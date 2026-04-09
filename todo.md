@@ -10,7 +10,7 @@
 - [x] Create menu categories management (add, edit, delete)
 - [x] Implement menu items management (add, edit, delete with price and description)
 - [x] Build menu management UI with elegant design
-- [ ] Add image upload capability for menu items
+- [ ] Add image upload capability for menu items (schema ready, UI/upload logic pending)
 
 ## Order Management System
 - [x] Create order registration form (customer name, phone, address)
@@ -28,14 +28,14 @@
 - [x] Create driver dashboard showing assigned orders
 - [x] Implement order status update functionality (Pending → On the Way → Delivered)
 - [x] Build driver-specific UI with order details
-- [ ] Add location sharing capability for drivers
+- [ ] Add location sharing capability for drivers (placeholder only, geolocation capture pending)
 
 ## Live Map & Location Tracking
 - [x] Integrate Google Maps API into admin dashboard (MapView component added)
-- [ ] Implement real-time driver location tracking UI
-- [ ] Display customer address on map
-- [ ] Show driver location on map
-- [ ] Build map view component with markers and routes
+- [ ] Implement real-time driver location tracking UI (needs polling/websocket)
+- [ ] Display customer address on map (needs geocoding and markers)
+- [ ] Show driver location on map (needs coordinate markers)
+- [ ] Build map view component with markers and routes (basic map view created)
 
 ## Management Dashboard
 - [x] Create main dashboard with live order status overview
@@ -52,9 +52,9 @@
 - [x] Ensure LTR (left-to-right) layout throughout
 
 ## Testing & Deployment
-- [ ] Write unit tests for core features (Vitest tests created but DB tables not migrated)
+- [ ] Write unit tests for core features (tests created but DB tables need migration)
 - [ ] Test all user flows and interactions
 - [x] Verify LTR layout on all pages (no RTL needed - English only)
-- [ ] Test map functionality and location tracking (map view added, needs real-time updates)
+- [ ] Test map functionality and location tracking
 - [ ] Performance optimization
 - [ ] Final deployment and handover
