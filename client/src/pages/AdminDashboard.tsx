@@ -8,6 +8,7 @@ import MenuManagement from "@/components/admin/MenuManagement";
 import OrderManagement from "@/components/admin/OrderManagement";
 import DriverManagement from "@/components/admin/DriverManagement";
 import Dashboard from "@/components/admin/Dashboard";
+import CreateOrder from "@/components/admin/CreateOrder";
 
 export default function AdminDashboard() {
   const [, params] = useRoute("/admin/*");
@@ -38,6 +39,13 @@ export default function AdminDashboard() {
             icon={<Package2 className="w-5 h-5" />}
             label="Dashboard"
             active={currentTab === "dashboard"}
+            collapsed={!sidebarOpen}
+          />
+          <NavItem
+            href="/admin/create-order"
+            icon={<Plus className="w-5 h-5" />}
+            label="New Order"
+            active={currentTab === "create-order"}
             collapsed={!sidebarOpen}
           />
           <NavItem
@@ -85,6 +93,7 @@ export default function AdminDashboard() {
         {/* Content */}
         <div className="flex-1 overflow-auto p-6">
           {currentTab === "dashboard" && <Dashboard />}
+          {currentTab === "create-order" && <CreateOrder />}
           {currentTab === "menu" && <MenuManagement />}
           {currentTab === "orders" && <OrderManagement />}
           {currentTab === "drivers" && <DriverManagement />}

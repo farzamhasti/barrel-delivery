@@ -13,21 +13,21 @@
 - [ ] Add image upload capability for menu items
 
 ## Order Management System
-- [ ] Create order registration form (customer name, phone, address)
-- [ ] Implement menu item selection interface for orders
-- [ ] Build order creation and storage logic
-- [ ] Create order list view with filtering and search
+- [x] Create order registration form (customer name, phone, address)
+- [x] Implement menu item selection interface for orders
+- [x] Build order creation and storage logic
+- [x] Create order list view with filtering and search
 
 ## Driver Management
-- [ ] Implement driver CRUD operations (add, edit, delete drivers)
-- [ ] Create driver list management UI
-- [ ] Build driver assignment system for orders
-- [ ] Implement driver status tracking
+- [x] Implement driver CRUD operations (add, edit, delete drivers)
+- [x] Create driver list management UI
+- [x] Build driver assignment system for orders
+- [x] Implement driver status tracking
 
 ## Driver Panel
-- [ ] Create driver dashboard showing assigned orders
-- [ ] Implement order status update functionality (Pending → On the Way → Delivered)
-- [ ] Build driver-specific UI with order details
+- [x] Create driver dashboard showing assigned orders
+- [x] Implement order status update functionality (Pending → On the Way → Delivered)
+- [x] Build driver-specific UI with order details
 - [ ] Add location sharing capability for drivers
 
 ## Live Map & Location Tracking
