@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { InsertUser, users, menuCategories, InsertMenuCategory, menuItems, InsertMenuItem, drivers, InsertDriver, customers, InsertCustomer, orders, InsertOrder, orderItems, InsertOrderItem } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -89,4 +89,109 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+// Menu Categories
+export async function getMenuCategories() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(menuCategories).orderBy(menuCategories.displayOrder);
+}
+
+export async function createMenuCategory(data: InsertMenuCategory) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(menuCategories).values(data);
+  return result;
+}
+
+export async function updateMenuCategory(id: number, data: Partial<InsertMenuCategory>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.update(menuCategories).set(data).where(eq(menuCategories.id, id));
+}
+
+// Menu Items
+export async function getMenuItems(categoryId?: number) {
+  const db = await getDb();
+  if (!db) return [];
+  if (categoryId) {
+    return db.select().from(menuItems).where(eq(menuItems.categoryId, categoryId)).orderBy(menuItems.displayOrder);
+  }
+  return db.select().from(menuItems).orderBy(menuItems.displayOrder);
+}
+
+export async function createMenuItem(data: InsertMenuItem) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.insert(menuItems).values(data);
+}
+
+// Drivers
+export async function getDrivers() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(drivers).where(eq(drivers.isActive, true));
+}
+
+export async function createDriver(data: InsertDriver) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.insert(drivers).values(data);
+}
+
+export async function updateDriverLocation(driverId: number, latitude: number, longitude: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.update(drivers).set({
+    currentLatitude: latitude as any,
+    currentLongitude: longitude as any,
+    lastLocationUpdate: new Date(),
+  }).where(eq(drivers.id, driverId));
+}
+
+// Customers
+export async function createCustomer(data: InsertCustomer) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.insert(customers).values(data);
+}
+
+// Orders
+export async function createOrder(data: InsertOrder) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.insert(orders).values(data);
+}
+
+export async function getOrders(driverId?: number) {
+  const db = await getDb();
+  if (!db) return [];
+  if (driverId) {
+    return db.select().from(orders).where(eq(orders.driverId, driverId)).orderBy(orders.createdAt);
+  }
+  return db.select().from(orders).orderBy(orders.createdAt);
+}
+
+export async function updateOrderStatus(orderId: number, status: "Pending" | "On the Way" | "Delivered") {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.update(orders).set({ status }).where(eq(orders.id, orderId));
+}
+
+export async function assignOrderToDriver(orderId: number, driverId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.update(orders).set({ driverId }).where(eq(orders.id, orderId));
+}
+
+// Order Items
+export async function createOrderItem(data: InsertOrderItem) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.insert(orderItems).values(data);
+}
+
+export async function getOrderItems(orderId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(orderItems).where(eq(orderItems.orderId, orderId));
+}
