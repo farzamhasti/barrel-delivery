@@ -31,18 +31,18 @@
 - [ ] Add location sharing capability for drivers
 
 ## Live Map & Location Tracking
-- [ ] Integrate Google Maps API
-- [ ] Implement real-time driver location tracking
+- [x] Integrate Google Maps API into admin dashboard (MapView component added)
+- [ ] Implement real-time driver location tracking UI
 - [ ] Display customer address on map
 - [ ] Show driver location on map
 - [ ] Build map view component with markers and routes
 
 ## Management Dashboard
-- [ ] Create main dashboard with live order status overview
-- [ ] Implement real-time order status updates
-- [ ] Build order statistics and metrics display
-- [ ] Add active orders list with status indicators
-- [ ] Implement map view integration in dashboard
+- [x] Create main dashboard with live order status overview
+- [x] Implement real-time order status updates
+- [x] Build order statistics and metrics display
+- [x] Add active orders list with status indicators
+- [x] Implement map view integration in dashboard (Live Map tab added)
 
 ## UI/UX & Styling
 - [x] Set up elegant color palette and typography
@@ -52,9 +52,9 @@
 - [x] Ensure LTR (left-to-right) layout throughout
 
 ## Testing & Deployment
-- [ ] Write unit tests for core features
+- [ ] Write unit tests for core features (Vitest tests created but DB tables not migrated)
 - [ ] Test all user flows and interactions
-- [ ] Verify RTL layout on all pages
-- [ ] Test map functionality and location tracking
+- [x] Verify LTR layout on all pages (no RTL needed - English only)
+- [ ] Test map functionality and location tracking (map view added, needs real-time updates)
 - [ ] Performance optimization
 - [ ] Final deployment and handover

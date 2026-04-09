@@ -3,12 +3,13 @@ import { useRoute } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Menu, Package2, Truck, LogOut, Settings, Plus } from "lucide-react";
+import { Menu, Package2, Truck, LogOut, Settings, Plus, Map } from "lucide-react";
 import MenuManagement from "@/components/admin/MenuManagement";
 import OrderManagement from "@/components/admin/OrderManagement";
 import DriverManagement from "@/components/admin/DriverManagement";
 import Dashboard from "@/components/admin/Dashboard";
 import CreateOrder from "@/components/admin/CreateOrder";
+import MapView from "@/components/admin/MapView";
 
 export default function AdminDashboard() {
   const [, params] = useRoute("/admin/*");
@@ -69,6 +70,13 @@ export default function AdminDashboard() {
             active={currentTab === "drivers"}
             collapsed={!sidebarOpen}
           />
+          <NavItem
+            href="/admin/map"
+            icon={<Map className="w-5 h-5" />}
+            label="Live Map"
+            active={currentTab === "map"}
+            collapsed={!sidebarOpen}
+          />
         </nav>
 
         <div className="p-4 border-t border-border">
@@ -97,6 +105,7 @@ export default function AdminDashboard() {
           {currentTab === "menu" && <MenuManagement />}
           {currentTab === "orders" && <OrderManagement />}
           {currentTab === "drivers" && <DriverManagement />}
+          {currentTab === "map" && <MapView />}
         </div>
       </main>
     </div>
