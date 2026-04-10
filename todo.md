@@ -61,4 +61,4 @@
 
 
 ## Bug Fixes
-- [ ] Fix OAuth callback error when logging in as admin
+- [x] Fix OAuth callback error when logging in as admin (Fixed state encoding in const.ts)
