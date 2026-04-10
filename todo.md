@@ -58,3 +58,7 @@
 - [ ] Test map functionality and location tracking
 - [ ] Performance optimization
 - [ ] Final deployment and handover
+
+
+## Bug Fixes
+- [ ] Fix OAuth callback error when logging in as admin

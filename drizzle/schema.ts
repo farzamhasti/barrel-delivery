@@ -10,7 +10,6 @@ export const users = mysqlTable("users", {
   openId: varchar("openId", { length: 64 }).notNull().unique(),
   name: text("name"),
   email: varchar("email", { length: 320 }),
-  phone: varchar("phone", { length: 20 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
   role: mysqlEnum("role", ["user", "admin", "driver"]).default("user").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -57,7 +56,6 @@ export const drivers = mysqlTable("drivers", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("user_id"),
   name: varchar("name", { length: 255 }).notNull(),
-  phone: varchar("phone", { length: 20 }).notNull(),
   isActive: boolean("is_active").default(true),
   currentLatitude: decimal("current_latitude", { precision: 10, scale: 8 }),
   currentLongitude: decimal("current_longitude", { precision: 11, scale: 8 }),
@@ -73,7 +71,6 @@ export type InsertDriver = typeof drivers.$inferInsert;
 export const customers = mysqlTable("customers", {
   id: int("id").autoincrement().primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
-  phone: varchar("phone", { length: 20 }).notNull(),
   address: text("address").notNull(),
   latitude: decimal("latitude", { precision: 10, scale: 8 }),
   longitude: decimal("longitude", { precision: 11, scale: 8 }),
