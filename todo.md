@@ -66,3 +66,11 @@
 
 ## Feature Requests
 - [x] Modify Home page to show Admin Dashboard and Driver Panel directly without login requirement
+
+
+## Current Issues
+- [x] Fix API error on /admin/menu - Fixed by implementing automatic database initialization
+
+
+## Database Issues
+- [x] Database tables not created - implemented auto-initialization on server startup
