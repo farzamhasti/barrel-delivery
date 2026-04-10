@@ -361,7 +361,7 @@ export default function MenuManagement() {
                     <tr key={item.id} className="border-b hover:bg-muted/30">
                       <td className="py-3 px-4 font-medium">{item.name}</td>
                       <td className="py-3 px-4">{category?.name}</td>
-                      <td className="py-3 px-4 text-right font-semibold">${item.price.toFixed(2)}</td>
+                      <td className="py-3 px-4 text-right font-semibold">${typeof item.price === 'number' ? item.price.toFixed(2) : parseFloat(item.price).toFixed(2)}</td>
                       <td className="py-3 px-4 text-center">
                         {item.isAvailable ? (
                           <span className="text-green-600 font-semibold">✓</span>

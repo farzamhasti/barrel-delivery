@@ -83,3 +83,7 @@
 - [x] Add edit functionality for categories and items
 - [x] Add delete functionality with confirmation
 - [x] Improve MenuManagement component UI/UX
+
+
+## Current Bugs
+- [x] Fix price.toFixed error in MenuManagement - item.price is not a number type (Fixed with type checking)
