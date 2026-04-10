@@ -45,6 +45,11 @@ export const appRouter = router({
           const { id, ...data } = input;
           return db.updateMenuCategory(id, data);
         }),
+      delete: protectedProcedure
+        .input(z.object({ id: z.number() }))
+        .mutation(async ({ input }) => {
+          return db.deleteMenuCategory(input.id);
+        }),
     }),
     items: router({
       list: publicProcedure
@@ -52,22 +57,42 @@ export const appRouter = router({
         .query(async ({ input }) => {
           return db.getMenuItems(input?.categoryId);
         }),
-    create: protectedProcedure
-      .input(z.object({
-        categoryId: z.number(),
-        name: z.string(),
-        description: z.string().optional(),
-        price: z.number(),
-        imageUrl: z.string().optional(),
-        isAvailable: z.boolean().optional(),
-        displayOrder: z.number().optional(),
-      }))
-      .mutation(async ({ input }) => {
-        return db.createMenuItem({
-          ...input,
-          price: input.price as any,
-        });
-      }),
+      create: protectedProcedure
+        .input(z.object({
+          categoryId: z.number(),
+          name: z.string(),
+          description: z.string().optional(),
+          price: z.number(),
+          imageUrl: z.string().optional(),
+          isAvailable: z.boolean().optional(),
+          displayOrder: z.number().optional(),
+        }))
+        .mutation(async ({ input }) => {
+          return db.createMenuItem({
+            ...input,
+            price: input.price as any,
+          });
+        }),
+      update: protectedProcedure
+        .input(z.object({
+          id: z.number(),
+          categoryId: z.number().optional(),
+          name: z.string().optional(),
+          description: z.string().optional(),
+          price: z.number().optional(),
+          imageUrl: z.string().optional(),
+          isAvailable: z.boolean().optional(),
+          displayOrder: z.number().optional(),
+        }))
+        .mutation(async ({ input }) => {
+          const { id, ...data } = input;
+          return db.updateMenuItem(id, data as any);
+        }),
+      delete: protectedProcedure
+        .input(z.object({ id: z.number() }))
+        .mutation(async ({ input }) => {
+          return db.deleteMenuItem(input.id);
+        }),
     }),
   }),
 

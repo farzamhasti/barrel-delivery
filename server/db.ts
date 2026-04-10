@@ -109,6 +109,12 @@ export async function updateMenuCategory(id: number, data: Partial<InsertMenuCat
   return db.update(menuCategories).set(data).where(eq(menuCategories.id, id));
 }
 
+export async function deleteMenuCategory(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.delete(menuCategories).where(eq(menuCategories.id, id));
+}
+
 // Menu Items
 export async function getMenuItems(categoryId?: number) {
   const db = await getDb();
@@ -123,6 +129,18 @@ export async function createMenuItem(data: InsertMenuItem) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   return db.insert(menuItems).values(data);
+}
+
+export async function updateMenuItem(id: number, data: Partial<InsertMenuItem>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.update(menuItems).set(data).where(eq(menuItems.id, id));
+}
+
+export async function deleteMenuItem(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.delete(menuItems).where(eq(menuItems.id, id));
 }
 
 // Drivers

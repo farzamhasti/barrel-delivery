@@ -8,6 +8,7 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { initializeDatabase } from "./initDb";
+import { seedSampleData } from "./seedData";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -31,6 +32,8 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 async function startServer() {
   // Initialize database tables
   await initializeDatabase();
+  // Seed sample data
+  await seedSampleData();
   
   const app = express();
   const server = createServer(app);
