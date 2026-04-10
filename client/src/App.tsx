@@ -36,8 +36,8 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
-      <Route path="/admin/*" component={() => <ProtectedRoute component={AdminDashboard} requiredRole="admin" />} />
-      <Route path="/driver/*" component={() => <ProtectedRoute component={DriverPanel} requiredRole="driver" />} />
+      <Route path="/admin/*" component={AdminDashboard} />
+      <Route path="/driver/*" component={DriverPanel} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

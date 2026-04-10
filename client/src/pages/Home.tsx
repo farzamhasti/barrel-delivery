@@ -1,73 +1,46 @@
-import { useAuth } from "@/_core/hooks/useAuth";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { getLoginUrl } from "@/const";
-import { Package2, Truck, LogOut } from "lucide-react";
+import { Package2, Truck } from "lucide-react";
+import AdminDashboard from "./AdminDashboard";
+import DriverPanel from "./DriverPanel";
 
 export default function Home() {
-  const { user, loading, logout } = useAuth();
+  const [activeTab, setActiveTab] = useState<"admin" | "driver" | "home">("home");
 
-  if (loading) {
+  if (activeTab === "admin") {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
+      <div className="min-h-screen bg-background">
+        <div className="border-b border-border/40 backdrop-blur-sm sticky top-0 z-50">
+          <div className="container mx-auto px-4 py-4">
+            <Button
+              variant="outline"
+              onClick={() => setActiveTab("home")}
+              className="gap-2"
+            >
+              ← Back
+            </Button>
+          </div>
+        </div>
+        <AdminDashboard />
       </div>
     );
   }
 
-  if (user) {
+  if (activeTab === "driver") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background to-muted/30">
-        <div className="container mx-auto px-4 py-12">
-          <div className="max-w-2xl mx-auto">
-            <div className="bg-card rounded-2xl shadow-lg p-8 border border-border">
-              <div className="flex items-center justify-between mb-8">
-                <div>
-                  <h1 className="text-3xl font-bold text-foreground mb-2">Welcome to Barrel Delivery</h1>
-                  <p className="text-muted-foreground">Logged in as: {user.name || user.email}</p>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => logout()}
-                  className="gap-2"
-                >
-                  <LogOut className="w-4 h-4" />
-                  Logout
-                </Button>
-              </div>
-
-              {user.role === "admin" && (
-                <div className="space-y-4">
-                  <p className="text-sm text-muted-foreground mb-6">You have admin access. Navigate to the admin dashboard:</p>
-                  <a href="/admin">
-                    <Button className="w-full gap-3 h-14 text-lg" size="lg">
-                      <Package2 className="w-6 h-6" />
-                      Admin Dashboard
-                    </Button>
-                  </a>
-                </div>
-              )}
-
-              {user.role === "driver" && (
-                <div className="space-y-4">
-                  <p className="text-sm text-muted-foreground mb-6">You have driver access. View your orders:</p>
-                  <a href="/driver">
-                    <Button className="w-full gap-3 h-14 text-lg" size="lg">
-                      <Truck className="w-6 h-6" />
-                      Driver Panel
-                    </Button>
-                  </a>
-                </div>
-              )}
-
-              {user.role === "user" && (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground">Your account role is not configured for this application.</p>
-                </div>
-              )}
-            </div>
+      <div className="min-h-screen bg-background">
+        <div className="border-b border-border/40 backdrop-blur-sm sticky top-0 z-50">
+          <div className="container mx-auto px-4 py-4">
+            <Button
+              variant="outline"
+              onClick={() => setActiveTab("home")}
+              className="gap-2"
+            >
+              ← Back
+            </Button>
           </div>
         </div>
+        <DriverPanel />
       </div>
     );
   }
@@ -107,11 +80,13 @@ export default function Home() {
               <p className="text-sm text-muted-foreground mb-4">
                 Manage menu, orders, drivers, and track deliveries in real-time.
               </p>
-              <a href={getLoginUrl()}>
-                <Button className="w-full" size="lg">
-                  Login as Admin
-                </Button>
-              </a>
+              <Button
+                className="w-full"
+                size="lg"
+                onClick={() => setActiveTab("admin")}
+              >
+                Open Admin Dashboard
+              </Button>
             </div>
 
             <div className="bg-card rounded-xl border border-border p-6 hover:border-accent/50 transition-colors">
@@ -122,11 +97,13 @@ export default function Home() {
               <p className="text-sm text-muted-foreground mb-4">
                 View assigned orders and update delivery status in real-time.
               </p>
-              <a href={getLoginUrl()}>
-                <Button className="w-full" size="lg">
-                  Login as Driver
-                </Button>
-              </a>
+              <Button
+                className="w-full"
+                size="lg"
+                onClick={() => setActiveTab("driver")}
+              >
+                Open Driver Panel
+              </Button>
             </div>
           </div>
 

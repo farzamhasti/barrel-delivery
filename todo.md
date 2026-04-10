@@ -62,3 +62,7 @@
 
 ## Bug Fixes
 - [x] Fix OAuth callback error when logging in as admin (Fixed state encoding in const.ts)
+
+
+## Feature Requests
+- [x] Modify Home page to show Admin Dashboard and Driver Panel directly without login requirement
