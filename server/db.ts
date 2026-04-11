@@ -231,3 +231,53 @@ export async function deleteDriver(id: number) {
   if (!db) throw new Error("Database not available");
   return db.delete(drivers).where(eq(drivers.id, id));
 }
+
+
+// Order Updates and Queries
+export async function getOrderById(orderId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(orders).where(eq(orders.id, orderId));
+  return result.length > 0 ? result[0] : null;
+}
+
+export async function getOrderWithItems(orderId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const order = await getOrderById(orderId);
+  if (!order) return null;
+  const items = await getOrderItems(orderId);
+  return { ...order, items };
+}
+
+export async function updateOrder(orderId: number, data: Partial<InsertOrder>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.update(orders).set(data).where(eq(orders.id, orderId));
+}
+
+export async function updateOrderItem(itemId: number, data: Partial<InsertOrderItem>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.update(orderItems).set(data).where(eq(orderItems.id, itemId));
+}
+
+export async function deleteOrderItem(itemId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.delete(orderItems).where(eq(orderItems.id, itemId));
+}
+
+// Customer Updates
+export async function updateCustomer(customerId: number, data: Partial<InsertCustomer>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.update(customers).set(data).where(eq(customers.id, customerId));
+}
+
+export async function getCustomerById(customerId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(customers).where(eq(customers.id, customerId));
+  return result.length > 0 ? result[0] : null;
+}

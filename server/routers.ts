@@ -64,7 +64,6 @@ export const appRouter = router({
           description: z.string().optional(),
           price: z.number(),
           imageUrl: z.string().optional(),
-          isAvailable: z.boolean().optional(),
           displayOrder: z.number().optional(),
         }))
         .mutation(async ({ input }) => {
@@ -86,7 +85,10 @@ export const appRouter = router({
         }))
         .mutation(async ({ input }) => {
           const { id, ...data } = input;
-          return db.updateMenuItem(id, data as any);
+          return db.updateMenuItem(id, {
+            ...data,
+            price: data.price as any,
+          });
         }),
       delete: protectedProcedure
         .input(z.object({ id: z.number() }))
@@ -104,18 +106,17 @@ export const appRouter = router({
     create: protectedProcedure
       .input(z.object({
         name: z.string(),
-        phone: z.string().optional(),
-        licenseNumber: z.string().optional(),
+        phone: z.string(),
+        email: z.string().optional(),
         vehicleType: z.string().optional(),
-        userId: z.number().optional(),
+        latitude: z.number().optional(),
+        longitude: z.number().optional(),
       }))
       .mutation(async ({ input }) => {
         return db.createDriver({
-          name: input.name,
-          phone: input.phone,
-          licenseNumber: input.licenseNumber,
-          vehicleType: input.vehicleType,
-          userId: input.userId as any,
+          ...input,
+          currentLatitude: input.latitude as any,
+          currentLongitude: input.longitude as any,
         });
       }),
     update: protectedProcedure
@@ -123,27 +124,24 @@ export const appRouter = router({
         id: z.number(),
         name: z.string().optional(),
         phone: z.string().optional(),
-        licenseNumber: z.string().optional(),
+        email: z.string().optional(),
         vehicleType: z.string().optional(),
         isActive: z.boolean().optional(),
+        latitude: z.number().optional(),
+        longitude: z.number().optional(),
       }))
       .mutation(async ({ input }) => {
         const { id, ...data } = input;
-        return db.updateDriver(id, data);
+        return db.updateDriver(id, {
+          ...data,
+          currentLatitude: data.latitude as any,
+          currentLongitude: data.longitude as any,
+        });
       }),
     delete: protectedProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => {
         return db.deleteDriver(input.id);
-      }),
-    updateLocation: publicProcedure
-      .input(z.object({
-        driverId: z.number(),
-        latitude: z.number(),
-        longitude: z.number(),
-      }))
-      .mutation(async ({ input }) => {
-        return db.updateDriverLocation(input.driverId, input.latitude, input.longitude);
       }),
   }),
 
@@ -163,6 +161,22 @@ export const appRouter = router({
           latitude: input.latitude as any,
           longitude: input.longitude as any,
         });
+      }),
+    getById: publicProcedure
+      .input(z.object({ customerId: z.number() }))
+      .query(async ({ input }) => {
+        return db.getCustomerById(input.customerId);
+      }),
+    update: protectedProcedure
+      .input(z.object({
+        customerId: z.number(),
+        name: z.string().optional(),
+        phone: z.string().optional(),
+        address: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { customerId, ...updateData } = input;
+        return db.updateCustomer(customerId, updateData as any);
       }),
   }),
 
@@ -220,6 +234,38 @@ export const appRouter = router({
       }))
       .mutation(async ({ input }) => {
         return db.assignOrderToDriver(input.orderId, input.driverId);
+      }),
+    getById: publicProcedure
+      .input(z.object({ orderId: z.number() }))
+      .query(async ({ input }) => {
+        return db.getOrderWithItems(input.orderId);
+      }),
+    update: protectedProcedure
+      .input(z.object({
+        orderId: z.number(),
+        customerId: z.number().optional(),
+        totalPrice: z.number().optional(),
+        notes: z.string().optional(),
+        status: z.enum(["Pending", "On the Way", "Delivered"]).optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { orderId, ...updateData } = input;
+        return db.updateOrder(orderId, updateData as any);
+      }),
+    updateItem: protectedProcedure
+      .input(z.object({
+        itemId: z.number(),
+        quantity: z.number().optional(),
+        priceAtOrder: z.number().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { itemId, ...updateData } = input;
+        return db.updateOrderItem(itemId, updateData as any);
+      }),
+    deleteItem: protectedProcedure
+      .input(z.object({ itemId: z.number() }))
+      .mutation(async ({ input }) => {
+        return db.deleteOrderItem(input.itemId);
       }),
   }),
 });

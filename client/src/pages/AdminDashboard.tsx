@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Menu, Package2, Truck, LogOut, Settings, Plus, Map } from "lucide-react";
 import MenuManagement from "@/components/admin/MenuManagement";
-import OrderManagement from "@/components/admin/OrderManagement";
+import { OrderManagement } from "@/pages/OrderManagement";
 import DriverManagement from "@/components/admin/DriverManagement";
 import Dashboard from "@/components/admin/Dashboard";
 import CreateOrder from "@/components/admin/CreateOrder";

@@ -135,3 +135,16 @@
 
 ## Current Bugs - Menu Category Deletion
 - [x] Menu category deletion failing - foreign key constraint when category has menu items (Fixed: Implemented soft delete by setting isActive=false)
+
+
+## New Features - Order Editing
+- [x] Backend: Add updateOrder procedure to modify order details (customer, total price, notes)
+- [x] Backend: Add updateOrderItem procedure to modify individual order items
+- [x] Backend: Add deleteOrderItem procedure to remove items from orders
+- [x] Backend: Add getOrderById procedure to fetch complete order with items
+- [x] Frontend: Create OrderManagement page with list and edit functionality
+- [x] Frontend: Add edit mode to CreateOrder component for existing orders
+- [x] Frontend: Implement customer info editing in order form
+- [x] Frontend: Implement order items editing (add/remove/modify quantities)
+- [x] Tests: Write tests for order update procedures (9 tests passing)
+- [x] Tests: Write tests for order item update/delete procedures (all passing)
