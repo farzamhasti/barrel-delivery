@@ -93,7 +93,7 @@ export async function getUserByOpenId(openId: string) {
 export async function getMenuCategories() {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(menuCategories).orderBy(menuCategories.displayOrder);
+  return db.select().from(menuCategories).where(eq(menuCategories.isActive, true)).orderBy(menuCategories.displayOrder);
 }
 
 export async function createMenuCategory(data: InsertMenuCategory) {
@@ -112,7 +112,8 @@ export async function updateMenuCategory(id: number, data: Partial<InsertMenuCat
 export async function deleteMenuCategory(id: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  return db.delete(menuCategories).where(eq(menuCategories.id, id));
+  // Soft delete: mark as inactive instead of hard delete to avoid foreign key violations
+  return db.update(menuCategories).set({ isActive: false }).where(eq(menuCategories.id, id));
 }
 
 // Menu Items

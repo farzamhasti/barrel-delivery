@@ -131,3 +131,7 @@
 
 ## Current Bugs - Menu Item Deletion
 - [x] Menu item deletion failing - foreign key constraint when menu item is referenced by order_items (Fixed: Implemented soft delete by setting isAvailable=false)
+
+
+## Current Bugs - Menu Category Deletion
+- [x] Menu category deletion failing - foreign key constraint when category has menu items (Fixed: Implemented soft delete by setting isActive=false)
