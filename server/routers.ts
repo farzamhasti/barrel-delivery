@@ -192,9 +192,11 @@ export const appRouter = router({
         });
         
         // Create order items
+        // Drizzle ORM returns an array [ResultSetHeader, undefined]
+        const orderId = Array.isArray(order) ? (order as any)[0]?.insertId : (order as any).insertId;
         for (const item of input.items) {
           await db.createOrderItem({
-            orderId: (order as any).insertId,
+            orderId,
             menuItemId: item.menuItemId,
             quantity: item.quantity,
             priceAtOrder: item.priceAtOrder as any,

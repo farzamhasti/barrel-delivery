@@ -123,3 +123,7 @@
 
 ## Current Bugs - Order Creation
 - [x] Order creation failing - customerId is undefined when extracting from customer creation result (Fixed: Extract insertId from array[0])
+
+
+## Current Bugs - Order Items Creation
+- [x] Order items creation failing - orderId is not being extracted correctly from order creation result (Fixed: Extract orderId from array[0])
