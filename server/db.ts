@@ -281,3 +281,27 @@ export async function getCustomerById(customerId: number) {
   const result = await db.select().from(customers).where(eq(customers.id, customerId));
   return result.length > 0 ? result[0] : null;
 }
+
+
+export async function deleteAllOrderItems(orderId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+  const result = await db.delete(orderItems).where(eq(orderItems.orderId, orderId));
+  return result;
+}
+
+export async function deleteOrder(orderId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+  
+  // First delete all order items
+  await deleteAllOrderItems(orderId);
+  
+  // Then delete the order
+  const result = await db.delete(orders).where(eq(orders.id, orderId));
+  return result;
+}

@@ -267,6 +267,11 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         return db.deleteOrderItem(input.itemId);
       }),
+    delete: protectedProcedure
+      .input(z.object({ orderId: z.number() }))
+      .mutation(async ({ input }) => {
+        return db.deleteOrder(input.orderId);
+      }),
   }),
 });
 

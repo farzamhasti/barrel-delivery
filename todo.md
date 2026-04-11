@@ -157,3 +157,14 @@
 - [x] Reorder items via drag-and-drop in Order Summary
 - [x] Real-time total price calculation
 - [x] Visual feedback for editing actions
+
+
+## New Features - Order Deletion and Management
+- [x] Backend: Add deleteOrder procedure
+- [x] Backend: Add deleteAllOrderItems procedure (cascade delete)
+- [x] Frontend: Add delete order button with confirmation
+- [x] Frontend: Add edit customer info in order management
+- [x] Frontend: Add edit order items (quantity, price, delete)
+- [x] Frontend: Add change order status (Pending → On the Way → Delivered)
+- [x] Tests: Write tests for order deletion
+- [x] Tests: Write tests for order management operations

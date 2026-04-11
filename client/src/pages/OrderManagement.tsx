@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Trash2, Edit, Plus } from "lucide-react";
+import { Trash2, Edit, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 
 export function OrderManagement() {
@@ -15,19 +15,29 @@ export function OrderManagement() {
   const [editingItemId, setEditingItemId] = useState<number | null>(null);
   const [editQuantity, setEditQuantity] = useState<number>(1);
   const [editPrice, setEditPrice] = useState<number>(0);
+  const [editingCustomerName, setEditingCustomerName] = useState<string>("");
+  const [editingCustomerPhone, setEditingCustomerPhone] = useState<string>("");
+  const [editingCustomerAddress, setEditingCustomerAddress] = useState<string>("");
+  const [editingCustomer, setEditingCustomer] = useState(false);
 
   const { data: orders, isLoading: ordersLoading, refetch: refetchOrders } = trpc.orders.list.useQuery();
   const { data: order, refetch: refetchOrder } = trpc.orders.getById.useQuery(
     { orderId: editingOrderId || 0 },
     { enabled: editingOrderId !== null }
   );
+
+  const { data: customer } = trpc.customers.getById.useQuery(
+    { customerId: order?.customerId || 0 },
+    { enabled: order?.customerId !== undefined && editingOrderId !== null }
+  );
+
   const { data: menuItems } = trpc.menu.items.list.useQuery();
 
   const updateOrderMutation = trpc.orders.update.useMutation({
     onSuccess: () => {
       toast.success("Order updated successfully");
       refetchOrders();
-      setEditingOrderId(null);
+      refetchOrder();
     },
     onError: (error) => {
       toast.error(`Failed to update order: ${error.message}`);
@@ -52,6 +62,28 @@ export function OrderManagement() {
     },
     onError: (error) => {
       toast.error(`Failed to delete item: ${error.message}`);
+    },
+  });
+
+  const deleteOrderMutation = trpc.orders.delete.useMutation({
+    onSuccess: () => {
+      toast.success("Order deleted successfully");
+      refetchOrders();
+      setEditingOrderId(null);
+    },
+    onError: (error) => {
+      toast.error(`Failed to delete order: ${error.message}`);
+    },
+  });
+
+  const updateCustomerMutation = trpc.customers.update.useMutation({
+    onSuccess: () => {
+      toast.success("Customer information updated");
+      refetchOrder();
+      setEditingCustomer(false);
+    },
+    onError: (error) => {
+      toast.error(`Failed to update customer: ${error.message}`);
     },
   });
 
@@ -93,6 +125,37 @@ export function OrderManagement() {
     }
   };
 
+  const handleDeleteOrder = (orderId: number) => {
+    if (confirm("Are you sure you want to delete this entire order? This action cannot be undone.")) {
+      deleteOrderMutation.mutate({ orderId });
+    }
+  };
+
+  const handleEditCustomer = () => {
+    if (!order || !customer) return;
+    // Load current customer info
+    setEditingCustomerName(customer.name);
+    setEditingCustomerPhone(customer.phone || "");
+    setEditingCustomerAddress(customer.address);
+    setEditingCustomer(true);
+  };
+
+  const handleSaveCustomer = () => {
+    if (!order) return;
+    
+    updateCustomerMutation.mutate({
+      customerId: order.customerId,
+      name: editingCustomerName,
+      phone: editingCustomerPhone,
+      address: editingCustomerAddress,
+    });
+  };
+
+  const getCustomerName = (customerId: number) => {
+    // Customer name will be fetched from order details
+    return `Customer #${customerId}`;
+  };
+
   if (ordersLoading) {
     return <div className="p-4">Loading orders...</div>;
   }
@@ -101,7 +164,7 @@ export function OrderManagement() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Order Management</h1>
-        <p className="text-gray-600 mt-2">View and edit orders</p>
+        <p className="text-gray-600 mt-2">View, edit, and delete orders</p>
       </div>
 
       <Card>
@@ -125,8 +188,8 @@ export function OrderManagement() {
                 {orders?.map((order: any) => (
                   <TableRow key={order.id}>
                     <TableCell>#{order.id}</TableCell>
-                    <TableCell>{order.customerId}</TableCell>
-                    <TableCell>${order.totalPrice}</TableCell>
+                    <TableCell>{getCustomerName(order.customerId)}</TableCell>
+                    <TableCell>${parseFloat(order.totalPrice).toFixed(2)}</TableCell>
                     <TableCell>
                       <span className={`px-2 py-1 rounded text-sm ${
                         order.status === "Delivered" ? "bg-green-100 text-green-800" :
@@ -137,7 +200,7 @@ export function OrderManagement() {
                       </span>
                     </TableCell>
                     <TableCell>{order.items?.length || 0}</TableCell>
-                    <TableCell>
+                    <TableCell className="space-x-2">
                       <Dialog open={editingOrderId === order.id} onOpenChange={(open) => {
                         if (!open) setEditingOrderId(null);
                       }}>
@@ -156,6 +219,52 @@ export function OrderManagement() {
                           </DialogHeader>
                           {order ? (
                             <div className="space-y-6">
+                              {/* Customer Information */}
+                              <div className="space-y-3 p-3 border rounded-lg bg-muted/50">
+                                <h3 className="font-semibold">Customer Information</h3>
+                                {editingCustomer ? (
+                                  <div className="space-y-2">
+                                    <Input
+                                      placeholder="Customer Name"
+                                      value={editingCustomerName}
+                                      onChange={(e) => setEditingCustomerName(e.target.value)}
+                                    />
+                                    <Input
+                                      placeholder="Phone Number"
+                                      value={editingCustomerPhone}
+                                      onChange={(e) => setEditingCustomerPhone(e.target.value)}
+                                    />
+                                    <Input
+                                      placeholder="Address"
+                                      value={editingCustomerAddress}
+                                      onChange={(e) => setEditingCustomerAddress(e.target.value)}
+                                    />
+                                    <div className="flex gap-2">
+                                      <Button size="sm" onClick={handleSaveCustomer} className="flex-1">
+                                        Save
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => setEditingCustomer(false)}
+                                        className="flex-1"
+                                      >
+                                        Cancel
+                                      </Button>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="space-y-1 text-sm">
+                                    <p><strong>Name:</strong> {customer?.name}</p>
+                                    <p><strong>Phone:</strong> {customer?.phone || "N/A"}</p>
+                                    <p><strong>Address:</strong> {customer?.address}</p>
+                                    <Button size="sm" variant="outline" onClick={handleEditCustomer} className="mt-2">
+                                      <Edit className="w-3 h-3 mr-1" /> Edit
+                                    </Button>
+                                  </div>
+                                )}
+                              </div>
+
                               {/* Order Status */}
                               <div className="space-y-2">
                                 <label className="text-sm font-medium">Status</label>
@@ -222,7 +331,7 @@ export function OrderManagement() {
                                       ) : (
                                         <>
                                           <span className="flex-1">
-                                            Item #{item.menuItemId} - Qty: {item.quantity} x ${item.priceAtOrder}
+                                            {menuItems?.find((m: any) => m.id === item.menuItemId)?.name || `Item #${item.menuItemId}`} - Qty: {item.quantity} x ${parseFloat(item.priceAtOrder).toFixed(2)}
                                           </span>
                                           <Button
                                             size="sm"
@@ -244,12 +353,35 @@ export function OrderManagement() {
                                   ))}
                                 </div>
                               </div>
+
+                              {/* Delete Order Button */}
+                              <div className="p-3 border border-destructive/50 rounded-lg bg-destructive/5">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <AlertCircle className="w-4 h-4 text-destructive" />
+                                  <span className="text-sm font-medium text-destructive">Danger Zone</span>
+                                </div>
+                                <Button
+                                  variant="destructive"
+                                  className="w-full"
+                                  onClick={() => handleDeleteOrder(order.id)}
+                                >
+                                  <Trash2 className="w-4 h-4 mr-2" />
+                                  Delete Order
+                                </Button>
+                              </div>
                             </div>
                           ) : (
                             <div className="p-4 text-center">Loading order details...</div>
                           )}
                         </DialogContent>
                       </Dialog>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handleDeleteOrder(order.id)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
