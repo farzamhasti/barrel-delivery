@@ -148,3 +148,12 @@
 - [x] Frontend: Implement order items editing (add/remove/modify quantities)
 - [x] Tests: Write tests for order update procedures (9 tests passing)
 - [x] Tests: Write tests for order item update/delete procedures (all passing)
+
+
+## New Features - Order Summary Editing
+- [x] Edit item quantity in Order Summary
+- [x] Edit item price in Order Summary
+- [x] Delete items from Order Summary
+- [x] Reorder items via drag-and-drop in Order Summary
+- [x] Real-time total price calculation
+- [x] Visual feedback for editing actions
