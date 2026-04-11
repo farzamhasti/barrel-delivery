@@ -115,3 +115,7 @@
 
 ## Current Bugs - Real-time Updates
 - [x] Driver list not updating in real-time after add/edit/delete - Fixed with onSuccess callbacks
+
+
+## Current Bugs - Customer Creation
+- [x] Customer creation failing - phone column missing from insert query (Fixed: Added phone column to customers table schema and database initialization)

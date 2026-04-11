@@ -60,10 +60,12 @@ export async function initializeDatabase() {
         PRIMARY KEY(\`id\`)
       );
 
+      ALTER TABLE \`customers\` MODIFY COLUMN \`phone\` varchar(20) DEFAULT NULL;
+
       CREATE TABLE IF NOT EXISTS \`customers\` (
         \`id\` int AUTO_INCREMENT NOT NULL,
         \`name\` varchar(255) NOT NULL,
-        \`phone\` varchar(20) NOT NULL,
+        \`phone\` varchar(20),
         \`address\` text NOT NULL,
         \`latitude\` decimal(10,8),
         \`longitude\` decimal(11,8),

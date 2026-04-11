@@ -8,6 +8,13 @@
       "when": 1775761552801,
       "tag": "0001_initial_schema",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1775925101354,
+      "tag": "0001_marvelous_shotgun",
+      "breakpoints": true
     }
   ]
 }
