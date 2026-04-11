@@ -119,3 +119,7 @@
 
 ## Current Bugs - Customer Creation
 - [x] Customer creation failing - phone column missing from insert query (Fixed: Added phone column to customers table schema and database initialization)
+
+
+## Current Bugs - Order Creation
+- [x] Order creation failing - customerId is undefined when extracting from customer creation result (Fixed: Extract insertId from array[0])

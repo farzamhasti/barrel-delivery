@@ -57,7 +57,8 @@ export default function CreateOrder() {
         address: formData.customerAddress,
       });
 
-      const customerId = (customerResult as any).insertId;
+      // Drizzle ORM returns an array [ResultSetHeader, undefined]
+      const customerId = Array.isArray(customerResult) ? (customerResult as any)[0]?.insertId : (customerResult as any).insertId;
       const totalPrice = formData.items.reduce((sum, item) => sum + item.priceAtOrder * item.quantity, 0);
 
       // Create order
