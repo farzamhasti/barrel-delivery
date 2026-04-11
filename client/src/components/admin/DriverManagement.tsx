@@ -11,19 +11,19 @@ export default function DriverManagement() {
   const { data: drivers = [] } = trpc.drivers.list.useQuery();
   const createDriverMutation = trpc.drivers.create.useMutation();
   const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({ name: "", phone: "" });
+  const [formData, setFormData] = useState({ name: "" });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.phone) {
-      toast.error("Please fill in all fields");
+    if (!formData.name) {
+      toast.error("Please enter driver name");
       return;
     }
 
     try {
       await createDriverMutation.mutateAsync(formData);
       toast.success("Driver added successfully!");
-      setFormData({ name: "", phone: "" });
+      setFormData({ name: "" });
       setShowForm(false);
       trpc.useUtils().drivers.list.invalidate();
     } catch (error) {
@@ -63,16 +63,6 @@ export default function DriverManagement() {
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="John Doe"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="driver-phone">Phone Number</Label>
-              <Input
-                id="driver-phone"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                placeholder="+1 (555) 000-0000"
               />
             </div>
 

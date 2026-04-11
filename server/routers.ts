@@ -104,12 +104,11 @@ export const appRouter = router({
     create: protectedProcedure
       .input(z.object({
         name: z.string(),
-        phone: z.string(),
         userId: z.number().optional(),
       }))
       .mutation(async ({ input }) => {
         return db.createDriver({
-          ...input,
+          name: input.name,
           userId: input.userId as any,
         });
       }),
