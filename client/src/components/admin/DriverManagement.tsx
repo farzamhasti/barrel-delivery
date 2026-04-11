@@ -8,10 +8,23 @@ import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 
 export default function DriverManagement() {
+  const utils = trpc.useUtils();
   const { data: drivers = [] } = trpc.drivers.list.useQuery();
-  const createDriverMutation = trpc.drivers.create.useMutation();
-  const updateDriverMutation = trpc.drivers.update.useMutation();
-  const deleteDriverMutation = trpc.drivers.delete.useMutation();
+  const createDriverMutation = trpc.drivers.create.useMutation({
+    onSuccess: () => {
+      utils.drivers.list.invalidate();
+    },
+  });
+  const updateDriverMutation = trpc.drivers.update.useMutation({
+    onSuccess: () => {
+      utils.drivers.list.invalidate();
+    },
+  });
+  const deleteDriverMutation = trpc.drivers.delete.useMutation({
+    onSuccess: () => {
+      utils.drivers.list.invalidate();
+    },
+  });
   
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -49,7 +62,6 @@ export default function DriverManagement() {
         vehicleType: "",
       });
       setShowForm(false);
-      trpc.useUtils().drivers.list.invalidate();
     } catch (error) {
       toast.error(editingId ? "Failed to update driver" : "Failed to add driver");
     }
@@ -71,7 +83,6 @@ export default function DriverManagement() {
       try {
         await deleteDriverMutation.mutateAsync({ id });
         toast.success("Driver deleted successfully!");
-        trpc.useUtils().drivers.list.invalidate();
       } catch (error) {
         toast.error("Failed to delete driver");
       }
@@ -173,6 +184,12 @@ export default function DriverManagement() {
                 onClick={() => {
                   setShowForm(false);
                   setEditingId(null);
+                  setFormData({
+                    name: "",
+                    phone: "",
+                    licenseNumber: "",
+                    vehicleType: "",
+                  });
                 }}
               >
                 Cancel

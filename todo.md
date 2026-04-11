@@ -111,3 +111,7 @@
 - [x] Implement drivers.update tRPC procedure
 - [x] Add delete button with confirmation for drivers
 - [x] Implement drivers.delete tRPC procedure
+
+
+## Current Bugs - Real-time Updates
+- [x] Driver list not updating in real-time after add/edit/delete - Fixed with onSuccess callbacks
