@@ -104,11 +104,17 @@ export const appRouter = router({
     create: protectedProcedure
       .input(z.object({
         name: z.string(),
+        phone: z.string().optional(),
+        licenseNumber: z.string().optional(),
+        vehicleType: z.string().optional(),
         userId: z.number().optional(),
       }))
       .mutation(async ({ input }) => {
         return db.createDriver({
           name: input.name,
+          phone: input.phone,
+          licenseNumber: input.licenseNumber,
+          vehicleType: input.vehicleType,
           userId: input.userId as any,
         });
       }),

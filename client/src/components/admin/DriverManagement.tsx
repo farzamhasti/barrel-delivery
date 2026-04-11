@@ -11,7 +11,12 @@ export default function DriverManagement() {
   const { data: drivers = [] } = trpc.drivers.list.useQuery();
   const createDriverMutation = trpc.drivers.create.useMutation();
   const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({ name: "" });
+  const [formData, setFormData] = useState({
+    name: "",
+    phone: "",
+    licenseNumber: "",
+    vehicleType: "",
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,7 +28,12 @@ export default function DriverManagement() {
     try {
       await createDriverMutation.mutateAsync(formData);
       toast.success("Driver added successfully!");
-      setFormData({ name: "" });
+      setFormData({
+        name: "",
+        phone: "",
+        licenseNumber: "",
+        vehicleType: "",
+      });
       setShowForm(false);
       trpc.useUtils().drivers.list.invalidate();
     } catch (error) {
@@ -57,12 +67,44 @@ export default function DriverManagement() {
             </div>
 
             <div>
-              <Label htmlFor="driver-name">Driver Name</Label>
+              <Label htmlFor="driver-name">Driver Name *</Label>
               <Input
                 id="driver-name"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="John Doe"
+                required
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="driver-phone">Phone Number</Label>
+              <Input
+                id="driver-phone"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                placeholder="+1 (555) 123-4567"
+                type="tel"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="driver-license">License Number</Label>
+              <Input
+                id="driver-license"
+                value={formData.licenseNumber}
+                onChange={(e) => setFormData({ ...formData, licenseNumber: e.target.value })}
+                placeholder="DL123456"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="driver-vehicle">Vehicle Type</Label>
+              <Input
+                id="driver-vehicle"
+                value={formData.vehicleType}
+                onChange={(e) => setFormData({ ...formData, vehicleType: e.target.value })}
+                placeholder="e.g., Motorcycle, Car, Truck"
               />
             </div>
 
@@ -96,28 +138,24 @@ export default function DriverManagement() {
                 <tr className="border-b">
                   <th className="text-left py-3 px-4 font-semibold">Name</th>
                   <th className="text-left py-3 px-4 font-semibold">Phone</th>
+                  <th className="text-left py-3 px-4 font-semibold">License</th>
+                  <th className="text-left py-3 px-4 font-semibold">Vehicle Type</th>
                   <th className="text-left py-3 px-4 font-semibold">Status</th>
-                  <th className="text-left py-3 px-4 font-semibold">Last Update</th>
                 </tr>
               </thead>
               <tbody>
                 {drivers.map((driver: any) => (
                   <tr key={driver.id} className="border-b hover:bg-muted/30">
                     <td className="py-3 px-4 font-medium">{driver.name}</td>
-                    <td className="py-3 px-4">{driver.phone}</td>
-                    <td className="py-3 px-4">
-                      <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
-                        driver.isActive
-                          ? "bg-green-100 text-green-800"
-                          : "bg-gray-100 text-gray-800"
-                      }`}>
-                        {driver.isActive ? "Active" : "Inactive"}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 text-sm text-muted-foreground">
-                      {driver.lastLocationUpdate
-                        ? new Date(driver.lastLocationUpdate).toLocaleString()
-                        : "Never"}
+                    <td className="py-3 px-4">{driver.phone || "—"}</td>
+                    <td className="py-3 px-4">{driver.licenseNumber || "—"}</td>
+                    <td className="py-3 px-4">{driver.vehicleType || "—"}</td>
+                    <td className="py-3 px-4 text-center">
+                      {driver.isActive ? (
+                        <span className="text-green-600 font-semibold">✓ Active</span>
+                      ) : (
+                        <span className="text-gray-500">Inactive</span>
+                      )}
                     </td>
                   </tr>
                 ))}

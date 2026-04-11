@@ -91,3 +91,11 @@
 
 ## Current Bugs - Driver Creation
 - [x] Fix driver creation error - removed phone field from driver schema (not in database)
+
+
+## Driver Fields Enhancement
+- [x] Add phone number field to drivers table and form
+- [x] Add license number field to drivers table and form
+- [x] Add vehicle type field to drivers table and form
+- [x] Update DriverManagement component to display new fields
+- [x] Update driver list view to show phone, license, and vehicle type
