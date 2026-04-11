@@ -99,3 +99,7 @@
 - [x] Add vehicle type field to drivers table and form
 - [x] Update DriverManagement component to display new fields
 - [x] Update driver list view to show phone, license, and vehicle type
+
+
+## Database Migration Issues
+- [x] Add ALTER TABLE migration for drivers table to add phone, license_number, vehicle_type columns (Applied via initDb)

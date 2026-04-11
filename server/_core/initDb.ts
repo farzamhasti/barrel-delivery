@@ -39,6 +39,11 @@ export async function initializeDatabase() {
         FOREIGN KEY(\`category_id\`) REFERENCES \`menu_categories\`(\`id\`)
       );
 
+      -- Add new columns to drivers table if they don't exist
+      ALTER TABLE \`drivers\` ADD COLUMN IF NOT EXISTS \`phone\` varchar(20);
+      ALTER TABLE \`drivers\` ADD COLUMN IF NOT EXISTS \`license_number\` varchar(50);
+      ALTER TABLE \`drivers\` ADD COLUMN IF NOT EXISTS \`vehicle_type\` varchar(100);
+
       CREATE TABLE IF NOT EXISTS \`drivers\` (
         \`id\` int AUTO_INCREMENT NOT NULL,
         \`user_id\` int,
