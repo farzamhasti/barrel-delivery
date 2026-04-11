@@ -178,3 +178,17 @@
 - [x] Frontend: Display success message after adding item
 - [x] Frontend: Update order total price after adding items
 - [x] Tests: Write tests for adding items to existing orders (5 tests passing)
+
+
+## New Features - Order Management Redesign
+- [x] Create split-view layout: order list on left, full order details on right
+- [x] Display full order details without dialog (customer info, items, status, notes)
+- [x] Implement inline editing for customer information
+- [x] Implement inline editing for order items (quantity, price)
+- [x] Add inline delete buttons for order items
+- [x] Add inline add item button with dropdown
+- [x] Display order total price with auto-calculation
+- [x] Add order status selector with visual indicators
+- [x] Add order notes field with inline editing
+- [x] Implement real-time updates when editing
+- [x] Add confirmation dialogs for destructive actions

@@ -3,55 +3,73 @@ import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Trash2, Edit, AlertCircle, Plus } from "lucide-react";
+import { Trash2, Edit, Save, X, Plus, AlertCircle, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 
 export function OrderManagement() {
-  const [editingOrderId, setEditingOrderId] = useState<number | null>(null);
-  const [editingItemId, setEditingItemId] = useState<number | null>(null);
-  const [editQuantity, setEditQuantity] = useState<number>(1);
-  const [editPrice, setEditPrice] = useState<number>(0);
-  const [editingCustomerName, setEditingCustomerName] = useState<string>("");
-  const [editingCustomerPhone, setEditingCustomerPhone] = useState<string>("");
-  const [editingCustomerAddress, setEditingCustomerAddress] = useState<string>("");
+  const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
   const [editingCustomer, setEditingCustomer] = useState(false);
+  const [editingItemId, setEditingItemId] = useState<number | null>(null);
   const [addingItem, setAddingItem] = useState(false);
+
+  // Form states for editing
+  const [editCustomerName, setEditCustomerName] = useState("");
+  const [editCustomerPhone, setEditCustomerPhone] = useState("");
+  const [editCustomerAddress, setEditCustomerAddress] = useState("");
+  const [editOrderStatus, setEditOrderStatus] = useState("");
+  const [editOrderNotes, setEditOrderNotes] = useState("");
+
+  // Add item states
   const [newItemMenuId, setNewItemMenuId] = useState<number | null>(null);
-  const [newItemQuantity, setNewItemQuantity] = useState<number>(1);
-  const [newItemPrice, setNewItemPrice] = useState<number>(0);
+  const [newItemQuantity, setNewItemQuantity] = useState(1);
+  const [newItemPrice, setNewItemPrice] = useState(0);
 
-  const { data: orders, isLoading: ordersLoading, refetch: refetchOrders } = trpc.orders.list.useQuery();
-  const { data: order, refetch: refetchOrder } = trpc.orders.getById.useQuery(
-    { orderId: editingOrderId || 0 },
-    { enabled: editingOrderId !== null }
+  // Item edit states
+  const [editItemQuantity, setEditItemQuantity] = useState(1);
+  const [editItemPrice, setEditItemPrice] = useState(0);
+
+  // Queries
+  const { data: orders, refetch: refetchOrders } = trpc.orders.list.useQuery();
+  const { data: selectedOrder, refetch: refetchSelectedOrder } = trpc.orders.getById.useQuery(
+    { orderId: selectedOrderId || 0 },
+    { enabled: selectedOrderId !== null }
   );
-
   const { data: customer } = trpc.customers.getById.useQuery(
-    { customerId: order?.customerId || 0 },
-    { enabled: order?.customerId !== undefined && editingOrderId !== null }
+    { customerId: selectedOrder?.customerId || 0 },
+    { enabled: selectedOrder?.customerId !== undefined }
   );
-
   const { data: menuItems } = trpc.menu.items.list.useQuery();
 
+  // Mutations
   const updateOrderMutation = trpc.orders.update.useMutation({
     onSuccess: () => {
-      toast.success("Order updated successfully");
+      toast.success("Order updated");
+      refetchSelectedOrder();
       refetchOrders();
-      refetchOrder();
     },
     onError: (error) => {
       toast.error(`Failed to update order: ${error.message}`);
     },
   });
 
+  const updateCustomerMutation = trpc.customers.update.useMutation({
+    onSuccess: () => {
+      toast.success("Customer updated");
+      refetchSelectedOrder();
+      setEditingCustomer(false);
+    },
+    onError: (error) => {
+      toast.error(`Failed to update customer: ${error.message}`);
+    },
+  });
+
   const updateItemMutation = trpc.orders.updateItem.useMutation({
     onSuccess: () => {
-      toast.success("Order item updated");
-      if (editingOrderId) refetchOrder();
+      toast.success("Item updated");
+      refetchSelectedOrder();
       setEditingItemId(null);
     },
     onError: (error) => {
@@ -61,8 +79,8 @@ export function OrderManagement() {
 
   const deleteItemMutation = trpc.orders.deleteItem.useMutation({
     onSuccess: () => {
-      toast.success("Order item removed");
-      if (editingOrderId) refetchOrder();
+      toast.success("Item removed");
+      refetchSelectedOrder();
     },
     onError: (error) => {
       toast.error(`Failed to delete item: ${error.message}`);
@@ -71,8 +89,8 @@ export function OrderManagement() {
 
   const createItemMutation = trpc.orders.createItem.useMutation({
     onSuccess: () => {
-      toast.success("Item added to order");
-      if (editingOrderId) refetchOrder();
+      toast.success("Item added");
+      refetchSelectedOrder();
       setAddingItem(false);
       setNewItemMenuId(null);
       setNewItemQuantity(1);
@@ -85,410 +103,437 @@ export function OrderManagement() {
 
   const deleteOrderMutation = trpc.orders.delete.useMutation({
     onSuccess: () => {
-      toast.success("Order deleted successfully");
+      toast.success("Order deleted");
       refetchOrders();
-      setEditingOrderId(null);
+      setSelectedOrderId(null);
     },
     onError: (error) => {
       toast.error(`Failed to delete order: ${error.message}`);
     },
   });
 
-  const updateCustomerMutation = trpc.customers.update.useMutation({
-    onSuccess: () => {
-      toast.success("Customer information updated");
-      refetchOrder();
-      setEditingCustomer(false);
-    },
-    onError: (error) => {
-      toast.error(`Failed to update customer: ${error.message}`);
-    },
-  });
-
-  const handleEditOrder = (orderId: number) => {
-    setEditingOrderId(orderId);
-  };
-
-  const handleSaveOrder = (newStatus?: string) => {
-    if (!editingOrderId) return;
-    
-    const updateData: any = {};
-    if (newStatus) updateData.status = newStatus;
-    
-    updateOrderMutation.mutate({
-      orderId: editingOrderId,
-      ...updateData,
-    });
-  };
-
-  const handleEditItem = (itemId: number, quantity: number, price: number) => {
-    setEditingItemId(itemId);
-    setEditQuantity(quantity);
-    setEditPrice(price);
-  };
-
-  const handleSaveItem = () => {
-    if (!editingItemId) return;
-    
-    updateItemMutation.mutate({
-      itemId: editingItemId,
-      quantity: editQuantity,
-      priceAtOrder: editPrice,
-    });
-  };
-
-  const handleDeleteItem = (itemId: number) => {
-    if (confirm("Are you sure you want to remove this item from the order?")) {
-      deleteItemMutation.mutate({ itemId });
-    }
-  };
-
-  const handleDeleteOrder = (orderId: number) => {
-    if (confirm("Are you sure you want to delete this entire order? This action cannot be undone.")) {
-      deleteOrderMutation.mutate({ orderId });
-    }
+  // Handlers
+  const handleSelectOrder = (orderId: number) => {
+    setSelectedOrderId(orderId);
+    setEditingCustomer(false);
+    setAddingItem(false);
+    setEditingItemId(null);
   };
 
   const handleEditCustomer = () => {
-    if (!order || !customer) return;
-    // Load current customer info
-    setEditingCustomerName(customer.name);
-    setEditingCustomerPhone(customer.phone || "");
-    setEditingCustomerAddress(customer.address);
-    setEditingCustomer(true);
+    if (customer) {
+      setEditCustomerName(customer.name);
+      setEditCustomerPhone(customer.phone || "");
+      setEditCustomerAddress(customer.address);
+      setEditingCustomer(true);
+    }
   };
 
   const handleSaveCustomer = () => {
-    if (!order) return;
-    
-    updateCustomerMutation.mutate({
-      customerId: order.customerId,
-      name: editingCustomerName,
-      phone: editingCustomerPhone,
-      address: editingCustomerAddress,
+    if (customer) {
+      updateCustomerMutation.mutate({
+        customerId: customer.id,
+        name: editCustomerName,
+        phone: editCustomerPhone,
+        address: editCustomerAddress,
+      });
+    }
+  };
+
+  const handleEditItem = (item: any) => {
+    setEditingItemId(item.id);
+    setEditItemQuantity(item.quantity);
+    setEditItemPrice(parseFloat(item.priceAtOrder));
+  };
+
+  const handleSaveItem = (itemId: number) => {
+    updateItemMutation.mutate({
+      itemId,
+      quantity: editItemQuantity,
+      priceAtOrder: editItemPrice,
     });
   };
 
-  const getCustomerName = (customerId: number) => {
-    // Customer name will be fetched from order details
-    return `Customer #${customerId}`;
+  const handleAddItem = () => {
+    if (!newItemMenuId || !selectedOrderId) {
+      toast.error("Please select a menu item");
+      return;
+    }
+    createItemMutation.mutate({
+      orderId: selectedOrderId,
+      menuItemId: newItemMenuId,
+      quantity: newItemQuantity,
+      priceAtOrder: newItemPrice,
+    });
   };
 
-  if (ordersLoading) {
-    return <div className="p-4">Loading orders...</div>;
-  }
+  const calculateTotal = () => {
+    if (!selectedOrder?.items) return 0;
+    return selectedOrder.items.reduce((sum: number, item: any) => {
+      return sum + (parseFloat(item.priceAtOrder) * item.quantity);
+    }, 0);
+  };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Order Management</h1>
-        <p className="text-gray-600 mt-2">View, edit, and delete orders</p>
-      </div>
-
-      <Card>
-        <CardHeader>
+    <div className="flex h-screen gap-4 p-4 bg-background">
+      {/* Orders List */}
+      <div className="w-80 flex flex-col border rounded-lg overflow-hidden">
+        <CardHeader className="border-b">
           <CardTitle>Orders</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Order ID</TableHead>
-                  <TableHead>Customer</TableHead>
-                  <TableHead>Total</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Items</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {orders?.map((order: any) => (
-                  <TableRow key={order.id}>
-                    <TableCell>#{order.id}</TableCell>
-                    <TableCell>{getCustomerName(order.customerId)}</TableCell>
-                    <TableCell>${parseFloat(order.totalPrice).toFixed(2)}</TableCell>
-                    <TableCell>
-                      <span className={`px-2 py-1 rounded text-sm ${
-                        order.status === "Delivered" ? "bg-green-100 text-green-800" :
-                        order.status === "On the Way" ? "bg-blue-100 text-blue-800" :
-                        "bg-yellow-100 text-yellow-800"
-                      }`}>
-                        {order.status}
-                      </span>
-                    </TableCell>
-                    <TableCell>{order.items?.length || 0}</TableCell>
-                    <TableCell className="space-x-2">
-                      <Dialog open={editingOrderId === order.id} onOpenChange={(open) => {
-                        if (!open) setEditingOrderId(null);
-                      }}>
-                        <DialogTrigger asChild>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleEditOrder(order.id)}
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                          <DialogHeader>
-                            <DialogTitle>Edit Order #{editingOrderId}</DialogTitle>
-                          </DialogHeader>
-                          {order ? (
-                            <div className="space-y-6">
-                              {/* Customer Information */}
-                              <div className="space-y-3 p-3 border rounded-lg bg-muted/50">
-                                <h3 className="font-semibold">Customer Information</h3>
-                                {editingCustomer ? (
-                                  <div className="space-y-2">
-                                    <Input
-                                      placeholder="Customer Name"
-                                      value={editingCustomerName}
-                                      onChange={(e) => setEditingCustomerName(e.target.value)}
-                                    />
-                                    <Input
-                                      placeholder="Phone Number"
-                                      value={editingCustomerPhone}
-                                      onChange={(e) => setEditingCustomerPhone(e.target.value)}
-                                    />
-                                    <Input
-                                      placeholder="Address"
-                                      value={editingCustomerAddress}
-                                      onChange={(e) => setEditingCustomerAddress(e.target.value)}
-                                    />
-                                    <div className="flex gap-2">
-                                      <Button size="sm" onClick={handleSaveCustomer} className="flex-1">
-                                        Save
-                                      </Button>
-                                      <Button
-                                        size="sm"
-                                        variant="outline"
-                                        onClick={() => setEditingCustomer(false)}
-                                        className="flex-1"
-                                      >
-                                        Cancel
-                                      </Button>
-                                    </div>
-                                  </div>
-                                ) : (
-                                  <div className="space-y-1 text-sm">
-                                    <p><strong>Name:</strong> {customer?.name}</p>
-                                    <p><strong>Phone:</strong> {customer?.phone || "N/A"}</p>
-                                    <p><strong>Address:</strong> {customer?.address}</p>
-                                    <Button size="sm" variant="outline" onClick={handleEditCustomer} className="mt-2">
-                                      <Edit className="w-3 h-3 mr-1" /> Edit
-                                    </Button>
-                                  </div>
-                                )}
-                              </div>
+        <div className="flex-1 overflow-y-auto">
+          {orders?.map((order: any) => (
+            <div
+              key={order.id}
+              onClick={() => handleSelectOrder(order.id)}
+              className={`p-3 border-b cursor-pointer hover:bg-muted transition-colors ${
+                selectedOrderId === order.id ? "bg-muted" : ""
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <div className="font-medium text-sm">Order #{order.id}</div>
+                  <div className="text-xs text-muted-foreground">
+                    ${parseFloat(order.totalPrice).toFixed(2)}
+                  </div>
+                  <div className={`text-xs font-medium mt-1 ${
+                    order.status === "Delivered" ? "text-green-600" :
+                    order.status === "On the Way" ? "text-blue-600" :
+                    "text-yellow-600"
+                  }`}>
+                    {order.status}
+                  </div>
+                </div>
+                {selectedOrderId === order.id && <ChevronRight className="w-4 h-4" />}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
 
-                              {/* Order Status */}
-                              <div className="space-y-2">
-                                <label className="text-sm font-medium">Status</label>
-                                <Select defaultValue={order.status} onValueChange={(value) => {
-                                  handleSaveOrder(value);
-                                }}>
-                                  <SelectTrigger>
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="Pending">Pending</SelectItem>
-                                    <SelectItem value="On the Way">On the Way</SelectItem>
-                                    <SelectItem value="Delivered">Delivered</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
+      {/* Order Details */}
+      <div className="flex-1 flex flex-col">
+        {selectedOrder ? (
+          <>
+            {/* Header */}
+            <Card className="mb-4">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Order #{selectedOrder.id}</CardTitle>
+                    <div className="text-sm text-muted-foreground mt-1">
+                      Created: {new Date(selectedOrder.createdAt).toLocaleDateString()}
+                    </div>
+                  </div>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => {
+                      if (confirm("Are you sure you want to delete this order?")) {
+                        deleteOrderMutation.mutate({ orderId: selectedOrder.id });
+                      }
+                    }}
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete Order
+                  </Button>
+                </div>
+              </CardHeader>
+            </Card>
 
-                              {/* Order Notes */}
-                              <div className="space-y-2">
-                                <label className="text-sm font-medium">Notes</label>
-                                <Textarea
-                                  defaultValue={order.notes || ""}
-                                  placeholder="Order notes..."
-                                  onChange={(e) => {
-                                    updateOrderMutation.mutate({
-                                      orderId: order.id,
-                                      notes: e.target.value,
-                                    });
-                                  }}
-                                />
-                              </div>
-
-                              {/* Order Items */}
-                              <div className="space-y-3">
-                                <div className="flex items-center justify-between">
-                                  <h3 className="font-semibold">Order Items</h3>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => setAddingItem(!addingItem)}
-                                  >
-                                    <Plus className="w-4 h-4 mr-1" />
-                                    Add Item
-                                  </Button>
-                                </div>
-                                {addingItem && (
-                                  <div className="p-3 border rounded-lg bg-muted/50 space-y-2">
-                                    <Select value={newItemMenuId?.toString() || ""} onValueChange={(value) => {
-                                      const menuItem = menuItems?.find((m: any) => m.id === parseInt(value));
-                                      setNewItemMenuId(parseInt(value));
-                                      setNewItemPrice(parseFloat(menuItem?.price || "0"));
-                                    }}>
-                                      <SelectTrigger>
-                                        <SelectValue placeholder="Select menu item" />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        {menuItems?.map((item: any) => (
-                                          <SelectItem key={item.id} value={item.id.toString()}>
-                                            {item.name} - ${parseFloat(item.price).toFixed(2)}
-                                          </SelectItem>
-                                        ))}
-                                      </SelectContent>
-                                    </Select>
-                                    <div className="flex gap-2">
-                                      <Input
-                                        type="number"
-                                        min="1"
-                                        placeholder="Quantity"
-                                        value={newItemQuantity}
-                                        onChange={(e) => setNewItemQuantity(parseInt(e.target.value))}
-                                        className="w-24"
-                                      />
-                                      <Input
-                                        type="number"
-                                        step="0.01"
-                                        placeholder="Price"
-                                        value={newItemPrice}
-                                        onChange={(e) => setNewItemPrice(parseFloat(e.target.value))}
-                                        className="flex-1"
-                                      />
-                                    </div>
-                                    <div className="flex gap-2">
-                                      <Button
-                                        size="sm"
-                                        className="flex-1"
-                                        onClick={() => {
-                                          if (!newItemMenuId) {
-                                            toast.error("Please select a menu item");
-                                            return;
-                                          }
-                                          createItemMutation.mutate({
-                                            orderId: order.id,
-                                            menuItemId: newItemMenuId,
-                                            quantity: newItemQuantity,
-                                            priceAtOrder: newItemPrice,
-                                          });
-                                        }}
-                                      >
-                                        Add
-                                      </Button>
-                                      <Button
-                                        size="sm"
-                                        variant="outline"
-                                        className="flex-1"
-                                        onClick={() => {
-                                          setAddingItem(false);
-                                          setNewItemMenuId(null);
-                                          setNewItemQuantity(1);
-                                          setNewItemPrice(0);
-                                        }}
-                                      >
-                                        Cancel
-                                      </Button>
-                                    </div>
-                                  </div>
-                                )}
-                                <div className="space-y-2 max-h-64 overflow-y-auto">
-                                  {order.items?.map((item: any) => (
-                                    <div key={item.id} className="flex items-center gap-2 p-2 border rounded">
-                                      {editingItemId === item.id ? (
-                                        <>
-                                          <Input
-                                            type="number"
-                                            min="1"
-                                            value={editQuantity}
-                                            onChange={(e) => setEditQuantity(parseInt(e.target.value))}
-                                            className="w-16"
-                                          />
-                                          <Input
-                                            type="number"
-                                            step="0.01"
-                                            value={editPrice}
-                                            onChange={(e) => setEditPrice(parseFloat(e.target.value))}
-                                            className="flex-1"
-                                          />
-                                          <Button size="sm" onClick={handleSaveItem}>Save</Button>
-                                          <Button
-                                            size="sm"
-                                            variant="outline"
-                                            onClick={() => setEditingItemId(null)}
-                                          >
-                                            Cancel
-                                          </Button>
-                                        </>
-                                      ) : (
-                                        <>
-                                          <span className="flex-1">
-                                            {menuItems?.find((m: any) => m.id === item.menuItemId)?.name || `Item #${item.menuItemId}`} - Qty: {item.quantity} x ${parseFloat(item.priceAtOrder).toFixed(2)}
-                                          </span>
-                                          <Button
-                                            size="sm"
-                                            variant="outline"
-                                            onClick={() => handleEditItem(item.id, item.quantity, parseFloat(item.priceAtOrder))}
-                                          >
-                                            <Edit className="w-4 h-4" />
-                                          </Button>
-                                          <Button
-                                            size="sm"
-                                            variant="destructive"
-                                            onClick={() => handleDeleteItem(item.id)}
-                                          >
-                                            <Trash2 className="w-4 h-4" />
-                                          </Button>
-                                        </>
-                                      )}
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-
-                              {/* Delete Order Button */}
-                              <div className="p-3 border border-destructive/50 rounded-lg bg-destructive/5">
-                                <div className="flex items-center gap-2 mb-2">
-                                  <AlertCircle className="w-4 h-4 text-destructive" />
-                                  <span className="text-sm font-medium text-destructive">Danger Zone</span>
-                                </div>
-                                <Button
-                                  variant="destructive"
-                                  className="w-full"
-                                  onClick={() => handleDeleteOrder(order.id)}
-                                >
-                                  <Trash2 className="w-4 h-4 mr-2" />
-                                  Delete Order
-                                </Button>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="p-4 text-center">Loading order details...</div>
-                          )}
-                        </DialogContent>
-                      </Dialog>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleDeleteOrder(order.id)}
-                      >
-                        <Trash2 className="w-4 h-4" />
+            {/* Customer Info */}
+            <Card className="mb-4">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base">Customer Information</CardTitle>
+                  {!editingCustomer && (
+                    <Button size="sm" variant="outline" onClick={handleEditCustomer}>
+                      <Edit className="w-4 h-4 mr-1" />
+                      Edit
+                    </Button>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent>
+                {editingCustomer ? (
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-sm font-medium">Name</label>
+                      <Input
+                        value={editCustomerName}
+                        onChange={(e) => setEditCustomerName(e.target.value)}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Phone</label>
+                      <Input
+                        value={editCustomerPhone}
+                        onChange={(e) => setEditCustomerPhone(e.target.value)}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Address</label>
+                      <Input
+                        value={editCustomerAddress}
+                        onChange={(e) => setEditCustomerAddress(e.target.value)}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={handleSaveCustomer} className="flex-1">
+                        <Save className="w-4 h-4 mr-1" />
+                        Save
                       </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setEditingCustomer(false)}
+                        className="flex-1"
+                      >
+                        <X className="w-4 h-4 mr-1" />
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div>
+                      <div className="text-sm text-muted-foreground">Name</div>
+                      <div className="font-medium">{customer?.name}</div>
+                    </div>
+                    <div>
+                      <div className="text-sm text-muted-foreground">Phone</div>
+                      <div className="font-medium">{customer?.phone || "N/A"}</div>
+                    </div>
+                    <div>
+                      <div className="text-sm text-muted-foreground">Address</div>
+                      <div className="font-medium">{customer?.address}</div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Order Status and Notes */}
+            <Card className="mb-4">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Order Status & Notes</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div>
+                  <label className="text-sm font-medium">Status</label>
+                  <Select
+                    value={selectedOrder.status || "Pending"}
+                    onValueChange={(value) => {
+                      updateOrderMutation.mutate({
+                        orderId: selectedOrder.id,
+                        status: value as "Pending" | "On the Way" | "Delivered",
+                      });
+                    }}
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Pending">Pending</SelectItem>
+                      <SelectItem value="On the Way">On the Way</SelectItem>
+                      <SelectItem value="Delivered">Delivered</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Notes</label>
+                  <Textarea
+                    value={selectedOrder.notes || ""}
+                    onChange={(e) => {
+                      updateOrderMutation.mutate({
+                        orderId: selectedOrder.id,
+                        notes: e.target.value,
+                      });
+                    }}
+                    className="mt-1"
+                    placeholder="Order notes..."
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Order Items */}
+            <Card className="flex-1 flex flex-col overflow-hidden">
+              <CardHeader className="border-b pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base">Order Items</CardTitle>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setAddingItem(!addingItem)}
+                  >
+                    <Plus className="w-4 h-4 mr-1" />
+                    Add Item
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="flex-1 overflow-y-auto p-0">
+                <div className="p-4 space-y-2">
+                  {/* Add Item Form */}
+                  {addingItem && (
+                    <div className="p-3 border rounded-lg bg-muted/50 space-y-2 mb-3">
+                      <Select
+                        value={newItemMenuId?.toString() || ""}
+                        onValueChange={(value) => {
+                          const menuItem = menuItems?.find((m: any) => m.id === parseInt(value));
+                          setNewItemMenuId(parseInt(value));
+                          setNewItemPrice(parseFloat(menuItem?.price || "0"));
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select menu item" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {menuItems?.map((item: any) => (
+                            <SelectItem key={item.id} value={item.id.toString()}>
+                              {item.name} - ${parseFloat(item.price).toFixed(2)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <div className="flex gap-2">
+                        <Input
+                          type="number"
+                          min="1"
+                          placeholder="Qty"
+                          value={newItemQuantity}
+                          onChange={(e) => setNewItemQuantity(parseInt(e.target.value))}
+                          className="w-20"
+                        />
+                        <Input
+                          type="number"
+                          step="0.01"
+                          placeholder="Price"
+                          value={newItemPrice}
+                          onChange={(e) => setNewItemPrice(parseFloat(e.target.value))}
+                          className="flex-1"
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <Button size="sm" className="flex-1" onClick={handleAddItem}>
+                          Add
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="flex-1"
+                          onClick={() => {
+                            setAddingItem(false);
+                            setNewItemMenuId(null);
+                            setNewItemQuantity(1);
+                            setNewItemPrice(0);
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Items List */}
+                  {selectedOrder.items?.map((item: any) => (
+                    <div key={item.id} className="p-3 border rounded-lg">
+                      {editingItemId === item.id ? (
+                        <div className="space-y-2">
+                          <div className="text-sm font-medium">
+                            {menuItems?.find((m: any) => m.id === item.menuItemId)?.name}
+                          </div>
+                          <div className="flex gap-2">
+                            <Input
+                              type="number"
+                              min="1"
+                              value={editItemQuantity}
+                              onChange={(e) => setEditItemQuantity(parseInt(e.target.value))}
+                              className="w-20"
+                            />
+                            <Input
+                              type="number"
+                              step="0.01"
+                              value={editItemPrice}
+                              onChange={(e) => setEditItemPrice(parseFloat(e.target.value))}
+                              className="flex-1"
+                            />
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              className="flex-1"
+                              onClick={() => handleSaveItem(item.id)}
+                            >
+                              Save
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="flex-1"
+                              onClick={() => setEditingItemId(null)}
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <div className="font-medium text-sm">
+                              {menuItems?.find((m: any) => m.id === item.menuItemId)?.name}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {item.quantity} × ${parseFloat(item.priceAtOrder).toFixed(2)} = $
+                              {(item.quantity * parseFloat(item.priceAtOrder)).toFixed(2)}
+                            </div>
+                          </div>
+                          <div className="flex gap-1">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleEditItem(item)}
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => {
+                                if (confirm("Remove this item?")) {
+                                  deleteItemMutation.mutate({ itemId: item.id });
+                                }
+                              }}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+              <div className="border-t p-4 bg-muted/50">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold">Total:</span>
+                  <span className="text-lg font-bold">${calculateTotal().toFixed(2)}</span>
+                </div>
+              </div>
+            </Card>
+          </>
+        ) : (
+          <div className="flex-1 flex items-center justify-center text-muted-foreground">
+            <div className="text-center">
+              <AlertCircle className="w-12 h-12 mx-auto mb-2 opacity-50" />
+              <p>Select an order to view details</p>
+            </div>
           </div>
-        </CardContent>
-      </Card>
+        )}
+      </div>
     </div>
   );
 }
