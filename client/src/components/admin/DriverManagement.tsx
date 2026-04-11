@@ -3,14 +3,18 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, X } from "lucide-react";
+import { Plus, X, Edit, Trash2 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 
 export default function DriverManagement() {
   const { data: drivers = [] } = trpc.drivers.list.useQuery();
   const createDriverMutation = trpc.drivers.create.useMutation();
+  const updateDriverMutation = trpc.drivers.update.useMutation();
+  const deleteDriverMutation = trpc.drivers.delete.useMutation();
+  
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -26,8 +30,18 @@ export default function DriverManagement() {
     }
 
     try {
-      await createDriverMutation.mutateAsync(formData);
-      toast.success("Driver added successfully!");
+      if (editingId) {
+        await updateDriverMutation.mutateAsync({
+          id: editingId,
+          ...formData,
+        });
+        toast.success("Driver updated successfully!");
+        setEditingId(null);
+      } else {
+        await createDriverMutation.mutateAsync(formData);
+        toast.success("Driver added successfully!");
+      }
+      
       setFormData({
         name: "",
         phone: "",
@@ -37,7 +51,30 @@ export default function DriverManagement() {
       setShowForm(false);
       trpc.useUtils().drivers.list.invalidate();
     } catch (error) {
-      toast.error("Failed to add driver");
+      toast.error(editingId ? "Failed to update driver" : "Failed to add driver");
+    }
+  };
+
+  const handleEdit = (driver: any) => {
+    setEditingId(driver.id);
+    setFormData({
+      name: driver.name,
+      phone: driver.phone || "",
+      licenseNumber: driver.licenseNumber || "",
+      vehicleType: driver.vehicleType || "",
+    });
+    setShowForm(true);
+  };
+
+  const handleDelete = async (id: number) => {
+    if (confirm("Are you sure you want to delete this driver?")) {
+      try {
+        await deleteDriverMutation.mutateAsync({ id });
+        toast.success("Driver deleted successfully!");
+        trpc.useUtils().drivers.list.invalidate();
+      } catch (error) {
+        toast.error("Failed to delete driver");
+      }
     }
   };
 
@@ -45,21 +82,38 @@ export default function DriverManagement() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Driver Management</h2>
-        <Button className="gap-2" onClick={() => setShowForm(!showForm)}>
+        <Button 
+          className="gap-2" 
+          onClick={() => {
+            setEditingId(null);
+            setFormData({
+              name: "",
+              phone: "",
+              licenseNumber: "",
+              vehicleType: "",
+            });
+            setShowForm(!showForm);
+          }}
+        >
           <Plus className="w-4 h-4" />
           Add Driver
         </Button>
       </div>
 
-      {/* Add Driver Form */}
+      {/* Add/Edit Driver Form */}
       {showForm && (
         <Card className="p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="font-semibold">Add New Driver</h3>
+              <h3 className="font-semibold">
+                {editingId ? "Edit Driver" : "Add New Driver"}
+              </h3>
               <button
                 type="button"
-                onClick={() => setShowForm(false)}
+                onClick={() => {
+                  setShowForm(false);
+                  setEditingId(null);
+                }}
                 className="text-muted-foreground hover:text-foreground"
               >
                 <X className="w-5 h-5" />
@@ -110,13 +164,16 @@ export default function DriverManagement() {
 
             <div className="flex gap-2">
               <Button type="submit" className="flex-1">
-                Add Driver
+                {editingId ? "Update Driver" : "Add Driver"}
               </Button>
               <Button
                 type="button"
                 variant="outline"
                 className="flex-1"
-                onClick={() => setShowForm(false)}
+                onClick={() => {
+                  setShowForm(false);
+                  setEditingId(null);
+                }}
               >
                 Cancel
               </Button>
@@ -141,6 +198,7 @@ export default function DriverManagement() {
                   <th className="text-left py-3 px-4 font-semibold">License</th>
                   <th className="text-left py-3 px-4 font-semibold">Vehicle Type</th>
                   <th className="text-left py-3 px-4 font-semibold">Status</th>
+                  <th className="text-center py-3 px-4 font-semibold">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -156,6 +214,28 @@ export default function DriverManagement() {
                       ) : (
                         <span className="text-gray-500">Inactive</span>
                       )}
+                    </td>
+                    <td className="py-3 px-4">
+                      <div className="flex gap-2 justify-center">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleEdit(driver)}
+                          className="gap-1"
+                        >
+                          <Edit className="w-4 h-4" />
+                          Edit
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => handleDelete(driver.id)}
+                          className="gap-1"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          Delete
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))}

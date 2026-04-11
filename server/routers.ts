@@ -118,6 +118,24 @@ export const appRouter = router({
           userId: input.userId as any,
         });
       }),
+    update: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        name: z.string().optional(),
+        phone: z.string().optional(),
+        licenseNumber: z.string().optional(),
+        vehicleType: z.string().optional(),
+        isActive: z.boolean().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { id, ...data } = input;
+        return db.updateDriver(id, data);
+      }),
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        return db.deleteDriver(input.id);
+      }),
     updateLocation: publicProcedure
       .input(z.object({
         driverId: z.number(),

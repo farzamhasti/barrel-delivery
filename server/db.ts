@@ -213,3 +213,17 @@ export async function getOrderItems(orderId: number) {
   if (!db) return [];
   return db.select().from(orderItems).where(eq(orderItems.orderId, orderId));
 }
+
+
+// Driver Update and Delete
+export async function updateDriver(id: number, data: Partial<InsertDriver>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.update(drivers).set(data).where(eq(drivers.id, id));
+}
+
+export async function deleteDriver(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.delete(drivers).where(eq(drivers.id, id));
+}

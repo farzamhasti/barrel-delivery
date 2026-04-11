@@ -103,3 +103,11 @@
 
 ## Database Migration Issues
 - [x] Add ALTER TABLE migration for drivers table to add phone, license_number, vehicle_type columns (Applied via initDb)
+
+
+## Driver Editing Feature
+- [x] Add edit button to driver list rows
+- [x] Create edit dialog for driver information
+- [x] Implement drivers.update tRPC procedure
+- [x] Add delete button with confirmation for drivers
+- [x] Implement drivers.delete tRPC procedure
