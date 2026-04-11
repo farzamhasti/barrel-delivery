@@ -168,3 +168,13 @@
 - [x] Frontend: Add change order status (Pending → On the Way → Delivered)
 - [x] Tests: Write tests for order deletion
 - [x] Tests: Write tests for order management operations
+
+
+## New Features - Add Items to Existing Orders
+- [x] Backend: Verify createOrderItem procedure works for adding items to submitted orders
+- [x] Frontend: Add "Add Item" button in Order Management edit dialog
+- [x] Frontend: Create item selection dropdown with available menu items
+- [x] Frontend: Add quantity and price input for new items
+- [x] Frontend: Display success message after adding item
+- [x] Frontend: Update order total price after adding items
+- [x] Tests: Write tests for adding items to existing orders (5 tests passing)

@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Trash2, Edit, AlertCircle } from "lucide-react";
+import { Trash2, Edit, AlertCircle, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 export function OrderManagement() {
@@ -19,6 +19,10 @@ export function OrderManagement() {
   const [editingCustomerPhone, setEditingCustomerPhone] = useState<string>("");
   const [editingCustomerAddress, setEditingCustomerAddress] = useState<string>("");
   const [editingCustomer, setEditingCustomer] = useState(false);
+  const [addingItem, setAddingItem] = useState(false);
+  const [newItemMenuId, setNewItemMenuId] = useState<number | null>(null);
+  const [newItemQuantity, setNewItemQuantity] = useState<number>(1);
+  const [newItemPrice, setNewItemPrice] = useState<number>(0);
 
   const { data: orders, isLoading: ordersLoading, refetch: refetchOrders } = trpc.orders.list.useQuery();
   const { data: order, refetch: refetchOrder } = trpc.orders.getById.useQuery(
@@ -62,6 +66,20 @@ export function OrderManagement() {
     },
     onError: (error) => {
       toast.error(`Failed to delete item: ${error.message}`);
+    },
+  });
+
+  const createItemMutation = trpc.orders.createItem.useMutation({
+    onSuccess: () => {
+      toast.success("Item added to order");
+      if (editingOrderId) refetchOrder();
+      setAddingItem(false);
+      setNewItemMenuId(null);
+      setNewItemQuantity(1);
+      setNewItemPrice(0);
+    },
+    onError: (error) => {
+      toast.error(`Failed to add item: ${error.message}`);
     },
   });
 
@@ -299,7 +317,88 @@ export function OrderManagement() {
 
                               {/* Order Items */}
                               <div className="space-y-3">
-                                <h3 className="font-semibold">Order Items</h3>
+                                <div className="flex items-center justify-between">
+                                  <h3 className="font-semibold">Order Items</h3>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => setAddingItem(!addingItem)}
+                                  >
+                                    <Plus className="w-4 h-4 mr-1" />
+                                    Add Item
+                                  </Button>
+                                </div>
+                                {addingItem && (
+                                  <div className="p-3 border rounded-lg bg-muted/50 space-y-2">
+                                    <Select value={newItemMenuId?.toString() || ""} onValueChange={(value) => {
+                                      const menuItem = menuItems?.find((m: any) => m.id === parseInt(value));
+                                      setNewItemMenuId(parseInt(value));
+                                      setNewItemPrice(parseFloat(menuItem?.price || "0"));
+                                    }}>
+                                      <SelectTrigger>
+                                        <SelectValue placeholder="Select menu item" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {menuItems?.map((item: any) => (
+                                          <SelectItem key={item.id} value={item.id.toString()}>
+                                            {item.name} - ${parseFloat(item.price).toFixed(2)}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                    <div className="flex gap-2">
+                                      <Input
+                                        type="number"
+                                        min="1"
+                                        placeholder="Quantity"
+                                        value={newItemQuantity}
+                                        onChange={(e) => setNewItemQuantity(parseInt(e.target.value))}
+                                        className="w-24"
+                                      />
+                                      <Input
+                                        type="number"
+                                        step="0.01"
+                                        placeholder="Price"
+                                        value={newItemPrice}
+                                        onChange={(e) => setNewItemPrice(parseFloat(e.target.value))}
+                                        className="flex-1"
+                                      />
+                                    </div>
+                                    <div className="flex gap-2">
+                                      <Button
+                                        size="sm"
+                                        className="flex-1"
+                                        onClick={() => {
+                                          if (!newItemMenuId) {
+                                            toast.error("Please select a menu item");
+                                            return;
+                                          }
+                                          createItemMutation.mutate({
+                                            orderId: order.id,
+                                            menuItemId: newItemMenuId,
+                                            quantity: newItemQuantity,
+                                            priceAtOrder: newItemPrice,
+                                          });
+                                        }}
+                                      >
+                                        Add
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="flex-1"
+                                        onClick={() => {
+                                          setAddingItem(false);
+                                          setNewItemMenuId(null);
+                                          setNewItemQuantity(1);
+                                          setNewItemPrice(0);
+                                        }}
+                                      >
+                                        Cancel
+                                      </Button>
+                                    </div>
+                                  </div>
+                                )}
                                 <div className="space-y-2 max-h-64 overflow-y-auto">
                                   {order.items?.map((item: any) => (
                                     <div key={item.id} className="flex items-center gap-2 p-2 border rounded">
