@@ -1,5 +1,5 @@
-import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
+import { and, eq } from "drizzle-orm";
 import { InsertUser, users, menuCategories, InsertMenuCategory, menuItems, InsertMenuItem, drivers, InsertDriver, customers, InsertCustomer, orders, InsertOrder, orderItems, InsertOrderItem } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -120,9 +120,11 @@ export async function getMenuItems(categoryId?: number) {
   const db = await getDb();
   if (!db) return [];
   if (categoryId) {
-    return db.select().from(menuItems).where(eq(menuItems.categoryId, categoryId)).orderBy(menuItems.displayOrder);
+    return db.select().from(menuItems).where(
+      and(eq(menuItems.categoryId, categoryId), eq(menuItems.isAvailable, true))
+    ).orderBy(menuItems.displayOrder);
   }
-  return db.select().from(menuItems).orderBy(menuItems.displayOrder);
+  return db.select().from(menuItems).where(eq(menuItems.isAvailable, true)).orderBy(menuItems.displayOrder);
 }
 
 export async function createMenuItem(data: InsertMenuItem) {
@@ -140,7 +142,8 @@ export async function updateMenuItem(id: number, data: Partial<InsertMenuItem>) 
 export async function deleteMenuItem(id: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  return db.delete(menuItems).where(eq(menuItems.id, id));
+  // Soft delete: mark as unavailable instead of hard delete to avoid foreign key violations
+  return db.update(menuItems).set({ isAvailable: false }).where(eq(menuItems.id, id));
 }
 
 // Drivers

@@ -127,3 +127,7 @@
 
 ## Current Bugs - Order Items Creation
 - [x] Order items creation failing - orderId is not being extracted correctly from order creation result (Fixed: Extract orderId from array[0])
+
+
+## Current Bugs - Menu Item Deletion
+- [x] Menu item deletion failing - foreign key constraint when menu item is referenced by order_items (Fixed: Implemented soft delete by setting isAvailable=false)
