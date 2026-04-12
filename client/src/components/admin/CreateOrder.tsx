@@ -6,8 +6,10 @@ import { Label } from "@/components/ui/label";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { Trash2, GripVertical, Edit2, Check, X } from "lucide-react";
+import { useLocation } from "wouter";
 
 export default function CreateOrder() {
+  const [, navigate] = useLocation();
   const [formData, setFormData] = useState({
     customerName: "",
     customerPhone: "",
@@ -133,6 +135,8 @@ export default function CreateOrder() {
         customerAddress: "",
         items: [],
       });
+      // Redirect to Orders page
+      navigate("/admin/orders");
     } catch (error) {
       toast.error("Failed to create order");
     }

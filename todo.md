@@ -227,8 +227,13 @@
 
 
 ## Bug - Order Items Not Displaying
-- [ ] Order items are not showing in Order Management page - all orders show empty items list
-- [ ] Need to debug why getOrderItemsWithMenuNames is not returning items
-- [ ] Check if order_items table has data
-- [ ] Verify backend query is working correctly
-- [ ] Test frontend is receiving items data
+- [x] Order items are not showing in Order Management page - all orders show empty items list (Fixed: Removed overflow-y-auto from CardContent)
+- [x] Need to debug why getOrderItemsWithMenuNames is not returning items (Verified: Backend returns correct data)
+- [x] Check if order_items table has data (Verified: Data exists in database)
+- [x] Verify backend query is working correctly (Verified: Query returns all fields)
+- [x] Test frontend is receiving items data (Verified: Frontend receives complete data)
+
+## Bug - New Orders Not Appearing in Orders List
+- [x] New orders created from Create Order page were not appearing in Orders list (Fixed: Added redirect to /admin/orders after order creation)
+- [x] CreateOrder component was missing redirect logic (Fixed: Added useLocation hook and navigate call)
+- [x] Verified new orders now appear in Orders list with full details (Verified: Order #30060 displays correctly)
