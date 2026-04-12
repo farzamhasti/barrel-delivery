@@ -237,3 +237,10 @@
 - [x] New orders created from Create Order page were not appearing in Orders list (Fixed: Added redirect to /admin/orders after order creation)
 - [x] CreateOrder component was missing redirect logic (Fixed: Added useLocation hook and navigate call)
 - [x] Verified new orders now appear in Orders list with full details (Verified: Order #30060 displays correctly)
+
+
+## Bug - Order Items UI Layout Issue
+- [x] Order Items section becomes too small when many items are added (Fixed: Changed overflow-visible to overflow-y-auto)
+- [x] Need to add scrollable container for Order Items (Fixed: Added overflow-y-auto to CardContent)
+- [x] Improve spacing and layout for better readability with multiple items (Verified: Scroll bar works correctly)
+- [x] Test with 5+ items to verify layout works correctly (Verified: Order #30063 displays correctly with scroll)
