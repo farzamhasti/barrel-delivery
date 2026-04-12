@@ -444,7 +444,7 @@ export function OrderManagement() {
                       {editingItemId === item.id ? (
                         <div className="space-y-2">
                           <div className="text-sm font-medium">
-                            {menuItems?.find((m: any) => m.id === item.menuItemId)?.name}
+                            {item.menuItemName || `Item #${item.menuItemId}`}
                           </div>
                           <div className="flex gap-2">
                             <Input
@@ -484,7 +484,7 @@ export function OrderManagement() {
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
                             <div className="font-medium text-sm">
-                              {menuItems?.find((m: any) => m.id === item.menuItemId)?.name}
+                              {item.menuItemName || `Item #${item.menuItemId}`}
                             </div>
                             <div className="text-sm text-muted-foreground">
                               {item.quantity} × ${parseFloat(item.priceAtOrder).toFixed(2)} = $

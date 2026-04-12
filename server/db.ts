@@ -218,6 +218,26 @@ export async function getOrderItems(orderId: number) {
   return db.select().from(orderItems).where(eq(orderItems.orderId, orderId));
 }
 
+export async function getOrderItemsWithMenuNames(orderId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const items = await db.select({
+    id: orderItems.id,
+    orderId: orderItems.orderId,
+    menuItemId: orderItems.menuItemId,
+    quantity: orderItems.quantity,
+    priceAtOrder: orderItems.priceAtOrder,
+    createdAt: orderItems.createdAt,
+    menuItemName: menuItems.name,
+  })
+  .from(orderItems)
+  .leftJoin(menuItems, eq(orderItems.menuItemId, menuItems.id))
+  .where(eq(orderItems.orderId, orderId));
+  
+  return items;
+}
+
 
 // Driver Update and Delete
 export async function updateDriver(id: number, data: Partial<InsertDriver>) {
@@ -246,7 +266,7 @@ export async function getOrderWithItems(orderId: number) {
   if (!db) return null;
   const order = await getOrderById(orderId);
   if (!order) return null;
-  const items = await getOrderItems(orderId);
+  const items = await getOrderItemsWithMenuNames(orderId);
   return { ...order, items };
 }
 

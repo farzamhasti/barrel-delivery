@@ -203,3 +203,9 @@
 - [x] Implement inline editing for order items
 - [x] Display order total price with auto-calculation
 - [x] Real-time updates when items are modified (5 tests passing)
+
+
+## Current Bugs - Order Items Not Displaying
+- [x] Order Items section is empty - items are not showing in Orders page detail view (Fixed: Added getOrderItemsWithMenuNames to include menu item names in response)
+- [x] Need to debug data fetching from backend (Fixed: Backend now returns items with menuItemName)
+- [x] Need to verify UI is rendering items correctly (Fixed: OrderManagement now uses menuItemName from backend)
