@@ -247,7 +247,7 @@
 
 
 ## Bug - Order #30065 Details Not Displaying
-- [ ] Order #30065 created but details are not showing
-- [ ] Need to investigate why some newly created orders don't display item details
-- [ ] Check if issue is consistent or intermittent
-- [ ] Debug backend data retrieval for this specific order
+- [x] Order #30065 created but details are not showing (Fixed: Changed CardContent flex layout to properly display all items)
+- [x] Need to investigate why some newly created orders don't display item details (Root cause: overflow-y-auto was causing items to scroll out of view)
+- [x] Check if issue is consistent or intermittent (Verified: All orders now display correctly with proper scrolling)
+- [x] Debug backend data retrieval for this specific order (Verified: Backend returns complete data correctly)
