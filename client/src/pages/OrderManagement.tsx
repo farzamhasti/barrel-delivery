@@ -377,6 +377,11 @@ export function OrderManagement() {
               </CardHeader>
               <CardContent className="flex-1 overflow-y-auto p-0">
                 <div className="p-4 space-y-2">
+                  {/* Debug: Show items count */}
+                  {!selectedOrder && <div className="text-sm text-muted-foreground">Select an order to view items</div>}
+                  {selectedOrder && !selectedOrder.items?.length && !addingItem && (
+                    <div className="text-sm text-muted-foreground">No items in this order</div>
+                  )}
                   {/* Add Item Form */}
                   {addingItem && (
                     <div className="p-3 border rounded-lg bg-muted/50 space-y-2 mb-3">
