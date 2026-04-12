@@ -209,3 +209,18 @@
 - [x] Order Items section is empty - items are not showing in Orders page detail view (Fixed: Added getOrderItemsWithMenuNames to include menu item names in response)
 - [x] Need to debug data fetching from backend (Fixed: Backend now returns items with menuItemName)
 - [x] Need to verify UI is rendering items correctly (Fixed: OrderManagement now uses menuItemName from backend)
+
+
+## New Features - Order Items Section Redesign
+- [x] Redesign Order Items section to match Customer Information layout with display/edit modes
+- [x] Add display mode showing all order items with name, quantity, price
+- [x] Add Edit button to switch to edit mode
+- [x] Implement inline editing for each item (quantity, price)
+- [x] Add delete button for each item
+- [x] Add Add Item button to add new items
+- [x] Show order total price
+- [x] Real-time updates when items are modified
+- [x] Remove debug console logs and cleanup unused imports
+- [x] Add client-side validation for quantity and price inputs
+- [x] Add loading/disabled states during mutations
+- [x] Browser testing: verify all functionality works correctly
