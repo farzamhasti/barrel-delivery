@@ -244,3 +244,10 @@
 - [x] Need to add scrollable container for Order Items (Fixed: Added overflow-y-auto to CardContent)
 - [x] Improve spacing and layout for better readability with multiple items (Verified: Scroll bar works correctly)
 - [x] Test with 5+ items to verify layout works correctly (Verified: Order #30063 displays correctly with scroll)
+
+
+## Bug - Order #30065 Details Not Displaying
+- [ ] Order #30065 created but details are not showing
+- [ ] Need to investigate why some newly created orders don't display item details
+- [ ] Check if issue is consistent or intermittent
+- [ ] Debug backend data retrieval for this specific order

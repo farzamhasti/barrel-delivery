@@ -414,8 +414,8 @@ export function OrderManagement() {
                   )}
                 </div>
               </CardHeader>
-              <CardContent className="flex-1 p-0 overflow-y-auto">
-                <div className="p-4 space-y-2">
+              <CardContent className="flex-1 p-0 overflow-hidden flex flex-col">
+                <div className="p-4 space-y-2 flex-1 overflow-y-auto">
                   {/* Display Mode */}
                   {!editingItems ? (
                     <>
