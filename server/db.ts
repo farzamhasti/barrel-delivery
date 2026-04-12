@@ -267,7 +267,21 @@ export async function getOrderWithItems(orderId: number) {
   const order = await getOrderById(orderId);
   if (!order) return null;
   const items = await getOrderItemsWithMenuNames(orderId);
-  return { ...order, items };
+  
+  // Get customer details
+  let customerName = "";
+  let customerPhone = "";
+  let customerAddress = "";
+  if (order.customerId) {
+    const customer = await db.select().from(customers).where(eq(customers.id, order.customerId)).limit(1);
+    if (customer.length > 0) {
+      customerName = customer[0].name;
+      customerPhone = customer[0].phone || "";
+      customerAddress = customer[0].address;
+    }
+  }
+  
+  return { ...order, items, customerName, customerPhone, customerAddress };
 }
 
 export async function updateOrder(orderId: number, data: Partial<InsertOrder>) {

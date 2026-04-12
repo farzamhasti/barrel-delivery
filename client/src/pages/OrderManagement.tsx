@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,14 +33,19 @@ export function OrderManagement() {
 
   // Queries
   const { data: orders, refetch: refetchOrders } = trpc.orders.list.useQuery();
-  const { data: selectedOrder, refetch: refetchSelectedOrder } = trpc.orders.getById.useQuery(
+  const { data: selectedOrder, isLoading: isLoadingOrder, error: orderError, refetch: refetchSelectedOrder } = trpc.orders.getById.useQuery(
     { orderId: selectedOrderId || 0 },
     { enabled: selectedOrderId !== null }
   );
-  const { data: customer } = trpc.customers.getById.useQuery(
-    { customerId: selectedOrder?.customerId || 0 },
-    { enabled: selectedOrder?.customerId !== undefined }
-  );
+
+  // Debug logging
+  useEffect(() => {
+    console.log('selectedOrderId:', selectedOrderId);
+    console.log('selectedOrder:', selectedOrder);
+    console.log('isLoadingOrder:', isLoadingOrder);
+    console.log('orderError:', orderError);
+  }, [selectedOrderId, selectedOrder, isLoadingOrder, orderError]);
+  // Use customer data from selectedOrder directly
   const { data: menuItems } = trpc.menu.items.list.useQuery();
 
   // Mutations
@@ -121,18 +126,18 @@ export function OrderManagement() {
   };
 
   const handleEditCustomer = () => {
-    if (customer) {
-      setEditCustomerName(customer.name);
-      setEditCustomerPhone(customer.phone || "");
-      setEditCustomerAddress(customer.address);
+    if (selectedOrder) {
+      setEditCustomerName(selectedOrder.customerName || "");
+      setEditCustomerPhone(selectedOrder.customerPhone || "");
+      setEditCustomerAddress(selectedOrder.customerAddress || "");
       setEditingCustomer(true);
     }
   };
 
   const handleSaveCustomer = () => {
-    if (customer) {
+    if (selectedOrder) {
       updateCustomerMutation.mutate({
-        customerId: customer.id,
+        customerId: selectedOrder.customerId,
         name: editCustomerName,
         phone: editCustomerPhone,
         address: editCustomerAddress,
@@ -213,6 +218,16 @@ export function OrderManagement() {
 
       {/* Order Details */}
       <div className="flex-1 flex flex-col">
+        {isLoadingOrder && (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-muted-foreground">Loading order details...</div>
+          </div>
+        )}
+        {orderError && (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-red-600">Error loading order: {orderError.message}</div>
+          </div>
+        )}
         {selectedOrder ? (
           <>
             {/* Header */}
@@ -301,15 +316,15 @@ export function OrderManagement() {
                   <div className="space-y-2">
                     <div>
                       <div className="text-sm text-muted-foreground">Name</div>
-                      <div className="font-medium">{customer?.name}</div>
+                      <div className="font-medium">{selectedOrder?.customerName}</div>
                     </div>
                     <div>
                       <div className="text-sm text-muted-foreground">Phone</div>
-                      <div className="font-medium">{customer?.phone || "N/A"}</div>
+                      <div className="font-medium">{selectedOrder?.customerPhone || "N/A"}</div>
                     </div>
                     <div>
                       <div className="text-sm text-muted-foreground">Address</div>
-                      <div className="font-medium">{customer?.address}</div>
+                      <div className="font-medium">{selectedOrder?.customerAddress}</div>
                     </div>
                   </div>
                 )}
