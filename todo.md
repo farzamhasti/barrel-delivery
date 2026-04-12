@@ -224,3 +224,11 @@
 - [x] Add client-side validation for quantity and price inputs
 - [x] Add loading/disabled states during mutations
 - [x] Browser testing: verify all functionality works correctly
+
+
+## Bug - Order Items Not Displaying
+- [ ] Order items are not showing in Order Management page - all orders show empty items list
+- [ ] Need to debug why getOrderItemsWithMenuNames is not returning items
+- [ ] Check if order_items table has data
+- [ ] Verify backend query is working correctly
+- [ ] Test frontend is receiving items data
