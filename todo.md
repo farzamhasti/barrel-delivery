@@ -192,3 +192,14 @@
 - [x] Add order notes field with inline editing
 - [x] Implement real-time updates when editing
 - [x] Add confirmation dialogs for destructive actions
+
+
+## New Features - Order Items Display on Orders Page
+- [x] Display list of order items in Orders page detail view
+- [x] Show item name, quantity, price for each item
+- [x] Add edit button for each item (quantity and price)
+- [x] Add delete button for each item with confirmation
+- [x] Add "Add Item" button to add new items to order
+- [x] Implement inline editing for order items
+- [x] Display order total price with auto-calculation
+- [x] Real-time updates when items are modified (5 tests passing)
