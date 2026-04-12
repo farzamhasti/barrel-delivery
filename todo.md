@@ -251,3 +251,16 @@
 - [x] Need to investigate why some newly created orders don't display item details (Root cause: overflow-y-auto was causing items to scroll out of view)
 - [x] Check if issue is consistent or intermittent (Verified: All orders now display correctly with proper scrolling)
 - [x] Debug backend data retrieval for this specific order (Verified: Backend returns complete data correctly)
+
+
+## Bug - CreateOrder.tsx Missing useState Import
+- [x] CreateOrder.tsx had missing useState import causing compile error (Fixed: Added import { useState } from "react")
+- [x] Verified dev server compiles without errors after fix
+
+## Bug - Order Items Not Displaying (PERSISTENT BUG - FINAL FIX)
+- [x] Order Items section appeared empty despite data being in DOM (Root cause: CSS layout constraints)
+- [x] Multiple CSS fix attempts made (overflow-visible, overflow-y-auto, flex-col, max-h-[500px], min-h-0)
+- [x] Final fix applied: CardContent with flex flex-col overflow-hidden + inner div with max-h-[500px] overflow-y-auto
+- [x] Verified with Order #30065 (4 items: House Pizza, spaghetti, Carbonera, Shrimp Linguini - total $84.00)
+- [x] Verified with Order #30066 (3 items: House Pizza, Carbonera, Shrimp Linguini - total $165.00)
+- [x] All items now display correctly with proper scrolling when multiple items exist
