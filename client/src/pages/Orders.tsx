@@ -48,15 +48,23 @@ export function Orders() {
   });
 
   // Queries
-  const { data: orders = [], refetch: refetchOrders, isLoading: isLoadingOrders } = trpc.orders.getByDateRange.useQuery(
-    {
-      startDate: selectedDate,
-      endDate: selectedDate,
-    },
-    {
-      refetchOnWindowFocus: false,
-    }
-  );
+  // Fetch all orders and filter client-side by date
+  const { data: allOrders = [], refetch: refetchOrders, isLoading: isLoadingOrders } = trpc.orders.list.useQuery();
+  
+  // Filter orders by selected date on the client side
+  const orders = useMemo(() => {
+    return allOrders.filter((order: any) => {
+      // Parse the order creation date
+      const orderDate = new Date(order.createdAt);
+      const orderYear = orderDate.getUTCFullYear();
+      const orderMonth = String(orderDate.getUTCMonth() + 1).padStart(2, '0');
+      const orderDay = String(orderDate.getUTCDate()).padStart(2, '0');
+      const orderDateStr = `${orderYear}-${orderMonth}-${orderDay}`;
+      
+      // Compare with selected date
+      return orderDateStr === selectedDate;
+    });
+  }, [allOrders, selectedDate]);
   const { data: menuItems = [] } = trpc.menu.items.list.useQuery();
   const { data: selectedOrderDetails } = trpc.orders.getById.useQuery(
     { orderId: selectedOrderId || 0 },

@@ -341,3 +341,12 @@
 - [ ] Test filtering with sample orders from multiple dates
 - [ ] Verify filtering works correctly
 - [ ] Provide testing guide and deploy
+
+
+## NEW ISSUE - Order Item to Menu Item Relationships
+- [ ] Check menu items in database and verify IDs
+- [ ] Verify all order items reference valid menu item IDs
+- [ ] Identify any broken or missing relationships
+- [ ] Fix test data script to use correct menu item IDs
+- [ ] Recreate test data with proper relationships
+- [ ] Test date filtering with corrected data
