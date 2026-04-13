@@ -3,43 +3,70 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { LogOut, MapPin, Phone, Clock } from "lucide-react";
+import { LogOut, MapPin, Phone, Clock, Navigation } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import { toast } from "sonner";
 
 export default function DriverPanel() {
   const { logout } = useAuth();
   const [selectedOrder, setSelectedOrder] = useState<number | null>(null);
 
   // Fetch driver's orders
-  const { data: orders = [], isLoading } = trpc.orders.list.useQuery({ driverId: 1 });
+  const { data: orders = [], isLoading, refetch } = trpc.orders.list.useQuery({ driverId: 1 });
+  
+  // Fetch selected order with items
+  const { data: selectedOrderData } = trpc.orders.getById.useQuery(
+    { orderId: selectedOrder! },
+    { enabled: !!selectedOrder }
+  );
   
   // Update order status mutation
-  const updateStatusMutation = trpc.orders.updateStatus.useMutation();
+  const updateStatusMutation = trpc.orders.updateStatus.useMutation({
+    onSuccess: () => {
+      refetch();
+      toast.success("Order status updated!");
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to update order status");
+    },
+  });
 
-  const handleStatusUpdate = (orderId: number, newStatus: "Pending" | "On the Way" | "Delivered") => {
-    updateStatusMutation.mutate(
-      { orderId, status: newStatus },
-      {
-        onSuccess: () => {
-          // Invalidate and refetch
-          trpc.useUtils().orders.list.invalidate();
-        },
-      }
-    );
+  // Auto-refetch every 5 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      refetch();
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [refetch]);
+
+  const handleStatusUpdate = (orderId: number, newStatus: "Pending" | "Ready" | "On the Way" | "Delivered") => {
+    updateStatusMutation.mutate({
+      orderId,
+      status: newStatus,
+    });
+  };
+
+  const handleOpenMaps = (address: string) => {
+    const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(address)}`;
+    window.open(mapsUrl, "_blank");
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case "Pending":
         return "bg-yellow-100 text-yellow-800";
-      case "On the Way":
+      case "Ready":
         return "bg-blue-100 text-blue-800";
+      case "On the Way":
+        return "bg-purple-100 text-purple-800";
       case "Delivered":
         return "bg-green-100 text-green-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
   };
+
+
 
   return (
     <div className="min-h-screen bg-background">
@@ -125,6 +152,16 @@ export default function DriverPanel() {
                           </Button>
                           <Button
                             size="sm"
+                            variant={order.status === "Ready" ? "default" : "outline"}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleStatusUpdate(order.id, "Ready");
+                            }}
+                          >
+                            Ready
+                          </Button>
+                          <Button
+                            size="sm"
                             variant={order.status === "On the Way" ? "default" : "outline"}
                             onClick={(e) => {
                               e.stopPropagation();
@@ -144,6 +181,20 @@ export default function DriverPanel() {
                             Delivered
                           </Button>
                         </div>
+                        <div className="flex gap-2 pt-2 border-t border-border">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="flex-1 gap-2"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenMaps(order.customer?.address || "");
+                            }}
+                          >
+                            <Navigation className="w-4 h-4" />
+                            Navigate
+                          </Button>
+                        </div>
                       </div>
                     )}
                   </Card>
@@ -152,27 +203,47 @@ export default function DriverPanel() {
             )}
           </div>
 
-          {/* Order Details & Map */}
+          {/* Order Details */}
           <div className="lg:col-span-1">
             <h2 className="text-xl font-semibold text-foreground mb-4">Order Details</h2>
             
-            {selectedOrder ? (
+            {selectedOrderData ? (
               <Card className="p-4 space-y-4">
                 <div>
                   <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Order Total</p>
                   <p className="text-2xl font-bold text-foreground">
-                    ${orders.find((o: any) => o.id === selectedOrder)?.totalPrice || "0.00"}
+                    ${selectedOrderData.totalPrice || "0.00"}
                   </p>
                 </div>
 
                 <div className="bg-muted/30 rounded-lg p-4">
                   <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Order Items</p>
-                  <p className="text-sm text-muted-foreground">Items will be displayed here</p>
+                  <div className="space-y-2">
+                    {selectedOrderData.items?.length ? (
+                      selectedOrderData.items.map((item: any, idx: number) => (
+                        <div key={idx} className="flex justify-between text-sm">
+                          <span>{item.quantity}x {item.menuItemName}</span>
+                          <span className="text-muted-foreground">${(item.priceAtOrder * item.quantity).toFixed(2)}</span>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-sm text-muted-foreground">No items</p>
+                    )}
+                  </div>
                 </div>
 
-                <div className="bg-blue-50 dark:bg-blue-950/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
-                  <p className="text-xs text-blue-600 dark:text-blue-400 font-semibold mb-2">📍 Location Sharing</p>
-                  <p className="text-sm text-blue-700 dark:text-blue-300">
+                {selectedOrderData.notes && (
+                  <div className="bg-blue-50 dark:bg-blue-950/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
+                    <p className="text-xs text-blue-600 dark:text-blue-400 font-semibold mb-2">Special Instructions</p>
+                    <p className="text-sm text-blue-700 dark:text-blue-300">
+                      {selectedOrderData.notes}
+                    </p>
+                  </div>
+                )}
+
+                <div className="bg-green-50 dark:bg-green-950/20 rounded-lg p-4 border border-green-200 dark:border-green-800">
+                  <p className="text-xs text-green-600 dark:text-green-400 font-semibold mb-2">📍 Location Sharing</p>
+                  <p className="text-sm text-green-700 dark:text-green-300">
                     Your location is being shared with the customer for real-time tracking.
                   </p>
                 </div>
