@@ -78,7 +78,7 @@ export async function initializeDatabase() {
         \`id\` int AUTO_INCREMENT NOT NULL,
         \`customer_id\` int NOT NULL,
         \`driver_id\` int,
-        \`status\` enum('Pending','On the Way','Delivered') NOT NULL DEFAULT 'Pending',
+        \`status\` enum('Pending','Ready','On the Way','Delivered') NOT NULL DEFAULT 'Pending',
         \`total_price\` decimal(10,2) NOT NULL,
         \`notes\` text,
         \`createdAt\` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,

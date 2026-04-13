@@ -251,7 +251,7 @@ export async function getOrdersByDateRange(startDate: Date | string, endDate: Da
   return db.select().from(orders).where(and(...conditions)).orderBy(desc(orders.createdAt));
 }
 
-export async function updateOrderStatus(orderId: number, status: string) {
+export async function updateOrderStatus(orderId: number, status: any) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   return db.update(orders).set({ status }).where(eq(orders.id, orderId));

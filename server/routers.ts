@@ -247,7 +247,7 @@ export const appRouter = router({
     updateStatus: protectedProcedure
       .input(z.object({
         orderId: z.number(),
-        status: z.enum(["Pending", "Ready", "On the Way", "Delivered"]),
+        status: z.enum(["Pending", "Ready", "On the Way", "Delivered", "Returning to Restaurant", "At Restaurant"]),
       }))
       .mutation(async ({ input }) => {
         return db.updateOrderStatus(input.orderId, input.status);

@@ -11,6 +11,7 @@ import Dashboard from "@/components/admin/Dashboard";
 import CreateOrder from "@/components/admin/CreateOrder";
 import MapView from "@/components/admin/MapView";
 import OrderTracking from "@/components/admin/OrderTracking";
+import OrderTrackingWithMap from "@/components/admin/OrderTrackingWithMap";
 import KitchenDashboard from "@/components/admin/KitchenDashboard";
 
 export default function AdminDashboard() {
@@ -114,7 +115,7 @@ export default function AdminDashboard() {
           {currentTab === "menu" && <MenuManagement />}
           {currentTab === "orders" && <Orders />}
           {currentTab === "drivers" && <DriverManagement />}
-          {currentTab === "order-tracking" && <OrderTracking />}
+          {currentTab === "order-tracking" && <OrderTrackingWithMap />}
           {currentTab === "kitchen" && <KitchenDashboard />}
         </div>
       </main>
