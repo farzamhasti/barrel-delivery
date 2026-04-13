@@ -322,3 +322,22 @@
 - [x] Updated AdminDashboard to use new Orders component
 - [x] Dev server compiles without errors
 - [ ] Deploy to production via Publish button
+
+
+## NEW FEATURE - Daily Order Filtering with Date Picker
+- [ ] Update backend orders.list query to filter by date range
+- [ ] Add getOrdersByDate procedure to retrieve orders for specific date
+- [ ] Update Orders component to show only today's orders by default
+- [ ] Add date picker UI to Orders component
+- [ ] Implement date filtering logic in frontend
+- [ ] Test with orders from different dates
+- [ ] Verify auto-update when date changes
+- [ ] Deploy to production
+
+
+## NEW FEATURE - Daily Order Filtering
+- [ ] Simplify date filtering logic in backend
+- [ ] Create test data endpoint for inserting orders with different dates
+- [ ] Test filtering with sample orders from multiple dates
+- [ ] Verify filtering works correctly
+- [ ] Provide testing guide and deploy

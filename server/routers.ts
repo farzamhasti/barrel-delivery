@@ -187,6 +187,17 @@ export const appRouter = router({
       .query(async ({ input }) => {
         return db.getOrders(input?.driverId);
       }),
+    getByDateRange: publicProcedure
+      .input(z.object({
+        startDate: z.string().or(z.date()),
+        endDate: z.string().or(z.date()),
+        driverId: z.number().optional(),
+      }))
+      .query(async ({ input }) => {
+        const startDate = typeof input.startDate === 'string' ? new Date(input.startDate) : input.startDate;
+        const endDate = typeof input.endDate === 'string' ? new Date(input.endDate) : input.endDate;
+        return db.getOrdersByDateRange(startDate, endDate, input.driverId);
+      }),
     create: publicProcedure
       .input(z.object({
         customerId: z.number(),

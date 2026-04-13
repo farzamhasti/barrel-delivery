@@ -1,5 +1,5 @@
+import { and, eq, gte, lt, desc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { and, eq } from "drizzle-orm";
 import { InsertUser, users, menuCategories, InsertMenuCategory, menuItems, InsertMenuItem, drivers, InsertDriver, customers, InsertCustomer, orders, InsertOrder, orderItems, InsertOrderItem } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -48,45 +48,27 @@ export async function upsertUser(user: InsertUser): Promise<void> {
 
     textFields.forEach(assignNullable);
 
+    if (user.role !== undefined) {
+      values.role = user.role;
+      updateSet.role = user.role;
+    }
+
     if (user.lastSignedIn !== undefined) {
       values.lastSignedIn = user.lastSignedIn;
       updateSet.lastSignedIn = user.lastSignedIn;
     }
-    if (user.role !== undefined) {
-      values.role = user.role;
-      updateSet.role = user.role;
-    } else if (user.openId === ENV.ownerOpenId) {
-      values.role = 'admin';
-      updateSet.role = 'admin';
-    }
 
-    if (!values.lastSignedIn) {
-      values.lastSignedIn = new Date();
-    }
+    const db = await getDb();
+    if (!db) throw new Error("Database not available");
 
-    if (Object.keys(updateSet).length === 0) {
-      updateSet.lastSignedIn = new Date();
-    }
-
-    await db.insert(users).values(values).onDuplicateKeyUpdate({
-      set: updateSet,
-    });
+    await db
+      .insert(users)
+      .values(values)
+      .onDuplicateKeyUpdate({ set: updateSet });
   } catch (error) {
-    console.error("[Database] Failed to upsert user:", error);
+    console.error("[Database] Error upserting user:", error);
     throw error;
   }
-}
-
-export async function getUserByOpenId(openId: string) {
-  const db = await getDb();
-  if (!db) {
-    console.warn("[Database] Cannot get user: database not available");
-    return undefined;
-  }
-
-  const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
-
-  return result.length > 0 ? result[0] : undefined;
 }
 
 // Menu Categories
@@ -99,8 +81,7 @@ export async function getMenuCategories() {
 export async function createMenuCategory(data: InsertMenuCategory) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db.insert(menuCategories).values(data);
-  return result;
+  return db.insert(menuCategories).values(data);
 }
 
 export async function updateMenuCategory(id: number, data: Partial<InsertMenuCategory>) {
@@ -112,19 +93,14 @@ export async function updateMenuCategory(id: number, data: Partial<InsertMenuCat
 export async function deleteMenuCategory(id: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  // Soft delete: mark as inactive instead of hard delete to avoid foreign key violations
+  // Soft delete
   return db.update(menuCategories).set({ isActive: false }).where(eq(menuCategories.id, id));
 }
 
 // Menu Items
-export async function getMenuItems(categoryId?: number) {
+export async function getMenuItems() {
   const db = await getDb();
   if (!db) return [];
-  if (categoryId) {
-    return db.select().from(menuItems).where(
-      and(eq(menuItems.categoryId, categoryId), eq(menuItems.isAvailable, true))
-    ).orderBy(menuItems.displayOrder);
-  }
   return db.select().from(menuItems).where(eq(menuItems.isAvailable, true)).orderBy(menuItems.displayOrder);
 }
 
@@ -143,7 +119,7 @@ export async function updateMenuItem(id: number, data: Partial<InsertMenuItem>) 
 export async function deleteMenuItem(id: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  // Soft delete: mark as unavailable instead of hard delete to avoid foreign key violations
+  // Soft delete
   return db.update(menuItems).set({ isAvailable: false }).where(eq(menuItems.id, id));
 }
 
@@ -151,7 +127,7 @@ export async function deleteMenuItem(id: number) {
 export async function getDrivers() {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(drivers).where(eq(drivers.isActive, true));
+  return db.select().from(drivers).orderBy(drivers.createdAt);
 }
 
 export async function createDriver(data: InsertDriver) {
@@ -160,14 +136,16 @@ export async function createDriver(data: InsertDriver) {
   return db.insert(drivers).values(data);
 }
 
-export async function updateDriverLocation(driverId: number, latitude: number, longitude: number) {
+export async function updateDriver(id: number, data: Partial<InsertDriver>) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  return db.update(drivers).set({
-    currentLatitude: latitude as any,
-    currentLongitude: longitude as any,
-    lastLocationUpdate: new Date(),
-  }).where(eq(drivers.id, driverId));
+  return db.update(drivers).set(data).where(eq(drivers.id, id));
+}
+
+export async function deleteDriver(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.delete(drivers).where(eq(drivers.id, id));
 }
 
 // Customers
@@ -177,20 +155,100 @@ export async function createCustomer(data: InsertCustomer) {
   return db.insert(customers).values(data);
 }
 
-// Orders
-export async function createOrder(data: InsertOrder) {
+export async function getCustomer(id: number) {
   const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  return db.insert(orders).values(data);
+  if (!db) return null;
+  const result = await db.select().from(customers).where(eq(customers.id, id));
+  return result[0] || null;
 }
 
-export async function getOrders(driverId?: number) {
+export async function updateCustomer(id: number, data: Partial<InsertCustomer>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.update(customers).set(data).where(eq(customers.id, id));
+}
+
+// Orders
+export async function getOrders() {
   const db = await getDb();
   if (!db) return [];
-  if (driverId) {
-    return db.select().from(orders).where(eq(orders.driverId, driverId)).orderBy(orders.createdAt);
+  return db.select().from(orders).orderBy(desc(orders.createdAt));
+}
+
+export async function getOrder(id: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(orders).where(eq(orders.id, id));
+  return result[0] || null;
+}
+
+export async function getOrderWithItems(orderId: number) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const order = await db.select().from(orders).where(eq(orders.id, orderId));
+  if (!order.length) return null;
+
+  const items = await db
+    .select({
+      id: orderItems.id,
+      orderId: orderItems.orderId,
+      menuItemId: orderItems.menuItemId,
+      quantity: orderItems.quantity,
+      priceAtOrder: orderItems.priceAtOrder,
+      menuItemName: menuItems.name,
+    })
+    .from(orderItems)
+    .innerJoin(menuItems, eq(orderItems.menuItemId, menuItems.id))
+    .where(eq(orderItems.orderId, orderId));
+
+  return {
+    ...order[0],
+    items,
+  };
+}
+
+export async function getOrdersByDateRange(startDate: Date | string, endDate: Date | string, driverId?: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  // Parse dates - handle both Date objects and ISO strings
+  let start: Date;
+  let end: Date;
+  
+  if (typeof startDate === 'string') {
+    // Parse ISO date string (YYYY-MM-DD) as UTC
+    const parts = startDate.split('-');
+    const year = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10);
+    const day = parseInt(parts[2], 10);
+    start = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
+  } else {
+    start = new Date(startDate);
   }
-  return db.select().from(orders).orderBy(orders.createdAt);
+  
+  if (typeof endDate === 'string') {
+    // Parse ISO date string (YYYY-MM-DD) as UTC
+    const parts = endDate.split('-');
+    const year = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10);
+    const day = parseInt(parts[2], 10);
+    end = new Date(Date.UTC(year, month - 1, day, 23, 59, 59, 999));
+  } else {
+    end = new Date(endDate);
+  }
+  
+  // Create date range for the entire day
+  const rangeStart = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate(), 0, 0, 0, 0));
+  const rangeEnd = new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate() + 1, 0, 0, 0, 0));
+  
+  const conditions = [gte(orders.createdAt, rangeStart), lt(orders.createdAt, rangeEnd)];
+  
+  if (driverId) {
+    conditions.push(eq(orders.driverId, driverId));
+  }
+  
+  return db.select().from(orders).where(and(...conditions)).orderBy(desc(orders.createdAt));
 }
 
 export async function updateOrderStatus(orderId: number, status: "Pending" | "On the Way" | "Delivered") {
@@ -221,121 +279,56 @@ export async function getOrderItems(orderId: number) {
 export async function getOrderItemsWithMenuNames(orderId: number) {
   const db = await getDb();
   if (!db) return [];
-  
-  const items = await db.select({
-    id: orderItems.id,
-    orderId: orderItems.orderId,
-    menuItemId: orderItems.menuItemId,
-    quantity: orderItems.quantity,
-    priceAtOrder: orderItems.priceAtOrder,
-    createdAt: orderItems.createdAt,
-    menuItemName: menuItems.name,
-  })
-  .from(orderItems)
-  .leftJoin(menuItems, eq(orderItems.menuItemId, menuItems.id))
-  .where(eq(orderItems.orderId, orderId));
-  
-  return items;
+  return db
+    .select({
+      id: orderItems.id,
+      orderId: orderItems.orderId,
+      menuItemId: orderItems.menuItemId,
+      quantity: orderItems.quantity,
+      priceAtOrder: orderItems.priceAtOrder,
+      menuItemName: menuItems.name,
+    })
+    .from(orderItems)
+    .innerJoin(menuItems, eq(orderItems.menuItemId, menuItems.id))
+    .where(eq(orderItems.orderId, orderId));
 }
 
-
-// Driver Update and Delete
-export async function updateDriver(id: number, data: Partial<InsertDriver>) {
+export async function updateOrderItem(id: number, quantity: number, priceAtOrder: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  return db.update(drivers).set(data).where(eq(drivers.id, id));
+  return db.update(orderItems).set({ quantity, priceAtOrder }).where(eq(orderItems.id, id));
 }
 
-export async function deleteDriver(id: number) {
+export async function deleteOrderItem(id: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  return db.delete(drivers).where(eq(drivers.id, id));
+  return db.delete(orderItems).where(eq(orderItems.id, id));
 }
-
-
-// Order Updates and Queries
-export async function getOrderById(orderId: number) {
-  const db = await getDb();
-  if (!db) return null;
-  const result = await db.select().from(orders).where(eq(orders.id, orderId));
-  return result.length > 0 ? result[0] : null;
-}
-
-export async function getOrderWithItems(orderId: number) {
-  const db = await getDb();
-  if (!db) return null;
-  const order = await getOrderById(orderId);
-  if (!order) return null;
-  const items = await getOrderItemsWithMenuNames(orderId);
-  
-  // Get customer details
-  let customerName = "";
-  let customerPhone = "";
-  let customerAddress = "";
-  if (order.customerId) {
-    const customer = await db.select().from(customers).where(eq(customers.id, order.customerId)).limit(1);
-    if (customer.length > 0) {
-      customerName = customer[0].name;
-      customerPhone = customer[0].phone || "";
-      customerAddress = customer[0].address;
-    }
-  }
-  
-  return { ...order, items, customerName, customerPhone, customerAddress };
-}
-
-export async function updateOrder(orderId: number, data: Partial<InsertOrder>) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  return db.update(orders).set(data).where(eq(orders.id, orderId));
-}
-
-export async function updateOrderItem(itemId: number, data: Partial<InsertOrderItem>) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  return db.update(orderItems).set(data).where(eq(orderItems.id, itemId));
-}
-
-export async function deleteOrderItem(itemId: number) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  return db.delete(orderItems).where(eq(orderItems.id, itemId));
-}
-
-// Customer Updates
-export async function updateCustomer(customerId: number, data: Partial<InsertCustomer>) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  return db.update(customers).set(data).where(eq(customers.id, customerId));
-}
-
-export async function getCustomerById(customerId: number) {
-  const db = await getDb();
-  if (!db) return null;
-  const result = await db.select().from(customers).where(eq(customers.id, customerId));
-  return result.length > 0 ? result[0] : null;
-}
-
 
 export async function deleteAllOrderItems(orderId: number) {
   const db = await getDb();
-  if (!db) {
-    throw new Error("Database not available");
-  }
-  const result = await db.delete(orderItems).where(eq(orderItems.orderId, orderId));
-  return result;
+  if (!db) throw new Error("Database not available");
+  return db.delete(orderItems).where(eq(orderItems.orderId, orderId));
 }
 
-export async function deleteOrder(orderId: number) {
+export async function updateOrder(id: number, data: { status?: string; notes?: string; totalPrice?: number }) {
   const db = await getDb();
-  if (!db) {
-    throw new Error("Database not available");
-  }
-  
-  // First delete all order items
-  await deleteAllOrderItems(orderId);
-  
-  // Then delete the order
-  const result = await db.delete(orders).where(eq(orders.id, orderId));
-  return result;
+  if (!db) throw new Error("Database not available");
+  const updateData: any = {};
+  if (data.status) updateData.status = data.status;
+  if (data.notes !== undefined) updateData.notes = data.notes;
+  if (data.totalPrice !== undefined) updateData.totalPrice = data.totalPrice;
+  return db.update(orders).set(updateData).where(eq(orders.id, id));
+}
+
+export async function deleteOrder(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.delete(orders).where(eq(orders.id, id));
+}
+
+export async function createOrder(data: InsertOrder) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.insert(orders).values(data);
 }

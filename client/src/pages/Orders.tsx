@@ -1,13 +1,13 @@
 import { useState, useMemo, useEffect } from "react";
-import React from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Trash2, Edit2, Plus, Save, X, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
+import { Trash2, Edit2, Plus, Save, X, ChevronDown, ChevronUp, Loader2, Calendar } from "lucide-react";
 import { toast } from "sonner";
+import { format } from "date-fns";
 
 interface OrderFormData {
   customerName: string;
@@ -30,6 +30,7 @@ export function Orders() {
   const [editingOrderId, setEditingOrderId] = useState<number | null>(null);
   const [editingItemId, setEditingItemId] = useState<number | null>(null);
   const [showAddItemDialog, setShowAddItemDialog] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
 
   // Form data
   const [formData, setFormData] = useState<OrderFormData>({
@@ -47,7 +48,15 @@ export function Orders() {
   });
 
   // Queries
-  const { data: orders = [], refetch: refetchOrders, isLoading: isLoadingOrders } = trpc.orders.list.useQuery();
+  const { data: orders = [], refetch: refetchOrders, isLoading: isLoadingOrders } = trpc.orders.getByDateRange.useQuery(
+    {
+      startDate: selectedDate,
+      endDate: selectedDate,
+    },
+    {
+      refetchOnWindowFocus: false,
+    }
+  );
   const { data: menuItems = [] } = trpc.menu.items.list.useQuery();
   const { data: selectedOrderDetails } = trpc.orders.getById.useQuery(
     { orderId: selectedOrderId || 0 },
@@ -136,7 +145,7 @@ export function Orders() {
   };
 
   // Update form data when selected order details are loaded
-  React.useEffect(() => {
+  useEffect(() => {
     if (selectedOrderDetails) {
       setFormData({
         customerName: selectedOrderDetails.customerName || "",
@@ -247,6 +256,11 @@ export function Orders() {
     }, 0);
   };
 
+  // Refetch orders when date changes
+  useEffect(() => {
+    refetchOrders();
+  }, [selectedDate, refetchOrders]);
+
   const isLoading = updateOrderMutation.isPending || updateCustomerMutation.isPending || updateItemMutation.isPending || createItemMutation.isPending;
 
   return (
@@ -256,6 +270,15 @@ export function Orders() {
         <div>
           <h1 className="text-3xl font-bold">Orders Management</h1>
           <p className="text-muted-foreground mt-1">View, edit, and manage all restaurant orders</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Calendar className="w-5 h-5 text-muted-foreground" />
+          <input
+            type="date"
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+            className="px-3 py-2 border border-input rounded-md bg-background text-foreground"
+          />
         </div>
       </div>
 
@@ -291,6 +314,7 @@ export function Orders() {
                         <div className="flex-1 min-w-0">
                           <div className="font-semibold text-sm">Order #{order.id}</div>
                           <div className="text-xs text-muted-foreground mt-1 truncate">{order.customerName}</div>
+                          <div className="text-xs text-muted-foreground mt-1">{order.createdAt ? format(new Date(order.createdAt), 'MMM dd, yyyy HH:mm') : 'N/A'}</div>
                           <div className="flex items-center gap-2 mt-2">
                             <span className={`px-2 py-1 rounded text-xs font-medium ${
                               order.status === "Delivered" ? "bg-green-100 text-green-800" :
