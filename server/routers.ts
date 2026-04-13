@@ -206,15 +206,28 @@ export const appRouter = router({
         });
         
         // Create order items
-        // Drizzle ORM returns an array [ResultSetHeader, undefined]
-        const orderId = Array.isArray(order) ? (order as any)[0]?.insertId : (order as any).insertId;
-        for (const item of input.items) {
-          await db.createOrderItem({
-            orderId,
-            menuItemId: item.menuItemId,
-            quantity: item.quantity,
-            priceAtOrder: item.priceAtOrder as any,
-          });
+        // Extract orderId from Drizzle ORM response
+        let orderId: number | undefined;
+        if (Array.isArray(order)) {
+          // Response format: [ResultSetHeader, undefined]
+          orderId = (order as any)[0]?.insertId;
+        } else if (order && typeof order === 'object') {
+          // Direct object response
+          orderId = (order as any).insertId;
+        }
+        
+        // Only create items if we have a valid orderId
+        if (orderId) {
+          for (const item of input.items) {
+            await db.createOrderItem({
+              orderId,
+              menuItemId: item.menuItemId,
+              quantity: item.quantity,
+              priceAtOrder: item.priceAtOrder as any,
+            });
+          }
+        } else {
+          console.error('[Orders] Failed to extract orderId from insert response:', order);
         }
         
         return order;

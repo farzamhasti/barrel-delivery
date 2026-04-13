@@ -264,3 +264,35 @@
 - [x] Verified with Order #30065 (4 items: House Pizza, spaghetti, Carbonera, Shrimp Linguini - total $84.00)
 - [x] Verified with Order #30066 (3 items: House Pizza, Carbonera, Shrimp Linguini - total $165.00)
 - [x] All items now display correctly with proper scrolling when multiple items exist
+
+
+## New Issue - Order #60001 Investigation
+- [ ] Order #60001 shows items in display (house pizza, spaghetti) but user reports items not displaying
+- [ ] Need to verify if this is a UI rendering issue or data retrieval issue
+- [ ] Check if Edit button works for Order #60001
+- [ ] Verify order total calculation ($50.00)
+
+
+## CRITICAL BUG - Order Items Not Displaying (Systemic Issue)
+- [ ] NO orders display item details in Orders section (affects all 3 orders)
+- [ ] Need to check if order_items are being saved to database during order creation
+- [ ] Need to verify getOrderWithItems backend procedure returns items
+- [ ] Need to check frontend OrderManagement component for rendering issues
+- [ ] Root cause: Items may not be saved during order creation OR API not returning items OR frontend not rendering items
+
+
+## CRITICAL - User Cannot See Order Items (Systemic Issue)
+- [ ] Determine if user is viewing deployed version or dev server
+- [ ] Check if order items are being saved to database during order creation
+- [ ] Verify CreateOrder sends items in API request
+- [ ] Debug why items not displaying for user (but visible in dev server)
+- [ ] Provide user with proper deployment and reload instructions
+
+
+## FIXED - Order Items Not Saving Bug
+- [x] Identified root cause: orderId extraction from Drizzle ORM response was failing
+- [x] Fixed orderId extraction logic in server/routers.ts (lines 210-217)
+- [x] Added error logging for debugging
+- [x] Dev server compiled successfully
+- [ ] Test the fix with new order creation
+- [ ] Deploy the fix to production
