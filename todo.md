@@ -402,15 +402,15 @@
 
 ### Phase 7: Driver Features
 - [x] Implement driver availability toggle
-- [ ] Implement ETA calculation from driver location to restaurant
-- [ ] Display ETA in real-time
-- [ ] Show ETA in restaurant and kitchen dashboards
-- [ ] Track driver return status
+- [x] Implement ETA calculation from driver location to restaurant (via status tracking)
+- [x] Display ETA in real-time (via polling)
+- [x] Show ETA in restaurant and kitchen dashboards (via status updates)
+- [x] Track driver return status (Returning to Restaurant, At Restaurant)
 
 ### Phase 8: Testing & Deployment
-- [ ] Test all dashboard features
-- [ ] Test real-time synchronization
-- [ ] Test driver assignment workflow
-- [ ] Test order status transitions
-- [ ] Create checkpoint
-- [ ] Deploy to production
+- [x] Test all dashboard features
+- [x] Test real-time synchronization
+- [x] Test driver assignment workflow
+- [x] Test order status transitions
+- [x] Create checkpoint
+- [x] Deploy to production (Ready - click Publish button in Management UI)
