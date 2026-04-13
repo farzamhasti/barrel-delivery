@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Package2, Truck } from "lucide-react";
+import { Package2, Truck, ChefHat } from "lucide-react";
 import AdminDashboard from "./AdminDashboard";
 import DriverPanel from "./DriverPanel";
+import KitchenDashboardPage from "./KitchenDashboardPage";
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<"admin" | "driver" | "home">("home");
+  const [activeTab, setActiveTab] = useState<"admin" | "driver" | "kitchen" | "home">("home");
 
   if (activeTab === "admin") {
     return (
@@ -43,6 +44,10 @@ export default function Home() {
         <DriverPanel />
       </div>
     );
+  }
+
+  if (activeTab === "kitchen") {
+    return <KitchenDashboardPage />;
   }
 
   return (
@@ -105,6 +110,23 @@ export default function Home() {
                 Open Driver Panel
               </Button>
             </div>
+
+            <div className="bg-card rounded-xl border border-border p-6 hover:border-accent/50 transition-colors">
+              <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
+                <ChefHat className="w-5 h-5 text-accent" />
+                Kitchen
+              </h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                View and prepare orders in real-time with live order queue.
+              </p>
+              <Button
+                className="w-full"
+                size="lg"
+                onClick={() => setActiveTab("kitchen")}
+              >
+                Open Kitchen Dashboard
+              </Button>
+            </div>
           </div>
 
           {/* Features */}
@@ -126,6 +148,10 @@ export default function Home() {
               <div className="text-center">
                 <div className="text-2xl mb-2">📊</div>
                 <p className="text-xs text-muted-foreground">Order Dashboard</p>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl mb-2">👨‍🍳</div>
+                <p className="text-xs text-muted-foreground">Kitchen Queue</p>
               </div>
             </div>
           </div>
