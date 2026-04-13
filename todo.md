@@ -430,3 +430,16 @@
 - [x] Test real-time sync between Admin and Kitchen dashboards
 - [x] Verify order status updates propagate correctly
 - [x] Optimize UI for fast kitchen workflow
+
+
+## Remove Kitchen Tab from Admin Dashboard (NEW REQUEST)
+- [x] Identify Kitchen tab in AdminDashboard.tsx
+- [x] Remove Kitchen tab from navigation/tabs
+- [x] Remove KitchenDashboard component import
+- [x] Remove Kitchen-related state management
+- [x] Clean up unused imports
+- [x] Verify Orders tab still works correctly
+- [x] Verify Order Tracking tab still works correctly
+- [x] Verify no broken links remain
+- [x] Ensure data sync between Admin and Kitchen dashboards still works
+- [x] Test Admin dashboard after removal
