@@ -3,13 +3,15 @@ import { useRoute } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Menu, Package2, Truck, LogOut, Settings, Plus, Map } from "lucide-react";
+import { Menu, Package2, Truck, LogOut, Settings, Plus, Map, UtensilsCrossed } from "lucide-react";
 import MenuManagement from "@/components/admin/MenuManagement";
 import { Orders } from "@/pages/Orders";
 import DriverManagement from "@/components/admin/DriverManagement";
 import Dashboard from "@/components/admin/Dashboard";
 import CreateOrder from "@/components/admin/CreateOrder";
 import MapView from "@/components/admin/MapView";
+import OrderTracking from "@/components/admin/OrderTracking";
+import KitchenDashboard from "@/components/admin/KitchenDashboard";
 
 export default function AdminDashboard() {
   const [, params] = useRoute("/admin/*");
@@ -71,10 +73,17 @@ export default function AdminDashboard() {
             collapsed={!sidebarOpen}
           />
           <NavItem
-            href="/admin/map"
+            href="/admin/order-tracking"
             icon={<Map className="w-5 h-5" />}
-            label="Live Map"
-            active={currentTab === "map"}
+            label="Order Tracking"
+            active={currentTab === "order-tracking"}
+            collapsed={!sidebarOpen}
+          />
+          <NavItem
+            href="/admin/kitchen"
+            icon={<UtensilsCrossed className="w-5 h-5" />}
+            label="Kitchen"
+            active={currentTab === "kitchen"}
             collapsed={!sidebarOpen}
           />
         </nav>
@@ -105,7 +114,8 @@ export default function AdminDashboard() {
           {currentTab === "menu" && <MenuManagement />}
           {currentTab === "orders" && <Orders />}
           {currentTab === "drivers" && <DriverManagement />}
-          {currentTab === "map" && <MapView />}
+          {currentTab === "order-tracking" && <OrderTracking />}
+          {currentTab === "kitchen" && <KitchenDashboard />}
         </div>
       </main>
     </div>

@@ -1,4 +1,4 @@
-import { and, eq, gte, lt, desc } from "drizzle-orm";
+import { and, eq, gte, lt, desc, inArray } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { InsertUser, users, menuCategories, InsertMenuCategory, menuItems, InsertMenuItem, drivers, InsertDriver, customers, InsertCustomer, orders, InsertOrder, orderItems, InsertOrderItem } from "../drizzle/schema";
 import { ENV } from './_core/env';
@@ -251,7 +251,7 @@ export async function getOrdersByDateRange(startDate: Date | string, endDate: Da
   return db.select().from(orders).where(and(...conditions)).orderBy(desc(orders.createdAt));
 }
 
-export async function updateOrderStatus(orderId: number, status: "Pending" | "On the Way" | "Delivered") {
+export async function updateOrderStatus(orderId: number, status: string) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   return db.update(orders).set({ status }).where(eq(orders.id, orderId));
@@ -331,4 +331,16 @@ export async function createOrder(data: InsertOrder) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   return db.insert(orders).values(data);
+}
+
+export async function getOrdersByStatus(statuses?: string[]) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  if (statuses && statuses.length > 0) {
+    // Filter by statuses
+    return db.select().from(orders).where(inArray(orders.status, statuses as any)).orderBy(desc(orders.createdAt));
+  }
+  
+  return db.select().from(orders).orderBy(desc(orders.createdAt));
 }

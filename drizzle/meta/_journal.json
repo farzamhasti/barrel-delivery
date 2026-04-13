@@ -15,6 +15,13 @@
       "when": 1775925101354,
       "tag": "0001_marvelous_shotgun",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1776102792717,
+      "tag": "0002_known_bishop",
+      "breakpoints": true
     }
   ]
 }

@@ -350,3 +350,67 @@
 - [ ] Fix test data script to use correct menu item IDs
 - [ ] Recreate test data with proper relationships
 - [ ] Test date filtering with corrected data
+
+
+## NEW FEATURE - Dashboard System Redesign & Extension
+
+### Phase 1: Database Schema Updates
+- [ ] Add driver management table (drivers: id, name, phone, status, location)
+- [ ] Add order status tracking (status: pending, ready, on_the_way, delivered)
+- [ ] Add driver assignment to orders (orderId, driverId)
+- [ ] Add driver location tracking (latitude, longitude, timestamp)
+- [ ] Add driver availability status (online, offline, at_restaurant)
+
+### Phase 2: Order Tracking Tab (Rename Live Map)
+- [ ] Rename "Live Map" tab to "Order Tracking"
+- [ ] Display all orders with order number and customer address
+- [ ] Auto-update when new orders are created
+- [ ] Show order status (Pending, Ready, On the Way, Delivered)
+
+### Phase 3: Kitchen Dashboard
+- [ ] Create new "Kitchen" dashboard
+- [ ] Display all pending orders
+- [ ] Show order details (items without prices)
+- [ ] Show customer notes/comments
+- [ ] Add "Ready" button to mark orders as ready
+- [ ] Sync with Orders tab (read-only in kitchen)
+- [ ] Auto-update when orders are created or deleted
+
+### Phase 4: Enhanced Driver Dashboard
+- [ ] Create/enhance Driver Dashboard
+- [ ] Display assigned orders with order number, address, items, price, phone
+- [ ] Integrate Google Maps for routing
+- [ ] Add "Delivered" button
+- [ ] Add "Returning to Restaurant" button with ETA calculation
+- [ ] Add "I am at the Restaurant" button
+- [ ] Show driver availability status
+
+### Phase 5: Real-time Synchronization
+- [ ] Implement real-time status updates across dashboards
+- [ ] Sync order status changes (Pending → Ready → On the Way → Delivered)
+- [ ] Sync driver availability status
+- [ ] Sync driver location updates
+- [ ] Implement WebSocket or polling for real-time updates
+
+### Phase 6: Live Map Feature
+- [ ] Add live map section in Order Tracking tab
+- [ ] Display all active orders on map with markers
+- [ ] Show order numbers on map
+- [ ] Click order to view status
+- [ ] Use Fort Erie, Ontario as base location
+- [ ] Use 224 Garrison Rd, Fort Erie, ON L2A 1M7 as restaurant address
+
+### Phase 7: Driver Features
+- [ ] Implement driver availability toggle
+- [ ] Implement ETA calculation from driver location to restaurant
+- [ ] Display ETA in real-time
+- [ ] Show ETA in restaurant and kitchen dashboards
+- [ ] Track driver return status
+
+### Phase 8: Testing & Deployment
+- [ ] Test all dashboard features
+- [ ] Test real-time synchronization
+- [ ] Test driver assignment workflow
+- [ ] Test order status transitions
+- [ ] Create checkpoint
+- [ ] Deploy to production

@@ -90,7 +90,7 @@ export const orders = mysqlTable("orders", {
   id: int("id").autoincrement().primaryKey(),
   customerId: int("customer_id").notNull(),
   driverId: int("driver_id"),
-  status: mysqlEnum("status", ["Pending", "On the Way", "Delivered"]).default("Pending").notNull(),
+  status: mysqlEnum("status", ["Pending", "Ready", "On the Way", "Delivered"]).default("Pending").notNull(),
   totalPrice: decimal("total_price", { precision: 10, scale: 2 }).notNull(),
   notes: text("notes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),

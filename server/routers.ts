@@ -187,6 +187,7 @@ export const appRouter = router({
       .query(async ({ input }) => {
         return db.getOrders(input?.driverId);
       }),
+
     getByDateRange: publicProcedure
       .input(z.object({
         startDate: z.string().or(z.date()),
@@ -246,7 +247,7 @@ export const appRouter = router({
     updateStatus: protectedProcedure
       .input(z.object({
         orderId: z.number(),
-        status: z.enum(["Pending", "On the Way", "Delivered"]),
+        status: z.enum(["Pending", "Ready", "On the Way", "Delivered"]),
       }))
       .mutation(async ({ input }) => {
         return db.updateOrderStatus(input.orderId, input.status);
@@ -270,7 +271,7 @@ export const appRouter = router({
         customerId: z.number().optional(),
         totalPrice: z.number().optional(),
         notes: z.string().optional(),
-        status: z.enum(["Pending", "On the Way", "Delivered"]).optional(),
+        status: z.enum(["Pending", "Ready", "On the Way", "Delivered"]).optional(),
       }))
       .mutation(async ({ input }) => {
         const { orderId, ...updateData } = input;
