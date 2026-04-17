@@ -15,8 +15,8 @@ export default function OrderTrackingWithMap() {
   const mapRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
 
-  // Fetch all orders and filter on client side
-  const { data: allOrders = [], isLoading, refetch } = trpc.orders.list.useQuery();
+  // Fetch today's orders with items for complete data
+  const { data: allOrders = [], isLoading, refetch } = trpc.orders.getTodayOrdersWithItems.useQuery();
   
   // Fetch selected order with items
   const { data: selectedOrderData } = trpc.orders.getById.useQuery(

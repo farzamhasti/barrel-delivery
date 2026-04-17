@@ -208,6 +208,11 @@ export const appRouter = router({
         return db.getOrdersByDateRange(startOfDay, endOfDay);
       }),
 
+    getTodayOrdersWithItems: publicProcedure
+      .query(async () => {
+        return db.getTodayOrdersWithItems();
+      }),
+
     getTodayOrdersForDriver: publicProcedure
       .input(z.object({ driverId: z.number() }))
       .query(async ({ input }) => {

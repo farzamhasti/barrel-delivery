@@ -518,3 +518,26 @@
 - [x] Test with multiple dates and timezones
 - [x] Verify historical data handling
 - [x] Write comprehensive tests for daily filtering (19 tests passing)
+
+
+## Order Tracking Daily Update (Admin Dashboard) - NEW REQUEST
+- [x] Update Order Tracking tab to show only today's orders by default
+- [x] Implement date-based filtering using getTodayOrdersWithItems query
+- [x] Display order list with automatic daily refresh
+- [x] Ensure new orders appear automatically when created
+- [x] Hide previous days' orders unless explicitly requested
+- [x] Add date range filter option for historical data
+- [x] Test daily filtering with multiple dates
+- [x] Verify real-time updates when new orders are created
+
+## Kitchen Dashboard Order Details Enhancement - NEW REQUEST
+- [x] Display number of items per order (e.g., 2x Pizza, 3x Caesar Salad)
+- [x] Show food item types in order details
+- [x] Display customer address in order cards
+- [x] Show customer notes if available
+- [x] Ensure proper database linkage (Orders ↔ OrderItems)
+- [x] Implement real-time sync with Admin dashboard edits
+- [x] Test order creation and automatic appearance in Kitchen
+- [x] Test edit/delete operations sync to Kitchen dashboard
+- [x] Optimize UI for fast kitchen workflow
+- [x] Verify order items display correctly with quantities (26 tests passing)

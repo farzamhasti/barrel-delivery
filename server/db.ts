@@ -230,6 +230,45 @@ export async function getOrderWithItems(orderId: number) {
   };
 }
 
+export async function getTodayOrdersWithItems() {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const today = new Date();
+  const startOfDay = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate(), 0, 0, 0, 0));
+  const endOfDay = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() + 1, 0, 0, 0, 0));
+  
+  const todayOrders = await db
+    .select()
+    .from(orders)
+    .where(and(gte(orders.createdAt, startOfDay), lt(orders.createdAt, endOfDay)))
+    .orderBy(desc(orders.createdAt));
+  
+  const ordersWithItems = await Promise.all(
+    todayOrders.map(async (order) => {
+      const items = await db
+        .select({
+          id: orderItems.id,
+          orderId: orderItems.orderId,
+          menuItemId: orderItems.menuItemId,
+          quantity: orderItems.quantity,
+          priceAtOrder: orderItems.priceAtOrder,
+          menuItemName: menuItems.name,
+        })
+        .from(orderItems)
+        .innerJoin(menuItems, eq(orderItems.menuItemId, menuItems.id))
+        .where(eq(orderItems.orderId, order.id));
+      
+      return {
+        ...order,
+        items,
+      };
+    })
+  );
+  
+  return ordersWithItems;
+}
+
 export async function getOrdersByDateRange(startDate: Date | string, endDate: Date | string, driverId?: number) {
   const db = await getDb();
   if (!db) return [];

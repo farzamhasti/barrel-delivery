@@ -11,8 +11,8 @@ export default function KitchenDashboardPage() {
   const { logout } = useAuth();
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
 
-  // Fetch today's orders only
-  const { data: allOrders = [], isLoading, refetch } = trpc.orders.getTodayOrders.useQuery();
+  // Fetch today's orders with items
+  const { data: allOrders = [], isLoading, refetch } = trpc.orders.getTodayOrdersWithItems.useQuery();
 
   // Mutation to update order status to ready
   const updateStatusMutation = trpc.orders.updateStatus.useMutation({
