@@ -434,6 +434,11 @@ export async function updateOrder(id: number, data: { status?: string; notes?: s
 export async function deleteOrder(id: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
+  
+  // First delete all order items (cascade delete)
+  await db.delete(orderItems).where(eq(orderItems.orderId, id));
+  
+  // Then delete the order
   return db.delete(orders).where(eq(orders.id, id));
 }
 
