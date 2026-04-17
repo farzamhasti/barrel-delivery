@@ -284,8 +284,11 @@ export const appRouter = router({
         priceAtOrder: z.number().optional(),
       }))
       .mutation(async ({ input }) => {
-        const { itemId, ...updateData } = input;
-        return db.updateOrderItem(itemId, updateData as any);
+        const { itemId, quantity, priceAtOrder } = input;
+        if (quantity === undefined || priceAtOrder === undefined) {
+          throw new Error("Both quantity and priceAtOrder are required");
+        }
+        return db.updateOrderItem(itemId, quantity, priceAtOrder);
       }),
     deleteItem: protectedProcedure
       .input(z.object({ itemId: z.number() }))

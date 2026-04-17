@@ -18,6 +18,13 @@ export async function getDb() {
   return _db;
 }
 
+export async function getUserByOpenId(openId: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(users).where(eq(users.openId, openId));
+  return result[0] || null;
+}
+
 export async function upsertUser(user: InsertUser): Promise<void> {
   if (!user.openId) {
     throw new Error("User openId is required for upsert");
@@ -98,10 +105,17 @@ export async function deleteMenuCategory(id: number) {
 }
 
 // Menu Items
-export async function getMenuItems() {
+export async function getMenuItems(categoryId?: number) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(menuItems).where(eq(menuItems.isAvailable, true)).orderBy(menuItems.displayOrder);
+  if (categoryId !== undefined) {
+    return db.select().from(menuItems)
+      .where(and(eq(menuItems.isAvailable, true), eq(menuItems.categoryId, categoryId)))
+      .orderBy(menuItems.displayOrder);
+  }
+  return db.select().from(menuItems)
+    .where(eq(menuItems.isAvailable, true))
+    .orderBy(menuItems.displayOrder);
 }
 
 export async function createMenuItem(data: InsertMenuItem) {
@@ -162,6 +176,9 @@ export async function getCustomer(id: number) {
   return result[0] || null;
 }
 
+// Alias for backwards compatibility
+export const getCustomerById = getCustomer;
+
 export async function updateCustomer(id: number, data: Partial<InsertCustomer>) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -169,9 +186,14 @@ export async function updateCustomer(id: number, data: Partial<InsertCustomer>) 
 }
 
 // Orders
-export async function getOrders() {
+export async function getOrders(driverId?: number) {
   const db = await getDb();
   if (!db) return [];
+  if (driverId !== undefined) {
+    return db.select().from(orders)
+      .where(eq(orders.driverId, driverId))
+      .orderBy(desc(orders.createdAt));
+  }
   return db.select().from(orders).orderBy(desc(orders.createdAt));
 }
 
@@ -293,10 +315,10 @@ export async function getOrderItemsWithMenuNames(orderId: number) {
     .where(eq(orderItems.orderId, orderId));
 }
 
-export async function updateOrderItem(id: number, quantity: number, priceAtOrder: number) {
+export async function updateOrderItem(id: number, quantity: number, priceAtOrder: string | number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  return db.update(orderItems).set({ quantity, priceAtOrder }).where(eq(orderItems.id, id));
+  return db.update(orderItems).set({ quantity, priceAtOrder: String(priceAtOrder) }).where(eq(orderItems.id, id));
 }
 
 export async function deleteOrderItem(id: number) {
