@@ -208,7 +208,24 @@ export async function getOrderWithItems(orderId: number) {
   const db = await getDb();
   if (!db) return null;
 
-  const order = await db.select().from(orders).where(eq(orders.id, orderId));
+  const order = await db
+    .select({
+      id: orders.id,
+      customerId: orders.customerId,
+      driverId: orders.driverId,
+      status: orders.status,
+      totalPrice: orders.totalPrice,
+      notes: orders.notes,
+      area: orders.area,
+      createdAt: orders.createdAt,
+      updatedAt: orders.updatedAt,
+      customerName: customers.name,
+      customerPhone: customers.phone,
+      customerAddress: customers.address,
+    })
+    .from(orders)
+    .innerJoin(customers, eq(orders.customerId, customers.id))
+    .where(eq(orders.id, orderId));
   if (!order.length) return null;
 
   const items = await db
@@ -239,10 +256,24 @@ export async function getTodayOrdersWithItems() {
   const endOfDay = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() + 1, 0, 0, 0, 0));
   
   const todayOrders = await db
-    .select()
+    .select({
+      id: orders.id,
+      customerId: orders.customerId,
+      driverId: orders.driverId,
+      status: orders.status,
+      totalPrice: orders.totalPrice,
+      notes: orders.notes,
+      area: orders.area,
+      createdAt: orders.createdAt,
+      updatedAt: orders.updatedAt,
+      customerName: customers.name,
+      customerPhone: customers.phone,
+      customerAddress: customers.address,
+    })
     .from(orders)
+    .innerJoin(customers, eq(orders.customerId, customers.id))
     .where(and(gte(orders.createdAt, startOfDay), lt(orders.createdAt, endOfDay)))
-    .orderBy(desc(orders.createdAt));
+    .orderBy(desc(orders.createdAt))
   
   const ordersWithItems = await Promise.all(
     todayOrders.map(async (order) => {
@@ -309,7 +340,25 @@ export async function getOrdersByDateRange(startDate: Date | string, endDate: Da
     conditions.push(eq(orders.driverId, driverId));
   }
   
-  return db.select().from(orders).where(and(...conditions)).orderBy(desc(orders.createdAt));
+  return db
+    .select({
+      id: orders.id,
+      customerId: orders.customerId,
+      driverId: orders.driverId,
+      status: orders.status,
+      totalPrice: orders.totalPrice,
+      notes: orders.notes,
+      area: orders.area,
+      createdAt: orders.createdAt,
+      updatedAt: orders.updatedAt,
+      customerName: customers.name,
+      customerPhone: customers.phone,
+      customerAddress: customers.address,
+    })
+    .from(orders)
+    .innerJoin(customers, eq(orders.customerId, customers.id))
+    .where(and(...conditions))
+    .orderBy(desc(orders.createdAt))
 }
 
 export async function updateOrderStatus(orderId: number, status: any) {
