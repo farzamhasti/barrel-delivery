@@ -213,7 +213,7 @@ export function OrderManagement() {
                 <div className="flex-1">
                   <div className="font-medium text-sm">Order #{order.id}</div>
                   <div className="text-xs text-muted-foreground">
-                    ${parseFloat(order.totalPrice).toFixed(2)}
+                    ${(Number(order.totalPrice) || 0).toFixed(2)}
                   </div>
                   <div className={`text-xs font-medium mt-1 ${
                     order.status === "Delivered" ? "text-green-600" :

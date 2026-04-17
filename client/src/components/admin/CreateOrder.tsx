@@ -142,7 +142,7 @@ export default function CreateOrder() {
     }
   };
 
-  const totalPrice = formData.items.reduce((sum, item) => sum + parseFloat(item.priceAtOrder as any) * item.quantity, 0);
+  const totalPrice = formData.items.reduce((sum, item) => sum + (Number(item.priceAtOrder) || 0) * item.quantity, 0);
 
   return (
     <div className="space-y-6">
@@ -297,11 +297,11 @@ export default function CreateOrder() {
                             <div className="flex justify-between items-start gap-2">
                               <span className="text-sm font-medium truncate">{menuItem?.name}</span>
                               <span className="text-sm font-semibold text-accent whitespace-nowrap">
-                                ${itemTotal.toFixed(2)}
+                                ${((Number(itemTotal) || 0)).toFixed(2)}
                               </span>
                             </div>
                             <div className="text-xs text-muted-foreground">
-                              {item.quantity} × ${item.priceAtOrder.toFixed(2)}
+                              {item.quantity} × ${(Number(item.priceAtOrder) || 0).toFixed(2)}
                             </div>
                           </div>
                           <div className="flex gap-1">

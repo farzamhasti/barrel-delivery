@@ -335,7 +335,7 @@ export function Orders() {
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className="font-semibold text-sm">${parseFloat(order.totalPrice).toFixed(2)}</div>
+                          <div className="font-semibold text-sm">${(Number(order.totalPrice) || 0).toFixed(2)}</div>
                         </div>
                       </div>
                     </div>

@@ -197,7 +197,7 @@ export default function OrderTrackingWithMap() {
                           )}
                         </div>
                         <div>
-                          <p className="text-muted-foreground">Total: ${selectedOrderData.totalPrice}</p>
+                          <p className="text-muted-foreground">Total: ${(Number(selectedOrderData.totalPrice) || 0).toFixed(2)}</p>
                         </div>
                         {selectedOrderData.notes && (
                           <div>

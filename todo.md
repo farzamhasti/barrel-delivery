@@ -468,3 +468,16 @@
 - [x] Ensure redirect to login/home screen
 - [x] Clear session/state on logout
 - [x] Test logout in all dashboards
+
+
+## CRITICAL ISSUE - Global Delete Crash (BLOCKING)
+- [x] Identify root cause of delete button crash
+- [x] Check for unhandled exceptions in delete functions
+- [x] Investigate database constraint errors
+- [x] Check UI event handling for delete buttons
+- [x] Fix error handling in all delete operations
+- [x] Implement try-catch blocks in delete mutations
+- [x] Add proper error messages for delete failures
+- [x] Test delete operations across all modules
+- [x] Verify application doesn't crash on delete
+- [x] Ensure delete operations fail gracefully

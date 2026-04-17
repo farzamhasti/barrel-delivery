@@ -132,7 +132,7 @@ export default function OrderTracking() {
                       {selectedOrder.orderItems?.map((item: any, idx: number) => (
                         <div key={idx} className="flex justify-between text-sm">
                           <span>{item.quantity}x {item.menuItemName}</span>
-                          <span className="text-muted-foreground">${(item.price * item.quantity).toFixed(2)}</span>
+                          <span className="text-muted-foreground">${((Number(item.price) || 0) * item.quantity).toFixed(2)}</span>
                         </div>
                       ))}
                     </div>
@@ -141,7 +141,7 @@ export default function OrderTracking() {
                   <div className="border-t border-border pt-4">
                     <div className="flex justify-between font-semibold">
                       <span>Total</span>
-                      <span>${selectedOrder.totalPrice.toFixed(2)}</span>
+                      <span>${(Number(selectedOrder.totalPrice) || 0).toFixed(2)}</span>
                     </div>
                   </div>
 

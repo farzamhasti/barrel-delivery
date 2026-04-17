@@ -258,7 +258,7 @@ export default function DriverPanel() {
                 <div>
                   <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Order Total</p>
                   <p className="text-2xl font-bold text-foreground">
-                    ${selectedOrderData.totalPrice || "0.00"}
+                    ${(Number(selectedOrderData.totalPrice) || 0).toFixed(2)}
                   </p>
                 </div>
 
@@ -269,7 +269,7 @@ export default function DriverPanel() {
                       selectedOrderData.items.map((item: any, idx: number) => (
                         <div key={idx} className="flex justify-between text-sm">
                           <span>{item.quantity}x {item.menuItemName}</span>
-                          <span className="text-muted-foreground">${(item.priceAtOrder * item.quantity).toFixed(2)}</span>
+                          <span className="text-muted-foreground">${((Number(item.priceAtOrder) || 0) * item.quantity).toFixed(2)}</span>
                         </div>
                       ))
                     ) : (
