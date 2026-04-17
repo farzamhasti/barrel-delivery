@@ -89,6 +89,8 @@ export async function initializeDatabase() {
         FOREIGN KEY(\`driver_id\`) REFERENCES \`drivers\`(\`id\`)
       );
 
+      ALTER TABLE \`orders\` ADD COLUMN IF NOT EXISTS \`area\` varchar(50);
+
       CREATE TABLE IF NOT EXISTS \`order_items\` (
         \`id\` int AUTO_INCREMENT NOT NULL,
         \`order_id\` int NOT NULL,
