@@ -19,6 +19,7 @@ export default function MenuManagement() {
   const [showItemDialog, setShowItemDialog] = useState(false);
   const [editingCategory, setEditingCategory] = useState<any>(null);
   const [editingItem, setEditingItem] = useState<any>(null);
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{ type: 'category' | 'item'; id: number } | null>(null);
   
   // Category form
   const [categoryForm, setCategoryForm] = useState({ name: "", description: "" });
@@ -56,9 +57,13 @@ export default function MenuManagement() {
   const deleteCategory = trpc.menu.categories.delete.useMutation({
     onSuccess: () => {
       toast.success("Category deleted!");
+      setDeleteConfirmation(null);
       refetchCategories();
     },
-    onError: () => toast.error("Failed to delete category"),
+    onError: (error) => {
+      toast.error(error.message || "Failed to delete category");
+      setDeleteConfirmation(null);
+    },
   });
 
   const createItem = trpc.menu.items.create.useMutation({
@@ -85,9 +90,13 @@ export default function MenuManagement() {
   const deleteItem = trpc.menu.items.delete.useMutation({
     onSuccess: () => {
       toast.success("Menu item deleted!");
+      setDeleteConfirmation(null);
       refetchItems();
     },
-    onError: () => toast.error("Failed to delete menu item"),
+    onError: (error) => {
+      toast.error(error.message || "Failed to delete menu item");
+      setDeleteConfirmation(null);
+    },
   });
 
   // Handlers
@@ -239,7 +248,7 @@ export default function MenuManagement() {
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => deleteCategory.mutate({ id: cat.id })}
+                    onClick={() => setDeleteConfirmation({ type: 'category', id: cat.id })}
                   >
                     <Trash2 className="w-4 h-4 text-red-500" />
                   </Button>
@@ -381,7 +390,7 @@ export default function MenuManagement() {
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={() => deleteItem.mutate({ id: item.id })}
+                            onClick={() => setDeleteConfirmation({ type: 'item', id: item.id })}
                           >
                             <Trash2 className="w-4 h-4 text-red-500" />
                           </Button>
@@ -395,6 +404,41 @@ export default function MenuManagement() {
           </div>
         </Card>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      {deleteConfirmation && (
+        <Dialog open={true} onOpenChange={() => setDeleteConfirmation(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Confirm Deletion</DialogTitle>
+            </DialogHeader>
+            <p className="text-sm text-muted-foreground mb-4">
+              Are you sure you want to delete this {deleteConfirmation.type}? This action cannot be undone.
+            </p>
+            <div className="flex gap-2 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => setDeleteConfirmation(null)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  if (deleteConfirmation.type === 'category') {
+                    deleteCategory.mutate({ id: deleteConfirmation.id });
+                  } else {
+                    deleteItem.mutate({ id: deleteConfirmation.id });
+                  }
+                }}
+                disabled={deleteCategory.isPending || deleteItem.isPending}
+              >
+                {deleteCategory.isPending || deleteItem.isPending ? "Deleting..." : "Delete"}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

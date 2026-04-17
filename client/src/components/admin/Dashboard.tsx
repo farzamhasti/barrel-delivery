@@ -7,9 +7,18 @@ export default function Dashboard() {
   const { data: orders = [] } = trpc.orders.list.useQuery();
   const { data: drivers = [] } = trpc.drivers.list.useQuery();
 
-  const pendingOrders = orders.filter((o: any) => o.status === "Pending").length;
-  const onTheWayOrders = orders.filter((o: any) => o.status === "On the Way").length;
-  const deliveredOrders = orders.filter((o: any) => o.status === "Delivered").length;
+  // Filter orders for today
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayOrders = orders.filter((o: any) => {
+    const orderDate = new Date(o.createdAt);
+    orderDate.setHours(0, 0, 0, 0);
+    return orderDate.getTime() === today.getTime();
+  });
+
+  const pendingOrders = todayOrders.filter((o: any) => o.status === "Pending").length;
+  const onTheWayOrders = todayOrders.filter((o: any) => o.status === "On the Way").length;
+  const deliveredOrders = todayOrders.filter((o: any) => o.status === "Delivered").length;
   const activeDrivers = drivers.filter((d: any) => d.isActive).length;
 
   return (
@@ -22,9 +31,9 @@ export default function Dashboard() {
       </div>
 
       <Card className="p-6">
-        <h2 className="text-xl font-semibold text-foreground mb-4">Recent Orders</h2>
-        {orders.length === 0 ? (
-          <p className="text-muted-foreground text-center py-8">No orders yet</p>
+        <h2 className="text-xl font-semibold text-foreground mb-4">Today's Orders</h2>
+        {todayOrders.length === 0 ? (
+          <p className="text-muted-foreground text-center py-8">No orders today</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -37,7 +46,7 @@ export default function Dashboard() {
                 </tr>
               </thead>
               <tbody>
-                {orders.slice(0, 10).map((order: any) => (
+                {todayOrders.slice(0, 10).map((order: any) => (
                   <tr key={order.id} className="border-b border-border hover:bg-muted/30">
                     <td className="py-3 px-4">#{order.id}</td>
                     <td className="py-3 px-4">{order.customer?.name}</td>

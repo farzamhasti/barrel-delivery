@@ -443,3 +443,28 @@
 - [x] Verify no broken links remain
 - [x] Ensure data sync between Admin and Kitchen dashboards still works
 - [x] Test Admin dashboard after removal
+
+
+## BUG FIX - Category Deletion Crash (CRITICAL)
+- [x] Identify root cause of category deletion crash
+- [x] Check for foreign key constraints on menu items
+- [x] Implement safe deletion mechanism (prevent or cascade)
+- [x] Add proper error handling to prevent crashes
+- [x] Test category deletion with and without items
+- [x] Verify app doesn't crash under any condition
+
+## BUG FIX - Recent Orders Daily Update (FEATURE)
+- [x] Implement date-based filtering for orders
+- [x] Show only today's orders by default
+- [x] Auto-filter based on current date
+- [x] Hide past orders unless explicitly searched
+- [x] Ensure system ready for future data
+- [x] Test with multiple dates
+
+## BUG FIX - Logout Button Not Working (CRITICAL)
+- [x] Fix logout functionality in Admin Dashboard
+- [x] Fix logout functionality in Kitchen Dashboard
+- [x] Fix logout functionality in Driver Dashboard
+- [x] Ensure redirect to login/home screen
+- [x] Clear session/state on logout
+- [x] Test logout in all dashboards
