@@ -158,10 +158,13 @@ export default function KitchenDashboardPage() {
                   </Badge>
                 </div>
 
-                {/* Customer Address */}
+                {/* Customer Address and Area */}
                 <div className="flex items-start gap-2 mb-4 pb-4 border-b border-border">
                   <MapPin className="w-5 h-5 text-muted-foreground flex-shrink-0 mt-0.5" />
-                  <p className="text-sm text-muted-foreground line-clamp-2">{order.customer?.address}</p>
+                  <div className="flex-1">
+                    <p className="text-sm text-muted-foreground line-clamp-2">{order.customerAddress || order.customer?.address}</p>
+                    {order.area && <p className="text-xs font-semibold text-accent mt-1">Area: {order.area}</p>}
+                  </div>
                 </div>
 
                 {/* Order Items */}

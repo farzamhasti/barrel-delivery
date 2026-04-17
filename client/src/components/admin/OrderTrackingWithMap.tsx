@@ -176,7 +176,10 @@ export default function OrderTrackingWithMap() {
 
                   <div className="flex items-start gap-2 text-sm text-muted-foreground">
                     <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                    <span className="line-clamp-2">{order.customer?.address}</span>
+                    <div className="flex-1">
+                      <p className="line-clamp-2">{order.customerAddress || order.customer?.address}</p>
+                      {order.area && <p className="text-xs font-semibold text-accent mt-1">Area: {order.area}</p>}
+                    </div>
                   </div>
 
                   {selectedOrderId === order.id && selectedOrderData && (
@@ -199,6 +202,11 @@ export default function OrderTrackingWithMap() {
                         <div>
                           <p className="text-muted-foreground">Total: ${(Number(selectedOrderData.totalPrice) || 0).toFixed(2)}</p>
                         </div>
+                        {selectedOrderData.area && (
+                          <div>
+                            <p className="text-muted-foreground">Area: <span className="font-semibold text-accent">{selectedOrderData.area}</span></p>
+                          </div>
+                        )}
                         {selectedOrderData.notes && (
                           <div>
                             <p className="text-muted-foreground">Notes: {selectedOrderData.notes}</p>
