@@ -5,9 +5,11 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { LogOut, ChefHat, MapPin, Clock, AlertCircle } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import { invalidateOrderCache } from "@/lib/invalidation";
 import { toast } from "sonner";
 
 export default function KitchenDashboardPage() {
+  const utils = trpc.useUtils();
   const { logout } = useAuth();
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
 
@@ -18,7 +20,7 @@ export default function KitchenDashboardPage() {
   const updateStatusMutation = trpc.orders.updateStatus.useMutation({
     onSuccess: () => {
       toast.success("Order marked as ready!");
-      refetch();
+      invalidateOrderCache(utils);
       setSelectedOrderId(null);
     },
     onError: (error) => {
@@ -32,6 +34,7 @@ export default function KitchenDashboardPage() {
   );
 
   // Auto-refetch every 3 seconds for real-time updates
+  // Cache invalidation from Orders tab will also trigger immediate refresh
   useEffect(() => {
     const interval = setInterval(() => {
       refetch();
@@ -40,6 +43,8 @@ export default function KitchenDashboardPage() {
   }, [refetch]);
 
   const selectedOrder = kitchenOrders.find((o: any) => o.id === selectedOrderId) as any;
+
+
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -69,7 +74,7 @@ export default function KitchenDashboardPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-foreground">Kitchen Dashboard</h1>
-            <p className="text-sm text-muted-foreground">Order Preparation Queue</p>
+            <p className="text-sm text-muted-foreground">Order Preparation Queue (Real-time Sync)</p>
           </div>
         </div>
 

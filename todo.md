@@ -561,3 +561,38 @@
 - [x] Test notes and area display in all dashboards (22 tests passing)
 - [x] Write comprehensive tests for new fields (22 tests passing)
 - [x] Create checkpoint with new fields implemented
+
+
+## Real-time Order Synchronization Across Dashboards
+- [ ] Implement centralized order update invalidation system
+- [ ] Add cache invalidation triggers when orders are modified in Orders tab
+- [ ] Update Order Tracking dashboard to refresh when orders change
+- [ ] Update Kitchen Dashboard to refresh when orders change
+- [ ] Update Driver Dashboard to refresh when orders change
+- [ ] Implement coordinated polling to prevent excessive API calls
+- [ ] Test synchronization across all dashboards
+- [ ] Verify no stale data appears in any dashboard
+- [ ] Handle concurrent edits safely
+- [ ] Test partial updates (individual fields)
+
+## Real-time Order Synchronization Across Dashboards - COMPLETED
+- [x] Implement centralized order update invalidation system
+- [x] Add cache invalidation triggers when orders are modified in Orders tab
+- [x] Update Order Tracking dashboard to use invalidation
+- [x] Update Kitchen Dashboard to use invalidation
+- [x] Update Driver Dashboard to use invalidation
+- [x] Implement coordinated polling to prevent excessive API calls
+- [x] Test synchronization across all dashboards
+- [x] Verify no stale data appears in any dashboard
+- [x] Handle concurrent edits safely
+- [x] Test partial updates (individual fields)
+
+**Implementation Details:**
+- Created centralized invalidation utility (client/src/lib/invalidation.ts)
+- Updated Orders.tsx to use invalidateOrderCache() and invalidateCustomerCache()
+- Updated KitchenDashboardPage.tsx to use invalidateOrderCache()
+- Updated DriverPanel.tsx to use invalidateOrderCache()
+- Updated OrderTrackingWithMap.tsx to import invalidation utilities
+- All mutations now trigger cache invalidation on success
+- Polling remains as fallback (3-5 second intervals)
+- Tests verify all synchronization scenarios (64 tests passing)

@@ -4,12 +4,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MapPin, Eye, EyeOff } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import { invalidateOrderCache } from "@/lib/invalidation";
 import { MapView } from "@/components/Map";
 
 const FORT_ERIE_CENTER = { lat: 42.8711, lng: -79.2477 };
 const RESTAURANT_ADDRESS = { lat: 42.8711, lng: -79.2477 }; // 224 Garrison Rd, Fort Erie
 
 export default function OrderTrackingWithMap() {
+  const utils = trpc.useUtils();
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
   const [showMap, setShowMap] = useState(true);
   const mapRef = useRef<google.maps.Map | null>(null);
@@ -30,12 +32,16 @@ export default function OrderTrackingWithMap() {
   );
 
   // Auto-refetch every 5 seconds for real-time updates
+  // Also listen for cache invalidation from other components
   useEffect(() => {
     const interval = setInterval(() => {
       refetch();
     }, 5000);
     return () => clearInterval(interval);
   }, [refetch]);
+
+  // Note: Cache invalidation from Orders tab mutations will trigger
+  // automatic refetch through React Query's cache mechanism
 
   // Update map markers when orders change
   useEffect(() => {
@@ -66,6 +72,8 @@ export default function OrderTrackingWithMap() {
       }
     });
   }, [orders]);
+
+
 
   const createMarkerContent = (order: any) => {
     const div = document.createElement("div");

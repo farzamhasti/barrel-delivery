@@ -5,9 +5,11 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { LogOut, MapPin, Phone, Clock, Navigation, RotateCcw, CheckCircle } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import { invalidateOrderCache } from "@/lib/invalidation";
 import { toast } from "sonner";
 
 export default function DriverPanel() {
+  const utils = trpc.useUtils();
   const { logout } = useAuth();
   const [selectedOrder, setSelectedOrder] = useState<number | null>(null);
 
@@ -23,7 +25,7 @@ export default function DriverPanel() {
   // Update order status mutation
   const updateStatusMutation = trpc.orders.updateStatus.useMutation({
     onSuccess: () => {
-      refetch();
+      invalidateOrderCache(utils);
       toast.success("Order status updated!");
     },
     onError: (error) => {
@@ -32,6 +34,7 @@ export default function DriverPanel() {
   });
 
   // Auto-refetch every 5 seconds
+  // Cache invalidation from Orders tab will also trigger immediate refresh
   useEffect(() => {
     const interval = setInterval(() => {
       refetch();
@@ -56,6 +59,7 @@ export default function DriverPanel() {
       orderId,
       status: "Returning to Restaurant",
     });
+    // Cache invalidation will automatically trigger refresh
   };
 
   const handleAtRestaurant = (orderId: number) => {
@@ -63,6 +67,7 @@ export default function DriverPanel() {
       orderId,
       status: "At Restaurant",
     });
+    // Cache invalidation will automatically trigger refresh
   };
 
   const getStatusColor = (status: string) => {

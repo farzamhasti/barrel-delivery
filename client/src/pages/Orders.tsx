@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
+import { invalidateOrderCache, invalidateCustomerCache } from "@/lib/invalidation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,6 +25,9 @@ interface OrderItemFormData {
 }
 
 export function Orders() {
+  // Get trpc utils for cache invalidation
+  const utils = trpc.useUtils();
+
   // Local state
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
   const [expandedOrderId, setExpandedOrderId] = useState<number | null>(null);
@@ -83,7 +87,7 @@ export function Orders() {
   const updateOrderMutation = trpc.orders.update.useMutation({
     onSuccess: () => {
       toast.success("Order updated successfully");
-      refetchOrders();
+      invalidateOrderCache(utils);
       setEditingOrderId(null);
     },
     onError: (error) => {
@@ -94,7 +98,7 @@ export function Orders() {
   const updateCustomerMutation = trpc.customers.update.useMutation({
     onSuccess: () => {
       toast.success("Customer information updated");
-      refetchOrders();
+      invalidateCustomerCache(utils);
       setEditingOrderId(null);
     },
     onError: (error) => {
@@ -105,7 +109,7 @@ export function Orders() {
   const updateItemMutation = trpc.orders.updateItem.useMutation({
     onSuccess: () => {
       toast.success("Item updated");
-      refetchOrders();
+      invalidateOrderCache(utils);
       setEditingItemId(null);
     },
     onError: (error) => {
@@ -116,7 +120,7 @@ export function Orders() {
   const deleteItemMutation = trpc.orders.deleteItem.useMutation({
     onSuccess: () => {
       toast.success("Item removed");
-      refetchOrders();
+      invalidateOrderCache(utils);
     },
     onError: (error) => {
       toast.error(`Failed to delete item: ${error.message}`);
@@ -126,7 +130,7 @@ export function Orders() {
   const createItemMutation = trpc.orders.createItem.useMutation({
     onSuccess: () => {
       toast.success("Item added to order");
-      refetchOrders();
+      invalidateOrderCache(utils);
       setShowAddItemDialog(false);
       setItemFormData({ menuItemId: 0, quantity: 1, priceAtOrder: 0 });
     },
@@ -138,7 +142,7 @@ export function Orders() {
   const deleteOrderMutation = trpc.orders.delete.useMutation({
     onSuccess: () => {
       toast.success("Order deleted");
-      refetchOrders();
+      invalidateOrderCache(utils);
       setSelectedOrderId(null);
     },
     onError: (error) => {
