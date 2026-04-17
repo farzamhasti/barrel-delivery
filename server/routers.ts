@@ -226,6 +226,7 @@ export const appRouter = router({
         customerId: z.number(),
         totalPrice: z.number(),
         notes: z.string().optional(),
+        area: z.string().optional(),
         items: z.array(z.object({
           menuItemId: z.number(),
           quantity: z.number(),
@@ -237,6 +238,7 @@ export const appRouter = router({
           customerId: input.customerId,
           totalPrice: input.totalPrice as any,
           notes: input.notes,
+          area: input.area,
         });
         
         // Create order items

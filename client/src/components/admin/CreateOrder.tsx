@@ -14,6 +14,8 @@ export default function CreateOrder() {
     customerName: "",
     customerPhone: "",
     customerAddress: "",
+    notes: "",
+    area: "",
     items: [] as { menuItemId: number; quantity: number; priceAtOrder: number }[],
   });
 
@@ -125,6 +127,8 @@ export default function CreateOrder() {
       await createOrderMutation.mutateAsync({
         customerId,
         totalPrice,
+        notes: formData.notes || undefined,
+        area: formData.area || undefined,
         items: formData.items,
       });
 
@@ -133,6 +137,8 @@ export default function CreateOrder() {
         customerName: "",
         customerPhone: "",
         customerAddress: "",
+        notes: "",
+        area: "",
         items: [],
       });
       // Redirect to Orders page
@@ -180,6 +186,29 @@ export default function CreateOrder() {
                     value={formData.customerAddress}
                     onChange={(e) => setFormData({ ...formData, customerAddress: e.target.value })}
                     placeholder="123 Main St, City, State"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="area">Area</Label>
+                  <select
+                    id="area"
+                    value={formData.area}
+                    onChange={(e) => setFormData({ ...formData, area: e.target.value })}
+                    className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground"
+                  >
+                    <option value="">Select Area</option>
+                    <option value="Downtown">Downtown</option>
+                    <option value="CP">CP</option>
+                    <option value="B">B</option>
+                  </select>
+                </div>
+                <div>
+                  <Label htmlFor="notes">Notes</Label>
+                  <Input
+                    id="notes"
+                    value={formData.notes}
+                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                    placeholder="Special instructions, allergies, etc."
                   />
                 </div>
               </div>

@@ -541,3 +541,23 @@
 - [x] Test edit/delete operations sync to Kitchen dashboard
 - [x] Optimize UI for fast kitchen workflow
 - [x] Verify order items display correctly with quantities (26 tests passing)
+
+
+## Add Notes and Area Fields to Order System (NEW REQUEST)
+- [x] Update database schema to add notes (TEXT) field to orders table
+- [x] Update database schema to add area (VARCHAR) field to orders table
+- [x] Create database migration for new fields
+- [x] Update Drizzle ORM schema with new fields
+- [x] Update server/db.ts functions to handle notes and area
+- [x] Update server/routers.ts to include notes and area in procedures
+- [x] Update CreateOrder component to include Notes input field
+- [x] Update CreateOrder component to include Area dropdown field
+- [x] Ensure notes are saved during order creation
+- [x] Ensure area is saved during order creation
+- [ ] Display notes in Kitchen Dashboard
+- [ ] Display area in Order Tracking (Admin Dashboard)
+- [ ] Display area in Kitchen Dashboard
+- [ ] Test notes and area data binding
+- [ ] Test notes and area display in all dashboards
+- [ ] Write comprehensive tests for new fields
+- [ ] Create checkpoint with new fields implemented
