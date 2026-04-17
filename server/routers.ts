@@ -199,6 +199,23 @@ export const appRouter = router({
         const endDate = typeof input.endDate === 'string' ? new Date(input.endDate) : input.endDate;
         return db.getOrdersByDateRange(startDate, endDate, input.driverId);
       }),
+
+    getTodayOrders: publicProcedure
+      .query(async () => {
+        const today = new Date();
+        const startOfDay = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate(), 0, 0, 0, 0));
+        const endOfDay = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() + 1, 0, 0, 0, 0));
+        return db.getOrdersByDateRange(startOfDay, endOfDay);
+      }),
+
+    getTodayOrdersForDriver: publicProcedure
+      .input(z.object({ driverId: z.number() }))
+      .query(async ({ input }) => {
+        const today = new Date();
+        const startOfDay = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate(), 0, 0, 0, 0));
+        const endOfDay = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() + 1, 0, 0, 0, 0));
+        return db.getOrdersByDateRange(startOfDay, endOfDay, input.driverId);
+      }),
     create: publicProcedure
       .input(z.object({
         customerId: z.number(),
