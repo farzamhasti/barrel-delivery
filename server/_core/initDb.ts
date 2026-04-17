@@ -81,6 +81,7 @@ export async function initializeDatabase() {
         \`status\` enum('Pending','Ready','On the Way','Delivered') NOT NULL DEFAULT 'Pending',
         \`total_price\` decimal(10,2) NOT NULL,
         \`notes\` text,
+        \`area\` varchar(50),
         \`createdAt\` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
         \`updatedAt\` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         PRIMARY KEY(\`id\`),
