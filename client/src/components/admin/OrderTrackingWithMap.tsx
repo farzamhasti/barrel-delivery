@@ -8,8 +8,8 @@ import { invalidateOrderCache } from "@/lib/invalidation";
 import { MapView } from "@/components/Map";
 import { OrderMapModal } from "@/components/OrderMapModal";
 
-const FORT_ERIE_CENTER = { lat: 42.8711, lng: -79.2477 };
-const RESTAURANT_ADDRESS = { lat: 42.8711, lng: -79.2477 }; // 224 Garrison Rd, Fort Erie
+const FORT_ERIE_CENTER = { lat: 42.905191, lng: -78.9225479 };
+const RESTAURANT_ADDRESS = { lat: 42.905191, lng: -78.9225479 }; // 224 Garrison Rd, Fort Erie, ON L2A 1M7
 
 export default function OrderTrackingWithMap() {
   const utils = trpc.useUtils();
