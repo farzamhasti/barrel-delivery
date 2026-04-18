@@ -22,21 +22,21 @@ export default function Dashboard() {
   const activeDrivers = drivers.filter((d: any) => d.isActive).length;
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="space-y-4 md:space-y-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         <StatCard icon={<Package2 className="w-6 h-6" />} label="Pending" value={pendingOrders} color="bg-yellow-100 text-yellow-700" />
         <StatCard icon={<Truck className="w-6 h-6" />} label="On the Way" value={onTheWayOrders} color="bg-blue-100 text-blue-700" />
         <StatCard icon={<TrendingUp className="w-6 h-6" />} label="Delivered" value={deliveredOrders} color="bg-green-100 text-green-700" />
         <StatCard icon={<Truck className="w-6 h-6" />} label="Active Drivers" value={activeDrivers} color="bg-purple-100 text-purple-700" />
       </div>
 
-      <Card className="p-6">
-        <h2 className="text-xl font-semibold text-foreground mb-4">Today's Orders</h2>
+      <Card className="p-4 md:p-6">
+        <h2 className="text-lg md:text-xl font-semibold text-foreground mb-4">Today's Orders</h2>
         {todayOrders.length === 0 ? (
           <p className="text-muted-foreground text-center py-8">No orders today</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          <div className="overflow-x-auto -mx-4 md:mx-0">
+            <table className="w-full text-xs md:text-sm">
               <thead>
                 <tr className="border-b border-border">
                   <th className="text-left py-3 px-4 font-semibold">Order ID</th>
@@ -65,10 +65,10 @@ export default function Dashboard() {
 
 function StatCard({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: number; color: string }) {
   return (
-    <Card className="p-6">
-      <div className={`w-12 h-12 rounded-lg ${color} flex items-center justify-center mb-4`}>{icon}</div>
-      <p className="text-sm text-muted-foreground mb-1">{label}</p>
-      <p className="text-3xl font-bold">{value}</p>
+    <Card className="p-4 md:p-6">
+      <div className={`w-10 md:w-12 h-10 md:h-12 rounded-lg ${color} flex items-center justify-center mb-3 md:mb-4`}><span className="w-5 md:w-6 h-5 md:h-6 flex items-center justify-center">{icon}</span></div>
+      <p className="text-xs md:text-sm text-muted-foreground mb-1">{label}</p>
+      <p className="text-2xl md:text-3xl font-bold">{value}</p>
     </Card>
   );
 }

@@ -34,6 +34,7 @@ export default function AdminDashboard() {
   const width = useWindowWidth();
   
   const isTablet = width >= 768 && width < 1024;
+  const isDesktop = width >= 1024;
   const currentTab = (params as any)?.["*"] || "dashboard";
 
   // Auto-close sidebar on mobile when navigating
@@ -53,10 +54,10 @@ export default function AdminDashboard() {
   }, [isMobile]);
 
   return (
-    <div className="min-h-screen bg-background flex flex-col md:flex-row">
-      {/* Mobile/Tablet Header */}
-      {(isMobile || isTablet) && (
-        <header className="border-b border-border bg-card px-4 py-3 flex items-center justify-between md:hidden sticky top-0 z-40">
+    <div className="min-h-screen bg-background flex flex-col">
+      {/* Mobile Header - Always visible on mobile */}
+      {isMobile && (
+        <header className="border-b border-border bg-card px-4 py-3 flex items-center justify-between sticky top-0 z-40">
           <h1 className="text-lg font-bold text-foreground truncate flex-1">
             Barrel Delivery
           </h1>
@@ -64,7 +65,7 @@ export default function AdminDashboard() {
             variant="ghost"
             size="sm"
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="ml-2"
+            className="ml-2 flex-shrink-0"
           >
             {sidebarOpen ? (
               <X className="w-5 h-5" />
@@ -75,117 +76,141 @@ export default function AdminDashboard() {
         </header>
       )}
 
-      {/* Sidebar */}
-      <aside
-        className={`
-          ${isMobile ? "fixed inset-0 top-[3.5rem] z-50 w-64" : ""}
-          ${isTablet ? "w-56" : ""}
-          ${!isMobile && !isTablet ? "w-64" : ""}
-          border-r border-border bg-card transition-all duration-300 flex flex-col
-          ${isMobile && !sidebarOpen ? "translate-x-[-100%]" : "translate-x-0"}
-          ${isMobile ? "shadow-lg" : ""}
-        `}
-      >
-        {/* Desktop Header */}
-        <div className="p-4 border-b border-border flex items-center justify-between hidden md:flex">
-          <h2 className="font-bold text-foreground text-sm lg:text-base">
-            Barrel Delivery
-          </h2>
-          {isTablet && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="ml-auto"
+      {/* Main Layout Container */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Sidebar - Mobile: Fixed overlay, Desktop: Static */}
+        {isMobile ? (
+          <>
+            {/* Mobile Sidebar Overlay */}
+            {sidebarOpen && (
+              <div
+                className="fixed inset-0 bg-black/50 z-40 top-[3.5rem]"
+                onClick={() => setSidebarOpen(false)}
+              />
+            )}
+            {/* Mobile Sidebar */}
+            <aside
+              className={`
+                fixed left-0 top-[3.5rem] h-[calc(100vh-3.5rem)] w-64 z-50
+                border-r border-border bg-card transition-transform duration-300 flex flex-col
+                ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
+                shadow-lg
+              `}
             >
-              <Menu className="w-4 h-4" />
-            </Button>
+              <SidebarContent currentTab={currentTab} logout={logout} />
+            </aside>
+          </>
+        ) : (
+          <>
+            {/* Tablet/Desktop Sidebar */}
+            <aside
+              className={`
+                ${isTablet ? "w-56" : "w-64"}
+                border-r border-border bg-card flex flex-col flex-shrink-0
+              `}
+            >
+              {/* Desktop Header */}
+              <div className="p-4 border-b border-border flex items-center justify-between">
+                <h2 className="font-bold text-foreground text-sm lg:text-base">
+                  Barrel Delivery
+                </h2>
+              </div>
+              <SidebarContent currentTab={currentTab} logout={logout} />
+            </aside>
+          </>
+        )}
+
+        {/* Main Content Area */}
+        <main className="flex-1 flex flex-col overflow-hidden">
+          {/* Desktop Header */}
+          {!isMobile && (
+            <header className="border-b border-border bg-card px-4 md:px-6 py-3 md:py-4 flex items-center justify-between flex-shrink-0">
+              <h1 className="text-xl md:text-2xl font-bold text-foreground">
+                Admin Dashboard
+              </h1>
+            </header>
           )}
-        </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-          <NavItem
-            href="/admin/dashboard"
-            icon={<Package2 className="w-5 h-5" />}
-            label="Dashboard"
-            active={currentTab === "dashboard"}
-          />
-          <NavItem
-            href="/admin/create-order"
-            icon={<Plus className="w-5 h-5" />}
-            label="New Order"
-            active={currentTab === "create-order"}
-          />
-          <NavItem
-            href="/admin/menu"
-            icon={<Settings className="w-5 h-5" />}
-            label="Menu"
-            active={currentTab === "menu"}
-          />
-          <NavItem
-            href="/admin/orders"
-            icon={<Package2 className="w-5 h-5" />}
-            label="Orders"
-            active={currentTab === "orders"}
-          />
-          <NavItem
-            href="/admin/drivers"
-            icon={<Truck className="w-5 h-5" />}
-            label="Drivers"
-            active={currentTab === "drivers"}
-          />
-          <NavItem
-            href="/admin/order-tracking"
-            icon={<Map className="w-5 h-5" />}
-            label="Order Tracking"
-            active={currentTab === "order-tracking"}
-          />
-        </nav>
-
-        {/* Footer */}
-        <div className="p-3 border-t border-border">
-          <Button
-            variant="outline"
-            className="w-full gap-2 justify-center text-sm h-9"
-            onClick={() => logout()}
-          >
-            <LogOut className="w-4 h-4" />
-            <span className="hidden sm:inline">Logout</span>
-          </Button>
-        </div>
-      </aside>
-
-      {/* Mobile Overlay */}
-      {isMobile && sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 top-[3.5rem]"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col overflow-hidden">
-        {/* Desktop Header */}
-        <header className="border-b border-border bg-card px-4 md:px-6 py-3 md:py-4 flex items-center justify-between hidden md:flex sticky top-0 z-30">
-          <h1 className="text-xl md:text-2xl font-bold text-foreground">
-            Admin Dashboard
-          </h1>
-        </header>
-
-        {/* Content Area */}
-        <div className="flex-1 overflow-auto p-4 md:p-6 w-full">
-          <div className="w-full max-w-7xl mx-auto">
-            {currentTab === "dashboard" && <Dashboard />}
-            {currentTab === "create-order" && <CreateOrder />}
-            {currentTab === "menu" && <MenuManagement />}
-            {currentTab === "orders" && <Orders />}
-            {currentTab === "drivers" && <DriverManagement />}
-            {currentTab === "order-tracking" && <OrderTrackingWithMap />}
+          {/* Content Area - Scrollable */}
+          <div className="flex-1 overflow-auto">
+            <div className="w-full h-full p-4 md:p-6">
+              <div className="w-full max-w-7xl mx-auto">
+                {currentTab === "dashboard" && <Dashboard />}
+                {currentTab === "create-order" && <CreateOrder />}
+                {currentTab === "menu" && <MenuManagement />}
+                {currentTab === "orders" && <Orders />}
+                {currentTab === "drivers" && <DriverManagement />}
+                {currentTab === "order-tracking" && <OrderTrackingWithMap />}
+              </div>
+            </div>
           </div>
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
+  );
+}
+
+function SidebarContent({
+  currentTab,
+  logout,
+}: {
+  currentTab: string;
+  logout: () => void;
+}) {
+  return (
+    <>
+      {/* Navigation */}
+      <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+        <NavItem
+          href="/admin/dashboard"
+          icon={<Package2 className="w-5 h-5" />}
+          label="Dashboard"
+          active={currentTab === "dashboard"}
+        />
+        <NavItem
+          href="/admin/create-order"
+          icon={<Plus className="w-5 h-5" />}
+          label="New Order"
+          active={currentTab === "create-order"}
+        />
+        <NavItem
+          href="/admin/menu"
+          icon={<Settings className="w-5 h-5" />}
+          label="Menu"
+          active={currentTab === "menu"}
+        />
+        <NavItem
+          href="/admin/orders"
+          icon={<Package2 className="w-5 h-5" />}
+          label="Orders"
+          active={currentTab === "orders"}
+        />
+        <NavItem
+          href="/admin/drivers"
+          icon={<Truck className="w-5 h-5" />}
+          label="Drivers"
+          active={currentTab === "drivers"}
+        />
+        <NavItem
+          href="/admin/order-tracking"
+          icon={<Map className="w-5 h-5" />}
+          label="Order Tracking"
+          active={currentTab === "order-tracking"}
+        />
+      </nav>
+
+      {/* Footer */}
+      <div className="p-3 border-t border-border flex-shrink-0">
+        <Button
+          variant="outline"
+          className="w-full gap-2 justify-center text-sm h-9"
+          onClick={() => logout()}
+        >
+          <LogOut className="w-4 h-4" />
+          <span className="hidden sm:inline">Logout</span>
+        </Button>
+      </div>
+    </>
   );
 }
 

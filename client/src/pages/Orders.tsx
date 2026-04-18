@@ -276,26 +276,26 @@ export function Orders() {
   const isLoading = updateOrderMutation.isPending || updateCustomerMutation.isPending || updateItemMutation.isPending || createItemMutation.isPending;
 
   return (
-    <div className="h-full flex flex-col gap-4 p-6 bg-background">
+    <div className="h-full flex flex-col gap-3 md:gap-4 p-4 md:p-6 bg-background">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold">Orders Management</h1>
-          <p className="text-muted-foreground mt-1">View, edit, and manage all restaurant orders</p>
+          <h1 className="text-2xl md:text-3xl font-bold">Orders Management</h1>
+          <p className="text-xs md:text-sm text-muted-foreground mt-1">View, edit, and manage all restaurant orders</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Calendar className="w-5 h-5 text-muted-foreground" />
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <Calendar className="w-4 md:w-5 h-4 md:h-5 text-muted-foreground" />
           <input
             type="date"
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
-            className="px-3 py-2 border border-input rounded-md bg-background text-foreground"
+            className="px-2 md:px-3 py-1 md:py-2 text-xs md:text-sm border border-input rounded-md bg-background text-foreground"
           />
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 overflow-hidden">
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-6 overflow-hidden">
         {/* Orders List */}
         <div className="lg:col-span-1">
           <Card className="h-full flex flex-col">
