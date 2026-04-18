@@ -114,6 +114,9 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
   useEffect(() => {
     if (!mapReady || !mapRef.current || !geocodedLocation || !open) return;
 
+    // Trigger map resize to ensure it renders properly when order changes
+    google.maps.event.trigger(mapRef.current, 'resize');
+
     // Clear existing markers and info windows
     markersRef.current.forEach(marker => marker.setMap(null));
     infoWindowsRef.current.forEach(infoWindow => infoWindow.close());
@@ -240,7 +243,12 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
       const bounds = new google.maps.LatLngBounds();
       bounds.extend(geocodedLocation);
       bounds.extend(RESTAURANT_LOCATION);
-      mapRef.current.fitBounds(bounds, { top: 100, right: 100, bottom: 100, left: 100 });
+      // Use setTimeout to ensure map is ready before fitting bounds
+      setTimeout(() => {
+        if (mapRef.current) {
+          mapRef.current.fitBounds(bounds, { top: 100, right: 100, bottom: 100, left: 100 });
+        }
+      }, 50);
     } catch (error) {
       console.error("Error creating markers:", error);
       setGeocodeError("Failed to display markers on map");
@@ -305,12 +313,16 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
                 </div>
               ) : (
                 <MapView
-                  key={`map-${order.id}-${open}`}
+                  key={`map-${order.id}`}
                   initialCenter={geocodedLocation || RESTAURANT_LOCATION}
                   initialZoom={geocodedLocation ? 15 : 13}
                   onMapReady={(map) => {
                     mapRef.current = map;
                     setMapReady(true);
+                    // Trigger map resize to ensure it renders properly
+                    setTimeout(() => {
+                      google.maps.event.trigger(map, 'resize');
+                    }, 100);
                   }}
                 />
               )}
