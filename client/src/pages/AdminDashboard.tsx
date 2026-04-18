@@ -12,13 +12,28 @@ import Dashboard from "@/components/admin/Dashboard";
 import CreateOrder from "@/components/admin/CreateOrder";
 import OrderTrackingWithMap from "@/components/admin/OrderTrackingWithMap";
 
+// Helper hook to get window width
+function useWindowWidth() {
+  const [width, setWidth] = useState(typeof window !== "undefined" ? window.innerWidth : 1024);
+
+  useEffect(() => {
+    const handleResize = () => setWidth(window.innerWidth);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  return width;
+}
+
 export default function AdminDashboard() {
+  // All hooks must be at the top level, in the same order every render
   const [, params] = useRoute("/admin/*");
   const { logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const isMobile = useIsMobile();
-  const isTablet = useWindowWidth() >= 768 && useWindowWidth() < 1024;
-
+  const width = useWindowWidth();
+  
+  const isTablet = width >= 768 && width < 1024;
   const currentTab = (params as any)?.["*"] || "dashboard";
 
   // Auto-close sidebar on mobile when navigating
@@ -196,17 +211,4 @@ function NavItem({
       </Button>
     </a>
   );
-}
-
-// Helper hook to get window width
-function useWindowWidth() {
-  const [width, setWidth] = useState(typeof window !== "undefined" ? window.innerWidth : 1024);
-
-  useEffect(() => {
-    const handleResize = () => setWidth(window.innerWidth);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  return width;
 }
