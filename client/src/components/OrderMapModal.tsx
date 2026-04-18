@@ -32,8 +32,8 @@ export interface OrderMapModalProps {
   };
 }
 
-// Correct restaurant location: 224 Garrison Rd, Fort Erie, ON L2A 1M7
-const RESTAURANT_LOCATION = { lat: 42.9081, lng: -79.2477 };
+// Correct restaurant location: UniglassPlus - Fort Erie, 255 Garrison Rd, Fort Erie, ON L2N 1M9
+const RESTAURANT_LOCATION = { lat: 42.9089, lng: -79.2481 };
 
 export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps) {
   const mapRef = useRef<google.maps.Map | null>(null);
