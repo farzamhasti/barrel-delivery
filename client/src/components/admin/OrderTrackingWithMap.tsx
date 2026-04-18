@@ -6,12 +6,15 @@ import { MapPin, Eye, EyeOff } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { invalidateOrderCache } from "@/lib/invalidation";
 import { MapView } from "@/components/Map";
+import { OrderMapModal } from "@/components/OrderMapModal";
 
 const FORT_ERIE_CENTER = { lat: 42.8711, lng: -79.2477 };
 const RESTAURANT_ADDRESS = { lat: 42.8711, lng: -79.2477 }; // 224 Garrison Rd, Fort Erie
 
 export default function OrderTrackingWithMap() {
   const utils = trpc.useUtils();
+const [mapModalOpen, setMapModalOpen] = useState(false);
+  const [selectedOrderForMap, setSelectedOrderForMap] = useState<any>(null);
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
   const [showMap, setShowMap] = useState(true);
   const mapRef = useRef<google.maps.Map | null>(null);
@@ -185,7 +188,15 @@ export default function OrderTrackingWithMap() {
                   <div className="flex items-start gap-2 text-sm text-muted-foreground">
                     <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
                     <div className="flex-1">
-                      <p className="line-clamp-2">{order.customerAddress || order.customer?.address}</p>
+                      <button
+                        onClick={() => {
+                          setSelectedOrderForMap(order);
+                          setMapModalOpen(true);
+                        }}
+                        className="line-clamp-2 text-left hover:text-accent hover:underline transition-colors cursor-pointer"
+                      >
+                        {order.customerAddress || order.customer?.address}
+                      </button>
                       {order.area && <p className="text-xs font-semibold text-accent mt-1">Area: {order.area}</p>}
                     </div>
                   </div>
@@ -229,6 +240,14 @@ export default function OrderTrackingWithMap() {
           )}
         </div>
       </div>
+
+      {selectedOrderForMap && (
+        <OrderMapModal
+          open={mapModalOpen}
+          onOpenChange={setMapModalOpen}
+          order={selectedOrderForMap}
+        />
+      )}
     </div>
   );
 }

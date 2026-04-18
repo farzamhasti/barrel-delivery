@@ -4,6 +4,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import * as db from "./db";
+import { geocodeAddress, reverseGeocodeCoordinates, calculateDistance, isValidCoordinates } from "./geocoding";
 
 export const appRouter = router({
   system: systemRouter,
@@ -334,6 +335,45 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         return db.createOrderItem(input as any);
       }),
+
+  // Geocoding and Maps
+  maps: router({
+    geocode: protectedProcedure
+      .input(z.object({ address: z.string() }))
+      .mutation(async ({ input }) => {
+        return geocodeAddress(input.address);
+      }),
+    reverseGeocode: protectedProcedure
+      .input(z.object({
+        latitude: z.number(),
+        longitude: z.number(),
+      }))
+      .mutation(async ({ input }) => {
+        return reverseGeocodeCoordinates(input.latitude, input.longitude);
+      }),
+    calculateDistance: publicProcedure
+      .input(z.object({
+        lat1: z.number(),
+        lng1: z.number(),
+        lat2: z.number(),
+        lng2: z.number(),
+      }))
+      .query(({ input }) => {
+        return {
+          distance: calculateDistance(input.lat1, input.lng1, input.lat2, input.lng2),
+        };
+      }),
+    validateCoordinates: publicProcedure
+      .input(z.object({
+        latitude: z.number(),
+        longitude: z.number(),
+      }))
+      .query(({ input }) => {
+        return {
+          valid: isValidCoordinates(input.latitude, input.longitude),
+        };
+      }),
+  }),
   }),
 });
 
