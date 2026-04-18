@@ -63,7 +63,7 @@
 
 /// <reference types="@types/google.maps" />
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePersistFn } from "@/hooks/usePersistFn";
 import { cn } from "@/lib/utils";
 
@@ -158,6 +158,7 @@ export function MapView({
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<google.maps.Map | null>(null);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const init = usePersistFn(async () => {
     try {
@@ -222,6 +223,8 @@ export function MapView({
       }
     } catch (error) {
       console.error("Map initialization error:", error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to load map';
+      setError(errorMessage);
     }
   });
 
@@ -235,6 +238,25 @@ export function MapView({
       }
     };
   }, [init]);
+
+  if (error) {
+    return (
+      <div 
+        className={cn("w-full h-full min-h-[300px] bg-red-50 flex items-center justify-center", className)}
+        style={{ 
+          display: 'flex',
+          position: 'relative',
+          overflow: 'hidden'
+        }}
+      >
+        <div className="text-center">
+          <div className="text-red-600 text-sm font-semibold mb-2">Map Error</div>
+          <div className="text-gray-600 text-xs">{error}</div>
+          {!API_KEY && <div className="text-gray-600 text-xs mt-2">API Key not configured</div>}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div 
