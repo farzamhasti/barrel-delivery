@@ -288,7 +288,7 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
               <div className="pt-2 border-t border-border">
                 <div className="flex justify-between items-center">
                   <p className="text-sm font-medium text-foreground">Total</p>
-                  <p className="text-lg font-bold text-accent">${order.totalPrice?.toFixed(2)}</p>
+                  <p className="text-lg font-bold text-accent">${typeof order.totalPrice === 'number' ? order.totalPrice.toFixed(2) : (parseFloat(String(order.totalPrice || 0))).toFixed(2)}</p>
                 </div>
               </div>
             </Card>
