@@ -37,6 +37,7 @@ const RESTAURANT_LOCATION = { lat: 42.8711, lng: -79.2477 };
 export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps) {
   const mapRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.Marker[]>([]);
+  const infoWindowsRef = useRef<google.maps.InfoWindow[]>([]);
   const [geocodedLocation, setGeocodedLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [isGeocoding, setIsGeocoding] = useState(false);
   const [geocodeError, setGeocodeError] = useState<string | null>(null);
@@ -91,12 +92,47 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
   useEffect(() => {
     if (!mapRef.current || !geocodedLocation) return;
 
-    // Clear existing markers
+    // Clear existing markers and info windows
     markersRef.current.forEach(marker => marker.setMap(null));
+    infoWindowsRef.current.forEach(infoWindow => infoWindow.close());
     markersRef.current = [];
+    infoWindowsRef.current = [];
 
     try {
-      // Add customer location marker using standard Marker
+      // Create info window for customer location with detailed order information
+      const customerInfoContent = document.createElement('div');
+      customerInfoContent.style.cssText = 'font-family: Arial, sans-serif; width: 280px;';
+      customerInfoContent.innerHTML = `
+        <div style="padding: 12px;">
+          <div style="font-weight: bold; font-size: 16px; margin-bottom: 8px; color: #1f2937;">
+            Order #${order.id}
+          </div>
+          <div style="font-size: 13px; margin-bottom: 6px;">
+            <strong>Customer:</strong> ${order.customer?.name || 'N/A'}
+          </div>
+          <div style="font-size: 13px; margin-bottom: 6px;">
+            <strong>Address:</strong> ${order.customerAddress || order.customer?.address || 'N/A'}
+          </div>
+          <div style="font-size: 13px; margin-bottom: 6px;">
+            <strong>Area:</strong> ${order.area || 'N/A'}
+          </div>
+          <div style="font-size: 13px; margin-bottom: 8px; padding-top: 8px; border-top: 1px solid #e5e7eb;">
+            <strong>Status:</strong> 
+            <span style="display: inline-block; margin-left: 4px; padding: 4px 8px; background-color: #fbbf24; border-radius: 4px; font-weight: bold; color: #78350f;">
+              ${order.status}
+            </span>
+          </div>
+          ${order.notes ? `<div style="font-size: 12px; color: #6b7280; font-style: italic; margin-top: 6px; padding-top: 6px; border-top: 1px solid #e5e7eb;">
+            <strong>Notes:</strong> ${order.notes}
+          </div>` : ''}
+        </div>
+      `;
+
+      const customerInfoWindow = new google.maps.InfoWindow({
+        content: customerInfoContent,
+      });
+
+      // Add customer location marker with larger, more visible styling
       const customerMarker = new google.maps.Marker({
         map: mapRef.current,
         position: geocodedLocation,
@@ -104,50 +140,90 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
         label: {
           text: `#${order.id}`,
           color: "white",
-          fontSize: "14px",
+          fontSize: "16px",
           fontWeight: "bold",
         },
         icon: {
           path: google.maps.SymbolPath.CIRCLE,
-          scale: 12,
+          scale: 18,
           fillColor: "#3b82f6",
           fillOpacity: 1,
           strokeColor: "white",
-          strokeWeight: 2,
+          strokeWeight: 3,
         },
+        animation: google.maps.Animation.DROP,
       });
+
+      // Add click listener to show info window
+      customerMarker.addListener('click', () => {
+        // Close all other info windows
+        infoWindowsRef.current.forEach(iw => iw.close());
+        customerInfoWindow.open(mapRef.current, customerMarker);
+      });
+
+      // Open info window by default
+      customerInfoWindow.open(mapRef.current, customerMarker);
+      infoWindowsRef.current.push(customerInfoWindow);
       markersRef.current.push(customerMarker);
 
-      // Add restaurant marker
+      // Create info window for restaurant
+      const restaurantInfoContent = document.createElement('div');
+      restaurantInfoContent.style.cssText = 'font-family: Arial, sans-serif;';
+      restaurantInfoContent.innerHTML = `
+        <div style="padding: 12px;">
+          <div style="font-weight: bold; font-size: 16px; color: #1f2937;">
+            🍽️ Restaurant
+          </div>
+          <div style="font-size: 13px; margin-top: 4px; color: #6b7280;">
+            Order Preparation Point
+          </div>
+        </div>
+      `;
+
+      const restaurantInfoWindow = new google.maps.InfoWindow({
+        content: restaurantInfoContent,
+      });
+
+      // Add restaurant marker with larger, more visible styling
       const restaurantMarker = new google.maps.Marker({
         map: mapRef.current,
         position: RESTAURANT_LOCATION,
         title: "Restaurant",
         label: {
           text: "🍽️",
-          fontSize: "16px",
+          fontSize: "20px",
         },
         icon: {
           path: google.maps.SymbolPath.CIRCLE,
-          scale: 12,
+          scale: 18,
           fillColor: "#ef4444",
           fillOpacity: 1,
           strokeColor: "white",
-          strokeWeight: 2,
+          strokeWeight: 3,
         },
+        animation: google.maps.Animation.DROP,
       });
+
+      // Add click listener to show info window
+      restaurantMarker.addListener('click', () => {
+        // Close all other info windows
+        infoWindowsRef.current.forEach(iw => iw.close());
+        restaurantInfoWindow.open(mapRef.current, restaurantMarker);
+      });
+
+      infoWindowsRef.current.push(restaurantInfoWindow);
       markersRef.current.push(restaurantMarker);
 
-      // Center map between the two locations
+      // Center map between the two locations with padding
       const bounds = new google.maps.LatLngBounds();
       bounds.extend(geocodedLocation);
       bounds.extend(RESTAURANT_LOCATION);
-      mapRef.current.fitBounds(bounds);
+      mapRef.current.fitBounds(bounds, { top: 100, right: 100, bottom: 100, left: 100 });
     } catch (error) {
       console.error("Error creating markers:", error);
       setGeocodeError("Failed to display markers on map");
     }
-  }, [geocodedLocation, order.id, order.customer?.name]);
+  }, [geocodedLocation, order.id, order.customer?.name, order.status, order.area, order.notes]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
