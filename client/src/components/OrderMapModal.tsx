@@ -83,6 +83,12 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
       return;
     }
 
+    // Clear previous markers when order changes
+    markersRef.current.forEach(marker => marker.setMap(null));
+    infoWindowsRef.current.forEach(infoWindow => infoWindow.close());
+    markersRef.current = [];
+    infoWindowsRef.current = [];
+
     // Check if we already have coordinates from customer data
     if (
       order.customer?.latitude &&
@@ -106,7 +112,7 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
 
   // Update map markers when location changes
   useEffect(() => {
-    if (!mapReady || !mapRef.current || !geocodedLocation) return;
+    if (!mapReady || !mapRef.current || !geocodedLocation || !open) return;
 
     // Clear existing markers and info windows
     markersRef.current.forEach(marker => marker.setMap(null));
