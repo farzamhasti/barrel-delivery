@@ -611,3 +611,18 @@
 - [x] Test map interaction and modal functionality (18 tests passing)
 - [x] Verify real-time status updates on map
 - [x] Handle edge cases (invalid addresses, missing coordinates)
+
+
+## Map Markers Display Bug - COMPLETED
+- [x] Fix missing markers/pins on map view
+- [x] Debug marker creation in OrderMapModal
+- [x] Ensure markers appear after geocoding completes
+- [x] Verify marker positioning and styling
+- [x] Test marker display with various orders
+
+**Implementation Details:**
+- Replaced AdvancedMarkerElement with standard google.maps.Marker for better compatibility
+- Used google.maps.SymbolPath.CIRCLE for custom marker shapes (blue for customer, red for restaurant)
+- Added proper error handling and try-catch blocks
+- Markers now display with labels and proper styling
+- All 18 map interaction tests passing

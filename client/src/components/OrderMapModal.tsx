@@ -36,7 +36,7 @@ const RESTAURANT_LOCATION = { lat: 42.8711, lng: -79.2477 };
 
 export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps) {
   const mapRef = useRef<google.maps.Map | null>(null);
-  const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
+  const markersRef = useRef<google.maps.Marker[]>([]);
   const [geocodedLocation, setGeocodedLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [isGeocoding, setIsGeocoding] = useState(false);
   const [geocodeError, setGeocodeError] = useState<string | null>(null);
@@ -92,33 +92,62 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
     if (!mapRef.current || !geocodedLocation) return;
 
     // Clear existing markers
-    markersRef.current.forEach(marker => marker.remove());
+    markersRef.current.forEach(marker => marker.setMap(null));
     markersRef.current = [];
 
-    // Add customer location marker
-    const customerMarker = new google.maps.marker.AdvancedMarkerElement({
-      map: mapRef.current,
-      position: geocodedLocation,
-      title: `Order #${order.id} - ${order.customer?.name}`,
-      content: createOrderMarker(order),
-    });
-    markersRef.current.push(customerMarker);
+    try {
+      // Add customer location marker using standard Marker
+      const customerMarker = new google.maps.Marker({
+        map: mapRef.current,
+        position: geocodedLocation,
+        title: `Order #${order.id} - ${order.customer?.name}`,
+        label: {
+          text: `#${order.id}`,
+          color: "white",
+          fontSize: "14px",
+          fontWeight: "bold",
+        },
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 12,
+          fillColor: "#3b82f6",
+          fillOpacity: 1,
+          strokeColor: "white",
+          strokeWeight: 2,
+        },
+      });
+      markersRef.current.push(customerMarker);
 
-    // Add restaurant marker
-    const restaurantMarker = new google.maps.marker.AdvancedMarkerElement({
-      map: mapRef.current,
-      position: RESTAURANT_LOCATION,
-      title: "Restaurant",
-      content: createRestaurantMarker(),
-    });
-    markersRef.current.push(restaurantMarker);
+      // Add restaurant marker
+      const restaurantMarker = new google.maps.Marker({
+        map: mapRef.current,
+        position: RESTAURANT_LOCATION,
+        title: "Restaurant",
+        label: {
+          text: "🍽️",
+          fontSize: "16px",
+        },
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 12,
+          fillColor: "#ef4444",
+          fillOpacity: 1,
+          strokeColor: "white",
+          strokeWeight: 2,
+        },
+      });
+      markersRef.current.push(restaurantMarker);
 
-    // Center map between the two locations
-    const bounds = new google.maps.LatLngBounds();
-    bounds.extend(geocodedLocation);
-    bounds.extend(RESTAURANT_LOCATION);
-    mapRef.current.fitBounds(bounds);
-  }, [geocodedLocation, order.id]);
+      // Center map between the two locations
+      const bounds = new google.maps.LatLngBounds();
+      bounds.extend(geocodedLocation);
+      bounds.extend(RESTAURANT_LOCATION);
+      mapRef.current.fitBounds(bounds);
+    } catch (error) {
+      console.error("Error creating markers:", error);
+      setGeocodeError("Failed to display markers on map");
+    }
+  }, [geocodedLocation, order.id, order.customer?.name]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -248,36 +277,24 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
               <div>
                 <p className="text-xs text-muted-foreground font-medium mb-2">Items</p>
                 <div className="space-y-1 text-sm">
-                  {order.items && order.items.length > 0 ? (
-                    order.items.map((item, idx) => (
-                      <div key={idx} className="flex justify-between">
-                        <span className="text-foreground">{item.quantity}x</span>
-                        <span className="text-muted-foreground line-clamp-1 flex-1 ml-2">
-                          {item.menuItemName}
-                        </span>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-muted-foreground text-xs">No items</p>
-                  )}
+                  {order.items?.map((item, idx) => (
+                    <div key={idx} className="flex justify-between">
+                      <span className="text-foreground">{item.quantity}x {item.menuItemName}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
 
-              {order.totalPrice !== undefined && (
-                <div className="pt-2 border-t border-border">
-                  <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground font-medium">Total</span>
-                    <span className="text-lg font-bold text-accent">
-                      ${(Number(order.totalPrice) || 0).toFixed(2)}
-                    </span>
-                  </div>
+              <div className="pt-2 border-t border-border">
+                <div className="flex justify-between items-center">
+                  <p className="text-sm font-medium text-foreground">Total</p>
+                  <p className="text-lg font-bold text-accent">${order.totalPrice?.toFixed(2)}</p>
                 </div>
-              )}
+              </div>
             </Card>
 
-            {/* Notes Card */}
             {order.notes && (
-              <Card className="p-4 bg-muted/50">
+              <Card className="p-4 space-y-2 bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800">
                 <p className="text-xs text-muted-foreground font-medium mb-2">Special Instructions</p>
                 <p className="text-sm text-foreground">{order.notes}</p>
               </Card>
@@ -315,18 +332,4 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
       </DialogContent>
     </Dialog>
   );
-}
-
-function createOrderMarker(order: any) {
-  const div = document.createElement("div");
-  div.className = "flex items-center justify-center w-12 h-12 bg-blue-500 text-white rounded-full font-bold text-sm shadow-lg";
-  div.innerHTML = `#${order.id}`;
-  return div;
-}
-
-function createRestaurantMarker() {
-  const div = document.createElement("div");
-  div.className = "flex items-center justify-center w-12 h-12 bg-red-500 text-white rounded-full font-bold text-lg shadow-lg";
-  div.innerHTML = "🍽️";
-  return div;
 }
