@@ -73,11 +73,18 @@ declare global {
   }
 }
 
-const API_KEY = import.meta.env.VITE_FRONTEND_FORGE_API_KEY;
+const API_KEY = import.meta.env.VITE_FRONTEND_FORGE_API_KEY || "";
 const FORGE_BASE_URL =
   import.meta.env.VITE_FRONTEND_FORGE_API_URL ||
   "https://forge.butterfly-effect.dev";
 const MAPS_PROXY_URL = `${FORGE_BASE_URL}/v1/maps/proxy`;
+
+// Log environment for debugging
+if (typeof window !== "undefined") {
+  console.log("[Map] API_KEY present:", !!API_KEY);
+  console.log("[Map] FORGE_BASE_URL:", FORGE_BASE_URL);
+  console.log("[Map] MAPS_PROXY_URL:", MAPS_PROXY_URL);
+}
 
 // Track if the script is already loaded or loading
 let mapScriptPromise: Promise<void> | null = null;
@@ -99,7 +106,6 @@ function loadMapScript(): Promise<void> {
     const existingScript = document.querySelector(
       'script[src*="maps/api/js"]'
     );
-
     if (existingScript) {
       // Script already in DOM, wait for it to load
       if (window.google?.maps) {
@@ -109,15 +115,23 @@ function loadMapScript(): Promise<void> {
         const checkInterval = setInterval(() => {
           if (window.google?.maps) {
             clearInterval(checkInterval);
+            console.log("[Map] Google Maps loaded from existing script");
             resolve();
           }
         }, 100);
         // Timeout after 10 seconds
         setTimeout(() => {
           clearInterval(checkInterval);
-          reject(new Error("Google Maps script loading timeout"));
+          console.error("[Map] Google Maps script loading timeout (10s)");
+          reject(new Error("Google Maps script loading timeout (10s)"));
         }, 10000);
       }
+      return;
+    }
+
+    if (!API_KEY) {
+      console.error("[Map] API_KEY is not configured. Google Maps will not load.");
+      reject(new Error("Google Maps API key not configured (VITE_FRONTEND_FORGE_API_KEY missing)"));
       return;
     }
 
@@ -126,16 +140,20 @@ function loadMapScript(): Promise<void> {
     script.async = true;
     script.defer = true;
     script.crossOrigin = "anonymous";
+    console.log("[Map] Loading Google Maps script from:", script.src);
 
     script.onload = () => {
+      console.log("[Map] Google Maps script loaded successfully");
       resolve();
     };
 
     script.onerror = () => {
       mapScriptPromise = null; // Reset on error so it can be retried
+      console.error("[Map] Failed to load Google Maps script", script.src);
       reject(new Error("Failed to load Google Maps script"));
     };
 
+    console.log("[Map] Appending Google Maps script to DOM");
     document.head.appendChild(script);
   });
 
@@ -144,129 +162,129 @@ function loadMapScript(): Promise<void> {
 
 interface MapViewProps {
   className?: string;
-  initialCenter?: google.maps.LatLngLiteral;
+  initialCenter?: { lat: number; lng: number };
   initialZoom?: number;
   onMapReady?: (map: google.maps.Map) => void;
 }
 
 export function MapView({
   className,
-  initialCenter = { lat: 37.7749, lng: -122.4194 },
+  initialCenter = { lat: 40.7128, lng: -74.006 },
   initialZoom = 12,
   onMapReady,
 }: MapViewProps) {
-  const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<google.maps.Map | null>(null);
-  const resizeObserverRef = useRef<ResizeObserver | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<google.maps.Map | null>(null);
+  const [mapError, setMapError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const init = usePersistFn(async () => {
-    try {
-      console.log('Initializing map...');
-      await loadMapScript();
-      if (!mapContainer.current) {
-        console.error("Map container not found");
-        return;
-      }
-      
-      // Ensure container has proper dimensions
-      const containerRect = mapContainer.current.getBoundingClientRect();
-      console.log('Map container dimensions:', containerRect.width, 'x', containerRect.height);
-      
-      // Wait for container to have dimensions
-      if (containerRect.width === 0 || containerRect.height === 0) {
-        console.warn('Container has zero dimensions, waiting...');
-        setTimeout(init, 100);
-        return;
-      }
-      
-      map.current = new window.google!.maps.Map(mapContainer.current, {
-        zoom: initialZoom,
-        center: initialCenter,
-        mapTypeControl: true,
-        fullscreenControl: true,
-        zoomControl: true,
-        streetViewControl: true,
-        mapId: "DEMO_MAP_ID",
-      });
-      console.log('Map created successfully');
-      
-      // Trigger multiple resizes for mobile compatibility
-      setTimeout(() => {
-        if (map.current) {
-          google.maps.event.trigger(map.current, 'resize');
-          console.log('Map resize triggered (1st)');
-        }
-      }, 50);
-      
-      setTimeout(() => {
-        if (map.current) {
-          google.maps.event.trigger(map.current, 'resize');
-          console.log('Map resize triggered (2nd)');
-        }
-      }, 150);
-      
-      if (onMapReady) {
-        console.log('Calling onMapReady callback');
-        onMapReady(map.current);
-      }
-      
-      // Set up ResizeObserver to handle container size changes
-      if (typeof ResizeObserver !== 'undefined' && mapContainer.current) {
-        resizeObserverRef.current = new ResizeObserver(() => {
-          if (map.current) {
-            console.log('Container resized, triggering map resize');
-            google.maps.event.trigger(map.current, 'resize');
-          }
-        });
-        resizeObserverRef.current.observe(mapContainer.current);
-      }
-    } catch (error) {
-      console.error("Map initialization error:", error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to load map';
-      setError(errorMessage);
-    }
+  const handleMapReady = usePersistFn((map: google.maps.Map) => {
+    mapRef.current = map;
+    setIsLoading(false);
+    onMapReady?.(map);
   });
 
   useEffect(() => {
-    init();
-    
-    // Cleanup on unmount
-    return () => {
-      if (resizeObserverRef.current) {
-        resizeObserverRef.current.disconnect();
+    if (!containerRef.current) return;
+
+    let isMounted = true;
+
+    const initializeMap = async () => {
+      try {
+        setIsLoading(true);
+        setMapError(null);
+
+        // Load the Google Maps script
+        await loadMapScript();
+
+        if (!isMounted) return;
+
+        if (!window.google?.maps) {
+          throw new Error("Google Maps library failed to load");
+        }
+
+        if (!containerRef.current) return;
+
+        console.log("[Map] Initializing map...");
+        console.log("[Map] Container dimensions:", containerRef.current.offsetWidth, "x", containerRef.current.offsetHeight);
+
+        // Create the map
+        const map = new google.maps.Map(containerRef.current, {
+          center: initialCenter,
+          zoom: initialZoom,
+          mapTypeControl: true,
+          fullscreenControl: true,
+          streetViewControl: true,
+          zoomControl: true,
+        });
+
+        console.log("[Map] Map created successfully");
+        handleMapReady(map);
+
+        // Trigger resize events for mobile compatibility
+        setTimeout(() => {
+          if (map) {
+            google.maps.event.trigger(map, "resize");
+            console.log("[Map] First resize triggered");
+          }
+        }, 50);
+
+        setTimeout(() => {
+          if (map) {
+            google.maps.event.trigger(map, "resize");
+            console.log("[Map] Second resize triggered");
+          }
+        }, 150);
+
+        // Use ResizeObserver to handle container resizing
+        const resizeObserver = new ResizeObserver(() => {
+          if (map && containerRef.current && (containerRef.current.offsetWidth > 0 || containerRef.current.offsetHeight > 0)) {
+            google.maps.event.trigger(map, "resize");
+            console.log("[Map] Container resized, triggering map resize");
+          }
+        });
+
+        if (containerRef.current) {
+          resizeObserver.observe(containerRef.current);
+        }
+
+        return () => {
+          resizeObserver.disconnect();
+        };
+      } catch (error) {
+        if (!isMounted) return;
+
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        console.error("[Map] Error initializing map:", errorMessage);
+        setMapError(errorMessage);
+        setIsLoading(false);
       }
     };
-  }, [init]);
 
-  if (error) {
+    initializeMap();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [initialCenter, initialZoom, handleMapReady]);
+
+  if (mapError) {
     return (
-      <div 
-        className={cn("w-full h-full min-h-[300px] bg-red-50 flex items-center justify-center", className)}
-        style={{ 
-          display: 'flex',
-          position: 'relative',
-          overflow: 'hidden'
-        }}
-      >
-        <div className="text-center">
-          <div className="text-red-600 text-sm font-semibold mb-2">Map Error</div>
-          <div className="text-gray-600 text-xs">{error}</div>
-          {!API_KEY && <div className="text-gray-600 text-xs mt-2">API Key not configured</div>}
+      <div className={cn("w-full h-full flex items-center justify-center bg-destructive/10", className)}>
+        <div className="flex flex-col items-center gap-2 text-center px-4">
+          <div className="text-destructive font-medium">Map Error</div>
+          <div className="text-xs text-muted-foreground">{mapError}</div>
+          {!API_KEY && <div className="text-xs text-destructive mt-2">API Key not configured</div>}
         </div>
       </div>
     );
   }
 
   return (
-    <div 
-      ref={mapContainer} 
-      className={cn("w-full h-full min-h-[300px] bg-gray-100", className)}
-      style={{ 
-        display: 'block',
-        position: 'relative',
-        overflow: 'hidden'
-      }}
+    <div
+      ref={containerRef}
+      className={cn("w-full h-full bg-muted", className)}
+      style={{ display: "block", minHeight: "200px" }}
     />
   );
 }
