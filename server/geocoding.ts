@@ -1,4 +1,4 @@
-import { invokeLLM } from "./_core/llm";
+import { makeRequest, GeocodingResult } from "./_core/map";
 
 /**
  * Geocoding service for converting addresses to coordinates using Google Maps API
@@ -30,42 +30,25 @@ export async function geocodeAddress(address: string): Promise<GeocodeResult | G
       };
     }
 
-    // Use the built-in Maps API through Manus proxy
-    // The proxy automatically handles authentication
-    const response = await fetch(
-      `${process.env.BUILT_IN_FORGE_API_URL}/maps/geocode`,
+    // Use the Google Maps Geocoding API through Manus proxy
+    // The makeRequest helper handles authentication automatically
+    const result = await makeRequest<GeocodingResult>(
+      "/maps/api/geocode/json",
       {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${process.env.BUILT_IN_FORGE_API_KEY}`,
-        },
-        body: JSON.stringify({
-          address,
-          region: "CA", // Default to Canada
-        }),
+        address,
+        region: "CA", // Default to Canada
       }
     );
 
-    if (!response.ok) {
-      console.error(`Geocoding failed: ${response.status} ${response.statusText}`);
+    if (result.status !== "OK" || !result.results || result.results.length === 0) {
       return {
-        error: `Geocoding service returned ${response.status}`,
+        error: `Geocoding failed: ${result.status}`,
         address,
       };
     }
 
-    const data = await response.json();
-
-    if (!data.results || data.results.length === 0) {
-      return {
-        error: "Address not found",
-        address,
-      };
-    }
-
-    const result = data.results[0];
-    const location = result.geometry?.location;
+    const geocodeResult = result.results[0];
+    const location = geocodeResult.geometry?.location;
 
     if (!location) {
       return {
@@ -77,8 +60,8 @@ export async function geocodeAddress(address: string): Promise<GeocodeResult | G
     return {
       latitude: location.lat,
       longitude: location.lng,
-      formattedAddress: result.formatted_address || address,
-      placeId: result.place_id,
+      formattedAddress: geocodeResult.formatted_address || address,
+      placeId: geocodeResult.place_id,
     };
   } catch (error) {
     console.error("Geocoding error:", error);
@@ -123,45 +106,28 @@ export async function reverseGeocodeCoordinates(
       };
     }
 
-    const response = await fetch(
-      `${process.env.BUILT_IN_FORGE_API_URL}/maps/reverse-geocode`,
+    // Use the Google Maps Reverse Geocoding API through Manus proxy
+    const result = await makeRequest<GeocodingResult>(
+      "/maps/api/geocode/json",
       {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${process.env.BUILT_IN_FORGE_API_KEY}`,
-        },
-        body: JSON.stringify({
-          latitude,
-          longitude,
-        }),
+        latlng: `${latitude},${longitude}`,
       }
     );
 
-    if (!response.ok) {
-      console.error(`Reverse geocoding failed: ${response.status}`);
+    if (result.status !== "OK" || !result.results || result.results.length === 0) {
       return {
-        error: `Reverse geocoding service returned ${response.status}`,
+        error: `Reverse geocoding failed: ${result.status}`,
         address: `${latitude},${longitude}`,
       };
     }
 
-    const data = await response.json();
-
-    if (!data.results || data.results.length === 0) {
-      return {
-        error: "No address found for coordinates",
-        address: `${latitude},${longitude}`,
-      };
-    }
-
-    const result = data.results[0];
+    const geocodeResult = result.results[0];
 
     return {
       latitude,
       longitude,
-      formattedAddress: result.formatted_address || `${latitude},${longitude}`,
-      placeId: result.place_id,
+      formattedAddress: geocodeResult.formatted_address || `${latitude},${longitude}`,
+      placeId: geocodeResult.place_id,
     };
   } catch (error) {
     console.error("Reverse geocoding error:", error);
