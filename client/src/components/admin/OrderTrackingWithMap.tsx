@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,24 +13,24 @@ const RESTAURANT_ADDRESS = { lat: 42.905191, lng: -78.9225479 }; // 224 Garrison
 
 export default function OrderTrackingWithMap() {
   const utils = trpc.useUtils();
-const [mapModalOpen, setMapModalOpen] = useState(false);
+  const [mapModalOpen, setMapModalOpen] = useState(false);
   const [selectedOrderForMap, setSelectedOrderForMap] = useState<any>(null);
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
   const [showMap, setShowMap] = useState(true);
   const mapRef = useRef<google.maps.Map | null>(null);
-  const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
+  const markersRef = useRef<google.maps.Marker[]>([]);
 
   // Fetch today's orders with items for complete data
   const { data: allOrders = [], isLoading, refetch } = trpc.orders.getTodayOrdersWithItems.useQuery();
-  
+
   // Fetch selected order with items
   const { data: selectedOrderData } = trpc.orders.getById.useQuery(
     { orderId: selectedOrderId! },
     { enabled: !!selectedOrderId }
   );
-  
+
   // Filter to active orders
-  const orders = Array.isArray(allOrders) ? allOrders.filter((o: any) => 
+  const orders = Array.isArray(allOrders) ? allOrders.filter((o: any) =>
     ["Pending", "Ready", "On the Way"].includes(o.status)
   ) : [];
 
@@ -51,20 +51,33 @@ const [mapModalOpen, setMapModalOpen] = useState(false);
     if (!mapRef.current) return;
 
     // Clear existing markers
-    markersRef.current.forEach(marker => marker.remove());
+    markersRef.current.forEach(marker => marker.setMap(null));
     markersRef.current = [];
 
     // Add markers for each order
     orders.forEach((order: any) => {
       if (order.customer?.latitude && order.customer?.longitude) {
-        const marker = new google.maps.marker.AdvancedMarkerElement({
+        const marker = new google.maps.Marker({
           map: mapRef.current,
           position: {
             lat: parseFloat(order.customer.latitude as any),
             lng: parseFloat(order.customer.longitude as any),
           },
           title: `Order #${order.id}`,
-          content: createMarkerContent(order),
+          label: {
+            text: `#${order.id}`,
+            color: "white",
+            fontSize: "14px",
+            fontWeight: "bold",
+          },
+          icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 16,
+            fillColor: "#3b82f6",
+            fillOpacity: 1,
+            strokeColor: "white",
+            strokeWeight: 2,
+          },
         });
 
         marker.addListener("click", () => {
@@ -75,15 +88,6 @@ const [mapModalOpen, setMapModalOpen] = useState(false);
       }
     });
   }, [orders]);
-
-
-
-  const createMarkerContent = (order: any) => {
-    const div = document.createElement("div");
-    div.className = "flex items-center justify-center w-10 h-10 bg-blue-500 text-white rounded-full font-bold text-sm cursor-pointer hover:bg-blue-600 transition-colors";
-    div.textContent = `#${order.id}`;
-    return div;
-  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -99,8 +103,6 @@ const [mapModalOpen, setMapModalOpen] = useState(false);
         return "bg-gray-100 text-gray-800";
     }
   };
-
-
 
   return (
     <div className="space-y-6">
@@ -137,13 +139,24 @@ const [mapModalOpen, setMapModalOpen] = useState(false);
                 initialZoom={14}
                 onMapReady={(map) => {
                   mapRef.current = map;
-                  
+
                   // Add restaurant marker
-                  new google.maps.marker.AdvancedMarkerElement({
+                  new google.maps.Marker({
                     map,
                     position: RESTAURANT_ADDRESS,
                     title: "Restaurant",
-                    content: createRestaurantMarker(),
+                    label: {
+                      text: "🍽️",
+                      fontSize: "18px",
+                    },
+                    icon: {
+                      path: google.maps.SymbolPath.CIRCLE,
+                      scale: 18,
+                      fillColor: "#ef4444",
+                      fillOpacity: 1,
+                      strokeColor: "white",
+                      strokeWeight: 3,
+                    },
                   });
                 }}
               />
@@ -154,7 +167,7 @@ const [mapModalOpen, setMapModalOpen] = useState(false);
         {/* Orders List */}
         <div className={showMap ? "lg:col-span-1" : "lg:col-span-3"}>
           <h3 className="text-lg font-semibold text-foreground mb-4">Active Orders ({orders?.length || 0})</h3>
-          
+
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
@@ -250,11 +263,4 @@ const [mapModalOpen, setMapModalOpen] = useState(false);
       )}
     </div>
   );
-}
-
-function createRestaurantMarker() {
-  const div = document.createElement("div");
-  div.className = "flex items-center justify-center w-12 h-12 bg-red-500 text-white rounded-full font-bold text-lg";
-  div.innerHTML = "🍽️";
-  return div;
 }
