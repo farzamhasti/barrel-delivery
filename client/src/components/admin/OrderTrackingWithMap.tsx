@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -30,9 +30,9 @@ const [mapModalOpen, setMapModalOpen] = useState(false);
   );
   
   // Filter to active orders
-  const orders = allOrders.filter((o: any) => 
+  const orders = Array.isArray(allOrders) ? allOrders.filter((o: any) => 
     ["Pending", "Ready", "On the Way"].includes(o.status)
-  );
+  ) : [];
 
   // Auto-refetch every 5 seconds for real-time updates
   // Also listen for cache invalidation from other components
@@ -153,13 +153,13 @@ const [mapModalOpen, setMapModalOpen] = useState(false);
 
         {/* Orders List */}
         <div className={showMap ? "lg:col-span-1" : "lg:col-span-3"}>
-          <h3 className="text-lg font-semibold text-foreground mb-4">Active Orders ({orders.length})</h3>
+          <h3 className="text-lg font-semibold text-foreground mb-4">Active Orders ({orders?.length || 0})</h3>
           
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
             </div>
-          ) : orders.length === 0 ? (
+          ) : !orders || orders.length === 0 ? (
             <Card className="p-6 text-center">
               <p className="text-muted-foreground">No active orders</p>
             </Card>
