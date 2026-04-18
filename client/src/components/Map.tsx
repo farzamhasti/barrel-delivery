@@ -160,11 +160,17 @@ export function MapView({
 
   const init = usePersistFn(async () => {
     try {
+      console.log('Initializing map...');
       await loadMapScript();
       if (!mapContainer.current) {
         console.error("Map container not found");
         return;
       }
+      
+      // Ensure container has proper dimensions
+      const containerRect = mapContainer.current.getBoundingClientRect();
+      console.log('Map container dimensions:', containerRect.width, 'x', containerRect.height);
+      
       map.current = new window.google!.maps.Map(mapContainer.current, {
         zoom: initialZoom,
         center: initialCenter,
@@ -174,7 +180,18 @@ export function MapView({
         streetViewControl: true,
         mapId: "DEMO_MAP_ID",
       });
+      console.log('Map created successfully');
+      
+      // Trigger resize to ensure proper rendering on mobile
+      setTimeout(() => {
+        if (map.current) {
+          google.maps.event.trigger(map.current, 'resize');
+          console.log('Map resize triggered');
+        }
+      }, 100);
+      
       if (onMapReady) {
+        console.log('Calling onMapReady callback');
         onMapReady(map.current);
       }
     } catch (error) {
@@ -187,6 +204,10 @@ export function MapView({
   }, [init]);
 
   return (
-    <div ref={mapContainer} className={cn("w-full h-full min-h-[300px]", className)} />
+    <div 
+      ref={mapContainer} 
+      className={cn("w-full h-full min-h-[300px] bg-gray-100", className)}
+      style={{ display: 'block' }}
+    />
   );
 }

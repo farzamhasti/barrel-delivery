@@ -158,6 +158,7 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
       });
 
       // Add customer location marker with larger, more visible styling
+      console.log('Creating customer marker at:', geocodedLocation);
       const customerMarker = new google.maps.Marker({
         map: mapRef.current,
         position: geocodedLocation,
@@ -178,6 +179,7 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
         },
         animation: google.maps.Animation.DROP,
       });
+      console.log('Customer marker created successfully');
 
       // Add click listener to show info window
       customerMarker.addListener('click', () => {
@@ -190,6 +192,7 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
       customerInfoWindow.open(mapRef.current, customerMarker);
       infoWindowsRef.current.push(customerInfoWindow);
       markersRef.current.push(customerMarker);
+      console.log('Customer marker added to map, total markers:', markersRef.current.length);
 
       // Create info window for restaurant
       const restaurantInfoContent = document.createElement('div');
@@ -210,6 +213,7 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
       });
 
       // Add restaurant marker with larger, more visible styling
+      console.log('Creating restaurant marker at:', RESTAURANT_LOCATION);
       const restaurantMarker = new google.maps.Marker({
         map: mapRef.current,
         position: RESTAURANT_LOCATION,
@@ -228,6 +232,7 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
         },
         animation: google.maps.Animation.DROP,
       });
+      console.log('Restaurant marker created successfully');
 
       // Add click listener to show info window
       restaurantMarker.addListener('click', () => {
@@ -238,6 +243,7 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
 
       infoWindowsRef.current.push(restaurantInfoWindow);
       markersRef.current.push(restaurantMarker);
+      console.log('Restaurant marker added to map, total markers:', markersRef.current.length);
 
       // Center map between the two locations with padding
       const bounds = new google.maps.LatLngBounds();
@@ -246,7 +252,11 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
       // Use setTimeout to ensure map is ready before fitting bounds
       setTimeout(() => {
         if (mapRef.current) {
+          console.log('Fitting bounds on map');
           mapRef.current.fitBounds(bounds, { top: 100, right: 100, bottom: 100, left: 100 });
+          // Trigger another resize to ensure mobile rendering
+          google.maps.event.trigger(mapRef.current, 'resize');
+          console.log('Map bounds fitted and resized');
         }
       }, 50);
     } catch (error) {
