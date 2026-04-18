@@ -136,11 +136,15 @@ function loadMapScript(): Promise<void> {
     }
 
     const script = document.createElement("script");
-    script.src = `${MAPS_PROXY_URL}/maps/api/js?key=${API_KEY}&v=weekly&libraries=marker,places,geocoding,geometry`;
+    // Load Google Maps API with required libraries
+    // Note: 'marker' library is included for future AdvancedMarkerElement support
+    // Currently using legacy Marker API which doesn't require mapId
+    script.src = `${MAPS_PROXY_URL}/maps/api/js?key=${API_KEY}&v=weekly&libraries=places,geocoding,geometry`;
     script.async = true;
     script.defer = true;
     script.crossOrigin = "anonymous";
     console.log("[Map] Loading Google Maps script from:", script.src);
+    console.log("[Map] Note: Using legacy Marker API. For AdvancedMarkerElement, add mapId to map options.");
 
     script.onload = () => {
       console.log("[Map] Google Maps script loaded successfully");
@@ -209,6 +213,10 @@ export function MapView({
         console.log("[Map] Container dimensions:", containerRef.current.offsetWidth, "x", containerRef.current.offsetHeight);
 
         // Create the map
+        // Note: We don't set a mapId here because we're using the legacy Marker API
+        // If you want to use AdvancedMarkerElement in the future, you'll need to:
+        // 1. Create a Map ID in Google Cloud Console
+        // 2. Add mapId property here
         const map = new google.maps.Map(containerRef.current, {
           center: initialCenter,
           zoom: initialZoom,
@@ -275,6 +283,7 @@ export function MapView({
           <div className="text-destructive font-medium">Map Error</div>
           <div className="text-xs text-muted-foreground">{mapError}</div>
           {!API_KEY && <div className="text-xs text-destructive mt-2">API Key not configured</div>}
+          <div className="text-xs text-muted-foreground mt-2">Try refreshing the page or check browser console for details</div>
         </div>
       </div>
     );
