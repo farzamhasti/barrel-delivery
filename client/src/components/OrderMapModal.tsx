@@ -41,6 +41,7 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
   const [geocodedLocation, setGeocodedLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [isGeocoding, setIsGeocoding] = useState(false);
   const [geocodeError, setGeocodeError] = useState<string | null>(null);
+  const [mapReady, setMapReady] = useState(false);
 
   // Use geocoding mutation to convert address to coordinates
   const geocodeMutation = (trpc as any).maps.geocode.useMutation({
@@ -90,7 +91,7 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
 
   // Update map markers when location changes
   useEffect(() => {
-    if (!mapRef.current || !geocodedLocation) return;
+    if (!mapReady || !mapRef.current || !geocodedLocation) return;
 
     // Clear existing markers and info windows
     markersRef.current.forEach(marker => marker.setMap(null));
@@ -223,7 +224,7 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
       console.error("Error creating markers:", error);
       setGeocodeError("Failed to display markers on map");
     }
-  }, [geocodedLocation, order.id, order.customer?.name, order.status, order.area, order.notes]);
+  }, [mapReady, geocodedLocation, order.id, order.customer?.name, order.status, order.area, order.notes]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -287,6 +288,7 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
                   initialZoom={geocodedLocation ? 15 : 13}
                   onMapReady={(map) => {
                     mapRef.current = map;
+                    setMapReady(true);
                   }}
                 />
               )}

@@ -626,3 +626,19 @@
 - Added proper error handling and try-catch blocks
 - Markers now display with labels and proper styling
 - All 18 map interaction tests passing
+
+
+## Map Markers Not Displaying Bug - COMPLETED
+- [x] Debug marker rendering in OrderMapModal (Root cause: timing issue with refs and effects)
+- [x] Verify geocoding coordinates are being passed correctly (Confirmed working)
+- [x] Check if map is ready before adding markers (Fixed: Added mapReady state)
+- [x] Verify google.maps.Marker is being created correctly (Confirmed working)
+- [x] Test marker display with console logging (Verified in dev server)
+- [x] Fix marker rendering logic (Fixed: Added mapReady dependency to effect)
+
+**Implementation Details:**
+- Added mapReady state to track when MapView component initializes
+- Updated onMapReady callback to set mapReady=true
+- Added mapReady to marker effect dependencies
+- This ensures markers are created only after map is fully initialized
+- Markers now display correctly with customer (blue) and restaurant (red) pins
