@@ -157,6 +157,7 @@ export function MapView({
 }: MapViewProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<google.maps.Map | null>(null);
+  const resizeObserverRef = useRef<ResizeObserver | null>(null);
 
   const init = usePersistFn(async () => {
     try {
@@ -171,6 +172,13 @@ export function MapView({
       const containerRect = mapContainer.current.getBoundingClientRect();
       console.log('Map container dimensions:', containerRect.width, 'x', containerRect.height);
       
+      // Wait for container to have dimensions
+      if (containerRect.width === 0 || containerRect.height === 0) {
+        console.warn('Container has zero dimensions, waiting...');
+        setTimeout(init, 100);
+        return;
+      }
+      
       map.current = new window.google!.maps.Map(mapContainer.current, {
         zoom: initialZoom,
         center: initialCenter,
@@ -182,17 +190,35 @@ export function MapView({
       });
       console.log('Map created successfully');
       
-      // Trigger resize to ensure proper rendering on mobile
+      // Trigger multiple resizes for mobile compatibility
       setTimeout(() => {
         if (map.current) {
           google.maps.event.trigger(map.current, 'resize');
-          console.log('Map resize triggered');
+          console.log('Map resize triggered (1st)');
         }
-      }, 100);
+      }, 50);
+      
+      setTimeout(() => {
+        if (map.current) {
+          google.maps.event.trigger(map.current, 'resize');
+          console.log('Map resize triggered (2nd)');
+        }
+      }, 150);
       
       if (onMapReady) {
         console.log('Calling onMapReady callback');
         onMapReady(map.current);
+      }
+      
+      // Set up ResizeObserver to handle container size changes
+      if (typeof ResizeObserver !== 'undefined' && mapContainer.current) {
+        resizeObserverRef.current = new ResizeObserver(() => {
+          if (map.current) {
+            console.log('Container resized, triggering map resize');
+            google.maps.event.trigger(map.current, 'resize');
+          }
+        });
+        resizeObserverRef.current.observe(mapContainer.current);
       }
     } catch (error) {
       console.error("Map initialization error:", error);
@@ -201,13 +227,24 @@ export function MapView({
 
   useEffect(() => {
     init();
+    
+    // Cleanup on unmount
+    return () => {
+      if (resizeObserverRef.current) {
+        resizeObserverRef.current.disconnect();
+      }
+    };
   }, [init]);
 
   return (
     <div 
       ref={mapContainer} 
       className={cn("w-full h-full min-h-[300px] bg-gray-100", className)}
-      style={{ display: 'block' }}
+      style={{ 
+        display: 'block',
+        position: 'relative',
+        overflow: 'hidden'
+      }}
     />
   );
 }

@@ -249,6 +249,7 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
       const bounds = new google.maps.LatLngBounds();
       bounds.extend(geocodedLocation);
       bounds.extend(RESTAURANT_LOCATION);
+      
       // Use setTimeout to ensure map is ready before fitting bounds
       setTimeout(() => {
         if (mapRef.current) {
@@ -297,15 +298,15 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-2 sm:p-4 md:p-6">
-        <DialogHeader>
+      <DialogContent className="max-w-4xl max-h-[95vh] overflow-hidden p-2 sm:p-4 md:p-6 flex flex-col w-[calc(100%-1rem)] sm:w-auto">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="text-lg sm:text-xl">Order #{order.id} - Map View</DialogTitle>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 sm:gap-4">
+        <div className="flex-1 overflow-y-auto min-h-0 grid grid-cols-1 lg:grid-cols-3 gap-2 sm:gap-4">
           {/* Map Section */}
-          <div className="lg:col-span-2">
-            <Card className="overflow-hidden h-[300px] sm:h-[400px] lg:h-[500px]">
+          <div className="lg:col-span-2 flex flex-col min-h-0">
+            <Card className="overflow-hidden flex-1 min-h-0 h-[250px] sm:h-[350px] md:h-[400px] lg:h-auto">
               {isGeocoding ? (
                 <div className="flex items-center justify-center h-full bg-muted">
                   <div className="flex flex-col items-center gap-2">
@@ -324,15 +325,30 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
               ) : (
                 <MapView
                   key={`map-${order.id}`}
+                  className="w-full h-full"
                   initialCenter={geocodedLocation || RESTAURANT_LOCATION}
                   initialZoom={geocodedLocation ? 15 : 13}
                   onMapReady={(map) => {
+                    console.log('Map ready callback triggered');
                     mapRef.current = map;
                     setMapReady(true);
-                    // Trigger map resize to ensure it renders properly
+                    
+                    // Trigger multiple resizes for mobile compatibility
+                    // First resize immediately
                     setTimeout(() => {
-                      google.maps.event.trigger(map, 'resize');
-                    }, 100);
+                      if (map) {
+                        google.maps.event.trigger(map, 'resize');
+                        console.log('First resize triggered on map ready');
+                      }
+                    }, 50);
+                    
+                    // Second resize after a longer delay for mobile
+                    setTimeout(() => {
+                      if (map) {
+                        google.maps.event.trigger(map, 'resize');
+                        console.log('Second resize triggered for mobile');
+                      }
+                    }, 200);
                   }}
                 />
               )}
@@ -340,12 +356,12 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
           </div>
 
           {/* Order Details Section */}
-          <div className="space-y-4">
+          <div className="space-y-2 sm:space-y-4 overflow-y-auto lg:overflow-y-visible">
             {/* Status Card */}
-            <Card className="p-4 bg-gradient-to-br from-accent/10 to-accent/5">
-              <div className="flex items-center gap-3 mb-3">
-                <span className="text-2xl">{getStatusIcon(order.status)}</span>
-                <div>
+            <Card className="p-3 sm:p-4 bg-gradient-to-br from-accent/10 to-accent/5 flex-shrink-0">
+              <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
+                <span className="text-xl sm:text-2xl flex-shrink-0">{getStatusIcon(order.status)}</span>
+                <div className="min-w-0">
                   <p className="text-xs text-muted-foreground font-medium">Current Status</p>
                   <Badge className={getStatusColor(order.status)}>
                     {order.status}
@@ -355,20 +371,20 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
             </Card>
 
             {/* Customer Info Card */}
-            <Card className="p-4 space-y-3">
+            <Card className="p-3 sm:p-4 space-y-2 sm:space-y-3 flex-shrink-0">
               <div>
                 <p className="text-xs text-muted-foreground font-medium mb-1">Customer</p>
-                <p className="font-semibold text-foreground">{order.customer?.name}</p>
+                <p className="font-semibold text-foreground truncate">{order.customer?.name}</p>
               </div>
 
               {order.customer?.phone && (
-                <div className="flex items-start gap-2">
+                <div className="flex items-start gap-2 min-w-0">
                   <Phone className="w-4 h-4 mt-0.5 text-muted-foreground flex-shrink-0" />
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-xs text-muted-foreground">Phone</p>
                     <a
                       href={`tel:${order.customer.phone}`}
-                      className="text-sm font-medium text-accent hover:underline"
+                      className="text-sm font-medium text-accent hover:underline break-all"
                     >
                       {order.customer.phone}
                     </a>
@@ -376,11 +392,11 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
                 </div>
               )}
 
-              <div className="flex items-start gap-2">
+              <div className="flex items-start gap-2 min-w-0">
                 <MapPin className="w-4 h-4 mt-0.5 text-muted-foreground flex-shrink-0" />
-                <div>
+                <div className="min-w-0">
                   <p className="text-xs text-muted-foreground">Address</p>
-                  <p className="text-sm font-medium text-foreground line-clamp-2">
+                  <p className="text-sm font-medium text-foreground line-clamp-2 break-words">
                     {order.customerAddress || order.customer?.address}
                   </p>
                 </div>
@@ -389,19 +405,19 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
               {order.area && (
                 <div>
                   <p className="text-xs text-muted-foreground font-medium mb-1">Area</p>
-                  <Badge variant="outline">{order.area}</Badge>
+                  <Badge variant="outline" className="text-xs">{order.area}</Badge>
                 </div>
               )}
             </Card>
 
             {/* Order Summary Card */}
-            <Card className="p-4 space-y-3">
+            <Card className="p-3 sm:p-4 space-y-2 sm:space-y-3 flex-shrink-0">
               <div>
-                <p className="text-xs text-muted-foreground font-medium mb-2">Items</p>
+                <p className="text-xs text-muted-foreground font-medium mb-1 sm:mb-2">Items</p>
                 <div className="space-y-1 text-sm">
                   {order.items?.map((item, idx) => (
-                    <div key={idx} className="flex justify-between">
-                      <span className="text-foreground">{item.quantity}x {item.menuItemName}</span>
+                    <div key={idx} className="flex justify-between gap-2">
+                      <span className="text-foreground truncate">{item.quantity}x {item.menuItemName}</span>
                     </div>
                   ))}
                 </div>
@@ -416,18 +432,18 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
             </Card>
 
             {order.notes && (
-              <Card className="p-4 space-y-2 bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800">
-                <p className="text-xs text-muted-foreground font-medium mb-2">Special Instructions</p>
-                <p className="text-sm text-foreground">{order.notes}</p>
+              <Card className="p-3 sm:p-4 space-y-2 bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800 flex-shrink-0">
+                <p className="text-xs text-muted-foreground font-medium mb-1">Special Instructions</p>
+                <p className="text-sm text-foreground break-words">{order.notes}</p>
               </Card>
             )}
 
             {/* Action Buttons */}
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-shrink-0">
               <Button
                 variant="outline"
                 size="sm"
-                className="flex-1"
+                className="flex-1 text-xs sm:text-sm"
                 onClick={() => {
                   const address = order.customerAddress || order.customer?.address;
                   if (address) {
@@ -443,7 +459,7 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
               <Button
                 variant="outline"
                 size="sm"
-                className="flex-1"
+                className="flex-1 text-xs sm:text-sm"
                 onClick={() => onOpenChange(false)}
               >
                 Close
