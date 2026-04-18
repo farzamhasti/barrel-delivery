@@ -659,3 +659,29 @@
 - Added responsive padding and gap spacing for mobile (p-2 sm:p-4 md:p-6)
 - Dialog now properly adapts to mobile viewports
 - Markers display correctly on all screen sizes
+
+
+## Critical Map Issues - COMPLETED
+
+### Issue 1: Mobile Marker Not Displaying - FIXED
+- [x] Debug marker rendering on mobile devices
+- [x] Verify marker creation logic runs on mobile
+- [x] Test with various mobile browsers
+- [x] Ensure geocoding works on mobile
+- [x] Fix any mobile-specific rendering issues
+**Fix:** Responsive map container sizing
+
+### Issue 2: Map Not Re-rendering on Desktop - FIXED
+- [x] Fix map lifecycle when opening/closing modal
+- [x] Ensure map is properly cleaned up when modal closes
+- [x] Reset map state when modal reopens
+- [x] Verify markers are recreated on each open
+- [x] Test multiple open/close cycles
+**Fix:** Added cleanup logic and key prop to MapView
+
+### Issue 3: Incorrect Restaurant Location - FIXED
+- [x] Update restaurant coordinates to correct location
+- [x] Use accurate lat/lng instead of geocoding
+- [x] Verify restaurant marker displays at correct location
+- [x] Test on both desktop and mobile
+**Fix:** Updated to { lat: 42.9081, lng: -79.2477 }

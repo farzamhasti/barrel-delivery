@@ -32,7 +32,8 @@ export interface OrderMapModalProps {
   };
 }
 
-const RESTAURANT_LOCATION = { lat: 42.8711, lng: -79.2477 };
+// Correct restaurant location: 224 Garrison Rd, Fort Erie, ON L2A 1M7
+const RESTAURANT_LOCATION = { lat: 42.9081, lng: -79.2477 };
 
 export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps) {
   const mapRef = useRef<google.maps.Map | null>(null);
@@ -66,7 +67,20 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
 
   // Geocode address when modal opens or order changes
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      // Reset map state when modal closes
+      setGeocodedLocation(null);
+      setMapReady(false);
+      setGeocodeError(null);
+      // Clear markers and info windows
+      markersRef.current.forEach(marker => marker.setMap(null));
+      infoWindowsRef.current.forEach(infoWindow => infoWindow.close());
+      markersRef.current = [];
+      infoWindowsRef.current = [];
+      // Reset map ref
+      mapRef.current = null;
+      return;
+    }
 
     // Check if we already have coordinates from customer data
     if (
@@ -284,6 +298,7 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
                 </div>
               ) : (
                 <MapView
+                  key={`map-${order.id}-${open}`}
                   initialCenter={geocodedLocation || RESTAURANT_LOCATION}
                   initialZoom={geocodedLocation ? 15 : 13}
                   onMapReady={(map) => {
