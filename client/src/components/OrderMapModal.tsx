@@ -258,15 +258,15 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-2 sm:p-4 md:p-6">
         <DialogHeader>
-          <DialogTitle>Order #{order.id} - Map View</DialogTitle>
+          <DialogTitle className="text-lg sm:text-xl">Order #{order.id} - Map View</DialogTitle>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 sm:gap-4">
           {/* Map Section */}
           <div className="lg:col-span-2">
-            <Card className="overflow-hidden h-[400px] lg:h-[500px]">
+            <Card className="overflow-hidden h-[300px] sm:h-[400px] lg:h-[500px]">
               {isGeocoding ? (
                 <div className="flex items-center justify-center h-full bg-muted">
                   <div className="flex flex-col items-center gap-2">

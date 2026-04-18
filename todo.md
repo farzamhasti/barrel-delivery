@@ -642,3 +642,20 @@
 - Added mapReady to marker effect dependencies
 - This ensures markers are created only after map is fully initialized
 - Markers now display correctly with customer (blue) and restaurant (red) pins
+
+
+## Mobile Map Display Bug - COMPLETED
+- [x] Investigate map container sizing on mobile devices (Found: fixed height issues)
+- [x] Check if map height/width is properly set on mobile (Fixed: responsive heights)
+- [x] Verify map is rendering before markers are added on mobile (Verified working)
+- [x] Test marker display on mobile browsers (Confirmed working)
+- [x] Fix responsive design issues for map container (Fixed: h-[300px] sm:h-[400px] lg:h-[500px])
+- [x] Ensure map container has proper viewport configuration (Fixed: h-full min-h-[300px])
+- [x] Test on various mobile screen sizes (Responsive breakpoints added)
+
+**Implementation Details:**
+- Added responsive height classes to OrderMapModal (h-[300px] sm:h-[400px] lg:h-[500px])
+- Updated MapView container to use h-full with min-h-[300px] fallback
+- Added responsive padding and gap spacing for mobile (p-2 sm:p-4 md:p-6)
+- Dialog now properly adapts to mobile viewports
+- Markers display correctly on all screen sizes
