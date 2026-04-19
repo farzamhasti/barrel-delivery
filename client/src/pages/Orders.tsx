@@ -16,7 +16,7 @@ interface OrderFormData {
   customerName: string;
   customerPhone: string;
   customerAddress: string;
-  status: string;
+  status: "Pending" | "Ready" | "On the Way" | "Delivered";
   notes: string;
   area: string;
   taxPercentage: number;
@@ -65,6 +65,7 @@ export function Orders() {
     quantity: 1,
     priceAtOrder: 0,
   });
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
 
   // Queries
   const { data: allOrders = [], refetch: refetchOrders, isLoading: isLoadingOrders } = trpc.orders.list.useQuery();
@@ -89,168 +90,145 @@ export function Orders() {
   );
 
   const selectedOrder = useMemo(() => {
-    if (selectedOrderDetails) {
-      return selectedOrderDetails as any;
+    if (editingOrderId !== null) {
+      return orders.find((order: any) => order.id === editingOrderId);
     }
-    return orders.find((o: any) => o.id === selectedOrderId) as any;
-  }, [orders, selectedOrderId, selectedOrderDetails]);
-
-  // Calculate price updates dynamically
-  const priceCalculations = useMemo(() => {
-    // Use editingItems, but if currently editing an item, use the temporary editing values
-    const itemsForCalculation = editingItems.map((item, index) => {
-      if (index === editingItemIndex) {
-        return { ...item, quantity: editingItemQuantity, priceAtOrder: editingItemPrice };
-      }
-      return item;
-    });
-    const subtotal = itemsForCalculation.reduce((sum, item) => sum + item.priceAtOrder * item.quantity, 0);
-    const taxAmount = subtotal * (formData.taxPercentage / 100);
-    const totalPrice = subtotal + taxAmount;
-    return { subtotal, taxAmount, totalPrice };
-  }, [editingItems, formData.taxPercentage, editingItemIndex, editingItemQuantity, editingItemPrice]);
+    return selectedOrderDetails;
+  }, [editingOrderId, selectedOrderDetails, orders]);
 
   // Mutations
-  const updateOrderMutation = trpc.orders.update.useMutation({
-    onSuccess: () => {
-      toast.success("Order updated successfully");
-      invalidateOrderCache(utils);
-      setEditingOrderId(null);
-    },
-    onError: (error: any) => {
-      toast.error(`Failed to update order: ${error.message}`);
-    },
-  });
-
-  const updateCustomerMutation = trpc.customers.update.useMutation({
-    onSuccess: () => {
-      toast.success("Customer information updated");
-      invalidateCustomerCache(utils);
-    },
-    onError: (error: any) => {
-      toast.error(`Failed to update customer: ${error.message}`);
-    },
-  });
-
-  const deleteOrderMutation = trpc.orders.delete.useMutation({
-    onSuccess: () => {
-      toast.success("Order deleted successfully");
-      invalidateOrderCache(utils);
-      setSelectedOrderId(null);
-    },
-    onError: (error: any) => {
-      toast.error(`Failed to delete order: ${error.message}`);
-    },
-  });
-
   const addOrderItemMutation = trpc.orders.createItem.useMutation({
-    onSuccess: () => {
-      // Add the new item to the editingItems state immediately for UI feedback
+    onSuccess: (newItem: any) => {
+      // Add the new item to editingItems state for immediate UI update
+      // Use itemFormData which has the correct price since we just submitted it
       setEditingItems([...editingItems, {
         menuItemId: itemFormData.menuItemId,
         quantity: itemFormData.quantity,
         priceAtOrder: itemFormData.priceAtOrder,
       }]);
       toast.success("Item added to order");
-      invalidateOrderCache(utils);
-      setShowAddItemDialog(false);
-      setItemFormData({ menuItemId: 0, quantity: 1, priceAtOrder: 0 });
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast.error(`Failed to add item: ${error.message}`);
     },
   });
 
-  const updateOrderItemMutation = trpc.orders.updateItem.useMutation({
+  const updateOrderMutation = trpc.orders.update.useMutation({
     onSuccess: () => {
-      toast.success("Item updated");
+      setEditingOrderId(null);
       invalidateOrderCache(utils);
+      toast.success("Order updated successfully");
     },
-    onError: (error: any) => {
-      toast.error(`Failed to update item: ${error.message}`);
+    onError: (error) => {
+      toast.error(`Failed to update order: ${error.message}`);
+    },
+  });
+
+  const deleteOrderMutation = trpc.orders.delete.useMutation({
+    onSuccess: () => {
+      invalidateOrderCache(utils);
+      toast.success("Order deleted successfully");
+    },
+    onError: (error) => {
+      toast.error(`Failed to delete order: ${error.message}`);
     },
   });
 
   const deleteOrderItemMutation = trpc.orders.deleteItem.useMutation({
     onSuccess: () => {
       toast.success("Item removed from order");
-      invalidateOrderCache(utils);
     },
-    onError: (error: any) => {
-      toast.error(`Failed to delete item: ${error.message}`);
+    onError: (error) => {
+      toast.error(`Failed to remove item: ${error.message}`);
     },
   });
 
-  // Handlers
-  const handleEditOrder = (order: any) => {
-    setEditingOrderId(order.id);
-    setFormData({
-      customerName: order.customerName || "",
-      customerPhone: order.customerPhone || "",
-      customerAddress: order.customerAddress || "",
-      status: order.status || "Pending",
-      notes: order.notes || "",
-      area: order.area || "",
-      taxPercentage: order.taxPercentage || 13,
-      hasDeliveryTime: order.hasDeliveryTime || false,
-      deliveryTime: order.deliveryTime ? new Date(order.deliveryTime).toISOString().slice(0, 16) : "",
-    });
-    setEditingItems(order.items || []);
-  };
+  // Price calculations
+  const priceCalculations = useMemo(() => {
+    const subtotal = editingItems.reduce((sum, item) => {
+      return sum + (item.priceAtOrder * item.quantity);
+    }, 0);
+    const taxPercentage = formData.taxPercentage || 13;
+    const tax = subtotal * (taxPercentage / 100);
+    const total = subtotal + tax;
+    return { subtotal, tax, total, taxPercentage };
+  }, [editingItems, formData.taxPercentage]);
 
-  const handleSaveOrder = async () => {
-    if (!formData.customerName || !formData.customerPhone || !formData.customerAddress) {
-      toast.error("Please fill in all customer information");
+  // Handlers
+  const handleAddItemToOrder = async () => {
+    if (itemFormData.menuItemId === 0) {
+      toast.error("Please select an item");
       return;
     }
 
-    if (editingItems.length === 0) {
-      toast.error("Order must have at least one item");
+    if (!editingOrderId) {
+      toast.error("No order selected");
       return;
     }
 
     try {
-      // Update customer info
-      if (selectedOrder?.customerId) {
-        await updateCustomerMutation.mutateAsync({
-          customerId: selectedOrder.customerId,
-          name: formData.customerName,
-          phone: formData.customerPhone,
-          address: formData.customerAddress,
-        });
-      }
+      await addOrderItemMutation.mutateAsync({
+        orderId: editingOrderId,
+        menuItemId: itemFormData.menuItemId,
+        quantity: itemFormData.quantity,
+        priceAtOrder: itemFormData.priceAtOrder,
+      });
 
-      // Calculate new totals based on editingItems
-      const subtotal = editingItems.reduce((sum, item) => sum + (item.priceAtOrder * item.quantity), 0);
-      const taxAmount = subtotal * (formData.taxPercentage / 100);
-      const totalPrice = subtotal + taxAmount;
+      // Reset form
+      setItemFormData({
+        menuItemId: 0,
+        quantity: 1,
+        priceAtOrder: 0,
+      });
+      setSelectedCategoryId(null);
+      setShowAddItemDialog(false);
+    } catch (error) {
+      console.error("Error adding item:", error);
+    }
+  };
 
-      // Update order with new totals and status
+  const handleSaveOrder = async () => {
+    if (!editingOrderId) return;
+
+    try {
       await updateOrderMutation.mutateAsync({
-        orderId: selectedOrderId!,
-        status: formData.status as any,
-        totalPrice,
+        orderId: editingOrderId,
+        status: formData.status,
+        notes: formData.notes,
+        totalPrice: priceCalculations.total,
       });
     } catch (error) {
       console.error("Error saving order:", error);
     }
   };
 
-  const handleAddItemToOrder = async () => {
-    if (!itemFormData.menuItemId || itemFormData.quantity < 1) {
-      toast.error("Please select an item and quantity");
-      return;
-    }
-
+  const handleEditOrder = async (order: any) => {
+    setEditingOrderId(order.id);
+    setFormData({
+      customerName: order.customerName,
+      customerPhone: order.customerPhone,
+      customerAddress: order.customerAddress,
+      status: order.status,
+      notes: order.notes || "",
+      area: order.area,
+      taxPercentage: order.taxPercentage || 13,
+      hasDeliveryTime: !!order.deliveryTime,
+      deliveryTime: order.deliveryTime ? new Date(order.deliveryTime).toISOString().slice(0, 16) : "",
+    });
+    
+    // Fetch order details with items
     try {
-      await addOrderItemMutation.mutateAsync({
-        orderId: selectedOrderId!,
-        menuItemId: itemFormData.menuItemId,
-        quantity: itemFormData.quantity,
-        priceAtOrder: itemFormData.priceAtOrder,
-      });
+      const orderDetails = await utils.orders.getById.fetch({ orderId: order.id });
+      if (orderDetails?.items) {
+        setEditingItems(orderDetails.items.map((item: any) => ({
+          menuItemId: item.menuItemId,
+          quantity: item.quantity,
+          priceAtOrder: Number(item.priceAtOrder),
+        })));
+      }
     } catch (error) {
-      console.error("Error adding item:", error);
+      console.error("Error fetching order details:", error);
+      setEditingItems([]);
     }
   };
 
@@ -264,130 +242,97 @@ export function Orders() {
     }
   };
 
-  const handleEditItem = (index: number) => {
-    setEditingItemIndex(index);
-    setEditingItemQuantity(editingItems[index].quantity);
-    setEditingItemPrice(editingItems[index].priceAtOrder);
+  const handleDeleteOrderItem = async (orderId: number, itemId: number) => {
+    try {
+      await deleteOrderItemMutation.mutateAsync({ itemId });
+      setEditingItems(editingItems.filter((_, idx) => idx !== editingItems.findIndex((item) => item.menuItemId === itemId)));
+      invalidateOrderCache(utils);
+    } catch (error) {
+      console.error("Error deleting item:", error);
+    }
   };
 
-  const handleSaveItemEdit = (index: number) => {
-    if (editingItemQuantity < 1) {
-      toast.error("Quantity must be at least 1");
-      return;
-    }
-    if (editingItemPrice < 0) {
-      toast.error("Price cannot be negative");
-      return;
-    }
-
-    const itemId = selectedOrder?.items?.[index]?.id;
-    if (!itemId) {
-      toast.error("Item ID not found");
-      return;
-    }
-
-    updateOrderItemMutation.mutate({
-      itemId,
-      quantity: editingItemQuantity,
-      priceAtOrder: editingItemPrice,
+  const handleCancelEdit = () => {
+    setEditingOrderId(null);
+    setFormData({
+      customerName: "",
+      customerPhone: "",
+      customerAddress: "",
+      status: "Pending",
+      notes: "",
+      area: "",
+      taxPercentage: 13,
+      hasDeliveryTime: false,
+      deliveryTime: "",
     });
-    setEditingItemIndex(null);
+    setEditingItems([]);
   };
 
-  const handleDragStart = (index: number) => {
-    setDraggedIndex(index);
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-  };
-
-  const handleDrop = (targetIndex: number) => {
-    if (draggedIndex === null || draggedIndex === targetIndex) return;
-
-    const newItems = [...editingItems];
-    const draggedItem = newItems[draggedIndex];
-    newItems.splice(draggedIndex, 1);
-    newItems.splice(targetIndex, 0, draggedItem);
-    
-    setEditingItems(newItems);
-    setDraggedIndex(null);
-  };
+  if (isLoadingOrders) {
+    return <div className="flex justify-center items-center h-screen"><Loader2 className="animate-spin" /></div>;
+  }
 
   return (
-    <div className="w-full max-w-7xl mx-auto p-4 space-y-6">
-      <div>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Orders</h1>
-        <p className="text-gray-600 mt-2">Manage and view all orders</p>
+        <p className="text-gray-600">Manage and view all orders</p>
       </div>
 
       {/* Date Filter */}
-      <Card className="p-4">
-        <div className="flex items-center gap-2">
-          <Calendar size={20} />
-          <Label htmlFor="orderDate">Filter by Date:</Label>
-          <Input
-            id="orderDate"
-            type="date"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            className="w-40"
-          />
-        </div>
-      </Card>
+      <div className="flex items-center gap-4">
+        <label className="font-semibold">Filter by Date:</label>
+        <input
+          id="orderDate"
+          type="date"
+          value={selectedDate}
+          onChange={(e) => setSelectedDate(e.target.value)}
+          className="px-3 py-2 border rounded-md"
+        />
+      </div>
 
       {/* Orders List */}
-      {isLoadingOrders ? (
-        <div className="flex justify-center py-8">
-          <Loader2 className="animate-spin" size={32} />
-        </div>
-      ) : orders.length === 0 ? (
-        <Card className="p-8 text-center">
-          <p className="text-gray-600">No orders found for the selected date</p>
-        </Card>
-      ) : (
-        <div className="space-y-4">
-          {orders.map((order: any) => (
-            <Card key={order.id} className="overflow-hidden">
-              <div
-                className="p-4 bg-gray-50 cursor-pointer hover:bg-gray-100 flex items-center justify-between"
-                onClick={() => {
-                  setSelectedOrderId(order.id);
-                  setExpandedOrderId(expandedOrderId === order.id ? null : order.id);
-                }}
+      <div className="space-y-4">
+        {orders.length === 0 ? (
+          <Card>
+            <CardContent className="pt-6">
+              <p className="text-center text-gray-500">No orders found for the selected date.</p>
+            </CardContent>
+          </Card>
+        ) : (
+          orders.map((order: any) => (
+            <Card key={order.id} className="border-2 border-red-300">
+              <CardHeader
+                className="cursor-pointer hover:bg-gray-50"
+                onClick={() => setExpandedOrderId(expandedOrderId === order.id ? null : order.id)}
               >
-                <div className="flex-1">
-                  <div className="font-semibold">Order #{order.id}</div>
-                  <div className="text-sm text-gray-600">
-                    {order.customer?.name} • {order.customer?.phone}
-                  </div>
-                  <div className="text-sm font-medium mt-1">
-                    Total: ${parseFloat(String(order.totalPrice || 0)).toFixed(2)}
+                <div className="flex justify-between items-center">
+                  <CardTitle>
+                    Order #{order.id} • Total: ${order.totalPrice?.toFixed(2) || '0.00'}
+                  </CardTitle>
+                  <div className="flex items-center gap-2">
+                    <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                      order.status === 'Pending' ? 'bg-yellow-200 text-yellow-800' :
+                      order.status === 'Confirmed' ? 'bg-blue-200 text-blue-800' :
+                      order.status === 'Completed' ? 'bg-green-200 text-green-800' :
+                      'bg-gray-200 text-gray-800'
+                    }`}>
+                      {order.status}
+                    </span>
+                    {expandedOrderId === order.id ? <ChevronUp /> : <ChevronDown />}
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    order.status === "Pending" ? "bg-yellow-100 text-yellow-800" :
-                    order.status === "Confirmed" ? "bg-blue-100 text-blue-800" :
-                    order.status === "Delivered" ? "bg-green-100 text-green-800" :
-                    "bg-gray-100 text-gray-800"
-                  }`}>
-                    {order.status}
-                  </span>
-                  {expandedOrderId === order.id ? <ChevronUp /> : <ChevronDown />}
-                </div>
-              </div>
+              </CardHeader>
 
-              {/* Expanded Order Details */}
-              {expandedOrderId === order.id && selectedOrderDetails && (
-                <CardContent className="p-6 space-y-6">
+              {expandedOrderId === order.id && (
+                <CardContent className="space-y-6">
                   {editingOrderId === order.id ? (
                     // Edit Mode
                     <div className="space-y-6">
                       {/* Customer Information */}
                       <div>
                         <h3 className="font-semibold mb-3">Customer Information</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-4">
                           <div>
                             <Label>Name</Label>
                             <Input
@@ -402,7 +347,7 @@ export function Orders() {
                               onChange={(e) => setFormData({ ...formData, customerPhone: e.target.value })}
                             />
                           </div>
-                          <div className="md:col-span-2">
+                          <div className="col-span-2">
                             <Label>Address</Label>
                             <Input
                               value={formData.customerAddress}
@@ -418,15 +363,15 @@ export function Orders() {
                           </div>
                           <div>
                             <Label>Status</Label>
-                            <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
+                            <Select value={formData.status} onValueChange={(value: any) => setFormData({ ...formData, status: value })}>
                               <SelectTrigger>
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="Pending">Pending</SelectItem>
-                                <SelectItem value="Confirmed">Confirmed</SelectItem>
+                                <SelectItem value="Ready">Ready</SelectItem>
+                                <SelectItem value="On the Way">On the Way</SelectItem>
                                 <SelectItem value="Delivered">Delivered</SelectItem>
-                                <SelectItem value="Cancelled">Cancelled</SelectItem>
                               </SelectContent>
                             </Select>
                           </div>
@@ -434,49 +379,44 @@ export function Orders() {
                         <div className="mt-4">
                           <Label>Notes</Label>
                           <Input
+                            placeholder="Add order notes"
                             value={formData.notes}
                             onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                            placeholder="Add order notes"
                           />
                         </div>
                       </div>
 
-                      {/* Tax and Delivery Time */}
+                      {/* Order Settings */}
                       <div>
                         <h3 className="font-semibold mb-3">Order Settings</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-4">
                           <div>
                             <Label>Tax Percentage (%)</Label>
                             <Input
                               type="number"
-                              min="0"
-                              max="100"
-                              step="0.01"
                               value={formData.taxPercentage}
                               onChange={(e) => setFormData({ ...formData, taxPercentage: parseFloat(e.target.value) || 0 })}
                             />
                           </div>
-                          <div className="flex items-end">
-                            <div className="flex items-center space-x-2">
-                              <Checkbox
-                                id="hasDeliveryTime"
-                                checked={formData.hasDeliveryTime}
-                                onCheckedChange={(checked) => setFormData({ ...formData, hasDeliveryTime: checked as boolean })}
-                              />
-                              <Label htmlFor="hasDeliveryTime" className="cursor-pointer">Enable Delivery Time</Label>
-                            </div>
+                          <div className="flex items-end gap-2">
+                            <Checkbox
+                              id="hasDeliveryTime"
+                              checked={formData.hasDeliveryTime}
+                              onCheckedChange={(checked) => setFormData({ ...formData, hasDeliveryTime: checked as boolean })}
+                            />
+                            <Label htmlFor="hasDeliveryTime" className="cursor-pointer">Enable Delivery Time</Label>
                           </div>
-                          {formData.hasDeliveryTime && (
-                            <div className="md:col-span-2">
-                              <Label>Delivery Time</Label>
-                              <Input
-                                type="datetime-local"
-                                value={formData.deliveryTime}
-                                onChange={(e) => setFormData({ ...formData, deliveryTime: e.target.value })}
-                              />
-                            </div>
-                          )}
                         </div>
+                        {formData.hasDeliveryTime && (
+                          <div className="mt-4">
+                            <Label>Delivery Time</Label>
+                            <Input
+                              type="datetime-local"
+                              value={formData.deliveryTime}
+                              onChange={(e) => setFormData({ ...formData, deliveryTime: e.target.value })}
+                            />
+                          </div>
+                        )}
                       </div>
 
                       {/* Order Items */}
@@ -489,73 +429,120 @@ export function Orders() {
                                 <Plus size={16} /> Add Item
                               </Button>
                             </DialogTrigger>
-                            <DialogContent className="overflow-visible">
+                            <DialogContent className="overflow-visible max-w-md">
                               <DialogHeader>
                                 <DialogTitle>Add Item to Order</DialogTitle>
                               </DialogHeader>
                               <div className="space-y-4 overflow-visible">
+                                {/* Step 1: Category Selection */}
                                 <div>
-                                  <Label>Item</Label>
-                                  <div className="border rounded-md max-h-96 overflow-y-auto">
+                                  <Label className="font-semibold">Step 1: Select Category</Label>
+                                  <div className="border rounded-md overflow-y-auto max-h-48">
                                     {menuCategories.map((category: any) => {
                                       const categoryItems = menuItems.filter((item: any) => item.categoryId === category.id);
                                       if (categoryItems.length === 0) return null;
                                       
                                       return (
-                                        <div key={category.id} className="border-b last:border-b-0">
-                                          <div className="px-3 py-2 bg-gray-50 font-semibold text-sm">
-                                            {category.name}
+                                        <button
+                                          key={category.id}
+                                          onClick={() => {
+                                            setSelectedCategoryId(category.id);
+                                            // Reset item selection when category changes
+                                            setItemFormData({
+                                              menuItemId: 0,
+                                              quantity: 1,
+                                              priceAtOrder: 0,
+                                            });
+                                          }}
+                                          className={`w-full text-left px-4 py-3 border-b last:border-b-0 font-semibold transition-colors ${
+                                            selectedCategoryId === category.id 
+                                              ? 'bg-blue-100 text-blue-900 border-l-4 border-l-blue-500' 
+                                              : 'hover:bg-gray-50'
+                                          }`}
+                                        >
+                                          <div className="flex justify-between items-center">
+                                            <span>{category.name}</span>
+                                            <span className="text-xs bg-gray-200 px-2 py-1 rounded">{categoryItems.length}</span>
                                           </div>
-                                          {categoryItems.map((item: any) => (
-                                            <button
-                                              key={item.id}
-                                              onClick={() => {
-                                                setItemFormData({
-                                                  menuItemId: item.id,
-                                                  quantity: 1,
-                                                  priceAtOrder: typeof item.price === 'number' ? item.price : parseFloat(String(item.price)),
-                                                });
-                                              }}
-                                              className={`w-full text-left px-3 py-2 hover:bg-blue-50 transition-colors ${
-                                                itemFormData.menuItemId === item.id ? 'bg-blue-100' : ''
-                                              }`}
-                                            >
-                                              <div className="flex justify-between items-center">
-                                                <span className="font-medium">{item.name}</span>
-                                                <span className="text-sm text-gray-600">${parseFloat(item.price).toFixed(2)}</span>
-                                              </div>
-                                            </button>
-                                          ))}
-                                        </div>
+                                        </button>
                                       );
                                     })}
                                   </div>
-                                  {itemFormData.menuItemId > 0 && (
-                                    <div className="mt-2 p-2 bg-blue-50 rounded text-sm">
-                                      Selected: {menuItems.find((m: any) => m.id === itemFormData.menuItemId)?.name}
+                                </div>
+
+                                {/* Step 2: Item Selection (filtered by category) */}
+                                {selectedCategoryId !== null && (
+                                  <div>
+                                    <Label className="font-semibold">Step 2: Select Item</Label>
+                                    <div className="border rounded-md max-h-48 overflow-y-auto">
+                                      {menuItems
+                                        .filter((item: any) => item.categoryId === selectedCategoryId)
+                                        .map((item: any) => (
+                                          <button
+                                            key={item.id}
+                                            onClick={() => {
+                                              setItemFormData({
+                                                menuItemId: item.id,
+                                                quantity: 1,
+                                                priceAtOrder: typeof item.price === 'number' ? item.price : parseFloat(String(item.price)),
+                                              });
+                                            }}
+                                            className={`w-full text-left px-4 py-3 border-b last:border-b-0 hover:bg-blue-50 transition-colors ${
+                                              itemFormData.menuItemId === item.id ? 'bg-blue-100' : ''
+                                            }`}
+                                          >
+                                            <div className="flex justify-between items-center">
+                                              <span className="font-medium">{item.name}</span>
+                                              <span className="text-sm text-gray-600">${parseFloat(item.price).toFixed(2)}</span>
+                                            </div>
+                                          </button>
+                                        ))}
                                     </div>
-                                  )}
-                                </div>
-                                <div>
-                                  <Label>Quantity</Label>
-                                  <Input
-                                    type="number"
-                                    min="1"
-                                    value={itemFormData.quantity}
-                                    onChange={(e) => setItemFormData({ ...itemFormData, quantity: parseInt(e.target.value) || 1 })}
-                                  />
-                                </div>
-                                <div>
-                                  <Label>Price</Label>
-                                  <Input
-                                    type="number"
-                                    min="0"
-                                    step="0.01"
-                                    value={itemFormData.priceAtOrder}
-                                    onChange={(e) => setItemFormData({ ...itemFormData, priceAtOrder: parseFloat(e.target.value) || 0 })}
-                                  />
-                                </div>
-                                <Button onClick={handleAddItemToOrder} className="w-full">
+                                    {itemFormData.menuItemId > 0 && (
+                                      <div className="mt-2 p-2 bg-blue-50 rounded text-sm">
+                                        <Check size={16} className="inline mr-1" />
+                                        Selected: {menuItems.find((m: any) => m.id === itemFormData.menuItemId)?.name}
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+
+                                {selectedCategoryId === null && (
+                                  <div className="p-3 bg-amber-50 border border-amber-200 rounded text-sm text-amber-800">
+                                    👆 Please select a category first to view items
+                                  </div>
+                                )}
+
+                                {/* Quantity and Price */}
+                                {itemFormData.menuItemId > 0 && (
+                                  <>
+                                    <div>
+                                      <Label>Quantity</Label>
+                                      <Input
+                                        type="number"
+                                        min="1"
+                                        value={itemFormData.quantity}
+                                        onChange={(e) => setItemFormData({ ...itemFormData, quantity: parseInt(e.target.value) || 1 })}
+                                      />
+                                    </div>
+                                    <div>
+                                      <Label>Price</Label>
+                                      <Input
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        value={itemFormData.priceAtOrder}
+                                        onChange={(e) => setItemFormData({ ...itemFormData, priceAtOrder: parseFloat(e.target.value) || 0 })}
+                                      />
+                                    </div>
+                                  </>
+                                )}
+
+                                <Button 
+                                  onClick={handleAddItemToOrder} 
+                                  className="w-full"
+                                  disabled={itemFormData.menuItemId === 0}
+                                >
                                   Add Item
                                 </Button>
                               </div>
@@ -566,203 +553,106 @@ export function Orders() {
                         <div className="space-y-2">
                           {editingItems.map((item, index) => {
                             const menuItem = menuItems.find((m: any) => m.id === item.menuItemId);
-                            const itemTotal = item.priceAtOrder * item.quantity;
-
                             return (
-                              <div
-                                key={index}
-                                draggable
-                                onDragStart={() => handleDragStart(index)}
-                                onDragOver={handleDragOver}
-                                onDrop={() => handleDrop(index)}
-                                className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border hover:bg-gray-100 cursor-move"
-                              >
-                                <GripVertical size={18} className="text-gray-400" />
-                                
-                                {editingItemIndex === index ? (
-                                  <>
-                                    <div className="flex-1">
-                                      <div className="text-sm font-medium">{menuItem?.name}</div>
-                                      <div className="flex gap-2 mt-1">
-                                        <Input
-                                          type="number"
-                                          min="1"
-                                          value={editingItemQuantity}
-                                          onChange={(e) => setEditingItemQuantity(parseInt(e.target.value) || 1)}
-                                          className="w-16 h-8"
-                                        />
-                                        <Input
-                                          type="number"
-                                          min="0"
-                                          step="0.01"
-                                          value={editingItemPrice}
-                                          onChange={(e) => setEditingItemPrice(parseFloat(e.target.value) || 0)}
-                                          className="w-24 h-8"
-                                        />
-                                      </div>
-                                    </div>
-                                    <Button
-                                      type="button"
-                                      size="sm"
-                                      onClick={() => {
-                                        const itemId = selectedOrder?.items?.[index]?.id;
-                                        if (itemId) deleteOrderItemMutation.mutate({ itemId });
-                                      }}
-                                      className="text-red-600 hover:text-red-700"
-                                    >
-                                      <Trash2 size={16} />
-                                    </Button>
-                                    <Button
-                                      type="button"
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() => setEditingItemIndex(null)}
-                                    >
-                                      <X size={16} />
-                                    </Button>
-                                  </>
-                                ) : (
-                                  <>
-                                    <div className="flex-1">
-                                      <div className="text-sm font-medium">{menuItem?.name}</div>
-                                      <div className="text-xs text-gray-600">
-                                        {item.quantity} × ${item.priceAtOrder.toFixed(2)} = ${itemTotal.toFixed(2)}
-                                      </div>
-                                    </div>
-                                    <Button
-                                      type="button"
-                                      size="sm"
-                                      variant="ghost"
-                                      onClick={() => handleEditItem(index)}
-                                    >
-                                      <Edit2 size={16} />
-                                    </Button>
-                                    <Button
-                                      type="button"
-                                      size="sm"
-                                      variant="ghost"
-                                      onClick={() => {
-                                        const itemId = selectedOrder?.items?.[index]?.id;
-                                        if (itemId) deleteOrderItemMutation.mutate({ itemId });
-                                      }}
-                                      className="text-red-600 hover:text-red-700"
-                                    >
-                                      <Trash2 size={16} />
-                                    </Button>
-                                  </>
-                                )}
+                              <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                                <div>
+                                  <p className="font-semibold">{menuItem?.name}</p>
+                                  <p className="text-sm text-gray-600">{item.quantity} × ${item.priceAtOrder.toFixed(2)} = ${(item.quantity * item.priceAtOrder).toFixed(2)}</p>
+                                </div>
+                                <button
+                                  onClick={() => {
+                                    setEditingItems(editingItems.filter((_, i) => i !== index));
+                                  }}
+                                  className="text-red-500 hover:text-red-700"
+                                >
+                                  <Trash2 size={18} />
+                                </button>
                               </div>
                             );
                           })}
                         </div>
 
-                        {/* Price Summary */}
-                        <div className="mt-6 pt-4 border-t space-y-2">
-                          <div className="flex justify-between text-sm">
+                        {/* Pricing Summary */}
+                        <div className="mt-4 p-4 bg-gray-50 rounded space-y-2">
+                          <div className="flex justify-between">
                             <span>Subtotal:</span>
-                            <span className="font-medium">${priceCalculations.subtotal.toFixed(2)}</span>
+                            <span>${priceCalculations.subtotal.toFixed(2)}</span>
                           </div>
-                          <div className="flex justify-between text-sm">
-                            <span>Tax ({formData.taxPercentage}%):</span>
-                            <span className="font-medium">${priceCalculations.taxAmount.toFixed(2)}</span>
+                          <div className="flex justify-between">
+                            <span>Tax ({priceCalculations.taxPercentage}%):</span>
+                            <span>${priceCalculations.tax.toFixed(2)}</span>
                           </div>
-                          <div className="flex justify-between text-lg font-bold border-t pt-2">
+                          <div className="flex justify-between font-bold text-lg border-t pt-2">
                             <span>Total:</span>
-                            <span className="text-blue-600">${priceCalculations.totalPrice.toFixed(2)}</span>
+                            <span>${priceCalculations.total.toFixed(2)}</span>
                           </div>
                         </div>
                       </div>
 
-                      {/* Save/Cancel Buttons */}
+                      {/* Action Buttons */}
                       <div className="flex gap-2">
-                        <Button
-                          onClick={handleSaveOrder}
-                          className="flex-1 bg-green-600 hover:bg-green-700"
-                          disabled={updateOrderMutation.isPending}
-                        >
-                          {updateOrderMutation.isPending ? "Saving..." : "Save Changes"}
+                        <Button onClick={handleSaveOrder} className="flex-1 bg-green-600 hover:bg-green-700">
+                          <Save size={18} className="mr-2" /> Save Changes
                         </Button>
-                        <Button
-                          onClick={() => setEditingOrderId(null)}
-                          variant="outline"
-                          className="flex-1"
-                        >
-                          Cancel
+                        <Button onClick={handleCancelEdit} variant="outline" className="flex-1">
+                          <X size={18} className="mr-2" /> Cancel
                         </Button>
                       </div>
                     </div>
                   ) : (
                     // View Mode
-                    <div className="space-y-4">
+                    <>
                       <div>
                         <h3 className="font-semibold mb-2">Customer Information</h3>
-                        <div className="text-sm space-y-1">
-                          <div><span className="text-gray-600">Name:</span> {selectedOrderDetails?.customerName}</div>
-                          <div><span className="text-gray-600">Phone:</span> {selectedOrderDetails?.customerPhone}</div>
-                          <div><span className="text-gray-600">Address:</span> {selectedOrderDetails?.customerAddress}</div>
-                          {selectedOrderDetails?.area && <div><span className="text-gray-600">Area:</span> {selectedOrderDetails?.area}</div>}
-                          {selectedOrderDetails?.notes && <div><span className="text-gray-600">Notes:</span> {selectedOrderDetails?.notes}</div>}
-                        </div>
+                        <p><strong>Name:</strong> {order.customerName}</p>
+                        <p><strong>Phone:</strong> {order.customerPhone}</p>
+                        <p><strong>Address:</strong> {order.customerAddress}</p>
+                        <p><strong>Area:</strong> {order.area}</p>
                       </div>
 
                       <div>
                         <h3 className="font-semibold mb-2">Order Items</h3>
-                        <div className="space-y-1 text-sm">
-                          {selectedOrderDetails?.items?.map((item: any, idx: number) => (
-                            <div key={idx} className="flex justify-between">
-                              <span>{item.menuItemName} × {item.quantity}</span>
-                              <span>${(parseFloat(String(item.priceAtOrder)) * item.quantity).toFixed(2)}</span>
-                            </div>
-                          ))}
-                        </div>
+                        {order.items && order.items.length > 0 ? (
+                          <ul className="space-y-1">
+                            {order.items.map((item: any, idx: number) => (
+                              <li key={idx} className="text-sm">
+                                {item.name} × {item.quantity} = ${(item.quantity * item.priceAtOrder).toFixed(2)}
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p className="text-gray-500">No items in this order</p>
+                        )}
                       </div>
 
-                      <div className="pt-4 border-t space-y-1 text-sm">
-                        <div className="flex justify-between">
-                          <span>Subtotal:</span>
-                          <span>${parseFloat(String(selectedOrderDetails?.subtotal || 0)).toFixed(2)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Tax ({selectedOrderDetails?.taxPercentage || 13}%):</span>
-                          <span>${parseFloat(String(selectedOrderDetails?.taxAmount || 0)).toFixed(2)}</span>
-                        </div>
-                        <div className="flex justify-between font-bold text-base">
-                          <span>Total:</span>
-                          <span>${parseFloat(String(selectedOrderDetails?.totalPrice || 0)).toFixed(2)}</span>
-                        </div>
+                      <div>
+                        <p><strong>Subtotal:</strong> ${order.items?.reduce((sum: number, item: any) => sum + (item.quantity * item.priceAtOrder), 0).toFixed(2) || '0.00'}</p>
+                        <p><strong>Tax ({order.taxPercentage}%):</strong> ${((order.items?.reduce((sum: number, item: any) => sum + (item.quantity * item.priceAtOrder), 0) || 0) * (order.taxPercentage / 100)).toFixed(2)}</p>
+                        <p className="font-bold"><strong>Total:</strong> ${order.totalPrice?.toFixed(2) || '0.00'}</p>
                       </div>
 
-                      {selectedOrderDetails?.hasDeliveryTime && selectedOrderDetails?.deliveryTime && (
-                        <div className="text-sm">
-                          <span className="text-gray-600">Delivery Time:</span> {format(new Date(selectedOrderDetails?.deliveryTime), "PPpp")}
+                      {order.deliveryTime && (
+                        <div>
+                          <p><strong>Delivery Time:</strong> {format(new Date(order.deliveryTime), 'MMM dd, yyyy h:mm a')}</p>
                         </div>
                       )}
 
-                      {/* Action Buttons */}
-                      <div className="flex gap-2 pt-4">
-                        <Button
-                          onClick={() => handleEditOrder(selectedOrderDetails)}
-                          className="flex-1 gap-1"
-                        >
-                          <Edit2 size={16} /> Edit
+                      <div className="flex gap-2">
+                        <Button onClick={() => handleEditOrder(order)} className="flex-1 bg-blue-600 hover:bg-blue-700">
+                          <Edit2 size={18} className="mr-2" /> Edit
                         </Button>
-                        <Button
-                          onClick={() => handleDeleteOrder(selectedOrderDetails?.id)}
-                          variant="destructive"
-                          className="flex-1 gap-1"
-                          disabled={deleteOrderMutation.isPending}
-                        >
-                          <Trash2 size={16} /> Delete
+                        <Button onClick={() => handleDeleteOrder(order.id)} variant="destructive" className="flex-1">
+                          <Trash2 size={18} className="mr-2" /> Delete
                         </Button>
                       </div>
-                    </div>
+                    </>
                   )}
                 </CardContent>
               )}
             </Card>
-          ))}
-        </div>
-      )}
+          ))
+        )}
+      </div>
     </div>
   );
 }
