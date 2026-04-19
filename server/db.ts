@@ -421,13 +421,18 @@ export async function deleteAllOrderItems(orderId: number) {
   return db.delete(orderItems).where(eq(orderItems.orderId, orderId));
 }
 
-export async function updateOrder(id: number, data: { status?: string; notes?: string; totalPrice?: number }) {
+export async function updateOrder(id: number, data: { status?: string; notes?: string; totalPrice?: number; subtotal?: number; taxPercentage?: number; taxAmount?: number; deliveryTime?: Date | null; hasDeliveryTime?: boolean }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const updateData: any = {};
   if (data.status) updateData.status = data.status;
   if (data.notes !== undefined) updateData.notes = data.notes;
   if (data.totalPrice !== undefined) updateData.totalPrice = data.totalPrice;
+  if (data.subtotal !== undefined) updateData.subtotal = data.subtotal;
+  if (data.taxPercentage !== undefined) updateData.taxPercentage = data.taxPercentage;
+  if (data.taxAmount !== undefined) updateData.taxAmount = data.taxAmount;
+  if (data.deliveryTime !== undefined) updateData.deliveryTime = data.deliveryTime;
+  if (data.hasDeliveryTime !== undefined) updateData.hasDeliveryTime = data.hasDeliveryTime;
   return db.update(orders).set(updateData).where(eq(orders.id, id));
 }
 

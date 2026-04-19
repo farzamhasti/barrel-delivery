@@ -1,12 +1,13 @@
-import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { Trash2, GripVertical, Edit2, Check, X } from "lucide-react";
 import { useLocation } from "wouter";
+import { useState, useMemo } from "react";
 
 export default function CreateOrder() {
   const [, navigate] = useLocation();
@@ -16,6 +17,9 @@ export default function CreateOrder() {
     customerAddress: "",
     notes: "",
     area: "",
+    taxPercentage: 13,
+    hasDeliveryTime: false,
+    deliveryTime: "",
     items: [] as { menuItemId: number; quantity: number; priceAtOrder: number }[],
   });
 
@@ -28,6 +32,14 @@ export default function CreateOrder() {
   const { data: menuItems = [] } = trpc.menu.items.list.useQuery();
   const createOrderMutation = trpc.orders.create.useMutation();
   const createCustomerMutation = trpc.customers.create.useMutation();
+
+  // Calculate subtotal, tax, and total dynamically
+  const calculations = useMemo(() => {
+    const subtotal = formData.items.reduce((sum, item) => sum + item.priceAtOrder * item.quantity, 0);
+    const taxAmount = subtotal * (formData.taxPercentage / 100);
+    const totalPrice = subtotal + taxAmount;
+    return { subtotal, taxAmount, totalPrice };
+  }, [formData.items, formData.taxPercentage]);
 
   const handleAddItem = (itemId: number) => {
     const item = menuItems.find((m: any) => m.id === itemId);
@@ -121,14 +133,18 @@ export default function CreateOrder() {
 
       // Drizzle ORM returns an array [ResultSetHeader, undefined]
       const customerId = Array.isArray(customerResult) ? (customerResult as any)[0]?.insertId : (customerResult as any).insertId;
-      const totalPrice = formData.items.reduce((sum, item) => sum + item.priceAtOrder * item.quantity, 0);
 
-      // Create order
+      // Create order with tax and delivery time
       await createOrderMutation.mutateAsync({
         customerId,
-        totalPrice,
+        subtotal: calculations.subtotal,
+        taxPercentage: formData.taxPercentage,
+        taxAmount: calculations.taxAmount,
+        totalPrice: calculations.totalPrice,
         notes: formData.notes || undefined,
         area: formData.area || undefined,
+        deliveryTime: formData.hasDeliveryTime && formData.deliveryTime ? new Date(formData.deliveryTime) : undefined,
+        hasDeliveryTime: formData.hasDeliveryTime,
         items: formData.items,
       });
 
@@ -139,6 +155,9 @@ export default function CreateOrder() {
         customerAddress: "",
         notes: "",
         area: "",
+        taxPercentage: 13,
+        hasDeliveryTime: false,
+        deliveryTime: "",
         items: [],
       });
       // Redirect to Orders page
@@ -148,229 +167,268 @@ export default function CreateOrder() {
     }
   };
 
-  const totalPrice = formData.items.reduce((sum, item) => sum + (Number(item.priceAtOrder) || 0) * item.quantity, 0);
-
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Create New Order</h2>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Form */}
-        <div className="lg:col-span-2">
-          <Card className="p-6">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-4">
-                <h3 className="font-semibold text-foreground">Customer Information</h3>
-                <div>
-                  <Label htmlFor="name">Customer Name</Label>
-                  <Input
-                    id="name"
-                    value={formData.customerName}
-                    onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
-                    placeholder="John Doe"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="phone">Phone Number</Label>
-                  <Input
-                    id="phone"
-                    value={formData.customerPhone}
-                    onChange={(e) => setFormData({ ...formData, customerPhone: e.target.value })}
-                    placeholder="+1 (555) 000-0000"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="address">Delivery Address</Label>
-                  <Input
-                    id="address"
-                    value={formData.customerAddress}
-                    onChange={(e) => setFormData({ ...formData, customerAddress: e.target.value })}
-                    placeholder="123 Main St, City, State"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="area">Area</Label>
-                  <select
-                    id="area"
-                    value={formData.area}
-                    onChange={(e) => setFormData({ ...formData, area: e.target.value })}
-                    className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground"
-                  >
-                    <option value="">Select Area</option>
-                    <option value="Downtown">Downtown</option>
-                    <option value="CP">CP</option>
-                    <option value="B">B</option>
-                  </select>
-                </div>
-                <div>
-                  <Label htmlFor="notes">Notes</Label>
-                  <Input
-                    id="notes"
-                    value={formData.notes}
-                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                    placeholder="Special instructions, allergies, etc."
-                  />
-                </div>
-              </div>
-
-              <div className="border-t border-border pt-6">
-                <h3 className="font-semibold text-foreground mb-4">Select Items</h3>
-                <div className="space-y-4">
-                  {categories.map((cat: any) => (
-                    <div key={cat.id}>
-                      <h4 className="text-sm font-medium text-muted-foreground mb-2">{cat.name}</h4>
-                      <div className="grid grid-cols-2 gap-2">
-                        {menuItems
-                          .filter((item: any) => item.categoryId === cat.id && item.isAvailable)
-                          .map((item: any) => (
-                            <Button
-                              key={item.id}
-                              type="button"
-                              variant="outline"
-                              className="justify-start text-left"
-                              onClick={() => handleAddItem(item.id)}
-                            >
-                              <span className="flex-1">{item.name}</span>
-                              <span className="text-xs">${parseFloat(item.price as any).toFixed(2)}</span>
-                            </Button>
-                          ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <Button type="submit" className="w-full" size="lg">
-                Create Order
-              </Button>
-            </form>
-          </Card>
-        </div>
-
-        {/* Order Summary */}
-        <div>
-          <Card className="p-6 sticky top-6">
-            <h3 className="font-semibold text-foreground mb-4">Order Summary</h3>
-            <div className="space-y-2 mb-6 max-h-96 overflow-y-auto">
-              {formData.items.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-4">No items added yet</p>
-              ) : (
-                formData.items.map((item, index) => {
-                  const menuItem = menuItems.find((m: any) => m.id === item.menuItemId);
-                  const itemTotal = item.priceAtOrder * item.quantity;
-
-                  return (
-                    <div
-                      key={index}
-                      draggable
-                      onDragStart={() => handleDragStart(index)}
-                      onDragOver={handleDragOver}
-                      onDrop={() => handleDrop(index)}
-                      className={`p-3 border rounded-lg transition-all ${
-                        draggedIndex === index ? "opacity-50 bg-accent/10" : "hover:bg-muted/50"
-                      }`}
-                    >
-                      {editingIndex === index ? (
-                        // Edit Mode
-                        <div className="space-y-2">
-                          <div className="flex gap-2 items-center">
-                            <span className="text-sm font-medium flex-1">{menuItem?.name}</span>
-                          </div>
-                          <div className="flex gap-2">
-                            <div className="flex-1">
-                              <label className="text-xs text-muted-foreground">Qty</label>
-                              <Input
-                                type="number"
-                                min="1"
-                                value={editQuantity}
-                                onChange={(e) => setEditQuantity(parseInt(e.target.value) || 1)}
-                                className="h-8"
-                              />
-                            </div>
-                            <div className="flex-1">
-                              <label className="text-xs text-muted-foreground">Price</label>
-                              <Input
-                                type="number"
-                                step="0.01"
-                                min="0"
-                                value={editPrice}
-                                onChange={(e) => setEditPrice(parseFloat(e.target.value) || 0)}
-                                className="h-8"
-                              />
-                            </div>
-                          </div>
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              variant="default"
-                              onClick={() => handleSaveEdit(index)}
-                              className="flex-1 h-8"
-                            >
-                              <Check className="w-3 h-3" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => setEditingIndex(null)}
-                              className="flex-1 h-8"
-                            >
-                              <X className="w-3 h-3" />
-                            </Button>
-                          </div>
-                        </div>
-                      ) : (
-                        // View Mode
-                        <div className="flex items-center gap-2">
-                          <GripVertical className="w-4 h-4 text-muted-foreground cursor-grab active:cursor-grabbing" />
-                          <div className="flex-1 min-w-0">
-                            <div className="flex justify-between items-start gap-2">
-                              <span className="text-sm font-medium truncate">{menuItem?.name}</span>
-                              <span className="text-sm font-semibold text-accent whitespace-nowrap">
-                                ${((Number(itemTotal) || 0)).toFixed(2)}
-                              </span>
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              {item.quantity} × ${(Number(item.priceAtOrder) || 0).toFixed(2)}
-                            </div>
-                          </div>
-                          <div className="flex gap-1">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => handleEditItem(index)}
-                              className="h-8 w-8 p-0"
-                            >
-                              <Edit2 className="w-3 h-3" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => handleDeleteItem(index)}
-                              className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </Button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })
-              )}
-            </div>
-
-            <div className="border-t border-border pt-4">
-              <div className="flex justify-between mb-4">
-                <span className="text-foreground font-semibold">Total:</span>
-                <span className="text-2xl font-bold text-accent">${totalPrice.toFixed(2)}</span>
-              </div>
-              <div className="text-xs text-muted-foreground">
-                {formData.items.length} item{formData.items.length !== 1 ? "s" : ""}
-              </div>
-            </div>
-          </Card>
-        </div>
+    <div className="w-full max-w-6xl mx-auto p-4 space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold">Create New Order</h1>
+        <p className="text-gray-600 mt-2">Add items and customer details to create an order</p>
       </div>
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Customer Information */}
+        <Card className="p-6">
+          <h2 className="text-xl font-semibold mb-4">Customer Information</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="customerName">Customer Name *</Label>
+              <Input
+                id="customerName"
+                value={formData.customerName}
+                onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
+                placeholder="Enter customer name"
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="customerPhone">Phone Number *</Label>
+              <Input
+                id="customerPhone"
+                value={formData.customerPhone}
+                onChange={(e) => setFormData({ ...formData, customerPhone: e.target.value })}
+                placeholder="Enter phone number"
+                required
+              />
+            </div>
+            <div className="md:col-span-2">
+              <Label htmlFor="customerAddress">Address *</Label>
+              <Input
+                id="customerAddress"
+                value={formData.customerAddress}
+                onChange={(e) => setFormData({ ...formData, customerAddress: e.target.value })}
+                placeholder="Enter customer address"
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="area">Area</Label>
+              <Input
+                id="area"
+                value={formData.area}
+                onChange={(e) => setFormData({ ...formData, area: e.target.value })}
+                placeholder="Enter delivery area"
+              />
+            </div>
+            <div>
+              <Label htmlFor="notes">Notes</Label>
+              <Input
+                id="notes"
+                value={formData.notes}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                placeholder="Add order notes"
+              />
+            </div>
+          </div>
+        </Card>
+
+        {/* Tax and Delivery Time */}
+        <Card className="p-6">
+          <h2 className="text-xl font-semibold mb-4">Order Settings</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="taxPercentage">Tax Percentage (%)</Label>
+              <Input
+                id="taxPercentage"
+                type="number"
+                min="0"
+                max="100"
+                step="0.01"
+                value={formData.taxPercentage}
+                onChange={(e) => setFormData({ ...formData, taxPercentage: parseFloat(e.target.value) || 0 })}
+                placeholder="Enter tax percentage"
+              />
+              <p className="text-sm text-gray-500 mt-1">Default: 13% (Canada HST)</p>
+            </div>
+            <div className="flex items-end">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="hasDeliveryTime"
+                  checked={formData.hasDeliveryTime}
+                  onCheckedChange={(checked) => setFormData({ ...formData, hasDeliveryTime: checked as boolean })}
+                />
+                <Label htmlFor="hasDeliveryTime" className="cursor-pointer">Enable Delivery Time</Label>
+              </div>
+            </div>
+            {formData.hasDeliveryTime && (
+              <div className="md:col-span-2">
+                <Label htmlFor="deliveryTime">Delivery Time</Label>
+                <Input
+                  id="deliveryTime"
+                  type="datetime-local"
+                  value={formData.deliveryTime}
+                  onChange={(e) => setFormData({ ...formData, deliveryTime: e.target.value })}
+                />
+              </div>
+            )}
+          </div>
+        </Card>
+
+        {/* Menu Items */}
+        <Card className="p-6">
+          <h2 className="text-xl font-semibold mb-4">Add Items</h2>
+          <div className="space-y-4">
+            {categories.map((category: any) => (
+              <div key={category.id}>
+                <h3 className="font-semibold text-lg mb-2">{category.name}</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                  {menuItems
+                    .filter((item: any) => item.categoryId === category.id)
+                    .map((item: any) => (
+                      <Button
+                        key={item.id}
+                        type="button"
+                        variant="outline"
+                        onClick={() => handleAddItem(item.id)}
+                        className="text-left h-auto py-2 px-3"
+                      >
+                        <div className="text-sm">
+                          <div className="font-medium">{item.name}</div>
+                          <div className="text-xs text-gray-600">${parseFloat(item.price).toFixed(2)}</div>
+                        </div>
+                      </Button>
+                    ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        {/* Order Items */}
+        {formData.items.length > 0 && (
+          <Card className="p-6">
+            <h2 className="text-xl font-semibold mb-4">Order Items</h2>
+            <div className="space-y-2">
+              {formData.items.map((item, index) => {
+                const menuItem = menuItems.find((m: any) => m.id === item.menuItemId);
+                const itemTotal = item.priceAtOrder * item.quantity;
+
+                return (
+                  <div
+                    key={index}
+                    draggable
+                    onDragStart={() => handleDragStart(index)}
+                    onDragOver={handleDragOver}
+                    onDrop={() => handleDrop(index)}
+                    className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border hover:bg-gray-100 cursor-move"
+                  >
+                    <GripVertical size={18} className="text-gray-400" />
+                    
+                    {editingIndex === index ? (
+                      <>
+                        <div className="flex-1">
+                          <div className="text-sm font-medium">{menuItem?.name}</div>
+                          <div className="flex gap-2 mt-1">
+                            <Input
+                              type="number"
+                              min="1"
+                              value={editQuantity}
+                              onChange={(e) => setEditQuantity(parseInt(e.target.value) || 1)}
+                              className="w-16 h-8"
+                            />
+                            <Input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={editPrice}
+                              onChange={(e) => setEditPrice(parseFloat(e.target.value) || 0)}
+                              className="w-24 h-8"
+                            />
+                          </div>
+                        </div>
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={() => handleSaveEdit(index)}
+                          className="bg-green-600 hover:bg-green-700"
+                        >
+                          <Check size={16} />
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setEditingIndex(null)}
+                        >
+                          <X size={16} />
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <div className="flex-1">
+                          <div className="text-sm font-medium">{menuItem?.name}</div>
+                          <div className="text-xs text-gray-600">
+                            {item.quantity} × ${item.priceAtOrder.toFixed(2)} = ${itemTotal.toFixed(2)}
+                          </div>
+                        </div>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleEditItem(index)}
+                        >
+                          <Edit2 size={16} />
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleDeleteItem(index)}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 size={16} />
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Price Summary */}
+            <div className="mt-6 pt-4 border-t space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>Subtotal:</span>
+                <span className="font-medium">${calculations.subtotal.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span>Tax ({formData.taxPercentage}%):</span>
+                <span className="font-medium">${calculations.taxAmount.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-lg font-bold border-t pt-2">
+                <span>Total:</span>
+                <span className="text-blue-600">${calculations.totalPrice.toFixed(2)}</span>
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {/* Submit Button */}
+        <div className="flex gap-2">
+          <Button
+            type="submit"
+            className="flex-1 bg-blue-600 hover:bg-blue-700"
+            disabled={createOrderMutation.isPending}
+          >
+            {createOrderMutation.isPending ? "Creating..." : "Create Order"}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => navigate("/admin/orders")}
+          >
+            Cancel
+          </Button>
+        </div>
+      </form>
     </div>
   );
 }

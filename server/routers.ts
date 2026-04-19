@@ -225,9 +225,14 @@ export const appRouter = router({
     create: publicProcedure
       .input(z.object({
         customerId: z.number(),
+        subtotal: z.number(),
+        taxPercentage: z.number().default(13),
+        taxAmount: z.number(),
         totalPrice: z.number(),
         notes: z.string().optional(),
         area: z.string().optional(),
+        deliveryTime: z.date().optional(),
+        hasDeliveryTime: z.boolean().default(false),
         items: z.array(z.object({
           menuItemId: z.number(),
           quantity: z.number(),
@@ -237,9 +242,14 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         const order = await db.createOrder({
           customerId: input.customerId,
+          subtotal: input.subtotal as any,
+          taxPercentage: input.taxPercentage as any,
+          taxAmount: input.taxAmount as any,
           totalPrice: input.totalPrice as any,
           notes: input.notes,
           area: input.area,
+          deliveryTime: input.hasDeliveryTime ? input.deliveryTime : null,
+          hasDeliveryTime: input.hasDeliveryTime,
         });
         
         // Create order items

@@ -1,14 +1,16 @@
-import { useState, useMemo, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { invalidateOrderCache, invalidateCustomerCache } from "@/lib/invalidation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Trash2, Edit2, Plus, Save, X, ChevronDown, ChevronUp, Loader2, Calendar } from "lucide-react";
+import { Trash2, Edit2, Plus, Save, X, ChevronDown, ChevronUp, Loader2, Calendar, GripVertical, Check } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { useState, useMemo } from "react";
 
 interface OrderFormData {
   customerName: string;
@@ -16,6 +18,10 @@ interface OrderFormData {
   customerAddress: string;
   status: string;
   notes: string;
+  area: string;
+  taxPercentage: number;
+  hasDeliveryTime: boolean;
+  deliveryTime: string;
 }
 
 interface OrderItemFormData {
@@ -32,9 +38,10 @@ export function Orders() {
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
   const [expandedOrderId, setExpandedOrderId] = useState<number | null>(null);
   const [editingOrderId, setEditingOrderId] = useState<number | null>(null);
-  const [editingItemId, setEditingItemId] = useState<number | null>(null);
+  const [editingItemIndex, setEditingItemIndex] = useState<number | null>(null);
   const [showAddItemDialog, setShowAddItemDialog] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
   // Form data
   const [formData, setFormData] = useState<OrderFormData>({
@@ -43,7 +50,15 @@ export function Orders() {
     customerAddress: "",
     status: "Pending",
     notes: "",
+    area: "",
+    taxPercentage: 13,
+    hasDeliveryTime: false,
+    deliveryTime: "",
   });
+
+  const [editingItems, setEditingItems] = useState<OrderItemFormData[]>([]);
+  const [editingItemQuantity, setEditingItemQuantity] = useState<number>(1);
+  const [editingItemPrice, setEditingItemPrice] = useState<number>(0);
 
   const [itemFormData, setItemFormData] = useState<OrderItemFormData>({
     menuItemId: 0,
@@ -52,30 +67,26 @@ export function Orders() {
   });
 
   // Queries
-  // Fetch all orders and filter client-side by date
   const { data: allOrders = [], refetch: refetchOrders, isLoading: isLoadingOrders } = trpc.orders.list.useQuery();
   
   // Filter orders by selected date on the client side
   const orders = useMemo(() => {
     return allOrders.filter((order: any) => {
-      // Parse the order creation date
       const orderDate = new Date(order.createdAt);
       const orderYear = orderDate.getUTCFullYear();
       const orderMonth = String(orderDate.getUTCMonth() + 1).padStart(2, '0');
       const orderDay = String(orderDate.getUTCDate()).padStart(2, '0');
       const orderDateStr = `${orderYear}-${orderMonth}-${orderDay}`;
-      
-      // Compare with selected date
       return orderDateStr === selectedDate;
     });
   }, [allOrders, selectedDate]);
+
   const { data: menuItems = [] } = trpc.menu.items.list.useQuery();
   const { data: selectedOrderDetails } = trpc.orders.getById.useQuery(
     { orderId: selectedOrderId || 0 },
     { enabled: selectedOrderId !== null }
   );
 
-  // Get selected order details - use the detailed version from getById which includes items
   const selectedOrder = useMemo(() => {
     if (selectedOrderDetails) {
       return selectedOrderDetails as any;
@@ -83,14 +94,22 @@ export function Orders() {
     return orders.find((o: any) => o.id === selectedOrderId) as any;
   }, [orders, selectedOrderId, selectedOrderDetails]);
 
+  // Calculate price updates dynamically
+  const priceCalculations = useMemo(() => {
+    const subtotal = editingItems.reduce((sum, item) => sum + item.priceAtOrder * item.quantity, 0);
+    const taxAmount = subtotal * (formData.taxPercentage / 100);
+    const totalPrice = subtotal + taxAmount;
+    return { subtotal, taxAmount, totalPrice };
+  }, [editingItems, formData.taxPercentage]);
+
   // Mutations
-  const updateOrderMutation = trpc.orders.update.useMutation({
+  const updateOrderMutation = trpc.orders.updateStatus.useMutation({
     onSuccess: () => {
       toast.success("Order updated successfully");
       invalidateOrderCache(utils);
       setEditingOrderId(null);
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast.error(`Failed to update order: ${error.message}`);
     },
   });
@@ -99,616 +118,612 @@ export function Orders() {
     onSuccess: () => {
       toast.success("Customer information updated");
       invalidateCustomerCache(utils);
-      setEditingOrderId(null);
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast.error(`Failed to update customer: ${error.message}`);
     },
   });
 
-  const updateItemMutation = trpc.orders.updateItem.useMutation({
+  const deleteOrderMutation = trpc.orders.delete.useMutation({
     onSuccess: () => {
-      toast.success("Item updated");
+      toast.success("Order deleted successfully");
       invalidateOrderCache(utils);
-      setEditingItemId(null);
+      setSelectedOrderId(null);
     },
-    onError: (error) => {
-      toast.error(`Failed to update item: ${error.message}`);
+    onError: (error: any) => {
+      toast.error(`Failed to delete order: ${error.message}`);
     },
   });
 
-  const deleteItemMutation = trpc.orders.deleteItem.useMutation({
-    onSuccess: () => {
-      toast.success("Item removed");
-      invalidateOrderCache(utils);
-    },
-    onError: (error) => {
-      toast.error(`Failed to delete item: ${error.message}`);
-    },
-  });
-
-  const createItemMutation = trpc.orders.createItem.useMutation({
+  const addOrderItemMutation = trpc.orders.createItem.useMutation({
     onSuccess: () => {
       toast.success("Item added to order");
       invalidateOrderCache(utils);
       setShowAddItemDialog(false);
       setItemFormData({ menuItemId: 0, quantity: 1, priceAtOrder: 0 });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast.error(`Failed to add item: ${error.message}`);
     },
   });
 
-  const deleteOrderMutation = trpc.orders.delete.useMutation({
+  const updateOrderItemMutation = trpc.orders.updateItem.useMutation({
     onSuccess: () => {
-      toast.success("Order deleted");
+      toast.success("Item updated");
       invalidateOrderCache(utils);
-      setSelectedOrderId(null);
     },
-    onError: (error) => {
-      toast.error(`Failed to delete order: ${error.message}`);
+    onError: (error: any) => {
+      toast.error(`Failed to update item: ${error.message}`);
+    },
+  });
+
+  const deleteOrderItemMutation = trpc.orders.deleteItem.useMutation({
+    onSuccess: () => {
+      toast.success("Item removed from order");
+      invalidateOrderCache(utils);
+    },
+    onError: (error: any) => {
+      toast.error(`Failed to delete item: ${error.message}`);
     },
   });
 
   // Handlers
-  const handleSelectOrder = (orderId: number) => {
-    setSelectedOrderId(orderId);
-    setExpandedOrderId(orderId);
+  const handleEditOrder = (order: any) => {
+    setEditingOrderId(order.id);
+    setFormData({
+      customerName: order.customer?.name || "",
+      customerPhone: order.customer?.phone || "",
+      customerAddress: order.customer?.address || "",
+      status: order.status || "Pending",
+      notes: order.notes || "",
+      area: order.area || "",
+      taxPercentage: order.taxPercentage || 13,
+      hasDeliveryTime: order.hasDeliveryTime || false,
+      deliveryTime: order.deliveryTime ? new Date(order.deliveryTime).toISOString().slice(0, 16) : "",
+    });
+    setEditingItems(order.items || []);
   };
 
-  // Update form data when selected order details are loaded
-  useEffect(() => {
-    if (selectedOrderDetails) {
-      setFormData({
-        customerName: selectedOrderDetails.customerName || "",
-        customerPhone: selectedOrderDetails.customerPhone || "",
-        customerAddress: selectedOrderDetails.customerAddress || "",
-        status: selectedOrderDetails.status || "Pending",
-        notes: selectedOrderDetails.notes || "",
-      });
-    }
-  }, [selectedOrderDetails]);
-
-  const handleEditOrder = () => {
-    if (selectedOrder) {
-      setFormData({
-        customerName: selectedOrder.customerName || "",
-        customerPhone: selectedOrder.customerPhone || "",
-        customerAddress: selectedOrder.customerAddress || "",
-        status: selectedOrder.status || "Pending",
-        notes: selectedOrder.notes || "",
-      });
-      setEditingOrderId(selectedOrderId);
-    }
-  };
-
-  const handleSaveOrder = () => {
-    if (!formData.customerName.trim()) {
-      toast.error("Customer name is required");
+  const handleSaveOrder = async () => {
+    if (!formData.customerName || !formData.customerPhone || !formData.customerAddress) {
+      toast.error("Please fill in all customer information");
       return;
     }
 
-    if (selectedOrder) {
-      // Update customer info
-      updateCustomerMutation.mutate({
-        customerId: selectedOrder.customerId,
-        name: formData.customerName,
-        phone: formData.customerPhone,
-        address: formData.customerAddress,
-      });
+    if (editingItems.length === 0) {
+      toast.error("Order must have at least one item");
+      return;
+    }
 
-      // Update order status and notes
-      updateOrderMutation.mutate({
+    try {
+      // Update customer info
+      if (selectedOrder?.customer?.id) {
+        await updateCustomerMutation.mutateAsync({
+          customerId: selectedOrder.customer.id,
+          name: formData.customerName,
+          phone: formData.customerPhone,
+          address: formData.customerAddress,
+        });
+      }
+
+      // Update order
+      await updateOrderMutation.mutateAsync({
         orderId: selectedOrderId!,
         status: formData.status as any,
-        notes: formData.notes,
       });
+    } catch (error) {
+      console.error("Error saving order:", error);
     }
   };
 
-  const handleEditItem = (item: any) => {
-    setEditingItemId(item.id);
+  const handleAddItemToOrder = async () => {
+    if (!itemFormData.menuItemId || itemFormData.quantity < 1) {
+      toast.error("Please select an item and quantity");
+      return;
+    }
+
+    try {
+      await addOrderItemMutation.mutateAsync({
+        orderId: selectedOrderId!,
+        menuItemId: itemFormData.menuItemId,
+        quantity: itemFormData.quantity,
+        priceAtOrder: itemFormData.priceAtOrder,
+      });
+    } catch (error) {
+      console.error("Error adding item:", error);
+    }
   };
 
-  const handleSaveItem = (itemId: number, quantity: number, priceAtOrder: number) => {
-    if (quantity < 1) {
+  const handleDeleteOrder = async (orderId: number) => {
+    if (confirm("Are you sure you want to delete this order?")) {
+      try {
+        await deleteOrderMutation.mutateAsync({ orderId });
+      } catch (error) {
+        console.error("Error deleting order:", error);
+      }
+    }
+  };
+
+  const handleEditItem = (index: number) => {
+    setEditingItemIndex(index);
+    setEditingItemQuantity(editingItems[index].quantity);
+    setEditingItemPrice(editingItems[index].priceAtOrder);
+  };
+
+  const handleSaveItemEdit = (index: number) => {
+    if (editingItemQuantity < 1) {
       toast.error("Quantity must be at least 1");
       return;
     }
-    if (priceAtOrder < 0) {
+    if (editingItemPrice < 0) {
       toast.error("Price cannot be negative");
       return;
     }
 
-    updateItemMutation.mutate({
+    const itemId = selectedOrder?.items?.[index]?.id;
+    if (!itemId) {
+      toast.error("Item ID not found");
+      return;
+    }
+
+    updateOrderItemMutation.mutate({
       itemId,
-      quantity,
-      priceAtOrder,
+      quantity: editingItemQuantity,
+      priceAtOrder: editingItemPrice,
     });
+    setEditingItemIndex(null);
   };
 
-  const handleAddItem = () => {
-    if (!itemFormData.menuItemId) {
-      toast.error("Please select a menu item");
-      return;
-    }
-    if (itemFormData.quantity < 1) {
-      toast.error("Quantity must be at least 1");
-      return;
-    }
-    if (itemFormData.priceAtOrder < 0) {
-      toast.error("Price cannot be negative");
-      return;
-    }
-
-    createItemMutation.mutate({
-      orderId: selectedOrderId!,
-      menuItemId: itemFormData.menuItemId,
-      quantity: itemFormData.quantity,
-      priceAtOrder: itemFormData.priceAtOrder,
-    });
+  const handleDragStart = (index: number) => {
+    setDraggedIndex(index);
   };
 
-  const handleDeleteOrder = (orderId: number) => {
-    if (window.confirm("Are you sure you want to delete this order?")) {
-      deleteOrderMutation.mutate({ orderId });
-    }
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
   };
 
-  const handleDeleteItem = (itemId: number) => {
-    if (window.confirm("Are you sure you want to remove this item?")) {
-      deleteItemMutation.mutate({ itemId });
-    }
+  const handleDrop = (targetIndex: number) => {
+    if (draggedIndex === null || draggedIndex === targetIndex) return;
+
+    const newItems = [...editingItems];
+    const draggedItem = newItems[draggedIndex];
+    newItems.splice(draggedIndex, 1);
+    newItems.splice(targetIndex, 0, draggedItem);
+    
+    setEditingItems(newItems);
+    setDraggedIndex(null);
   };
-
-  const calculateOrderTotal = (orderItems: any[]) => {
-    if (!orderItems) return 0;
-    return orderItems.reduce((sum, item) => {
-      return sum + parseFloat(item.priceAtOrder) * item.quantity;
-    }, 0);
-  };
-
-  // Refetch orders when date changes
-  useEffect(() => {
-    refetchOrders();
-  }, [selectedDate, refetchOrders]);
-
-  const isLoading = updateOrderMutation.isPending || updateCustomerMutation.isPending || updateItemMutation.isPending || createItemMutation.isPending;
 
   return (
-    <div className="h-full flex flex-col gap-3 md:gap-4 p-4 md:p-6 bg-background">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold">Orders Management</h1>
-          <p className="text-xs md:text-sm text-muted-foreground mt-1">View, edit, and manage all restaurant orders</p>
-        </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <Calendar className="w-4 md:w-5 h-4 md:h-5 text-muted-foreground" />
-          <input
+    <div className="w-full max-w-7xl mx-auto p-4 space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold">Orders</h1>
+        <p className="text-gray-600 mt-2">Manage and view all orders</p>
+      </div>
+
+      {/* Date Filter */}
+      <Card className="p-4">
+        <div className="flex items-center gap-2">
+          <Calendar size={20} />
+          <Label htmlFor="orderDate">Filter by Date:</Label>
+          <Input
+            id="orderDate"
             type="date"
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
-            className="px-2 md:px-3 py-1 md:py-2 text-xs md:text-sm border border-input rounded-md bg-background text-foreground"
+            className="w-40"
           />
         </div>
-      </div>
+      </Card>
 
-      {/* Main Content */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-6 overflow-hidden">
-        {/* Orders List */}
-        <div className="lg:col-span-1">
-          <Card className="h-full flex flex-col">
-            <CardHeader className="border-b">
-              <CardTitle className="text-lg">Orders List</CardTitle>
-                  <p className="text-sm text-muted-foreground mt-1">{(orders as any[]).length} total orders</p>
-            </CardHeader>
-            <div className="flex-1 overflow-y-auto">
-              {isLoadingOrders ? (
-                <div className="flex items-center justify-center h-full">
-                  <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-                </div>
-              ) : orders.length === 0 ? (
-                <div className="flex items-center justify-center h-full p-4 text-center">
-                  <div className="text-muted-foreground">No orders yet</div>
-                </div>
-              ) : (
-                <div className="divide-y">
-                  {(orders as any[]).map((order: any) => (
-                    <div
-                      key={order.id}
-                      onClick={() => handleSelectOrder(order.id)}
-                      className={`p-4 cursor-pointer transition-all hover:bg-muted/50 ${
-                        selectedOrderId === order.id ? "bg-muted border-l-4 border-blue-500" : ""
-                      }`}
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1 min-w-0">
-                          <div className="font-semibold text-sm">Order #{order.id}</div>
-                          <div className="text-xs text-muted-foreground mt-1 truncate">{order.customerName}</div>
-                          <div className="text-xs text-muted-foreground mt-1">{order.createdAt ? format(new Date(order.createdAt), 'MMM dd, yyyy HH:mm') : 'N/A'}</div>
-                          <div className="flex items-center gap-2 mt-2">
-                            <span className={`px-2 py-1 rounded text-xs font-medium ${
-                              order.status === "Delivered" ? "bg-green-100 text-green-800" :
-                              order.status === "On the Way" ? "bg-blue-100 text-blue-800" :
-                              order.status === "Pending" ? "bg-yellow-100 text-yellow-800" :
-                              "bg-gray-100 text-gray-800"
-                            }`}>
-                              {order.status}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="font-semibold text-sm">${(Number(order.totalPrice) || 0).toFixed(2)}</div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </Card>
+      {/* Orders List */}
+      {isLoadingOrders ? (
+        <div className="flex justify-center py-8">
+          <Loader2 className="animate-spin" size={32} />
         </div>
-
-        {/* Order Details */}
-        <div className="lg:col-span-2">
-          {selectedOrder ? (
-            <div className="flex flex-col gap-4 h-full overflow-y-auto">
-              {/* Customer Information Card */}
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                  <CardTitle className="text-lg">Customer Information</CardTitle>
-                  {editingOrderId !== selectedOrderId ? (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={handleEditOrder}
-                      className="gap-2"
-                    >
-                      <Edit2 className="w-4 h-4" />
-                      Edit
-                    </Button>
-                  ) : (
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        onClick={handleSaveOrder}
-                        disabled={isLoading}
-                        className="gap-2"
-                      >
-                        <Save className="w-4 h-4" />
-                        Save
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setEditingOrderId(null)}
-                        disabled={isLoading}
-                      >
-                        <X className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  )}
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* Name */}
-                  <div>
-                    <label className="text-sm font-medium">Customer Name</label>
-                    <Input
-                      value={formData.customerName}
-                      onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
-                      disabled={editingOrderId !== selectedOrderId}
-                      className="mt-1"
-                    />
+      ) : orders.length === 0 ? (
+        <Card className="p-8 text-center">
+          <p className="text-gray-600">No orders found for the selected date</p>
+        </Card>
+      ) : (
+        <div className="space-y-4">
+          {orders.map((order: any) => (
+            <Card key={order.id} className="overflow-hidden">
+              <div
+                className="p-4 bg-gray-50 cursor-pointer hover:bg-gray-100 flex items-center justify-between"
+                onClick={() => {
+                  setSelectedOrderId(order.id);
+                  setExpandedOrderId(expandedOrderId === order.id ? null : order.id);
+                }}
+              >
+                <div className="flex-1">
+                  <div className="font-semibold">Order #{order.id}</div>
+                  <div className="text-sm text-gray-600">
+                    {order.customer?.name} • {order.customer?.phone}
                   </div>
-
-                  {/* Phone */}
-                  <div>
-                    <label className="text-sm font-medium">Phone Number</label>
-                    <Input
-                      value={formData.customerPhone}
-                      onChange={(e) => setFormData({ ...formData, customerPhone: e.target.value })}
-                      disabled={editingOrderId !== selectedOrderId}
-                      className="mt-1"
-                      type="tel"
-                    />
+                  <div className="text-sm font-medium mt-1">
+                    Total: ${parseFloat(order.totalPrice).toFixed(2)}
                   </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                    order.status === "Pending" ? "bg-yellow-100 text-yellow-800" :
+                    order.status === "Confirmed" ? "bg-blue-100 text-blue-800" :
+                    order.status === "Delivered" ? "bg-green-100 text-green-800" :
+                    "bg-gray-100 text-gray-800"
+                  }`}>
+                    {order.status}
+                  </span>
+                  {expandedOrderId === order.id ? <ChevronUp /> : <ChevronDown />}
+                </div>
+              </div>
 
-                  {/* Address */}
-                  <div>
-                    <label className="text-sm font-medium">Delivery Address</label>
-                    <Input
-                      value={formData.customerAddress}
-                      onChange={(e) => setFormData({ ...formData, customerAddress: e.target.value })}
-                      disabled={editingOrderId !== selectedOrderId}
-                      className="mt-1"
-                    />
-                  </div>
-
-                  {/* Status */}
-                  <div>
-                    <label className="text-sm font-medium">Order Status</label>
-                    <Select
-                      value={formData.status}
-                      onValueChange={(value) => setFormData({ ...formData, status: value })}
-                      disabled={editingOrderId !== selectedOrderId}
-                    >
-                      <SelectTrigger className="mt-1">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Pending">Pending</SelectItem>
-                        <SelectItem value="Confirmed">Confirmed</SelectItem>
-                        <SelectItem value="On the Way">On the Way</SelectItem>
-                        <SelectItem value="Delivered">Delivered</SelectItem>
-                        <SelectItem value="Cancelled">Cancelled</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Notes */}
-                  <div>
-                    <label className="text-sm font-medium">Order Notes</label>
-                    <textarea
-                      value={formData.notes}
-                      onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                      disabled={editingOrderId !== selectedOrderId}
-                      className="w-full mt-1 p-2 border rounded-md text-sm disabled:bg-muted disabled:cursor-not-allowed"
-                      rows={3}
-                      placeholder="Add any special instructions or notes..."
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Order Items Card */}
-              <Card className="flex-1 flex flex-col">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 border-b">
-                  <CardTitle className="text-lg">Order Items ({selectedOrder.items?.length || 0})</CardTitle>
-                  <Dialog open={showAddItemDialog} onOpenChange={setShowAddItemDialog}>
-                    <DialogTrigger asChild>
-                      <Button size="sm" className="gap-2">
-                        <Plus className="w-4 h-4" />
-                        Add Item
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Add Item to Order</DialogTitle>
-                      </DialogHeader>
-                      <div className="space-y-4 py-4">
-                        <div>
-                          <label className="text-sm font-medium">Menu Item</label>
-                          <Select
-                            value={itemFormData.menuItemId ? itemFormData.menuItemId.toString() : ""}
-                            onValueChange={(value) => {
-                              const selectedItem = menuItems.find((m: any) => m.id === parseInt(value));
-                              setItemFormData({
-                                ...itemFormData,
-                                menuItemId: parseInt(value),
-                                priceAtOrder: parseFloat(String(selectedItem?.price || 0)),
-                              });
-                            }}
-                          >
-                            <SelectTrigger className="mt-1">
-                              <SelectValue placeholder="Select a menu item" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {menuItems.map((item: any) => (
-                                <SelectItem key={item.id} value={item.id.toString()}>
-                                  {item.name} - ${parseFloat(item.price).toFixed(2)}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
+              {/* Expanded Order Details */}
+              {expandedOrderId === order.id && (
+                <CardContent className="p-6 space-y-6">
+                  {editingOrderId === order.id ? (
+                    // Edit Mode
+                    <div className="space-y-6">
+                      {/* Customer Information */}
+                      <div>
+                        <h3 className="font-semibold mb-3">Customer Information</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
-                            <label className="text-sm font-medium">Quantity</label>
+                            <Label>Name</Label>
                             <Input
-                              type="number"
-                              min="1"
-                              value={itemFormData.quantity}
-                              onChange={(e) => setItemFormData({ ...itemFormData, quantity: parseInt(e.target.value) || 1 })}
-                              className="mt-1"
+                              value={formData.customerName}
+                              onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
                             />
                           </div>
                           <div>
-                            <label className="text-sm font-medium">Price</label>
+                            <Label>Phone</Label>
+                            <Input
+                              value={formData.customerPhone}
+                              onChange={(e) => setFormData({ ...formData, customerPhone: e.target.value })}
+                            />
+                          </div>
+                          <div className="md:col-span-2">
+                            <Label>Address</Label>
+                            <Input
+                              value={formData.customerAddress}
+                              onChange={(e) => setFormData({ ...formData, customerAddress: e.target.value })}
+                            />
+                          </div>
+                          <div>
+                            <Label>Area</Label>
+                            <Input
+                              value={formData.area}
+                              onChange={(e) => setFormData({ ...formData, area: e.target.value })}
+                            />
+                          </div>
+                          <div>
+                            <Label>Status</Label>
+                            <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="Pending">Pending</SelectItem>
+                                <SelectItem value="Confirmed">Confirmed</SelectItem>
+                                <SelectItem value="Delivered">Delivered</SelectItem>
+                                <SelectItem value="Cancelled">Cancelled</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        <div className="mt-4">
+                          <Label>Notes</Label>
+                          <Input
+                            value={formData.notes}
+                            onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                            placeholder="Add order notes"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Tax and Delivery Time */}
+                      <div>
+                        <h3 className="font-semibold mb-3">Order Settings</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <Label>Tax Percentage (%)</Label>
                             <Input
                               type="number"
                               min="0"
+                              max="100"
                               step="0.01"
-                              value={itemFormData.priceAtOrder}
-                              onChange={(e) => setItemFormData({ ...itemFormData, priceAtOrder: parseFloat(e.target.value) || 0 })}
-                              className="mt-1"
+                              value={formData.taxPercentage}
+                              onChange={(e) => setFormData({ ...formData, taxPercentage: parseFloat(e.target.value) || 0 })}
                             />
                           </div>
-                        </div>
-
-                        <div className="flex gap-2 justify-end pt-4">
-                          <Button
-                            variant="outline"
-                            onClick={() => setShowAddItemDialog(false)}
-                          >
-                            Cancel
-                          </Button>
-                          <Button
-                            onClick={handleAddItem}
-                            disabled={createItemMutation.isPending}
-                          >
-                            {createItemMutation.isPending ? "Adding..." : "Add Item"}
-                          </Button>
+                          <div className="flex items-end">
+                            <div className="flex items-center space-x-2">
+                              <Checkbox
+                                id="hasDeliveryTime"
+                                checked={formData.hasDeliveryTime}
+                                onCheckedChange={(checked) => setFormData({ ...formData, hasDeliveryTime: checked as boolean })}
+                              />
+                              <Label htmlFor="hasDeliveryTime" className="cursor-pointer">Enable Delivery Time</Label>
+                            </div>
+                          </div>
+                          {formData.hasDeliveryTime && (
+                            <div className="md:col-span-2">
+                              <Label>Delivery Time</Label>
+                              <Input
+                                type="datetime-local"
+                                value={formData.deliveryTime}
+                                onChange={(e) => setFormData({ ...formData, deliveryTime: e.target.value })}
+                              />
+                            </div>
+                          )}
                         </div>
                       </div>
-                    </DialogContent>
-                  </Dialog>
-                </CardHeader>
 
-                <div className="flex-1 overflow-y-auto">
-                  {!selectedOrder?.items || selectedOrder?.items?.length === 0 ? (
-                    <div className="flex items-center justify-center h-full p-4 text-center">
-                      <div className="text-muted-foreground">No items in this order</div>
+                      {/* Order Items */}
+                      <div>
+                        <div className="flex justify-between items-center mb-3">
+                          <h3 className="font-semibold">Order Items</h3>
+                          <Dialog open={showAddItemDialog} onOpenChange={setShowAddItemDialog}>
+                            <DialogTrigger asChild>
+                              <Button size="sm" className="gap-1">
+                                <Plus size={16} /> Add Item
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>Add Item to Order</DialogTitle>
+                              </DialogHeader>
+                              <div className="space-y-4">
+                                <div>
+                                  <Label>Item</Label>
+                                  <Select
+                                    value={itemFormData.menuItemId.toString()}
+                                    onValueChange={(value) => {
+                                      const item = menuItems.find((m: any) => m.id === parseInt(value));
+                                      setItemFormData({
+                                        menuItemId: parseInt(value),
+                                        quantity: 1,
+                                        priceAtOrder: item ? parseFloat(item.price) : 0,
+                                      });
+                                    }}
+                                  >
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select item" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {menuItems.map((item: any) => (
+                                        <SelectItem key={item.id} value={item.id.toString()}>
+                                          {item.name} - ${parseFloat(item.price).toFixed(2)}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                <div>
+                                  <Label>Quantity</Label>
+                                  <Input
+                                    type="number"
+                                    min="1"
+                                    value={itemFormData.quantity}
+                                    onChange={(e) => setItemFormData({ ...itemFormData, quantity: parseInt(e.target.value) || 1 })}
+                                  />
+                                </div>
+                                <div>
+                                  <Label>Price</Label>
+                                  <Input
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    value={itemFormData.priceAtOrder}
+                                    onChange={(e) => setItemFormData({ ...itemFormData, priceAtOrder: parseFloat(e.target.value) || 0 })}
+                                  />
+                                </div>
+                                <Button onClick={handleAddItemToOrder} className="w-full">
+                                  Add Item
+                                </Button>
+                              </div>
+                            </DialogContent>
+                          </Dialog>
+                        </div>
+
+                        <div className="space-y-2">
+                          {editingItems.map((item, index) => {
+                            const menuItem = menuItems.find((m: any) => m.id === item.menuItemId);
+                            const itemTotal = item.priceAtOrder * item.quantity;
+
+                            return (
+                              <div
+                                key={index}
+                                draggable
+                                onDragStart={() => handleDragStart(index)}
+                                onDragOver={handleDragOver}
+                                onDrop={() => handleDrop(index)}
+                                className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border hover:bg-gray-100 cursor-move"
+                              >
+                                <GripVertical size={18} className="text-gray-400" />
+                                
+                                {editingItemIndex === index ? (
+                                  <>
+                                    <div className="flex-1">
+                                      <div className="text-sm font-medium">{menuItem?.name}</div>
+                                      <div className="flex gap-2 mt-1">
+                                        <Input
+                                          type="number"
+                                          min="1"
+                                          value={editingItemQuantity}
+                                          onChange={(e) => setEditingItemQuantity(parseInt(e.target.value) || 1)}
+                                          className="w-16 h-8"
+                                        />
+                                        <Input
+                                          type="number"
+                                          min="0"
+                                          step="0.01"
+                                          value={editingItemPrice}
+                                          onChange={(e) => setEditingItemPrice(parseFloat(e.target.value) || 0)}
+                                          className="w-24 h-8"
+                                        />
+                                      </div>
+                                    </div>
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      onClick={() => {
+                                        const itemId = selectedOrder?.items?.[index]?.id;
+                                        if (itemId) deleteOrderItemMutation.mutate({ itemId });
+                                      }}
+                                      className="text-red-600 hover:text-red-700"
+                                    >
+                                      <Trash2 size={16} />
+                                    </Button>
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => setEditingItemIndex(null)}
+                                    >
+                                      <X size={16} />
+                                    </Button>
+                                  </>
+                                ) : (
+                                  <>
+                                    <div className="flex-1">
+                                      <div className="text-sm font-medium">{menuItem?.name}</div>
+                                      <div className="text-xs text-gray-600">
+                                        {item.quantity} × ${item.priceAtOrder.toFixed(2)} = ${itemTotal.toFixed(2)}
+                                      </div>
+                                    </div>
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={() => handleEditItem(index)}
+                                    >
+                                      <Edit2 size={16} />
+                                    </Button>
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={() => {
+                                        const itemId = selectedOrder?.items?.[index]?.id;
+                                        if (itemId) deleteOrderItemMutation.mutate({ itemId });
+                                      }}
+                                      className="text-red-600 hover:text-red-700"
+                                    >
+                                      <Trash2 size={16} />
+                                    </Button>
+                                  </>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {/* Price Summary */}
+                        <div className="mt-6 pt-4 border-t space-y-2">
+                          <div className="flex justify-between text-sm">
+                            <span>Subtotal:</span>
+                            <span className="font-medium">${priceCalculations.subtotal.toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span>Tax ({formData.taxPercentage}%):</span>
+                            <span className="font-medium">${priceCalculations.taxAmount.toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between text-lg font-bold border-t pt-2">
+                            <span>Total:</span>
+                            <span className="text-blue-600">${priceCalculations.totalPrice.toFixed(2)}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Save/Cancel Buttons */}
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={handleSaveOrder}
+                          className="flex-1 bg-green-600 hover:bg-green-700"
+                          disabled={updateOrderMutation.isPending}
+                        >
+                          {updateOrderMutation.isPending ? "Saving..." : "Save Changes"}
+                        </Button>
+                        <Button
+                          onClick={() => setEditingOrderId(null)}
+                          variant="outline"
+                          className="flex-1"
+                        >
+                          Cancel
+                        </Button>
+                      </div>
                     </div>
                   ) : (
-                    <div className="divide-y">
-                      {selectedOrder?.items?.map((item: any) => (
-                        <OrderItemRow
-                          key={item.id}
-                          item={item}
-                          isEditing={editingItemId === item.id}
-                          onEdit={() => handleEditItem(item)}
-                          onSave={handleSaveItem}
-                          onDelete={() => handleDeleteItem(item.id)}
-                          isLoading={isLoading}
-                        />
-                      ))}
+                    // View Mode
+                    <div className="space-y-4">
+                      <div>
+                        <h3 className="font-semibold mb-2">Customer Information</h3>
+                        <div className="text-sm space-y-1">
+                          <div><span className="text-gray-600">Name:</span> {order.customer?.name}</div>
+                          <div><span className="text-gray-600">Phone:</span> {order.customer?.phone}</div>
+                          <div><span className="text-gray-600">Address:</span> {order.customer?.address}</div>
+                          {order.area && <div><span className="text-gray-600">Area:</span> {order.area}</div>}
+                          {order.notes && <div><span className="text-gray-600">Notes:</span> {order.notes}</div>}
+                        </div>
+                      </div>
+
+                      <div>
+                        <h3 className="font-semibold mb-2">Order Items</h3>
+                        <div className="space-y-1 text-sm">
+                          {order.items?.map((item: any, idx: number) => (
+                            <div key={idx} className="flex justify-between">
+                              <span>{item.menuItem?.name} × {item.quantity}</span>
+                              <span>${(item.priceAtOrder * item.quantity).toFixed(2)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="pt-4 border-t space-y-1 text-sm">
+                        <div className="flex justify-between">
+                          <span>Subtotal:</span>
+                          <span>${order.subtotal?.toFixed(2) || "0.00"}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Tax ({order.taxPercentage || 13}%):</span>
+                          <span>${order.taxAmount?.toFixed(2) || "0.00"}</span>
+                        </div>
+                        <div className="flex justify-between font-bold text-base">
+                          <span>Total:</span>
+                          <span>${order.totalPrice?.toFixed(2) || "0.00"}</span>
+                        </div>
+                      </div>
+
+                      {order.hasDeliveryTime && order.deliveryTime && (
+                        <div className="text-sm">
+                          <span className="text-gray-600">Delivery Time:</span> {format(new Date(order.deliveryTime), "PPpp")}
+                        </div>
+                      )}
+
+                      {/* Action Buttons */}
+                      <div className="flex gap-2 pt-4">
+                        <Button
+                          onClick={() => handleEditOrder(order)}
+                          className="flex-1 gap-1"
+                        >
+                          <Edit2 size={16} /> Edit
+                        </Button>
+                                      <Button
+                                        onClick={() => handleDeleteOrder(order.id)}
+                                        variant="destructive"
+                                        className="flex-1 gap-1"
+                                        disabled={deleteOrderMutation.isPending}
+                                      >
+                                        <Trash2 size={16} /> Delete
+                                      </Button>
+                      </div>
                     </div>
                   )}
-                </div>
-
-                {/* Order Total */}
-                <div className="border-t p-4 bg-muted/50">
-                  <div className="flex items-center justify-between">
-                    <span className="font-semibold text-lg">Order Total:</span>
-                    <span className="text-2xl font-bold text-blue-600">
-                      ${calculateOrderTotal(selectedOrder?.items || []).toFixed(2)}
-                    </span>
-                  </div>
-                </div>
-              </Card>
-
-              {/* Delete Order Button */}
-              <div className="flex gap-2">
-                <Button
-                  variant="destructive"
-                  className="w-full"
-                  onClick={() => handleDeleteOrder(selectedOrderId!)}
-                  disabled={isLoading}
-                >
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Delete Order
-                </Button>
-              </div>
-            </div>
-          ) : (
-              <Card className="h-full flex items-center justify-center">
-                <div className="text-center text-muted-foreground">
-                  <p className="text-lg">Select an order to view details</p>
-                </div>
-              </Card>
-            )
-          }
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Order Item Row Component
-function OrderItemRow({
-  item,
-  isEditing,
-  onEdit,
-  onSave,
-  onDelete,
-  isLoading,
-}: {
-  item: any;
-  isEditing: boolean;
-  onEdit: () => void;
-  onSave: (itemId: number, quantity: number, price: number) => void;
-  onDelete: () => void;
-  isLoading: boolean;
-}) {
-  const [quantity, setQuantity] = useState(item.quantity);
-  const [price, setPrice] = useState(parseFloat(item.priceAtOrder));
-
-  return (
-    <div className="p-4 hover:bg-muted/50 transition-colors">
-      {isEditing ? (
-        <div className="space-y-3">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-1">
-              <div className="font-medium text-sm mb-2">{item.menuItemName}</div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs text-muted-foreground">Quantity</label>
-                  <Input
-                    type="number"
-                    min="1"
-                    value={quantity}
-                    onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-                    className="mt-1 h-8"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs text-muted-foreground">Price</label>
-                  <Input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={price}
-                    onChange={(e) => setPrice(parseFloat(e.target.value) || 0)}
-                    className="mt-1 h-8"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="flex gap-2 justify-end">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => {
-                setQuantity(item.quantity);
-                setPrice(parseFloat(item.priceAtOrder));
-                onEdit();
-              }}
-              disabled={isLoading}
-            >
-              Cancel
-            </Button>
-            <Button
-              size="sm"
-              onClick={() => {
-                onSave(item.id, quantity, price);
-                setQuantity(item.quantity);
-                setPrice(parseFloat(item.priceAtOrder));
-              }}
-              disabled={isLoading}
-            >
-              Save
-            </Button>
-          </div>
-        </div>
-      ) : (
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex-1">
-            <div className="font-medium text-sm">{item.menuItemName}</div>
-            <div className="text-xs text-muted-foreground mt-1">
-              {item.quantity} × ${parseFloat(item.priceAtOrder).toFixed(2)} = ${(item.quantity * parseFloat(item.priceAtOrder)).toFixed(2)}
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={onEdit}
-              disabled={isLoading}
-            >
-              <Edit2 className="w-4 h-4" />
-            </Button>
-            <Button
-              size="sm"
-              variant="destructive"
-              onClick={onDelete}
-              disabled={isLoading}
-            >
-              <Trash2 className="w-4 h-4" />
-            </Button>
-          </div>
+                </CardContent>
+              )}
+            </Card>
+          ))}
         </div>
       )}
     </div>
