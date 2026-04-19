@@ -264,6 +264,8 @@ export async function getOrderWithItems(orderId: number) {
       totalPrice: orders.totalPrice,
       notes: orders.notes,
       area: orders.area,
+      hasDeliveryTime: orders.hasDeliveryTime,
+      deliveryTime: orders.deliveryTime,
       createdAt: orders.createdAt,
       updatedAt: orders.updatedAt,
       customerName: customers.name,

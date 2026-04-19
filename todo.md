@@ -700,3 +700,32 @@
 - [x] Verify price calculations update dynamically when tax percentage changes
 - [x] Ensure prices are properly stored in database
 - [x] Ensure prices are properly retrieved and displayed in all UI sections
+
+
+## NEW ISSUE - Missing Customer Info & Order Items in Orders Tab - FIXED
+- [x] Diagnose why customer information is not displayed in Orders tab
+- [x] Diagnose why order items are not displayed in Orders tab
+- [x] Check if getOrderWithItems query is returning customer data
+- [x] Check if getOrderWithItems query is returning order items data
+- [x] Fix database query to properly join customers and order_items tables
+- [x] Update Orders.tsx to display customer information
+- [x] Update Orders.tsx to display order items
+- [x] Ensure all fields are editable in Orders tab
+- [x] Test customer info display with multiple orders
+- [x] Test order items display with multiple orders
+
+## NEW ISSUE - Delivery Time Display Across Dashboards - FIXED
+- [x] Display delivery time in Orders tab if set
+- [x] Display delivery time in Order Tracking tab if set
+- [x] Display delivery time in Kitchen Dashboard if set
+- [x] Handle empty/null delivery time gracefully
+- [x] Test delivery time display with various orders
+
+## NEW ISSUE - Real-time Synchronization Across Dashboards
+- [ ] Implement real-time updates when order status changes
+- [ ] Implement real-time updates when order items change
+- [ ] Implement real-time updates when customer info changes
+- [ ] Ensure Order Tracking tab updates automatically
+- [ ] Ensure Kitchen Dashboard updates automatically
+- [ ] Test synchronization across multiple dashboards
+- [ ] Verify no manual refresh is required

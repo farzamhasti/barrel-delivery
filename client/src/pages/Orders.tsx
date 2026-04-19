@@ -359,7 +359,7 @@ export function Orders() {
               </div>
 
               {/* Expanded Order Details */}
-              {expandedOrderId === order.id && (
+              {expandedOrderId === order.id && selectedOrderDetails && (
                 <CardContent className="p-6 space-y-6">
                   {editingOrderId === order.id ? (
                     // Edit Mode
@@ -660,20 +660,20 @@ export function Orders() {
                       <div>
                         <h3 className="font-semibold mb-2">Customer Information</h3>
                         <div className="text-sm space-y-1">
-                          <div><span className="text-gray-600">Name:</span> {order.customer?.name}</div>
-                          <div><span className="text-gray-600">Phone:</span> {order.customer?.phone}</div>
-                          <div><span className="text-gray-600">Address:</span> {order.customer?.address}</div>
-                          {order.area && <div><span className="text-gray-600">Area:</span> {order.area}</div>}
-                          {order.notes && <div><span className="text-gray-600">Notes:</span> {order.notes}</div>}
+                          <div><span className="text-gray-600">Name:</span> {selectedOrderDetails?.customerName}</div>
+                          <div><span className="text-gray-600">Phone:</span> {selectedOrderDetails?.customerPhone}</div>
+                          <div><span className="text-gray-600">Address:</span> {selectedOrderDetails?.customerAddress}</div>
+                          {selectedOrderDetails?.area && <div><span className="text-gray-600">Area:</span> {selectedOrderDetails?.area}</div>}
+                          {selectedOrderDetails?.notes && <div><span className="text-gray-600">Notes:</span> {selectedOrderDetails?.notes}</div>}
                         </div>
                       </div>
 
                       <div>
                         <h3 className="font-semibold mb-2">Order Items</h3>
                         <div className="space-y-1 text-sm">
-                          {order.items?.map((item: any, idx: number) => (
+                          {selectedOrderDetails?.items?.map((item: any, idx: number) => (
                             <div key={idx} className="flex justify-between">
-                              <span>{item.menuItem?.name} × {item.quantity}</span>
+                              <span>{item.menuItemName} × {item.quantity}</span>
                               <span>${(parseFloat(String(item.priceAtOrder)) * item.quantity).toFixed(2)}</span>
                             </div>
                           ))}
@@ -683,40 +683,40 @@ export function Orders() {
                       <div className="pt-4 border-t space-y-1 text-sm">
                         <div className="flex justify-between">
                           <span>Subtotal:</span>
-                          <span>${parseFloat(String(order.subtotal || 0)).toFixed(2)}</span>
+                          <span>${parseFloat(String(selectedOrderDetails?.subtotal || 0)).toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span>Tax ({order.taxPercentage || 13}%):</span>
-                          <span>${parseFloat(String(order.taxAmount || 0)).toFixed(2)}</span>
+                          <span>Tax ({selectedOrderDetails?.taxPercentage || 13}%):</span>
+                          <span>${parseFloat(String(selectedOrderDetails?.taxAmount || 0)).toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between font-bold text-base">
                           <span>Total:</span>
-                          <span>${parseFloat(String(order.totalPrice || 0)).toFixed(2)}</span>
+                          <span>${parseFloat(String(selectedOrderDetails?.totalPrice || 0)).toFixed(2)}</span>
                         </div>
                       </div>
 
-                      {order.hasDeliveryTime && order.deliveryTime && (
+                      {selectedOrderDetails?.hasDeliveryTime && selectedOrderDetails?.deliveryTime && (
                         <div className="text-sm">
-                          <span className="text-gray-600">Delivery Time:</span> {format(new Date(order.deliveryTime), "PPpp")}
+                          <span className="text-gray-600">Delivery Time:</span> {format(new Date(selectedOrderDetails?.deliveryTime), "PPpp")}
                         </div>
                       )}
 
                       {/* Action Buttons */}
                       <div className="flex gap-2 pt-4">
                         <Button
-                          onClick={() => handleEditOrder(order)}
+                          onClick={() => handleEditOrder(selectedOrderDetails)}
                           className="flex-1 gap-1"
                         >
                           <Edit2 size={16} /> Edit
                         </Button>
-                                      <Button
-                                        onClick={() => handleDeleteOrder(order.id)}
-                                        variant="destructive"
-                                        className="flex-1 gap-1"
-                                        disabled={deleteOrderMutation.isPending}
-                                      >
-                                        <Trash2 size={16} /> Delete
-                                      </Button>
+                        <Button
+                          onClick={() => handleDeleteOrder(selectedOrderDetails?.id)}
+                          variant="destructive"
+                          className="flex-1 gap-1"
+                          disabled={deleteOrderMutation.isPending}
+                        >
+                          <Trash2 size={16} /> Delete
+                        </Button>
                       </div>
                     </div>
                   )}
