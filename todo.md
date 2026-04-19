@@ -769,3 +769,25 @@
 - [x] Implement proper cache invalidation on order item mutations
 - [x] Test synchronization across multiple dashboards
 - [x] Verify no manual refresh is required
+
+
+## FIX - Delivery Time Conversion Error (value.toISOString is not a function)
+- [x] Fixed deliveryTime conversion in routers.ts orders.update procedure
+  - Added proper string-to-Date conversion with validation
+  - Handles both string and Date object inputs
+  - Validates date is valid before persisting to database
+- [x] Fixed Orders.tsx to send deliveryTime as string from datetime-local input
+  - Client sends raw string value from datetime-local input
+  - Server converts string to Date object
+  - Added hasDeliveryTime flag to track if delivery time is set
+- [x] Tested delivery time save with Order #300199
+  - Successfully saved delivery time: 2026-04-19T20:30
+  - No "value.toISOString is not a function" errors
+  - Order edit mode exits cleanly after save
+- [x] Verified delivery time persists in database
+  - Created 6 comprehensive vitest tests for delivery time functionality
+  - All tests passing: create without delivery time, update with delivery time, remove delivery time, handle in getOrderWithItems, validate timestamp format, multiple updates
+  - Delivery time properly stored as MySQL timestamp
+- [x] Verified delivery time can be edited and saved again
+  - Order #300199 successfully saved with delivery time
+  - No errors in browser console or server logs

@@ -313,9 +313,10 @@ export const appRouter = router({
         customerAddress: z.string().optional(),
         area: z.string().optional(),
         deliveryTime: z.string().nullable().optional(),
+        hasDeliveryTime: z.boolean().optional(),
       }))
       .mutation(async ({ input }) => {
-        const { orderId, customerId, customerName, customerPhone, customerAddress, ...updateData } = input;
+        const { orderId, customerId, customerName, customerPhone, customerAddress, deliveryTime, hasDeliveryTime, ...updateData } = input;
         
         // Update customer information if provided
         if (customerId && (customerName || customerPhone || customerAddress)) {
@@ -326,8 +327,24 @@ export const appRouter = router({
           } as any);
         }
         
+        // Convert deliveryTime string to Date if provided
+        const processedData = { ...updateData } as any;
+        if (deliveryTime !== undefined) {
+          if (deliveryTime) {
+            const parsedDate = new Date(deliveryTime);
+            // Validate that the date is valid
+            if (!isNaN(parsedDate.getTime())) {
+              processedData.deliveryTime = parsedDate;
+            } else {
+              throw new Error('Invalid delivery time format');
+            }
+          } else {
+            processedData.deliveryTime = null;
+          }
+        }
+        
         // Update order
-        return db.updateOrder(orderId, updateData as any);
+        return db.updateOrder(orderId, processedData);
       }),
     updateItem: protectedProcedure
       .input(z.object({

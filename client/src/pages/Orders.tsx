@@ -228,7 +228,8 @@ export function Orders() {
         customerPhone: formData.customerPhone,
         customerAddress: formData.customerAddress,
         area: formData.area,
-        deliveryTime: formData.hasDeliveryTime && formData.deliveryTime ? new Date(formData.deliveryTime).toISOString() : null,
+        deliveryTime: formData.hasDeliveryTime && formData.deliveryTime ? formData.deliveryTime : null,
+        hasDeliveryTime: formData.hasDeliveryTime,
       })
     } catch (error) {
       console.error("Error saving order:", error);
