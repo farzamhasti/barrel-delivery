@@ -488,11 +488,11 @@ export function Orders() {
                                 <Plus size={16} /> Add Item
                               </Button>
                             </DialogTrigger>
-                            <DialogContent>
+                            <DialogContent className="overflow-visible">
                               <DialogHeader>
                                 <DialogTitle>Add Item to Order</DialogTitle>
                               </DialogHeader>
-                              <div className="space-y-4">
+                              <div className="space-y-4 overflow-visible">
                                 <div>
                                   <Label>Item</Label>
                                   <Select
