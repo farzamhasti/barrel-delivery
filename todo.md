@@ -742,3 +742,30 @@
 - [x] Test edit mode with multiple orders to verify data is pre-filled
 - [x] Verify edited data is saved correctly to database
 - [x] Ensure no data is lost when saving changes
+
+
+## NEW ISSUE - Order Item Editing Not Working - FIXED
+- [x] Diagnose why order item edits are not being applied
+- [x] Check if updateOrderItem mutation is being called correctly
+- [x] Verify database update queries for order items
+- [x] Test adding items to existing orders
+- [x] Test removing items from existing orders
+- [x] Test updating item quantities
+- [x] Test updating item prices
+- [x] Verify changes are saved to database
+
+## NEW ISSUE - Automatic Price Recalculation Not Working - FIXED
+- [x] Implement automatic subtotal recalculation after item changes
+- [x] Implement automatic tax recalculation after item changes
+- [x] Implement automatic total price recalculation after item changes
+- [x] Ensure prices update immediately in UI
+- [x] Ensure prices are persisted to database
+- [x] Test price updates with various item combinations
+
+## NEW ISSUE - Real-Time Synchronization Not Working - FIXED
+- [x] Verify tRPC cache invalidation is working correctly
+- [x] Check if Order Tracking dashboard updates automatically
+- [x] Check if Kitchen Dashboard updates automatically
+- [x] Implement proper cache invalidation on order item mutations
+- [x] Test synchronization across multiple dashboards
+- [x] Verify no manual refresh is required

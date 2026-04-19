@@ -96,11 +96,18 @@ export function Orders() {
 
   // Calculate price updates dynamically
   const priceCalculations = useMemo(() => {
-    const subtotal = editingItems.reduce((sum, item) => sum + item.priceAtOrder * item.quantity, 0);
+    // Use editingItems, but if currently editing an item, use the temporary editing values
+    const itemsForCalculation = editingItems.map((item, index) => {
+      if (index === editingItemIndex) {
+        return { ...item, quantity: editingItemQuantity, priceAtOrder: editingItemPrice };
+      }
+      return item;
+    });
+    const subtotal = itemsForCalculation.reduce((sum, item) => sum + item.priceAtOrder * item.quantity, 0);
     const taxAmount = subtotal * (formData.taxPercentage / 100);
     const totalPrice = subtotal + taxAmount;
     return { subtotal, taxAmount, totalPrice };
-  }, [editingItems, formData.taxPercentage]);
+  }, [editingItems, formData.taxPercentage, editingItemIndex, editingItemQuantity, editingItemPrice]);
 
   // Mutations
   const updateOrderMutation = trpc.orders.updateStatus.useMutation({
