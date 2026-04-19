@@ -82,6 +82,7 @@ export function Orders() {
   }, [allOrders, selectedDate]);
 
   const { data: menuItems = [] } = trpc.menu.items.list.useQuery();
+  const { data: menuCategories = [] } = trpc.menu.categories.list.useQuery();
   const { data: selectedOrderDetails } = trpc.orders.getById.useQuery(
     { orderId: selectedOrderId || 0 },
     { enabled: selectedOrderId !== null }
@@ -495,28 +496,45 @@ export function Orders() {
                               <div className="space-y-4 overflow-visible">
                                 <div>
                                   <Label>Item</Label>
-                                  <Select
-                                    value={itemFormData.menuItemId.toString()}
-                                    onValueChange={(value) => {
-                                      const item = menuItems.find((m: any) => m.id === parseInt(value));
-                                      setItemFormData({
-                                        menuItemId: parseInt(value),
-                                        quantity: 1,
-                                        priceAtOrder: item ? (typeof item.price === 'number' ? item.price : parseFloat(String(item.price))) : 0,
-                                      });
-                                    }}
-                                  >
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Select item" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {menuItems.map((item: any) => (
-                                        <SelectItem key={item.id} value={item.id.toString()}>
-                                          {item.name} - ${parseFloat(item.price).toFixed(2)}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
+                                  <div className="border rounded-md max-h-96 overflow-y-auto">
+                                    {menuCategories.map((category: any) => {
+                                      const categoryItems = menuItems.filter((item: any) => item.categoryId === category.id);
+                                      if (categoryItems.length === 0) return null;
+                                      
+                                      return (
+                                        <div key={category.id} className="border-b last:border-b-0">
+                                          <div className="px-3 py-2 bg-gray-50 font-semibold text-sm">
+                                            {category.name}
+                                          </div>
+                                          {categoryItems.map((item: any) => (
+                                            <button
+                                              key={item.id}
+                                              onClick={() => {
+                                                setItemFormData({
+                                                  menuItemId: item.id,
+                                                  quantity: 1,
+                                                  priceAtOrder: typeof item.price === 'number' ? item.price : parseFloat(String(item.price)),
+                                                });
+                                              }}
+                                              className={`w-full text-left px-3 py-2 hover:bg-blue-50 transition-colors ${
+                                                itemFormData.menuItemId === item.id ? 'bg-blue-100' : ''
+                                              }`}
+                                            >
+                                              <div className="flex justify-between items-center">
+                                                <span className="font-medium">{item.name}</span>
+                                                <span className="text-sm text-gray-600">${parseFloat(item.price).toFixed(2)}</span>
+                                              </div>
+                                            </button>
+                                          ))}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                  {itemFormData.menuItemId > 0 && (
+                                    <div className="mt-2 p-2 bg-blue-50 rounded text-sm">
+                                      Selected: {menuItems.find((m: any) => m.id === itemFormData.menuItemId)?.name}
+                                    </div>
+                                  )}
                                 </div>
                                 <div>
                                   <Label>Quantity</Label>
