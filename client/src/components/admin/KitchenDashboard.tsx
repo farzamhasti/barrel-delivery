@@ -9,8 +9,8 @@ import { toast } from "sonner";
 export default function KitchenDashboard() {
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
 
-  // Fetch all orders and filter on client side
-  const { data: allOrders = [], isLoading, refetch } = trpc.orders.list.useQuery();
+  // Fetch all orders with items and delivery time for today
+  const { data: allOrders = [], isLoading, refetch } = trpc.orders.getTodayOrdersWithItems.useQuery();
   
   // Filter to orders that need preparation
   const orders = allOrders.filter((o: any) => 
@@ -37,7 +37,11 @@ export default function KitchenDashboard() {
     return () => clearInterval(interval);
   }, [refetch]);
 
+
+
   const selectedOrder = orders.find((o: any) => o.id === selectedOrderId) as any;
+
+
 
   const getStatusColor = (status: string) => {
     switch (status) {

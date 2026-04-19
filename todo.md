@@ -838,3 +838,15 @@
   - Include in getTodayOrdersWithItems
   - Sync hasDeliveryTime flag automatically
 - [x] Verified polling triggers automatic refetch on cache invalidation
+
+
+## BUG - Kitchen Dashboard Not Showing Delivery Time Updates (FIXED)
+- [x] Investigated root cause: Kitchen dashboard was using orders.list instead of getTodayOrdersWithItems
+- [x] Fixed Kitchen dashboard to use getTodayOrdersWithItems query for delivery time data
+- [x] Added Kitchen dashboard to AdminDashboard routing (was missing from sidebar)
+- [x] Updated Kitchen dashboard component to display delivery time with Clock icon
+- [x] Verified getTodayOrdersWithItems includes delivery time and hasDeliveryTime fields
+- [x] Tested delivery time display in Kitchen dashboard - Order #300210 shows Expected Delivery Time
+- [x] Verified polling mechanism works (3-second refetch interval)
+- [x] Confirmed no manual refresh required - delivery time appears automatically
+- [x] All three dashboards (Orders, Order Tracking, Kitchen) now show consistent delivery time data
