@@ -145,6 +145,18 @@ export default function OrderTracking() {
                     </div>
                   </div>
 
+                  {selectedOrder.hasDeliveryTime && selectedOrder.deliveryTime && (
+                    <div>
+                      <div className="text-sm text-muted-foreground flex items-center gap-2">
+                        <Clock className="w-4 h-4" />
+                        Expected Delivery
+                      </div>
+                      <div className="font-semibold text-foreground">
+                        {new Date(selectedOrder.deliveryTime).toLocaleString()}
+                      </div>
+                    </div>
+                  )}
+
                   {selectedOrder.customerNotes && (
                     <div>
                       <div className="text-sm text-muted-foreground">Notes</div>

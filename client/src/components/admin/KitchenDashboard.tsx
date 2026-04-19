@@ -173,6 +173,21 @@ export default function KitchenDashboard() {
                   </div>
                 </div>
 
+                {/* Delivery Time */}
+                {selectedOrder.hasDeliveryTime && selectedOrder.deliveryTime && (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div className="flex items-start gap-3">
+                      <Clock className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <div className="font-semibold text-green-900">Expected Delivery Time</div>
+                        <div className="text-sm text-green-800 mt-1">
+                          {new Date(selectedOrder.deliveryTime).toLocaleString()}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Customer Notes */}
                 {selectedOrder.customerNotes && (
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">

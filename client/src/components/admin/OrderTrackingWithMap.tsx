@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MapPin, Eye, EyeOff } from "lucide-react";
+import { MapPin, Eye, EyeOff, Clock } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { invalidateOrderCache } from "@/lib/invalidation";
 import { MapView } from "@/components/Map";
@@ -239,6 +239,18 @@ export default function OrderTrackingWithMap() {
                             <p className="text-muted-foreground">Area: <span className="font-semibold text-accent">{selectedOrderData.area}</span></p>
                           </div>
                         )}
+                        {selectedOrderData.hasDeliveryTime && selectedOrderData.deliveryTime && (
+                          <div>
+                            <div className="text-sm text-muted-foreground flex items-center gap-2">
+                              <Clock className="w-4 h-4" />
+                              Expected Delivery
+                            </div>
+                            <div className="font-semibold text-foreground">
+                              {new Date(selectedOrderData.deliveryTime).toLocaleString()}
+                            </div>
+                          </div>
+                        )}
+
                         {selectedOrderData.notes && (
                           <div>
                             <p className="text-muted-foreground">Notes: {selectedOrderData.notes}</p>
