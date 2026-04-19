@@ -39,9 +39,9 @@ describe("Order Items Creation", () => {
       address: "123 Test St, Test City, TC 12345",
     });
 
-    const customerId = Array.isArray(customerResult) 
+    const customerId = (customerResult as any)?.id || (Array.isArray(customerResult) 
       ? (customerResult as any)[0]?.insertId 
-      : (customerResult as any).insertId;
+      : (customerResult as any).insertId);
 
     // Create an order
     const orderResult = await createOrder({
@@ -75,9 +75,9 @@ describe("Order Items Creation", () => {
       address: "456 Multi St, Multi City, MC 54321",
     });
 
-    const customerId = Array.isArray(customerResult) 
+    const customerId = (customerResult as any)?.id || (Array.isArray(customerResult) 
       ? (customerResult as any)[0]?.insertId 
-      : (customerResult as any).insertId;
+      : (customerResult as any).insertId);
 
     // Create an order
     const orderResult = await createOrder({
@@ -114,9 +114,9 @@ describe("Order Items Creation", () => {
       address: "789 Extract St, Extract City, EC 98765",
     } as any);
 
-    const customerId = Array.isArray(customerResult) 
+    const customerId = (customerResult as any)?.id || (Array.isArray(customerResult) 
       ? (customerResult as any)[0]?.insertId 
-      : (customerResult as any).insertId;
+      : (customerResult as any).insertId);
 
     const orderResult = await createOrder({
       customerId,

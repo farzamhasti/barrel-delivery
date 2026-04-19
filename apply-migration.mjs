@@ -7,32 +7,35 @@ async function applyMigration() {
     process.exit(1);
   }
 
-  const queries = [
+  const statements = [
+    "ALTER TABLE `orders` ADD COLUMN `area` varchar(50)",
+    "ALTER TABLE `orders` ADD COLUMN `total_price` decimal(10,2) NOT NULL DEFAULT '0'",
     "ALTER TABLE `orders` ADD COLUMN `subtotal` decimal(10,2) DEFAULT '0' NOT NULL",
     "ALTER TABLE `orders` ADD COLUMN `tax_percentage` decimal(5,2) DEFAULT '13' NOT NULL",
     "ALTER TABLE `orders` ADD COLUMN `tax_amount` decimal(10,2) DEFAULT '0' NOT NULL",
     "ALTER TABLE `orders` ADD COLUMN `delivery_time` timestamp",
     "ALTER TABLE `orders` ADD COLUMN `has_delivery_time` boolean DEFAULT false",
+    "ALTER TABLE `orders` MODIFY COLUMN `status` enum('Pending','Ready','On the Way','Delivered') NOT NULL DEFAULT 'Pending'"
   ];
 
-  try {
-    for (const query of queries) {
-      try {
-        await db.execute(query);
-        console.log(`✓ Executed: ${query.substring(0, 50)}...`);
-      } catch (err) {
-        if (err.code === 'ER_DUP_FIELDNAME' || err.message.includes('Duplicate column')) {
-          console.log(`⚠ Column already exists: ${query.substring(0, 50)}...`);
-        } else {
-          throw err;
-        }
+  for (const statement of statements) {
+    try {
+      await db.execute(statement);
+      console.log(`✓ Executed: ${statement.substring(0, 60)}...`);
+    } catch (err) {
+      if (err.code === 'ER_DUP_FIELDNAME' || err.message.includes('Duplicate column')) {
+        console.log(`⚠ Column already exists: ${statement.substring(0, 60)}...`);
+      } else {
+        console.error(`✗ Error: ${err.message}`);
       }
     }
-    console.log('✓ Migration completed successfully');
-  } catch (error) {
-    console.error('✗ Migration failed:', error.message);
-    process.exit(1);
   }
+
+  console.log('\n✓ Migration complete');
+  process.exit(0);
 }
 
-applyMigration();
+applyMigration().catch(err => {
+  console.error('Fatal error:', err);
+  process.exit(1);
+});

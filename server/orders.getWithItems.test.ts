@@ -40,7 +40,7 @@ describe("getOrderWithItems", () => {
       address: "123 Test St",
       phone: "1234567890",
     });
-    const customerId = (customerResult as any)[0]?.insertId || 1;
+    const customerId = (customerResult as any)?.id || (customerResult as any)[0]?.insertId || 1;
 
     // Create order
     const orderResult = await createOrder({
@@ -98,7 +98,7 @@ describe("getOrderWithItems", () => {
       address: "456 Test St",
       phone: "0987654321",
     });
-    const customerId = (customerResult as any)[0]?.insertId || 1;
+    const customerId = (customerResult as any)?.id || (customerResult as any)[0]?.insertId || 1;
 
     // Create order
     const orderResult = await createOrder({
@@ -138,7 +138,7 @@ describe("getOrderWithItems", () => {
       address: "789 Test St",
       phone: "5555555555",
     });
-    const customerId = (customerResult as any)[0]?.insertId || 1;
+    const customerId = (customerResult as any)?.id || (customerResult as any)[0]?.insertId || 1;
 
     // Create order without items
     const orderResult = await createOrder({

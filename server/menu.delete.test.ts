@@ -77,9 +77,9 @@ describe("Menu Item Soft Delete", () => {
       address: "123 Test St, Test City, TC 12345",
     });
 
-    const customerId = Array.isArray(customerResult) 
+    const customerId = (customerResult as any)?.id || (Array.isArray(customerResult) 
       ? (customerResult as any)[0]?.insertId 
-      : (customerResult as any).insertId;
+      : (customerResult as any).insertId);
 
     const orderResult = await createOrder({
       customerId,

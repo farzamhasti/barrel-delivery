@@ -19,9 +19,9 @@ describe("Order Creation Flow", () => {
     const customerResult = await createCustomer(customerData);
     
     // Extract customerId from the array result [ResultSetHeader, undefined]
-    const customerId = Array.isArray(customerResult) 
+    const customerId = (customerResult as any)?.id || (Array.isArray(customerResult) 
       ? (customerResult as any)[0]?.insertId 
-      : (customerResult as any).insertId;
+      : (customerResult as any).insertId);
     
     expect(customerId).toBeDefined();
     expect(typeof customerId).toBe("number");
@@ -55,9 +55,9 @@ describe("Order Creation Flow", () => {
     const customerResult = await createCustomer(customerData);
     
     // Simulate the frontend extraction logic
-    const customerId = Array.isArray(customerResult) 
+    const customerId = (customerResult as any)?.id || (Array.isArray(customerResult) 
       ? (customerResult as any)[0]?.insertId 
-      : (customerResult as any).insertId;
+      : (customerResult as any).insertId);
     
     // Verify customerId is a valid number
     expect(customerId).toBeDefined();
@@ -90,9 +90,9 @@ describe("Order Creation Flow", () => {
 
     const customerResult = await createCustomer(customerData);
     
-    const customerId = Array.isArray(customerResult) 
+    const customerId = (customerResult as any)?.id || (Array.isArray(customerResult) 
       ? (customerResult as any)[0]?.insertId 
-      : (customerResult as any).insertId;
+      : (customerResult as any).insertId);
     
     expect(customerId).toBeGreaterThan(0);
 

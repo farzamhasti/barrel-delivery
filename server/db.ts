@@ -147,7 +147,13 @@ export async function getDrivers() {
 export async function createDriver(data: InsertDriver) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  return db.insert(drivers).values(data);
+  const result = await db.insert(drivers).values(data);
+  // Extract insertId from the result
+  const insertId = (result as any)[0]?.insertId;
+  if (insertId) {
+    return db.select().from(drivers).where(eq(drivers.id, insertId)).then(rows => rows[0] || null);
+  }
+  return result;
 }
 
 export async function updateDriver(id: number, data: Partial<InsertDriver>) {
@@ -166,7 +172,13 @@ export async function deleteDriver(id: number) {
 export async function createCustomer(data: InsertCustomer) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  return db.insert(customers).values(data);
+  const result = await db.insert(customers).values(data);
+  // Extract insertId from the result
+  const insertId = (result as any)[0]?.insertId;
+  if (insertId) {
+    return db.select().from(customers).where(eq(customers.id, insertId)).then(rows => rows[0] || null);
+  }
+  return result;
 }
 
 export async function getCustomer(id: number) {
@@ -178,6 +190,7 @@ export async function getCustomer(id: number) {
 
 // Alias for backwards compatibility
 export const getCustomerById = getCustomer;
+export const getOrderById = getOrder;
 
 export async function updateCustomer(id: number, data: Partial<InsertCustomer>) {
   const db = await getDb();
@@ -403,10 +416,29 @@ export async function getOrderItemsWithMenuNames(orderId: number) {
     .where(eq(orderItems.orderId, orderId));
 }
 
-export async function updateOrderItem(id: number, quantity: number, priceAtOrder: string | number) {
+export async function updateOrderItem(id: number, data: Partial<InsertOrderItem> | number, priceAtOrder?: string | number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  return db.update(orderItems).set({ quantity, priceAtOrder: String(priceAtOrder) }).where(eq(orderItems.id, id));
+  
+  // Handle both old signature (id, quantity, priceAtOrder) and new signature (id, { quantity?, priceAtOrder? })
+  let updateData: any = {};
+  if (typeof data === 'number') {
+    // Old signature: updateOrderItem(id, quantity, priceAtOrder)
+    updateData = { quantity: data };
+    if (priceAtOrder !== undefined) {
+      updateData.priceAtOrder = String(priceAtOrder);
+    }
+  } else {
+    // New signature: updateOrderItem(id, { quantity?, priceAtOrder? })
+    if (data.quantity !== undefined) {
+      updateData.quantity = data.quantity;
+    }
+    if (data.priceAtOrder !== undefined) {
+      updateData.priceAtOrder = data.priceAtOrder;
+    }
+  }
+  
+  return db.update(orderItems).set(updateData).where(eq(orderItems.id, id));
 }
 
 export async function deleteOrderItem(id: number) {

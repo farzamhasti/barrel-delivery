@@ -51,9 +51,9 @@ describe("Order Editing", () => {
       phone: "+1 (555) 111-1111",
       address: "Original Address",
     });
-    customerId = Array.isArray(customerResult) 
+    customerId = (customerResult as any)?.id || (Array.isArray(customerResult) 
       ? (customerResult as any)[0]?.insertId 
-      : (customerResult as any).insertId;
+      : (customerResult as any).insertId);
 
     // Create order
     const orderResult = await createOrder({
