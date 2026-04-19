@@ -171,9 +171,9 @@ export function Orders() {
   const handleEditOrder = (order: any) => {
     setEditingOrderId(order.id);
     setFormData({
-      customerName: order.customer?.name || "",
-      customerPhone: order.customer?.phone || "",
-      customerAddress: order.customer?.address || "",
+      customerName: order.customerName || "",
+      customerPhone: order.customerPhone || "",
+      customerAddress: order.customerAddress || "",
       status: order.status || "Pending",
       notes: order.notes || "",
       area: order.area || "",
@@ -197,9 +197,9 @@ export function Orders() {
 
     try {
       // Update customer info
-      if (selectedOrder?.customer?.id) {
+      if (selectedOrder?.customerId) {
         await updateCustomerMutation.mutateAsync({
-          customerId: selectedOrder.customer.id,
+          customerId: selectedOrder.customerId,
           name: formData.customerName,
           phone: formData.customerPhone,
           address: formData.customerAddress,
