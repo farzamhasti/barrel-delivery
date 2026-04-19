@@ -231,6 +231,50 @@ export async function getOrders(driverId?: number) {
   }));
 }
 
+export async function getOrdersWithCustomer(driverId?: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const conditions = [];
+  if (driverId !== undefined) {
+    conditions.push(eq(orders.driverId, driverId));
+  }
+  
+  const result = await db
+    .select({
+      id: orders.id,
+      customerId: orders.customerId,
+      driverId: orders.driverId,
+      status: orders.status,
+      subtotal: orders.subtotal,
+      taxPercentage: orders.taxPercentage,
+      taxAmount: orders.taxAmount,
+      totalPrice: orders.totalPrice,
+      notes: orders.notes,
+      area: orders.area,
+      hasDeliveryTime: orders.hasDeliveryTime,
+      deliveryTime: orders.deliveryTime,
+      createdAt: orders.createdAt,
+      updatedAt: orders.updatedAt,
+      customerName: customers.name,
+      customerPhone: customers.phone,
+      customerAddress: customers.address,
+    })
+    .from(orders)
+    .innerJoin(customers, eq(orders.customerId, customers.id))
+    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .orderBy(desc(orders.createdAt));
+  
+  // Convert Decimal values to numbers
+  return result.map(order => ({
+    ...order,
+    subtotal: Number(order.subtotal),
+    taxPercentage: Number(order.taxPercentage),
+    taxAmount: Number(order.taxAmount),
+    totalPrice: Number(order.totalPrice),
+  }));
+}
+
 export async function getOrder(id: number) {
   const db = await getDb();
   if (!db) return null;

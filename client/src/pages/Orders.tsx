@@ -57,6 +57,7 @@ export function Orders() {
   });
 
   const [editingItems, setEditingItems] = useState<OrderItemFormData[]>([]);
+  const [originalItems, setOriginalItems] = useState<OrderItemFormData[]>([]);
   const [editingItemQuantity, setEditingItemQuantity] = useState<number>(1);
   const [editingItemPrice, setEditingItemPrice] = useState<number>(0);
 
@@ -191,6 +192,29 @@ export function Orders() {
     if (!editingOrderId) return;
 
     try {
+      // Delete items that were removed from editingItems
+      for (const originalItem of originalItems) {
+        const itemExists = editingItems.some(
+          (item) => item.menuItemId === originalItem.menuItemId && item.priceAtOrder === originalItem.priceAtOrder
+        );
+        if (!itemExists) {
+          // Find the actual database item ID by matching menuItemId and price
+          // We need to delete this from the database
+          try {
+            // Get all order items to find the ID
+            const orderDetails = await utils.orders.getById.fetch({ orderId: editingOrderId });
+            const itemToDelete = orderDetails?.items?.find(
+              (item: any) => item.menuItemId === originalItem.menuItemId && item.priceAtOrder === originalItem.priceAtOrder
+            );
+            if (itemToDelete?.id) {
+              await deleteOrderItemMutation.mutateAsync({ itemId: itemToDelete.id });
+            }
+          } catch (error) {
+            console.error("Error deleting item:", error);
+          }
+        }
+      }
+
       await updateOrderMutation.mutateAsync({
         orderId: editingOrderId,
         status: formData.status,
@@ -220,15 +244,18 @@ export function Orders() {
     try {
       const orderDetails = await utils.orders.getById.fetch({ orderId: order.id });
       if (orderDetails?.items) {
-        setEditingItems(orderDetails.items.map((item: any) => ({
+        const items = orderDetails.items.map((item: any) => ({
           menuItemId: item.menuItemId,
           quantity: item.quantity,
           priceAtOrder: Number(item.priceAtOrder),
-        })));
+        }));
+        setEditingItems(items);
+        setOriginalItems(items); // Store original items to track deletions
       }
     } catch (error) {
       console.error("Error fetching order details:", error);
       setEditingItems([]);
+      setOriginalItems([]);
     }
   };
 

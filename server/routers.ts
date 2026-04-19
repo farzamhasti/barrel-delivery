@@ -186,7 +186,7 @@ export const appRouter = router({
     list: publicProcedure
       .input(z.object({ driverId: z.number().optional() }).optional())
       .query(async ({ input }) => {
-        return db.getOrders(input?.driverId);
+        return db.getOrdersWithCustomer(input?.driverId);
       }),
 
     getByDateRange: publicProcedure
