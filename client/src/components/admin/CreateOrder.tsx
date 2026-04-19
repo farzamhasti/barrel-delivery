@@ -131,8 +131,13 @@ export default function CreateOrder() {
         address: formData.customerAddress,
       });
 
-      // Drizzle ORM returns an array [ResultSetHeader, undefined]
-      const customerId = Array.isArray(customerResult) ? (customerResult as any)[0]?.insertId : (customerResult as any).insertId;
+      // Extract customerId from the customer object
+      const customerId = (customerResult as any)?.id || (Array.isArray(customerResult) ? (customerResult as any)[0]?.insertId : (customerResult as any).insertId);
+      
+      if (!customerId) {
+        toast.error("Failed to create customer");
+        return;
+      }
 
       // Create order with tax and delivery time
       await createOrderMutation.mutateAsync({

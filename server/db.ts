@@ -482,7 +482,19 @@ export async function deleteOrder(id: number) {
 export async function createOrder(data: InsertOrder) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  return db.insert(orders).values(data);
+  const result = await db.insert(orders).values(data);
+  
+  // Extract the inserted ID from the result
+  const insertId = (result as any)?.[0]?.insertId || (result as any)?.insertId;
+  
+  if (!insertId) {
+    console.error('[createOrder] Failed to extract insertId from result:', result);
+    return result; // Return raw result if we can't extract ID
+  }
+  
+  // Fetch and return the created order
+  const createdOrder = await db.select().from(orders).where(eq(orders.id, insertId));
+  return createdOrder[0] || { id: insertId, ...data }; // Return the created order or a fallback
 }
 
 export async function getOrdersByStatus(statuses?: string[]) {

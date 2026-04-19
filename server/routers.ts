@@ -253,14 +253,15 @@ export const appRouter = router({
         });
         
         // Create order items
-        // Extract orderId from Drizzle ORM response
+        // Extract orderId from the order object
         let orderId: number | undefined;
-        if (Array.isArray(order)) {
-          // Response format: [ResultSetHeader, undefined]
+        if (order && typeof order === 'object') {
+          // New format: full order object with id property
+          orderId = (order as any)?.id || (order as any)?.insertId;
+        }
+        if (!orderId && Array.isArray(order)) {
+          // Fallback for array format: [ResultSetHeader, undefined]
           orderId = (order as any)[0]?.insertId;
-        } else if (order && typeof order === 'object') {
-          // Direct object response
-          orderId = (order as any).insertId;
         }
         
         // Only create items if we have a valid orderId
