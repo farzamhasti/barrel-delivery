@@ -450,7 +450,7 @@ export function OrderManagement() {
                             onValueChange={(value) => {
                               const menuItem = menuItems?.find((m: any) => m.id === parseInt(value));
                               setNewItemMenuId(parseInt(value));
-                              setNewItemPrice(parseFloat(menuItem?.price || "0"));
+                              setNewItemPrice(typeof menuItem?.price === 'number' ? menuItem.price : parseFloat(String(menuItem?.price || 0)));
                             }}
                             disabled={createItemMutation.isPending}
                           >

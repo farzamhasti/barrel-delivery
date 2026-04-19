@@ -108,14 +108,23 @@ export async function deleteMenuCategory(id: number) {
 export async function getMenuItems(categoryId?: number) {
   const db = await getDb();
   if (!db) return [];
+  
+  let result;
   if (categoryId !== undefined) {
-    return db.select().from(menuItems)
+    result = await db.select().from(menuItems)
       .where(and(eq(menuItems.isAvailable, true), eq(menuItems.categoryId, categoryId)))
       .orderBy(menuItems.displayOrder);
+  } else {
+    result = await db.select().from(menuItems)
+      .where(eq(menuItems.isAvailable, true))
+      .orderBy(menuItems.displayOrder);
   }
-  return db.select().from(menuItems)
-    .where(eq(menuItems.isAvailable, true))
-    .orderBy(menuItems.displayOrder);
+  
+  // Convert Decimal prices to numbers
+  return result.map(item => ({
+    ...item,
+    price: Number(item.price),
+  }));
 }
 
 export async function createMenuItem(data: InsertMenuItem) {
@@ -202,19 +211,41 @@ export async function updateCustomer(id: number, data: Partial<InsertCustomer>) 
 export async function getOrders(driverId?: number) {
   const db = await getDb();
   if (!db) return [];
+  
+  let result;
   if (driverId !== undefined) {
-    return db.select().from(orders)
+    result = await db.select().from(orders)
       .where(eq(orders.driverId, driverId))
       .orderBy(desc(orders.createdAt));
+  } else {
+    result = await db.select().from(orders).orderBy(desc(orders.createdAt));
   }
-  return db.select().from(orders).orderBy(desc(orders.createdAt));
+  
+  // Convert Decimal values to numbers
+  return result.map(order => ({
+    ...order,
+    subtotal: Number(order.subtotal),
+    taxPercentage: Number(order.taxPercentage),
+    taxAmount: Number(order.taxAmount),
+    totalPrice: Number(order.totalPrice),
+  }));
 }
 
 export async function getOrder(id: number) {
   const db = await getDb();
   if (!db) return null;
   const result = await db.select().from(orders).where(eq(orders.id, id));
-  return result[0] || null;
+  if (!result[0]) return null;
+  
+  // Convert Decimal values to numbers
+  const order = result[0];
+  return {
+    ...order,
+    subtotal: Number(order.subtotal),
+    taxPercentage: Number(order.taxPercentage),
+    taxAmount: Number(order.taxAmount),
+    totalPrice: Number(order.totalPrice),
+  };
 }
 
 export async function getOrderWithItems(orderId: number) {
@@ -227,6 +258,9 @@ export async function getOrderWithItems(orderId: number) {
       customerId: orders.customerId,
       driverId: orders.driverId,
       status: orders.status,
+      subtotal: orders.subtotal,
+      taxPercentage: orders.taxPercentage,
+      taxAmount: orders.taxAmount,
       totalPrice: orders.totalPrice,
       notes: orders.notes,
       area: orders.area,
@@ -254,9 +288,18 @@ export async function getOrderWithItems(orderId: number) {
     .innerJoin(menuItems, eq(orderItems.menuItemId, menuItems.id))
     .where(eq(orderItems.orderId, orderId));
 
+  // Convert Decimal values to numbers
+  const orderData = order[0];
   return {
-    ...order[0],
-    items,
+    ...orderData,
+    subtotal: Number(orderData.subtotal),
+    taxPercentage: Number(orderData.taxPercentage),
+    taxAmount: Number(orderData.taxAmount),
+    totalPrice: Number(orderData.totalPrice),
+    items: items.map(item => ({
+      ...item,
+      priceAtOrder: Number(item.priceAtOrder),
+    })),
   };
 }
 
@@ -274,6 +317,9 @@ export async function getTodayOrdersWithItems() {
       customerId: orders.customerId,
       driverId: orders.driverId,
       status: orders.status,
+      subtotal: orders.subtotal,
+      taxPercentage: orders.taxPercentage,
+      taxAmount: orders.taxAmount,
       totalPrice: orders.totalPrice,
       notes: orders.notes,
       area: orders.area,
@@ -305,7 +351,14 @@ export async function getTodayOrdersWithItems() {
       
       return {
         ...order,
-        items,
+        subtotal: Number(order.subtotal),
+        taxPercentage: Number(order.taxPercentage),
+        taxAmount: Number(order.taxAmount),
+        totalPrice: Number(order.totalPrice),
+        items: items.map(item => ({
+          ...item,
+          priceAtOrder: Number(item.priceAtOrder),
+        })),
       };
     })
   );
@@ -353,12 +406,15 @@ export async function getOrdersByDateRange(startDate: Date | string, endDate: Da
     conditions.push(eq(orders.driverId, driverId));
   }
   
-  return db
+  const result = await db
     .select({
       id: orders.id,
       customerId: orders.customerId,
       driverId: orders.driverId,
       status: orders.status,
+      subtotal: orders.subtotal,
+      taxPercentage: orders.taxPercentage,
+      taxAmount: orders.taxAmount,
       totalPrice: orders.totalPrice,
       notes: orders.notes,
       area: orders.area,
@@ -371,7 +427,16 @@ export async function getOrdersByDateRange(startDate: Date | string, endDate: Da
     .from(orders)
     .innerJoin(customers, eq(orders.customerId, customers.id))
     .where(and(...conditions))
-    .orderBy(desc(orders.createdAt))
+    .orderBy(desc(orders.createdAt));
+  
+  // Convert Decimal values to numbers
+  return result.map(order => ({
+    ...order,
+    subtotal: Number(order.subtotal),
+    taxPercentage: Number(order.taxPercentage),
+    taxAmount: Number(order.taxAmount),
+    totalPrice: Number(order.totalPrice),
+  }))
 }
 
 export async function updateOrderStatus(orderId: number, status: any) {
@@ -482,7 +547,17 @@ export async function deleteOrder(id: number) {
 export async function createOrder(data: InsertOrder) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db.insert(orders).values(data);
+  
+  // Ensure numeric values are properly formatted for Decimal columns
+  const orderData = {
+    ...data,
+    subtotal: data.subtotal ? String(data.subtotal) : "0",
+    taxPercentage: data.taxPercentage ? String(data.taxPercentage) : "13",
+    taxAmount: data.taxAmount ? String(data.taxAmount) : "0",
+    totalPrice: data.totalPrice ? String(data.totalPrice) : "0",
+  };
+  
+  const result = await db.insert(orders).values(orderData as any);
   
   // Extract the inserted ID from the result
   const insertId = (result as any)?.[0]?.insertId || (result as any)?.insertId;
@@ -494,17 +569,38 @@ export async function createOrder(data: InsertOrder) {
   
   // Fetch and return the created order
   const createdOrder = await db.select().from(orders).where(eq(orders.id, insertId));
-  return createdOrder[0] || { id: insertId, ...data }; // Return the created order or a fallback
+  if (createdOrder[0]) {
+    // Convert Decimal values to numbers for the response
+    const order = createdOrder[0];
+    return {
+      ...order,
+      subtotal: Number(order.subtotal),
+      taxPercentage: Number(order.taxPercentage),
+      taxAmount: Number(order.taxAmount),
+      totalPrice: Number(order.totalPrice),
+    };
+  }
+  return { id: insertId, ...data }; // Return the created order or a fallback
 }
 
 export async function getOrdersByStatus(statuses?: string[]) {
   const db = await getDb();
   if (!db) return [];
   
+  let result;
   if (statuses && statuses.length > 0) {
     // Filter by statuses
-    return db.select().from(orders).where(inArray(orders.status, statuses as any)).orderBy(desc(orders.createdAt));
+    result = await db.select().from(orders).where(inArray(orders.status, statuses as any)).orderBy(desc(orders.createdAt));
+  } else {
+    result = await db.select().from(orders).orderBy(desc(orders.createdAt));
   }
   
-  return db.select().from(orders).orderBy(desc(orders.createdAt));
+  // Convert Decimal values to numbers
+  return result.map(order => ({
+    ...order,
+    subtotal: Number(order.subtotal),
+    taxPercentage: Number(order.taxPercentage),
+    taxAmount: Number(order.taxAmount),
+    totalPrice: Number(order.totalPrice),
+  }));
 }

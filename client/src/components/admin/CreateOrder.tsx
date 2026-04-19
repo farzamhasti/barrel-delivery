@@ -45,16 +45,22 @@ export default function CreateOrder() {
     const item = menuItems.find((m: any) => m.id === itemId);
     if (item) {
       const existingItem = formData.items.find((i) => i.menuItemId === itemId);
+      const price = typeof item.price === 'string' ? parseFloat(item.price) : Number(item.price);
       if (existingItem) {
-        existingItem.quantity += 1;
+        // Create a new array with updated quantity
+        const newItems = formData.items.map(i => 
+          i.menuItemId === itemId ? { ...i, quantity: i.quantity + 1 } : i
+        );
+        setFormData({ ...formData, items: newItems });
       } else {
-        formData.items.push({
+        // Create a new array with the new item
+        const newItems = [...formData.items, {
           menuItemId: itemId,
           quantity: 1,
-          priceAtOrder: parseFloat(item.price as any),
-        });
+          priceAtOrder: price,
+        }];
+        setFormData({ ...formData, items: newItems });
       }
-      setFormData({ ...formData });
     }
   };
 

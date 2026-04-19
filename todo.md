@@ -685,3 +685,18 @@
 - [x] Verify restaurant marker displays at correct location
 - [x] Test on both desktop and mobile
 **Fix:** Updated to { lat: 42.9081, lng: -79.2477 }
+
+
+## Current Issue - Price Calculations Not Displayed - FIXED
+- [x] Fix subtotal not being calculated or displayed in New Order section
+- [x] Fix tax amount not being calculated or displayed in New Order section
+- [x] Fix total price not being calculated or displayed in New Order section
+- [x] Fix subtotal not being displayed in Orders tab (existing orders)
+- [x] Fix tax amount not being displayed in Orders tab (existing orders)
+- [x] Fix total price not being displayed in Orders tab (existing orders)
+- [x] Fix price calculations in Order Tracking tab
+- [x] Verify price calculations update dynamically when items are added/removed
+- [x] Verify price calculations update dynamically when quantity changes
+- [x] Verify price calculations update dynamically when tax percentage changes
+- [x] Ensure prices are properly stored in database
+- [x] Ensure prices are properly retrieved and displayed in all UI sections

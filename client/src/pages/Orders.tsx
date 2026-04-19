@@ -483,7 +483,7 @@ export function Orders() {
                                       setItemFormData({
                                         menuItemId: parseInt(value),
                                         quantity: 1,
-                                        priceAtOrder: item ? parseFloat(item.price) : 0,
+                                        priceAtOrder: item ? (typeof item.price === 'number' ? item.price : parseFloat(String(item.price))) : 0,
                                       });
                                     }}
                                   >
