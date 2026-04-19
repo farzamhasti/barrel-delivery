@@ -342,7 +342,7 @@ export function Orders() {
                     {order.customer?.name} • {order.customer?.phone}
                   </div>
                   <div className="text-sm font-medium mt-1">
-                    Total: ${parseFloat(order.totalPrice).toFixed(2)}
+                    Total: ${parseFloat(String(order.totalPrice || 0)).toFixed(2)}
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -674,7 +674,7 @@ export function Orders() {
                           {order.items?.map((item: any, idx: number) => (
                             <div key={idx} className="flex justify-between">
                               <span>{item.menuItem?.name} × {item.quantity}</span>
-                              <span>${(item.priceAtOrder * item.quantity).toFixed(2)}</span>
+                              <span>${(parseFloat(String(item.priceAtOrder)) * item.quantity).toFixed(2)}</span>
                             </div>
                           ))}
                         </div>
@@ -683,15 +683,15 @@ export function Orders() {
                       <div className="pt-4 border-t space-y-1 text-sm">
                         <div className="flex justify-between">
                           <span>Subtotal:</span>
-                          <span>${order.subtotal?.toFixed(2) || "0.00"}</span>
+                          <span>${parseFloat(String(order.subtotal || 0)).toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between">
                           <span>Tax ({order.taxPercentage || 13}%):</span>
-                          <span>${order.taxAmount?.toFixed(2) || "0.00"}</span>
+                          <span>${parseFloat(String(order.taxAmount || 0)).toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between font-bold text-base">
                           <span>Total:</span>
-                          <span>${order.totalPrice?.toFixed(2) || "0.00"}</span>
+                          <span>${parseFloat(String(order.totalPrice || 0)).toFixed(2)}</span>
                         </div>
                       </div>
 
