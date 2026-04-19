@@ -215,12 +215,21 @@ export function Orders() {
         }
       }
 
+      // Get the current order to access customerId
+      const currentOrder = allOrders?.find((o: any) => o.id === editingOrderId);
+      
       await updateOrderMutation.mutateAsync({
         orderId: editingOrderId,
+        customerId: currentOrder?.customerId,
         status: formData.status,
         notes: formData.notes,
         totalPrice: priceCalculations.total,
-      });
+        customerName: formData.customerName,
+        customerPhone: formData.customerPhone,
+        customerAddress: formData.customerAddress,
+        area: formData.area,
+        deliveryTime: formData.hasDeliveryTime && formData.deliveryTime ? new Date(formData.deliveryTime).toISOString() : null,
+      })
     } catch (error) {
       console.error("Error saving order:", error);
     }

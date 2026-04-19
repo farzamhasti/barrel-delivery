@@ -308,9 +308,25 @@ export const appRouter = router({
         totalPrice: z.number().optional(),
         notes: z.string().optional(),
         status: z.enum(["Pending", "Ready", "On the Way", "Delivered"]).optional(),
+        customerName: z.string().optional(),
+        customerPhone: z.string().optional(),
+        customerAddress: z.string().optional(),
+        area: z.string().optional(),
+        deliveryTime: z.string().nullable().optional(),
       }))
       .mutation(async ({ input }) => {
-        const { orderId, ...updateData } = input;
+        const { orderId, customerId, customerName, customerPhone, customerAddress, ...updateData } = input;
+        
+        // Update customer information if provided
+        if (customerId && (customerName || customerPhone || customerAddress)) {
+          await db.updateCustomer(customerId, {
+            name: customerName,
+            phone: customerPhone,
+            address: customerAddress,
+          } as any);
+        }
+        
+        // Update order
         return db.updateOrder(orderId, updateData as any);
       }),
     updateItem: protectedProcedure
