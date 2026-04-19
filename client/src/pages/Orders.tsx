@@ -110,7 +110,7 @@ export function Orders() {
   }, [editingItems, formData.taxPercentage, editingItemIndex, editingItemQuantity, editingItemPrice]);
 
   // Mutations
-  const updateOrderMutation = trpc.orders.updateStatus.useMutation({
+  const updateOrderMutation = trpc.orders.update.useMutation({
     onSuccess: () => {
       toast.success("Order updated successfully");
       invalidateOrderCache(utils);
@@ -144,6 +144,12 @@ export function Orders() {
 
   const addOrderItemMutation = trpc.orders.createItem.useMutation({
     onSuccess: () => {
+      // Add the new item to the editingItems state immediately for UI feedback
+      setEditingItems([...editingItems, {
+        menuItemId: itemFormData.menuItemId,
+        quantity: itemFormData.quantity,
+        priceAtOrder: itemFormData.priceAtOrder,
+      }]);
       toast.success("Item added to order");
       invalidateOrderCache(utils);
       setShowAddItemDialog(false);
@@ -213,10 +219,16 @@ export function Orders() {
         });
       }
 
-      // Update order
+      // Calculate new totals based on editingItems
+      const subtotal = editingItems.reduce((sum, item) => sum + (item.priceAtOrder * item.quantity), 0);
+      const taxAmount = subtotal * (formData.taxPercentage / 100);
+      const totalPrice = subtotal + taxAmount;
+
+      // Update order with new totals and status
       await updateOrderMutation.mutateAsync({
         orderId: selectedOrderId!,
         status: formData.status as any,
+        totalPrice,
       });
     } catch (error) {
       console.error("Error saving order:", error);
