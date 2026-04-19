@@ -137,6 +137,7 @@ export function Orders() {
 
   const deleteOrderItemMutation = trpc.orders.deleteItem.useMutation({
     onSuccess: () => {
+      invalidateOrderCache(utils);
       toast.success("Item removed from order");
     },
     onError: (error) => {

@@ -335,12 +335,19 @@ export const appRouter = router({
             // Validate that the date is valid
             if (!isNaN(parsedDate.getTime())) {
               processedData.deliveryTime = parsedDate;
+              processedData.hasDeliveryTime = true;
             } else {
               throw new Error('Invalid delivery time format');
             }
           } else {
             processedData.deliveryTime = null;
+            processedData.hasDeliveryTime = false;
           }
+        }
+        
+        // Also handle hasDeliveryTime if provided separately
+        if (hasDeliveryTime !== undefined) {
+          processedData.hasDeliveryTime = hasDeliveryTime;
         }
         
         // Update order

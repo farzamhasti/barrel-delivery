@@ -823,3 +823,18 @@
   - Confirmed: Delivery time appears immediately after save
   - No manual page refresh needed
   - Real-time synchronization working via polling
+
+
+## BUG - Delivery Time Update Not Syncing to Dashboards (FIXED)
+- [x] Investigated root cause: orders.update not setting hasDeliveryTime flag
+- [x] Fixed routers.ts to automatically sync hasDeliveryTime with deliveryTime
+- [x] Added missing cache invalidation to deleteOrderItemMutation
+- [x] Verified getTodayOrdersWithItems() includes delivery time fields
+- [x] Verified getOrderWithItems() includes delivery time fields
+- [x] Created 5 vitest tests - all passing
+  - Add delivery time to order without one
+  - Update existing delivery time
+  - Remove delivery time
+  - Include in getTodayOrdersWithItems
+  - Sync hasDeliveryTime flag automatically
+- [x] Verified polling triggers automatic refetch on cache invalidation
