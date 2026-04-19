@@ -48,6 +48,7 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
   // Use geocoding mutation to convert address to coordinates
   const geocodeMutation = (trpc as any).maps.geocode.useMutation({
     onSuccess: (result: any) => {
+      console.log('[OrderMapModal] Geocoding succeeded:', result);
       if ("error" in result) {
         setGeocodeError(result.error);
         setIsGeocoding(false);
@@ -61,6 +62,7 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
       }
     },
     onError: (error: any) => {
+      console.error('[OrderMapModal] Geocoding failed:', error);
       setGeocodeError(error.message || "Failed to geocode address");
       setIsGeocoding(false);
     },
@@ -69,6 +71,7 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
   // Geocode address when modal opens or order changes
   useEffect(() => {
     if (!open) {
+      console.log('[OrderMapModal] Modal closed, resetting state');
       // Reset map state when modal closes
       setGeocodedLocation(null);
       setMapReady(false);
@@ -83,11 +86,17 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
       return;
     }
 
+    console.log('[OrderMapModal] Modal opened or order changed, order ID:', order.id);
+
     // Clear previous markers when order changes
     markersRef.current.forEach(marker => marker.setMap(null));
     infoWindowsRef.current.forEach(infoWindow => infoWindow.close());
     markersRef.current = [];
     infoWindowsRef.current = [];
+
+    // Reset map ready state to force map recreation
+    setMapReady(false);
+    setGeocodeError(null);
 
     // Check if we already have coordinates from customer data
     if (
@@ -97,6 +106,7 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
       const lat = parseFloat(order.customer.latitude as any);
       const lng = parseFloat(order.customer.longitude as any);
       if (!isNaN(lat) && !isNaN(lng)) {
+        console.log('[OrderMapModal] Using customer coordinates:', { lat, lng });
         setGeocodedLocation({ lat, lng });
         return;
       }
@@ -105,23 +115,29 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
     // Otherwise, geocode the address
     const address = order.customerAddress || order.customer?.address;
     if (address) {
+      console.log('[OrderMapModal] Geocoding address:', address);
       setIsGeocoding(true);
       geocodeMutation.mutate({ address });
     }
-  }, [open, order.id, order.customerAddress, order.customer?.address]);
+  }, [open, order.id, order.customerAddress, order.customer?.address, order.customer?.latitude, order.customer?.longitude]);
 
   // Update map markers when location changes
   useEffect(() => {
     if (!mapReady || !mapRef.current || !geocodedLocation || !open) return;
 
-    // Trigger map resize to ensure it renders properly when order changes
-    google.maps.event.trigger(mapRef.current, 'resize');
+    console.log('[OrderMapModal] Order changed, updating markers for order:', order.id);
+    console.log('[OrderMapModal] New geocoded location:', geocodedLocation);
 
-    // Clear existing markers and info windows
+    // Clear existing markers and info windows FIRST
     markersRef.current.forEach(marker => marker.setMap(null));
     infoWindowsRef.current.forEach(infoWindow => infoWindow.close());
     markersRef.current = [];
     infoWindowsRef.current = [];
+    console.log('[OrderMapModal] Cleared previous markers and info windows');
+
+    // Trigger map resize to ensure it renders properly when order changes
+    google.maps.event.trigger(mapRef.current, 'resize');
+    console.log('[OrderMapModal] Triggered map resize event');
 
     try {
       // Create info window for customer location with detailed order information
@@ -250,21 +266,35 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
       bounds.extend(geocodedLocation);
       bounds.extend(RESTAURANT_LOCATION);
       
+      console.log('[OrderMapModal] Bounds created, fitting to map');
+      
       // Use setTimeout to ensure map is ready before fitting bounds
       setTimeout(() => {
         if (mapRef.current) {
-          console.log('Fitting bounds on map');
+          console.log('[OrderMapModal] Fitting bounds on map');
           mapRef.current.fitBounds(bounds, { top: 100, right: 100, bottom: 100, left: 100 });
-          // Trigger another resize to ensure mobile rendering
-          google.maps.event.trigger(mapRef.current, 'resize');
-          console.log('Map bounds fitted and resized');
+          
+          // Trigger multiple resizes to ensure proper rendering
+          setTimeout(() => {
+            if (mapRef.current) {
+              google.maps.event.trigger(mapRef.current, 'resize');
+              console.log('[OrderMapModal] First resize after fitBounds');
+            }
+          }, 100);
+          
+          setTimeout(() => {
+            if (mapRef.current) {
+              google.maps.event.trigger(mapRef.current, 'resize');
+              console.log('[OrderMapModal] Second resize after fitBounds');
+            }
+          }, 300);
         }
-      }, 50);
+      }, 100);
     } catch (error) {
-      console.error("Error creating markers:", error);
+      console.error("[OrderMapModal] Error creating markers:", error);
       setGeocodeError("Failed to display markers on map");
     }
-  }, [mapReady, geocodedLocation, order.id, order.customer?.name, order.status, order.area, order.notes]);
+  }, [mapReady, geocodedLocation, order.id, order.customer?.name, order.status, order.area, order.notes, open]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -329,7 +359,7 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
                   initialCenter={geocodedLocation || RESTAURANT_LOCATION}
                   initialZoom={geocodedLocation ? 15 : 13}
                   onMapReady={(map) => {
-                    console.log('Map ready callback triggered');
+                    console.log('[OrderMapModal] Map ready callback triggered for order:', order.id);
                     mapRef.current = map;
                     setMapReady(true);
                     
@@ -338,7 +368,7 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
                     setTimeout(() => {
                       if (map) {
                         google.maps.event.trigger(map, 'resize');
-                        console.log('First resize triggered on map ready');
+                        console.log('[OrderMapModal] First resize triggered on map ready');
                       }
                     }, 50);
                     
@@ -346,7 +376,7 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
                     setTimeout(() => {
                       if (map) {
                         google.maps.event.trigger(map, 'resize');
-                        console.log('Second resize triggered for mobile');
+                        console.log('[OrderMapModal] Second resize triggered for mobile');
                       }
                     }, 200);
                   }}
@@ -382,25 +412,25 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
                   <Phone className="w-4 h-4 mt-0.5 text-muted-foreground flex-shrink-0" />
                   <div className="min-w-0">
                     <p className="text-xs text-muted-foreground">Phone</p>
-                    <a
-                      href={`tel:${order.customer.phone}`}
-                      className="text-sm font-medium text-accent hover:underline break-all"
-                    >
-                      {order.customer.phone}
-                    </a>
+                  <a
+                    href={`tel:${order.customer.phone}`}
+                    className="text-sm font-medium text-accent hover:underline break-all"
+                  >
+                    {order.customer.phone}
+                  </a>
                   </div>
                 </div>
               )}
 
-              <div className="flex items-start gap-2 min-w-0">
-                <MapPin className="w-4 h-4 mt-0.5 text-muted-foreground flex-shrink-0" />
-                <div className="min-w-0">
-                  <p className="text-xs text-muted-foreground">Address</p>
-                  <p className="text-sm font-medium text-foreground line-clamp-2 break-words">
-                    {order.customerAddress || order.customer?.address}
-                  </p>
-                </div>
+            <div className="flex items-start gap-2 min-w-0">
+              <MapPin className="w-4 h-4 mt-0.5 text-muted-foreground flex-shrink-0" />
+              <div className="min-w-0">
+                <p className="text-xs text-muted-foreground">Address</p>
+                <p className="text-sm font-medium text-foreground line-clamp-2 break-words">
+                  {order.customerAddress || order.customer?.address}
+                </p>
               </div>
+            </div>
 
               {order.area && (
                 <div>
