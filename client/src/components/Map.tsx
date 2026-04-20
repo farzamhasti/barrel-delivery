@@ -193,7 +193,7 @@ export function MapView({
 
     let isMounted = true;
     let resizeObserver: ResizeObserver | null = null;
-    const timeouts: NodeJS.Timeout[] = [];
+    const timeouts: ReturnType<typeof setTimeout>[] = [];
 
     const initializeMap = async () => {
       try {
@@ -247,7 +247,7 @@ export function MapView({
         }, 150);
 
         // Use ResizeObserver to handle container resizing
-        const resizeObserver = new ResizeObserver(() => {
+        resizeObserver = new ResizeObserver(() => {
           if (map && containerRef.current && (containerRef.current.offsetWidth > 0 || containerRef.current.offsetHeight > 0)) {
             google.maps.event.trigger(map, "resize");
             console.log("[Map] Container resized, triggering map resize");
@@ -257,10 +257,6 @@ export function MapView({
         if (containerRef.current) {
           resizeObserver.observe(containerRef.current);
         }
-
-        return () => {
-          resizeObserver.disconnect();
-        };
       } catch (error) {
         if (!isMounted) return;
 
