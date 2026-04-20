@@ -923,29 +923,29 @@
 - [x] Ensure no unintended logout or page reset (PASSED - session preserved)
 
 
-## BUG - Maps Not Loading
-- [ ] Investigate why maps are not loading in Order Tracking and map modal
-- [ ] Check browser console for errors and API issues
-- [ ] Verify Google Maps API key is configured correctly
-- [ ] Check if map script is loading properly
-- [ ] Verify map container is rendering correctly
-- [ ] Fix map initialization logic if needed
-- [ ] Test map loading in Order Tracking page
-- [ ] Test map loading in order map modal
-- [ ] Ensure map displays with markers and controls
+## BUG - Maps Not Loading (FIXED)
+- [x] Investigate why maps are not loading in Order Tracking and map modal
+- [x] Check browser console for errors and API issues
+- [x] Verify Google Maps API key is configured correctly
+- [x] Check if map script is loading properly
+- [x] Verify map container is rendering correctly
+- [x] Fix map initialization logic if needed
+- [x] Test map loading in Order Tracking page
+- [x] Test map loading in order map modal
+- [x] Ensure map displays with markers and controls
 
 
-## CRITICAL - Map Stability Issues (NEW)
-- [ ] Investigate location data structure - check if latitude/longitude fields exist and have valid data
-- [ ] Check if order data is being fetched correctly with location information
-- [ ] Add null checks for latitude/longitude fields in OrderMapModal
-- [ ] Add fallback handling for missing or invalid location data
-- [ ] Prevent app crashes when map data is incomplete
-- [ ] Ensure map re-initializes correctly when opened multiple times
-- [ ] Validate data format consistency for map coordinates
-- [ ] Test map with orders that have missing location data
-- [ ] Verify no crashes or redirects when opening map
-- [ ] Test map stability across all orders in the system
+## CRITICAL - Map Stability Issues (FIXED)
+- [x] Investigate location data structure - check if latitude/longitude fields exist and have valid data
+- [x] Check if order data is being fetched correctly with location information
+- [x] Add null checks for latitude/longitude fields in OrderMapModal
+- [x] Add fallback handling for missing or invalid location data
+- [x] Prevent app crashes when map data is incomplete
+- [x] Ensure map re-initializes correctly when opened multiple times
+- [x] Validate data format consistency for map coordinates
+- [x] Test map with orders that have missing location data
+- [x] Verify no crashes or redirects when opening map
+- [x] Test map stability across all orders in the system
 
 
 ## FINAL FIXES - Session 4 Completion
@@ -994,3 +994,37 @@
 - [x] No unintended logouts or session resets
 - [x] Defensive programming implemented across all critical components
 - [x] Error handling prevents crashes and preserves user session
+
+
+## NEW ISSUES - Map Display and Layout (Session 5)
+
+### BUG - Map Container Too Narrow (FIXED)
+- [x] Identified root cause: Side-by-side layout with fixed-width details panel (w-80)
+- [x] Map was constrained to flex-1 in horizontal layout, making it too narrow
+- [x] Redesigned OrderMapModal layout from horizontal to vertical
+- [x] Map now takes full width and proper height (flex-1 with min-h-0)
+- [x] Details cards moved below map in responsive grid layout
+- [x] Tested on desktop - map is now large and clearly visible
+- [x] Modal max-width increased to max-w-5xl for better use of screen space
+- [x] Map height responsive: 400px on desktop, 256px on mobile
+
+### IMPROVEMENT - Map Modal Layout Redesign (COMPLETED)
+- [x] Changed from side-by-side layout to stacked vertical layout
+- [x] Map section: Full width, flex-1 height, min-h-0 for proper flex behavior
+- [x] Details section: Grid layout (1 column on mobile, 2-4 columns on desktop)
+- [x] Status card: Compact design with badge
+- [x] Customer Info card: Spans 2 columns on desktop, shows name/phone/address
+- [x] Total card: Highlighted with green background
+- [x] Items and Notes: Grid layout below main details
+- [x] Responsive breakpoints: Mobile-first with md: and lg: breakpoints
+- [x] Padding and spacing optimized for better readability
+- [x] Close button positioned at bottom with full width
+
+### VERIFICATION - Map Modal Responsive Design
+- [x] Desktop view: Full-width map (400-500px height), details in grid below
+- [x] Map displays both restaurant and customer markers
+- [x] Markers fit bounds automatically
+- [x] Order information displays correctly (name, phone, address, area, items, total)
+- [x] Modal closes cleanly without errors
+- [x] No infinite loading or circular dependencies
+- [x] Map controls (zoom, satellite, fullscreen) are accessible

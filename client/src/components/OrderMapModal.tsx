@@ -2,7 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MapPin, Phone, Clock, AlertCircle, Loader2 } from "lucide-react";
+import { MapPin, Phone, AlertCircle, Loader2 } from "lucide-react";
 import { MapView } from "@/components/Map";
 import { trpc } from "@/lib/trpc";
 import { useRef, useEffect, useState } from "react";
@@ -274,11 +274,11 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
         title: "Restaurant",
         label: {
           text: "🍽️",
-          fontSize: "20px",
+          fontSize: "18px",
         },
         icon: {
           path: google.maps.SymbolPath.CIRCLE,
-          scale: 18,
+          scale: 16,
           fillColor: "#ef4444",
           fillOpacity: 1,
           strokeColor: "white",
@@ -301,42 +301,17 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
       markersRef.current.push(restaurantMarker);
       console.log('Restaurant marker added to map, total markers:', markersRef.current.length);
 
-      // Center map between the two locations with padding
-      const bounds = new google.maps.LatLngBounds();
-      bounds.extend(geocodedLocation);
-      bounds.extend(RESTAURANT_LOCATION);
-      
-      console.log('[OrderMapModal] Bounds created, fitting to map');
-      
-      // Use setTimeout to ensure map is ready before fitting bounds
-      if (mapRef.current && isMountedRef.current) {
-        const timeout1 = setTimeout(() => {
-          if (mapRef.current && isMountedRef.current) {
-            console.log('[OrderMapModal] Fitting bounds on map');
-            mapRef.current.fitBounds(bounds, { top: 100, right: 100, bottom: 100, left: 100 });
-            
-            // Trigger multiple resizes to ensure proper rendering
-            const timeout2 = setTimeout(() => {
-              if (mapRef.current && isMountedRef.current) {
-                google.maps.event.trigger(mapRef.current, 'resize');
-                console.log('[OrderMapModal] First resize after fitBounds');
-              }
-            }, 100);
-            
-            const timeout3 = setTimeout(() => {
-              if (mapRef.current && isMountedRef.current) {
-                google.maps.event.trigger(mapRef.current, 'resize');
-                console.log('[OrderMapModal] Second resize after fitBounds');
-              }
-            }, 300);
-            
-            timeoutsRef.current.push(timeout2, timeout3);
-          }
-        }, 100);
-        timeoutsRef.current.push(timeout1);
+      // Fit bounds to show both markers
+      if (mapRef.current && markersRef.current.length > 0) {
+        const bounds = new google.maps.LatLngBounds();
+        markersRef.current.forEach(marker => {
+          bounds.extend(marker.getPosition()!);
+        });
+        mapRef.current.fitBounds(bounds);
+        console.log('[OrderMapModal] Map bounds fitted to markers');
       }
     } catch (error) {
-      console.error("[OrderMapModal] Error creating markers:", error);
+      console.error('[OrderMapModal] Error displaying markers on map:', error);
       if (isMountedRef.current) {
         setGeocodeError("Failed to display markers on map");
       }
@@ -367,23 +342,23 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
       }
       onOpenChange(newOpen);
     }}>
-      <DialogContent className="max-w-4xl h-[90vh] flex flex-col">
-        <DialogHeader>
+      <DialogContent className="max-w-5xl h-[95vh] flex flex-col p-0">
+        <DialogHeader className="px-6 pt-4 pb-2">
           <DialogTitle>Order #{order.id} - Map View</DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 flex gap-4 overflow-hidden">
-          {/* Map Section */}
-          <div className="flex-1 flex flex-col gap-2">
+        <div className="flex-1 flex flex-col gap-4 overflow-hidden px-6 pb-6">
+          {/* Map Section - Full Width and Height */}
+          <div className="flex-1 flex flex-col gap-2 min-h-0 bg-gray-100 rounded-lg overflow-hidden">
             {isGeocoding && (
-              <div className="flex items-center justify-center gap-2 p-4 bg-blue-50 rounded-lg">
+              <div className="absolute top-4 left-4 z-10 flex items-center justify-center gap-2 p-3 bg-blue-50 rounded-lg shadow-md">
                 <Loader2 className="w-4 h-4 animate-spin" />
                 <span className="text-sm text-blue-700">Locating address...</span>
               </div>
             )}
 
             {geocodeError && (
-              <div className="flex items-center gap-2 p-3 bg-red-50 rounded-lg">
+              <div className="absolute top-4 left-4 z-10 flex items-center gap-2 p-3 bg-red-50 rounded-lg shadow-md">
                 <AlertCircle className="w-4 h-4 text-red-600" />
                 <span className="text-sm text-red-700">{geocodeError}</span>
               </div>
@@ -391,7 +366,7 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
 
             <MapView
               key={`map-${order.id}`}
-              className="flex-1 rounded-lg"
+              className="w-full h-full"
               initialCenter={geocodedLocation || RESTAURANT_LOCATION}
               initialZoom={14}
               onMapReady={(map) => {
@@ -414,93 +389,93 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
             />
           </div>
 
-          {/* Order Details Section */}
-          <div className="w-80 flex flex-col gap-3 overflow-y-auto pr-2">
+          {/* Order Details Section - Below Map */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
             {/* Status Card */}
-            <Card className="p-4">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="font-semibold text-sm">Status</h3>
-                <Badge className={getStatusColor(order.status)}>
-                  {order.status}
-                </Badge>
-              </div>
+            <Card className="p-3">
+              <h3 className="font-semibold text-xs text-gray-600 mb-2">Status</h3>
+              <Badge className={`${getStatusColor(order.status)} w-full justify-center`}>
+                {order.status}
+              </Badge>
             </Card>
 
-            {/* Customer Card */}
-            <Card className="p-4">
-              <h3 className="font-semibold text-sm mb-3">Customer Info</h3>
-              <div className="space-y-2 text-sm">
+            {/* Customer Info Card */}
+            <Card className="p-3 lg:col-span-2">
+              <h3 className="font-semibold text-xs text-gray-600 mb-2">Customer Info</h3>
+              <div className="space-y-1 text-xs">
                 {order.customer?.name && (
-                  <div className="flex items-start gap-2">
+                  <div className="flex items-start gap-1">
                     <span className="text-gray-600 min-w-fit">Name:</span>
                     <span className="font-medium">{order.customer.name}</span>
                   </div>
                 )}
                 {order.customer?.phone && (
-                  <div className="flex items-center gap-2">
-                    <Phone className="w-4 h-4 text-gray-600" />
+                  <div className="flex items-center gap-1">
+                    <Phone className="w-3 h-3 text-gray-600 flex-shrink-0" />
                     <span className="font-medium">{order.customer.phone}</span>
                   </div>
                 )}
                 {(order.customerAddress || order.customer?.address) && (
-                  <div className="flex items-start gap-2">
-                    <MapPin className="w-4 h-4 text-gray-600 mt-0.5" />
-                    <span className="font-medium">{order.customerAddress || order.customer?.address}</span>
+                  <div className="flex items-start gap-1">
+                    <MapPin className="w-3 h-3 text-gray-600 mt-0.5 flex-shrink-0" />
+                    <span className="font-medium text-wrap">{order.customerAddress || order.customer?.address}</span>
                   </div>
                 )}
                 {order.area && (
-                  <div className="flex items-start gap-2">
-                    <span className="text-gray-600 min-w-fit">Area:</span>
-                    <span className="font-medium">{order.area}</span>
+                  <div className="flex items-center gap-1">
+                    <span className="text-gray-600">Area:</span>
+                    <Badge variant="outline" className="text-xs">{order.area}</Badge>
                   </div>
                 )}
               </div>
             </Card>
 
-            {/* Items Card */}
-            {order.items && order.items.length > 0 && (
-              <Card className="p-4">
-                <h3 className="font-semibold text-sm mb-3">Items</h3>
-                <div className="space-y-2">
-                  {order.items.map((item, idx) => (
-                    <div key={idx} className="flex justify-between text-sm">
-                      <span>{item.menuItemName}</span>
-                      <span className="text-gray-600">x{item.quantity}</span>
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            )}
-
-            {/* Notes Card */}
-            {order.notes && (
-              <Card className="p-4 bg-amber-50">
-                <h3 className="font-semibold text-sm mb-2">Notes</h3>
-                <p className="text-sm text-gray-700">{order.notes}</p>
-              </Card>
-            )}
-
             {/* Total Card */}
             {order.totalPrice && (
-              <Card className="p-4 bg-green-50">
-                <div className="flex justify-between items-center">
-                  <span className="font-semibold text-sm">Total</span>
-                  <span className="font-bold text-lg text-green-700">
-                    ${order.totalPrice.toFixed(2)}
-                  </span>
-                </div>
+              <Card className="p-3 bg-green-50 border-green-200">
+                <h3 className="font-semibold text-xs text-gray-600 mb-2">Total</h3>
+                <div className="text-lg font-bold text-green-700">${order.totalPrice.toFixed(2)}</div>
               </Card>
             )}
-
-            {/* Close Button */}
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => onOpenChange(false)}
-            >
-              Close
-            </Button>
           </div>
+
+          {/* Items and Notes Row */}
+          {(order.items?.length || order.notes) && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {/* Items Card */}
+              {order.items && order.items.length > 0 && (
+                <Card className="p-3">
+                  <h3 className="font-semibold text-xs text-gray-600 mb-2">Items</h3>
+                  <div className="space-y-1">
+                    {order.items.map((item, idx) => (
+                      <div key={idx} className="flex justify-between text-xs">
+                        <span>{item.menuItemName}</span>
+                        <span className="text-gray-600">x{item.quantity}</span>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              )}
+
+              {/* Notes Card */}
+              {order.notes && (
+                <Card className="p-3">
+                  <h3 className="font-semibold text-xs text-gray-600 mb-2">Notes</h3>
+                  <p className="text-xs text-gray-700">{order.notes}</p>
+                </Card>
+              )}
+            </div>
+          )}
+
+          {/* Close Button */}
+          <Button
+            onClick={() => onOpenChange(false)}
+            className="w-full"
+            variant="outline"
+            size="sm"
+          >
+            Close
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
