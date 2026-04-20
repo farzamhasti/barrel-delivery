@@ -152,6 +152,17 @@ export default function DriverDashboard() {
               >
                 {isLoading ? "Logging in..." : "Login"}
               </Button>
+
+              {/* Back Link */}
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={() => setLocation("/")}
+                  className="text-sm text-blue-600 hover:text-blue-700 underline"
+                >
+                  Back to Home
+                </button>
+              </div>
             </form>
           </CardContent>
         </Card>

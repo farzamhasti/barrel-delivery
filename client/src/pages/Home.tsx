@@ -1,54 +1,10 @@
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Package2, Truck, ChefHat } from "lucide-react";
-import AdminDashboard from "./AdminDashboard";
-import DriverPanel from "./DriverPanel";
-import KitchenDashboardPage from "./KitchenDashboardPage";
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<"admin" | "driver" | "kitchen" | "home">("home");
-
-  if (activeTab === "admin") {
-    return (
-      <div className="min-h-screen bg-background">
-        <div className="border-b border-border/40 backdrop-blur-sm sticky top-0 z-50">
-          <div className="container mx-auto px-4 py-4">
-            <Button
-              variant="outline"
-              onClick={() => setActiveTab("home")}
-              className="gap-2"
-            >
-              ← Back
-            </Button>
-          </div>
-        </div>
-        <AdminDashboard />
-      </div>
-    );
-  }
-
-  if (activeTab === "driver") {
-    return (
-      <div className="min-h-screen bg-background">
-        <div className="border-b border-border/40 backdrop-blur-sm sticky top-0 z-50">
-          <div className="container mx-auto px-4 py-4">
-            <Button
-              variant="outline"
-              onClick={() => setActiveTab("home")}
-              className="gap-2"
-            >
-              ← Back
-            </Button>
-          </div>
-        </div>
-        <DriverPanel />
-      </div>
-    );
-  }
-
-  if (activeTab === "kitchen") {
-    return <KitchenDashboardPage />;
-  }
+  const [, setLocation] = useLocation();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-card to-muted/30 flex flex-col">
@@ -88,7 +44,7 @@ export default function Home() {
               <Button
                 className="w-full"
                 size="lg"
-                onClick={() => setActiveTab("admin")}
+                onClick={() => setLocation("/admin-login")}
               >
                 Open Admin Dashboard
               </Button>
@@ -105,7 +61,7 @@ export default function Home() {
               <Button
                 className="w-full"
                 size="lg"
-                onClick={() => window.location.href = '/driver-dashboard'}
+                onClick={() => setLocation("/driver-dashboard")}
               >
                 Open Driver Dashboard
               </Button>
@@ -122,7 +78,7 @@ export default function Home() {
               <Button
                 className="w-full"
                 size="lg"
-                onClick={() => setActiveTab("kitchen")}
+                onClick={() => setLocation("/kitchen-login")}
               >
                 Open Kitchen Dashboard
               </Button>
@@ -149,19 +105,10 @@ export default function Home() {
                 <div className="text-2xl mb-2">📊</div>
                 <p className="text-xs text-muted-foreground">Order Dashboard</p>
               </div>
-              <div className="text-center">
-                <div className="text-2xl mb-2">👨‍🍳</div>
-                <p className="text-xs text-muted-foreground">Kitchen Queue</p>
-              </div>
             </div>
           </div>
         </div>
       </main>
-
-      {/* Footer */}
-      <footer className="border-t border-border/40 py-6 text-center text-sm text-muted-foreground">
-        <p>&copy; 2024 Barrel Delivery. All rights reserved.</p>
-      </footer>
     </div>
   );
 }

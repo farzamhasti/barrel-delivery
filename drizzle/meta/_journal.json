@@ -43,6 +43,13 @@
       "when": 1776659985589,
       "tag": "0005_small_lenny_balinger",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1776660520434,
+      "tag": "0006_curved_firebrand",
+      "breakpoints": true
     }
   ]
 }

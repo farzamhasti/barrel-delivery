@@ -186,3 +186,30 @@ export const customersRelations = relations(customers, ({ many }) => ({
 export const menuCategoriesRelations = relations(menuCategories, ({ many }) => ({
   items: many(menuItems),
 }));
+
+
+// System Credentials for Admin and Kitchen Login
+export const systemCredentials = mysqlTable("system_credentials", {
+  id: int("id").autoincrement().primaryKey(),
+  username: varchar("username", { length: 255 }).notNull().unique(),
+  passwordHash: text("password_hash").notNull(),
+  role: mysqlEnum("role", ["admin", "kitchen"]).notNull(),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type SystemCredential = typeof systemCredentials.$inferSelect;
+export type InsertSystemCredential = typeof systemCredentials.$inferInsert;
+
+// System Sessions for Admin and Kitchen Login
+export const systemSessions = mysqlTable("system_sessions", {
+  id: int("id").autoincrement().primaryKey(),
+  credentialId: int("credential_id").notNull().references(() => systemCredentials.id),
+  sessionToken: varchar("session_token", { length: 255 }).notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type SystemSession = typeof systemSessions.$inferSelect;
+export type InsertSystemSession = typeof systemSessions.$inferInsert;

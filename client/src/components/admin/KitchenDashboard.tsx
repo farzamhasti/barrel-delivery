@@ -2,11 +2,23 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, CheckCircle2, Clock, MapPin } from "lucide-react";
+import { AlertCircle, CheckCircle2, Clock, MapPin, LogOut } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+import { useLocation } from "wouter";
 
 export default function KitchenDashboard() {
+  const [, setLocation] = useLocation();
+  
+  const handleLogout = () => {
+    // Clear session
+    localStorage.removeItem("systemSessionToken");
+    localStorage.removeItem("systemRole");
+    localStorage.removeItem("systemUsername");
+    // Redirect to kitchen login
+    setLocation("/kitchen-login");
+  };
+  
   // Fetch all orders with items and delivery time for today
   const { data: allOrders = [], isLoading, refetch } = trpc.orders.getTodayOrdersWithItems.useQuery();
   
@@ -58,9 +70,19 @@ export default function KitchenDashboard() {
   return (
     <div className="space-y-6 p-6">
       {/* Header */}
-      <div>
-        <h2 className="text-3xl font-bold text-foreground">Kitchen Dashboard</h2>
-        <p className="text-muted-foreground mt-1">Manage orders and mark them as ready</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl font-bold text-foreground">Kitchen Dashboard</h2>
+          <p className="text-muted-foreground mt-1">Manage orders and mark them as ready</p>
+        </div>
+        <Button
+          variant="outline"
+          onClick={handleLogout}
+          className="gap-2"
+        >
+          <LogOut className="w-4 h-4" />
+          Logout
+        </Button>
       </div>
 
       {/* Summary Cards */}

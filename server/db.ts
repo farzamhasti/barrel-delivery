@@ -1,7 +1,8 @@
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, menuCategories, InsertMenuCategory, menuItems, InsertMenuItem, drivers, InsertDriver, customers, InsertCustomer, orders, InsertOrder, orderItems, InsertOrderItem } from "../drizzle/schema";
+import { InsertUser, users, menuCategories, InsertMenuCategory, menuItems, InsertMenuItem, drivers, InsertDriver, customers, InsertCustomer, orders, InsertOrder, orderItems, InsertOrderItem, systemCredentials, systemSessions } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { eq, and, desc, gte, lt, inArray, gt } from "drizzle-orm";
+import bcrypt from "bcrypt";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -745,4 +746,63 @@ export async function getDriverBySessionToken(sessionToken: string) {
     ));
   
   return session[0]?.driver || null;
+}
+
+
+// System Credentials Functions
+export async function getSystemCredentials(username: string) {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.select().from(systemCredentials).where(eq(systemCredentials.username, username));
+  return result[0] || null;
+}
+
+export async function verifySystemPassword(password: string, passwordHash: string): Promise<boolean> {
+  try {
+    return await bcrypt.compare(password, passwordHash);
+  } catch (error) {
+    console.error("Password verification error:", error);
+    return false;
+  }
+}
+
+export async function createSystemSession(credentialId: number, sessionToken: string, expiresAt: Date) {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.insert(systemSessions).values({
+    credentialId,
+    sessionToken,
+    expiresAt,
+  });
+  
+  return result;
+}
+
+export async function getSystemSessionByToken(sessionToken: string) {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db
+    .select({
+      username: systemCredentials.username,
+      role: systemCredentials.role,
+      sessionToken: systemSessions.sessionToken,
+    })
+    .from(systemSessions)
+    .innerJoin(systemCredentials, eq(systemSessions.credentialId, systemCredentials.id))
+    .where(and(
+      eq(systemSessions.sessionToken, sessionToken),
+      gt(systemSessions.expiresAt, new Date())
+    ));
+  
+  return result[0] || null;
+}
+
+export async function deleteSystemSession(sessionToken: string) {
+  const db = await getDb();
+  if (!db) return null;
+  
+  return await db.delete(systemSessions).where(eq(systemSessions.sessionToken, sessionToken));
 }

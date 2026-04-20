@@ -1185,3 +1185,14 @@
 - "Mark Ready" button changes order status and updates summary counts in real-time
 - Ready orders show "Ready for Pickup" message instead of button
 - 3-second auto-refresh for real-time order updates
+
+
+## FEATURE - Logout & Homepage Navigation Buttons (IN PROGRESS)
+- [ ] Add logout button to Admin Dashboard
+- [ ] Add logout button to Kitchen Dashboard  
+- [ ] Add logout button to Driver Dashboard
+- [ ] Add return to homepage button to Admin Login page
+- [ ] Add return to homepage button to Kitchen Login page
+- [ ] Add return to homepage button to Driver Login page
+- [ ] Test logout functionality on all dashboards
+- [ ] Test homepage navigation from all login pages
