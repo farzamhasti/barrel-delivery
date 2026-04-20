@@ -1,10 +1,54 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Package2, Truck, ChefHat } from "lucide-react";
-import { useLocation } from "wouter";
+import AdminDashboard from "./AdminDashboard";
+import DriverPanel from "./DriverPanel";
+import KitchenDashboardPage from "./KitchenDashboardPage";
 
 export default function Home() {
-  const [, navigate] = useLocation();
+  const [activeTab, setActiveTab] = useState<"admin" | "driver" | "kitchen" | "home">("home");
+
+  if (activeTab === "admin") {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="border-b border-border/40 backdrop-blur-sm sticky top-0 z-50">
+          <div className="container mx-auto px-4 py-4">
+            <Button
+              variant="outline"
+              onClick={() => setActiveTab("home")}
+              className="gap-2"
+            >
+              ← Back
+            </Button>
+          </div>
+        </div>
+        <AdminDashboard />
+      </div>
+    );
+  }
+
+  if (activeTab === "driver") {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="border-b border-border/40 backdrop-blur-sm sticky top-0 z-50">
+          <div className="container mx-auto px-4 py-4">
+            <Button
+              variant="outline"
+              onClick={() => setActiveTab("home")}
+              className="gap-2"
+            >
+              ← Back
+            </Button>
+          </div>
+        </div>
+        <DriverPanel />
+      </div>
+    );
+  }
+
+  if (activeTab === "kitchen") {
+    return <KitchenDashboardPage />;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-card to-muted/30 flex flex-col">
@@ -44,7 +88,7 @@ export default function Home() {
               <Button
                 className="w-full"
                 size="lg"
-                onClick={() => navigate("/admin-login")}
+                onClick={() => setActiveTab("admin")}
               >
                 Open Admin Dashboard
               </Button>
@@ -78,7 +122,7 @@ export default function Home() {
               <Button
                 className="w-full"
                 size="lg"
-                onClick={() => navigate("/kitchen-login")}
+                onClick={() => setActiveTab("kitchen")}
               >
                 Open Kitchen Dashboard
               </Button>

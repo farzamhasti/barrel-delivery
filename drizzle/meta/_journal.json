@@ -29,13 +29,6 @@
       "when": 1776654927526,
       "tag": "0003_new_wildside",
       "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "5",
-      "when": 1776659133279,
-      "tag": "0004_flippant_zaladane",
-      "breakpoints": true
     }
   ]
 }

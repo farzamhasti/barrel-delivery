@@ -113,29 +113,6 @@ export async function initializeDatabase() {
         FOREIGN KEY(driver_id) REFERENCES drivers(id)
       )`,
       
-      `CREATE TABLE IF NOT EXISTS system_credentials (
-        id int AUTO_INCREMENT NOT NULL,
-        username varchar(255) NOT NULL,
-        password_hash varchar(255) NOT NULL,
-        role enum('admin','kitchen') NOT NULL,
-        is_active boolean DEFAULT true,
-        createdAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        updatedAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        PRIMARY KEY(id),
-        UNIQUE KEY(username)
-      )`,
-      
-      `CREATE TABLE IF NOT EXISTS system_sessions (
-        id int AUTO_INCREMENT NOT NULL,
-        credential_id int NOT NULL,
-        session_token varchar(255) NOT NULL,
-        expires_at timestamp NOT NULL,
-        createdAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        PRIMARY KEY(id),
-        UNIQUE KEY(session_token),
-        FOREIGN KEY(credential_id) REFERENCES system_credentials(id)
-      )`,
-      
       `ALTER TABLE orders ADD COLUMN IF NOT EXISTS area varchar(50)`,
     ];
 
@@ -154,11 +131,6 @@ export async function initializeDatabase() {
     }
 
     await connection.end();
-    
-    // Initialize system credentials
-    const { initializeSystemCredentials } = await import('../db');
-    await initializeSystemCredentials();
-    
     initialized = true;
     console.log('[Database] Initialization complete');
   } catch (error) {
