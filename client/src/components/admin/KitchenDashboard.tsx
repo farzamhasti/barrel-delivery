@@ -2,13 +2,11 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, CheckCircle2, Clock } from "lucide-react";
+import { AlertCircle, CheckCircle2, Clock, MapPin } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 
 export default function KitchenDashboard() {
-  const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
-
   // Fetch all orders with items and delivery time for today
   const { data: allOrders = [], isLoading, refetch } = trpc.orders.getTodayOrdersWithItems.useQuery();
   
@@ -22,7 +20,6 @@ export default function KitchenDashboard() {
     onSuccess: () => {
       toast.success("Order marked as ready!");
       refetch();
-      setSelectedOrderId(null);
     },
     onError: (error) => {
       toast.error(error.message || "Failed to update order status");
@@ -37,11 +34,8 @@ export default function KitchenDashboard() {
     return () => clearInterval(interval);
   }, [refetch]);
 
-
-
-  const selectedOrder = orders.find((o: any) => o.id === selectedOrderId) as any;
-
-
+  const pendingCount = orders.filter((o: any) => o.status === "Pending").length;
+  const readyCount = orders.filter((o: any) => o.status === "Ready").length;
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -62,178 +56,167 @@ export default function KitchenDashboard() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6">
+      {/* Header */}
       <div>
         <h2 className="text-3xl font-bold text-foreground">Kitchen Dashboard</h2>
         <p className="text-muted-foreground mt-1">Manage orders and mark them as ready</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Orders Queue */}
-        <div className="lg:col-span-1">
-          <Card>
-            <CardHeader>
-              <CardTitle>Order Queue</CardTitle>
-              <CardDescription>{orders.length} orders to prepare</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2 max-h-[600px] overflow-y-auto">
-                {isLoading ? (
-                  <div className="text-center text-muted-foreground py-8">Loading orders...</div>
-                ) : orders.length === 0 ? (
-                  <div className="text-center text-muted-foreground py-8">No orders to prepare</div>
-                ) : (
-                  orders.map((order: any) => (
-                    <button
-                      key={order.id}
-                      onClick={() => setSelectedOrderId(order.id)}
-                      className={`w-full text-left p-3 rounded-lg border-2 transition-all ${
-                        selectedOrderId === order.id
-                          ? "border-accent bg-accent/10"
-                          : "border-border hover:border-accent/50"
-                      }`}
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1 min-w-0">
-                          <div className="font-semibold text-foreground">Order #{order.id}</div>
-                          <div className="text-sm text-muted-foreground truncate">{order.customerName}</div>
-                          <div className="flex items-center gap-2 mt-2">
-                            <Badge className={`text-xs ${getStatusColor(order.status)}`}>
-                              {order.status.replace("_", " ").toUpperCase()}
-                            </Badge>
-                            <span className="text-xs text-muted-foreground">
-                              {order.orderItems?.length || 0} items
-                            </span>
-                          </div>
-                          {/* Delivery Time Display */}
-                          {order.hasDeliveryTime && order.deliveryTime && (
-                            <div className="flex items-center gap-2 mt-2 text-xs text-green-700 bg-green-50 p-2 rounded">
-                              <Clock className="w-3 h-3" />
-                              <span>{new Date(order.deliveryTime).toLocaleString()}</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </button>
-                  ))
-                )}
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Pending Orders */}
+        <Card className="bg-yellow-50 border-yellow-200">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Pending Orders</p>
+                <p className="text-3xl font-bold text-yellow-800">{pendingCount}</p>
               </div>
-            </CardContent>
+              <AlertCircle className="w-8 h-8 text-yellow-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Ready Orders */}
+        <Card className="bg-blue-50 border-blue-200">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Ready Orders</p>
+                <p className="text-3xl font-bold text-blue-800">{readyCount}</p>
+              </div>
+              <CheckCircle2 className="w-8 h-8 text-blue-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Total Orders */}
+        <Card className="bg-green-50 border-green-200">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Total Orders</p>
+                <p className="text-3xl font-bold text-green-800">{orders.length}</p>
+              </div>
+              <Clock className="w-8 h-8 text-green-600" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Orders Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {isLoading ? (
+          <div className="col-span-full flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
+          </div>
+        ) : orders.length === 0 ? (
+          <Card className="col-span-full p-12 text-center bg-green-50 border-green-200">
+            <div className="text-4xl mb-4">✓</div>
+            <p className="text-lg font-semibold text-green-800">All Orders Complete!</p>
+            <p className="text-sm text-green-700 mt-2">No pending orders at the moment.</p>
           </Card>
-        </div>
-
-        {/* Order Details */}
-        <div className="lg:col-span-2">
-          {selectedOrder ? (
-            <Card>
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div>
-                    <CardTitle>Order #{selectedOrder.id}</CardTitle>
-                    <CardDescription>
-                      <Badge className={`mt-2 ${getStatusColor(selectedOrder.status)}`}>
-                        {selectedOrder.status.replace("_", " ").toUpperCase()}
-                      </Badge>
-                    </CardDescription>
-                  </div>
-                  {selectedOrder.status !== "ready" && (
-                    <Button
-                      onClick={() => handleMarkReady(selectedOrder.id)}
-                      disabled={updateStatusMutation.isPending}
-                      className="gap-2"
-                    >
-                      <CheckCircle2 className="w-4 h-4" />
-                      {updateStatusMutation.isPending ? "Marking..." : "Mark Ready"}
-                    </Button>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Customer Info */}
+        ) : (
+          orders.map((order: any) => (
+            <Card
+              key={order.id}
+              className={`p-6 border-2 flex flex-col ${
+                order.status === "Pending"
+                  ? "border-yellow-300 bg-yellow-50"
+                  : "border-blue-300 bg-blue-50"
+              }`}
+            >
+              {/* Order Header */}
+              <div className="flex items-start justify-between mb-4">
                 <div>
-                  <h3 className="font-semibold text-foreground mb-3">Customer Information</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <div className="text-sm text-muted-foreground">Name</div>
-                      <div className="font-semibold text-foreground">{selectedOrder.customerName}</div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-muted-foreground">Phone</div>
-                      <div className="font-semibold text-foreground">{selectedOrder.customerPhone}</div>
-                    </div>
-                  </div>
-                  <div className="mt-3">
-                    <div className="text-sm text-muted-foreground">Address</div>
-                    <div className="font-semibold text-foreground">{selectedOrder.customerAddress}</div>
-                  </div>
+                  <h3 className="text-2xl font-bold text-foreground">Order #{order.id}</h3>
+                  <p className="text-sm text-muted-foreground">{order.customer?.name}</p>
                 </div>
+                <Badge className={`${getStatusColor(order.status)} text-sm px-3 py-1`}>
+                  {order.status}
+                </Badge>
+              </div>
 
-                {/* Items (No Prices) */}
-                <div>
-                  <h3 className="font-semibold text-foreground mb-3">Items to Prepare</h3>
-                  <div className="space-y-2 bg-muted/50 p-4 rounded-lg">
-                    {selectedOrder.orderItems?.map((item: any, idx: number) => (
-                      <div key={idx} className="flex items-center justify-between py-2 border-b border-border last:border-0">
-                        <div>
-                          <div className="font-semibold text-foreground">{item.menuItemName}</div>
-                          <div className="text-sm text-muted-foreground">Qty: {item.quantity}</div>
-                        </div>
-                        <div className="text-lg font-bold text-accent">{item.quantity}</div>
+              {/* Customer Address */}
+              <div className="flex items-start gap-2 mb-4 pb-4 border-b border-border">
+                <MapPin className="w-5 h-5 text-muted-foreground flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-sm text-muted-foreground line-clamp-2">{order.customerAddress || order.customer?.address}</p>
+                  {order.area && <p className="text-xs font-semibold text-accent mt-1">Area: {order.area}</p>}
+                </div>
+              </div>
+
+              {/* Order Items */}
+              <div className="mb-4 flex-1">
+                <h4 className="font-semibold text-foreground mb-2">Items:</h4>
+                {order.items?.length ? (
+                  <div className="space-y-1">
+                    {order.items.map((item: any, idx: number) => (
+                      <div key={idx} className="flex items-center justify-between text-sm">
+                        <span className="text-foreground">{item.menuItemName}</span>
+                        <span className="font-semibold text-accent">x{item.quantity}</span>
                       </div>
                     ))}
                   </div>
-                </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No items</p>
+                )}
+              </div>
 
-                {/* Delivery Time */}
-                {selectedOrder.hasDeliveryTime && selectedOrder.deliveryTime && (
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <div className="flex items-start gap-3">
-                      <Clock className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                      <div>
-                        <div className="font-semibold text-green-900">Expected Delivery Time</div>
-                        <div className="text-sm text-green-800 mt-1">
-                          {new Date(selectedOrder.deliveryTime).toLocaleString()}
-                        </div>
-                      </div>
+              {/* Customer Notes */}
+              {order.notes && (
+                <div className="mb-4 pb-4 border-t border-border pt-4">
+                  <p className="text-xs font-semibold text-muted-foreground mb-1">NOTES:</p>
+                  <p className="text-sm text-foreground bg-yellow-100 p-2 rounded border border-yellow-300">
+                    {order.notes}
+                  </p>
+                </div>
+              )}
+
+              {/* Delivery Time */}
+              {order.hasDeliveryTime && order.deliveryTime && (
+                <div className="mb-4 pb-4 border-t border-border pt-4">
+                  <div className="flex items-start gap-2">
+                    <Clock className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-xs font-semibold text-green-700 mb-1">DELIVERY TIME:</p>
+                      <p className="text-sm font-semibold text-green-800 bg-green-100 p-2 rounded border border-green-300">
+                        {new Date(order.deliveryTime).toLocaleString()}
+                      </p>
                     </div>
                   </div>
-                )}
-
-                {/* Customer Notes */}
-                {selectedOrder.customerNotes && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <div className="flex items-start gap-3">
-                      <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                      <div>
-                        <div className="font-semibold text-blue-900">Special Instructions</div>
-                        <div className="text-sm text-blue-800 mt-1">{selectedOrder.customerNotes}</div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Status Info */}
-                <div className="bg-muted/50 p-4 rounded-lg">
-                  <div className="flex items-center gap-2 text-sm">
-                    <Clock className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-muted-foreground">
-                      Order created: {new Date(selectedOrder.createdAt).toLocaleString()}
-                    </span>
-                  </div>
                 </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card>
-              <CardContent className="flex items-center justify-center h-[400px]">
-                <div className="text-center text-muted-foreground">
-                  <AlertCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>Select an order to view details</p>
+              )}
+
+              {/* Action Button */}
+              {order.status === "Pending" && (
+                <Button
+                  className="w-full gap-2 bg-green-600 hover:bg-green-700 text-white"
+                  onClick={() => handleMarkReady(order.id)}
+                  disabled={updateStatusMutation.isPending}
+                >
+                  {updateStatusMutation.isPending ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      Updating...
+                    </>
+                  ) : (
+                    <>
+                      ✓ Mark Ready
+                    </>
+                  )}
+                </Button>
+              )}
+
+              {order.status === "Ready" && (
+                <div className="w-full p-3 bg-blue-100 border border-blue-300 rounded text-center">
+                  <p className="text-sm font-semibold text-blue-800">Ready for Pickup</p>
                 </div>
-              </CardContent>
+              )}
             </Card>
-          )}
-        </div>
+          ))
+        )}
       </div>
     </div>
   );
