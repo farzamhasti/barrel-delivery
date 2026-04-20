@@ -95,6 +95,32 @@ export const driverSessions = mysqlTable("driver_sessions", {
 export type DriverSession = typeof driverSessions.$inferSelect;
 export type InsertDriverSession = typeof driverSessions.$inferInsert;
 
+// System Credentials for Admin and Kitchen Dashboards
+export const systemCredentials = mysqlTable("system_credentials", {
+  id: int("id").autoincrement().primaryKey(),
+  username: varchar("username", { length: 255 }).notNull().unique(),
+  passwordHash: varchar("password_hash", { length: 255 }).notNull(),
+  role: mysqlEnum("role", ["admin", "kitchen"]).notNull(),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type SystemCredential = typeof systemCredentials.$inferSelect;
+export type InsertSystemCredential = typeof systemCredentials.$inferInsert;
+
+// System Sessions for Admin and Kitchen Users
+export const systemSessions = mysqlTable("system_sessions", {
+  id: int("id").autoincrement().primaryKey(),
+  credentialId: int("credential_id").notNull(),
+  sessionToken: varchar("session_token", { length: 255 }).notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type SystemSession = typeof systemSessions.$inferSelect;
+export type InsertSystemSession = typeof systemSessions.$inferInsert;
+
 // Customers
 export const customers = mysqlTable("customers", {
   id: int("id").autoincrement().primaryKey(),
