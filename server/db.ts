@@ -2,7 +2,7 @@ import { drizzle } from "drizzle-orm/mysql2";
 import { InsertUser, users, menuCategories, InsertMenuCategory, menuItems, InsertMenuItem, drivers, InsertDriver, customers, InsertCustomer, orders, InsertOrder, orderItems, InsertOrderItem, systemCredentials, systemSessions } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { eq, and, desc, gte, lt, inArray, gt } from "drizzle-orm";
-import bcrypt from "bcrypt";
+import { createHash, timingSafeEqual } from 'crypto';
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -760,7 +760,22 @@ export async function getSystemCredentials(username: string) {
 
 export async function verifySystemPassword(password: string, passwordHash: string): Promise<boolean> {
   try {
-    return await bcrypt.compare(password, passwordHash);
+    // Simple hash verification using SHA-256
+    // Format: algorithm$salt$hash
+    const parts = passwordHash.split('$');
+    if (parts.length !== 3 || parts[0] !== 'sha256') {
+      return false;
+    }
+    
+    const [, salt, storedHash] = parts;
+    const computedHash = createHash('sha256').update(salt + password).digest('hex');
+    
+    // Use timing-safe comparison to prevent timing attacks
+    try {
+      return timingSafeEqual(Buffer.from(computedHash), Buffer.from(storedHash));
+    } catch {
+      return false;
+    }
   } catch (error) {
     console.error("Password verification error:", error);
     return false;

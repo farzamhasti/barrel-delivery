@@ -1,5 +1,6 @@
 import mysql from "mysql2/promise";
 import { ENV } from "./env";
+import { createHash } from "crypto";
 
 let initialized = false;
 
@@ -114,6 +115,27 @@ export async function initializeDatabase() {
       )`,
       
       `ALTER TABLE orders ADD COLUMN IF NOT EXISTS area varchar(50)`,
+      
+      `CREATE TABLE IF NOT EXISTS system_credentials (
+        id int AUTO_INCREMENT NOT NULL,
+        username varchar(255) NOT NULL UNIQUE,
+        password_hash text NOT NULL,
+        role enum('admin','kitchen') NOT NULL,
+        is_active boolean DEFAULT true,
+        createdAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updatedAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY(id)
+      )`,
+      
+      `CREATE TABLE IF NOT EXISTS system_sessions (
+        id int AUTO_INCREMENT NOT NULL,
+        credential_id int NOT NULL,
+        session_token varchar(255) NOT NULL UNIQUE,
+        expires_at timestamp NOT NULL,
+        createdAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY(id),
+        FOREIGN KEY(credential_id) REFERENCES system_credentials(id)
+      )`,
     ];
 
     // Execute each statement
@@ -128,6 +150,33 @@ export async function initializeDatabase() {
           }
         }
       }
+    }
+
+    // Insert default system credentials if they don't exist
+    try {
+      const generatePasswordHash = (password: string): string => {
+        const salt = Math.random().toString(36).substring(2, 15);
+        const hash = createHash('sha256').update(salt + password).digest('hex');
+        return `sha256$${salt}$${hash}`;
+      };
+      
+      // Admin credentials
+      const adminHash = generatePasswordHash('Barrel_1981@');
+      await connection.execute(
+        'INSERT IGNORE INTO system_credentials (username, password_hash, role) VALUES (?, ?, ?)',
+        ['barrel_admin', adminHash, 'admin']
+      );
+      
+      // Kitchen credentials
+      const kitchenHash = generatePasswordHash('1111');
+      await connection.execute(
+        'INSERT IGNORE INTO system_credentials (username, password_hash, role) VALUES (?, ?, ?)',
+        ['barrel_kitchen', kitchenHash, 'kitchen']
+      );
+      
+      console.log('[Database] System credentials initialized');
+    } catch (error: any) {
+      console.error('[Database] Error initializing system credentials:', error.message);
     }
 
     await connection.end();
