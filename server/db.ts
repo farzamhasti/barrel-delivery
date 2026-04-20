@@ -1,7 +1,7 @@
-import { and, eq, gte, lt, desc, inArray } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { InsertUser, users, menuCategories, InsertMenuCategory, menuItems, InsertMenuItem, drivers, InsertDriver, customers, InsertCustomer, orders, InsertOrder, orderItems, InsertOrderItem } from "../drizzle/schema";
 import { ENV } from './_core/env';
+import { eq, and, desc, gte, lt, inArray, gt } from "drizzle-orm";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -666,4 +666,83 @@ export async function getOrdersByStatus(statuses?: string[]) {
     taxAmount: Number(order.taxAmount),
     totalPrice: Number(order.totalPrice),
   }));
+}
+
+
+// Driver Authentication
+export async function getDriverByNameAndLicense(name: string, licenseNumber: string) {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db
+    .select()
+    .from(drivers)
+    .where(and(
+      eq(drivers.name, name),
+      eq(drivers.licenseNumber, licenseNumber),
+      eq(drivers.isActive, true)
+    ));
+  
+  return result[0] || null;
+}
+
+export async function createDriverSession(driverId: number, sessionToken: string, expiresAt: Date) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Import the driverSessions table
+  const { driverSessions } = await import("../drizzle/schema");
+  
+  return db.insert(driverSessions).values({
+    driverId,
+    sessionToken,
+    expiresAt,
+  });
+}
+
+export async function getDriverSession(sessionToken: string) {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const { driverSessions } = await import("../drizzle/schema");
+  
+  const result = await db
+    .select()
+    .from(driverSessions)
+    .where(and(
+      eq(driverSessions.sessionToken, sessionToken),
+      gt(driverSessions.expiresAt, new Date())
+    ));
+  
+  return result[0] || null;
+}
+
+export async function deleteDriverSession(sessionToken: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const { driverSessions } = await import("../drizzle/schema");
+  
+  return db.delete(driverSessions).where(eq(driverSessions.sessionToken, sessionToken));
+}
+
+export async function getDriverBySessionToken(sessionToken: string) {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const { driverSessions } = await import("../drizzle/schema");
+  
+  const session = await db
+    .select({
+      driverId: driverSessions.driverId,
+      driver: drivers,
+    })
+    .from(driverSessions)
+    .innerJoin(drivers, eq(driverSessions.driverId, drivers.id))
+    .where(and(
+      eq(driverSessions.sessionToken, sessionToken),
+      gt(driverSessions.expiresAt, new Date())
+    ));
+  
+  return session[0]?.driver || null;
 }

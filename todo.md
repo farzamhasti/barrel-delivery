@@ -1090,3 +1090,72 @@
 - [x] Tested driver editing with license number - WORKING
 - [x] Confirmed license number persists in database
 - [x] Verified license number displays in driver list table
+
+
+## FEATURE - Role-Based Access Control (RBAC) System (NEW)
+
+### Phase 1: Email Whitelist System
+- [ ] Add authorized_emails table to database schema
+- [ ] Create admin UI to manage authorized email list
+- [ ] Implement email validation during OAuth callback
+- [ ] Prevent non-whitelisted emails from accessing the system
+- [ ] Add email whitelist management procedures to tRPC
+
+### Phase 2: Role-Based Dashboard Access
+- [ ] Implement route protection middleware for all dashboards
+- [ ] Create role-based route guards (admin, kitchen, driver)
+- [ ] Redirect unauthorized users based on role
+- [ ] Add role verification in tRPC procedures
+- [ ] Protect all API endpoints with role checks
+
+### Phase 3: Driver-Specific Login System
+- [ ] Create driver login form (name + license number)
+- [ ] Implement driver authentication without OAuth
+- [ ] Generate secure session tokens for drivers
+- [ ] Store driver login sessions in database
+- [ ] Add driver logout functionality
+
+### Phase 4: Personalized Driver Dashboards
+- [ ] Create isolated driver dashboard component
+- [ ] Filter orders to show only assigned to current driver
+- [ ] Display only current driver's delivery tasks
+- [ ] Implement driver-specific status updates
+- [ ] Add driver profile/account management
+
+### Phase 5: Security Enforcement
+- [ ] Implement session validation on every request
+- [ ] Add CSRF protection
+- [ ] Implement rate limiting for login attempts
+- [ ] Add security headers (X-Frame-Options, CSP, etc.)
+- [ ] Implement secure cookie handling
+
+### Phase 6: Testing & Verification
+- [ ] Test email whitelist enforcement
+- [ ] Test role-based access for all dashboards
+- [ ] Test driver login with name + license
+- [ ] Test cross-role access prevention
+- [ ] Test session expiration and security
+
+
+## FEATURE - Driver Login System (IN PROGRESS)
+- [x] Add driver_sessions table to database schema
+- [x] Create driver authentication backend procedures in driverRouter.ts
+- [x] Implement driver login form UI component
+- [x] Build driver dashboard page structure
+- [x] Add driver dashboard route to App.tsx
+- [x] Add driver dashboard link to home page
+- [x] Fix database initialization SQL parsing errors
+- [ ] Test driver login with existing driver credentials
+- [ ] Verify driver session creation and validation
+- [ ] Implement driver logout functionality
+- [ ] Build driver's assigned orders view
+- [ ] Add route protection for driver dashboard
+- [ ] Test complete driver login flow end-to-end
+
+## NOTES - Driver Login System
+- Driver login uses name + license number authentication
+- Backend procedures: login, me, logout, getAssignedOrders
+- Driver sessions stored in driver_sessions table with expiration
+- Session token stored in HTTP-only cookie for security
+- Currently needs testing with actual driver data from admin dashboard
+- Database initialization fixed: removed backtick escaping issues

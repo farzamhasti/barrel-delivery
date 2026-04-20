@@ -6,6 +6,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import AdminDashboard from "./pages/AdminDashboard";
 import DriverPanel from "./pages/DriverPanel";
+import DriverDashboard from "./pages/DriverDashboard";
 import KitchenDashboard from "./components/admin/KitchenDashboard";
 import NotFound from "./pages/NotFound";
 import { useAuth } from "./_core/hooks/useAuth";
@@ -37,6 +38,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/driver-dashboard" component={DriverDashboard} />
       <Route path="/admin/*" component={AdminDashboard} />
       <Route path="/driver/*" component={DriverPanel} />
       <Route path="/kitchen" component={KitchenDashboard} />

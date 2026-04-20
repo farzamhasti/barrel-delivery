@@ -105,9 +105,9 @@ export default function Home() {
               <Button
                 className="w-full"
                 size="lg"
-                onClick={() => setActiveTab("driver")}
+                onClick={() => window.location.href = '/driver-dashboard'}
               >
-                Open Driver Panel
+                Open Driver Dashboard
               </Button>
             </div>
 

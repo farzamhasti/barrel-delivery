@@ -20,6 +20,19 @@ export const users = mysqlTable("users", {
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
+// Authorized Emails for Access Control
+export const authorizedEmails = mysqlTable("authorized_emails", {
+  id: int("id").autoincrement().primaryKey(),
+  email: varchar("email", { length: 320 }).notNull().unique(),
+  role: mysqlEnum("role", ["admin", "kitchen", "driver"]).notNull(),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type AuthorizedEmail = typeof authorizedEmails.$inferSelect;
+export type InsertAuthorizedEmail = typeof authorizedEmails.$inferInsert;
+
 // Menu Categories
 export const menuCategories = mysqlTable("menu_categories", {
   id: int("id").autoincrement().primaryKey(),
@@ -69,6 +82,18 @@ export const drivers = mysqlTable("drivers", {
 
 export type Driver = typeof drivers.$inferSelect;
 export type InsertDriver = typeof drivers.$inferInsert;
+
+// Driver Sessions for authentication
+export const driverSessions = mysqlTable("driver_sessions", {
+  id: int("id").autoincrement().primaryKey(),
+  driverId: int("driver_id").notNull(),
+  sessionToken: varchar("session_token", { length: 255 }).notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type DriverSession = typeof driverSessions.$inferSelect;
+export type InsertDriverSession = typeof driverSessions.$inferInsert;
 
 // Customers
 export const customers = mysqlTable("customers", {

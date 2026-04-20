@@ -15,6 +15,20 @@
       "when": 1776616292547,
       "tag": "0001_overrated_harrier",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1776654616763,
+      "tag": "0002_faulty_night_thrasher",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1776654927526,
+      "tag": "0003_new_wildside",
+      "breakpoints": true
     }
   ]
 }
