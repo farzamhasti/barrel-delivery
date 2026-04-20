@@ -26,26 +26,40 @@ export const driverRouter = router({
         // Save session to database
         await db.createDriverSession(driver.id, sessionToken, expiresAt);
         
-        // Set session cookie
+        // Set session cookie (for server-side validation)
         const cookieOptions = getSessionCookieOptions(ctx.req);
         ctx.res.cookie("driver_session", sessionToken, {
           ...cookieOptions,
           maxAge: 24 * 60 * 60 * 1000, // 24 hours
+          httpOnly: false, // Allow frontend to read for localStorage
         });
         
+        // Return session token for frontend to store in localStorage
         return {
           success: true,
+          sessionToken,
           driverId: driver.id,
           driverName: driver.name,
+          vehicleType: driver.vehicleType,
+          phone: driver.phone,
         };
       } catch (error: any) {
         throw new Error(error.message || "Login failed");
       }
     }),
 
-  me: publicProcedure.query(async ({ ctx }) => {
+  me: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().optional(),
+    }).optional())
+    .query(async ({ input, ctx }) => {
     try {
-      const sessionToken = ctx.req.cookies?.driver_session;
+      // Try to get session token from cookie first, then from input (localStorage)
+      let sessionToken = ctx.req.cookies?.driver_session;
+      if (!sessionToken && input?.sessionToken) {
+        sessionToken = input.sessionToken;
+      }
+      
       if (!sessionToken) return null;
       
       const driver = await db.getDriverBySessionToken(sessionToken);
@@ -55,9 +69,18 @@ export const driverRouter = router({
     }
   }),
 
-  logout: publicProcedure.mutation(async ({ ctx }) => {
+  logout: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().optional(),
+    }).optional())
+    .mutation(async ({ input, ctx }) => {
     try {
-      const sessionToken = ctx.req.cookies?.driver_session;
+      // Try to get session token from cookie first, then from input
+      let sessionToken = ctx.req.cookies?.driver_session;
+      if (!sessionToken && input?.sessionToken) {
+        sessionToken = input.sessionToken;
+      }
+      
       if (sessionToken) {
         await db.deleteDriverSession(sessionToken);
       }
@@ -71,9 +94,18 @@ export const driverRouter = router({
     }
   }),
 
-  getAssignedOrders: publicProcedure.query(async ({ ctx }) => {
+  getAssignedOrders: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().optional(),
+    }).optional())
+    .query(async ({ input, ctx }) => {
     try {
-      const sessionToken = ctx.req.cookies?.driver_session;
+      // Try to get session token from cookie first, then from input
+      let sessionToken = ctx.req.cookies?.driver_session;
+      if (!sessionToken && input?.sessionToken) {
+        sessionToken = input.sessionToken;
+      }
+      
       if (!sessionToken) return [];
       
       const driver = await db.getDriverBySessionToken(sessionToken);

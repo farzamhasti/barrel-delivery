@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { useLocation } from "wouter";
 import { Badge } from "@/components/ui/badge";
 
+const DRIVER_SESSION_KEY = "driver_session_token";
+
 export default function DriverDashboard() {
   const [, setLocation] = useLocation();
   
@@ -16,14 +18,28 @@ export default function DriverDashboard() {
   const [licenseNumber, setLicenseNumber] = useState("");
   const [loginError, setLoginError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [sessionToken, setSessionToken] = useState<string | null>(null);
+  
+  // Get stored session token from localStorage on mount
+  useEffect(() => {
+    const storedToken = localStorage.getItem(DRIVER_SESSION_KEY);
+    if (storedToken) {
+      setSessionToken(storedToken);
+    }
+  }, []);
   
   // Check if driver is already logged in
-  const { data: currentDriver, isLoading: checkingAuth } = trpc.driver.me.useQuery();
+  const { data: currentDriver, isLoading: checkingAuth, refetch: refetchDriver } = trpc.driver.me.useQuery(
+    sessionToken ? { sessionToken } : undefined,
+    { enabled: !!sessionToken }
+  );
+  
   const loginMutation = trpc.driver.login.useMutation();
   const logoutMutation = trpc.driver.logout.useMutation();
+  
   const { data: assignedOrders = [], isLoading: ordersLoading } = trpc.driver.getAssignedOrders.useQuery(
-    undefined,
-    { enabled: !!currentDriver }
+    sessionToken ? { sessionToken } : undefined,
+    { enabled: !!currentDriver && !!sessionToken }
   );
 
   useEffect(() => {
@@ -38,17 +54,23 @@ export default function DriverDashboard() {
     setIsLoading(true);
 
     try {
-      await loginMutation.mutateAsync({
+      const result = await loginMutation.mutateAsync({
         name: driverName,
         licenseNumber: licenseNumber,
       });
+      
+      // Store session token in localStorage
+      if (result.sessionToken) {
+        localStorage.setItem(DRIVER_SESSION_KEY, result.sessionToken);
+        setSessionToken(result.sessionToken);
+      }
       
       setDriverName("");
       setLicenseNumber("");
       setIsLoggedIn(true);
       
-      // Refresh the page to load the new driver session
-      window.location.reload();
+      // Refresh driver data
+      refetchDriver();
     } catch (error: any) {
       setLoginError(error.message || "Login failed. Please check your credentials.");
     } finally {
@@ -58,15 +80,20 @@ export default function DriverDashboard() {
 
   const handleLogout = async () => {
     try {
-      await logoutMutation.mutateAsync();
+      if (sessionToken) {
+        await logoutMutation.mutateAsync({ sessionToken });
+      }
+      
+      // Clear localStorage
+      localStorage.removeItem(DRIVER_SESSION_KEY);
+      setSessionToken(null);
       setIsLoggedIn(false);
-      window.location.reload();
     } catch (error) {
       console.error("Logout failed:", error);
     }
   };
 
-  if (checkingAuth) {
+  if (checkingAuth && sessionToken) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">

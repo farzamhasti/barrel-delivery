@@ -1157,7 +1157,13 @@
 - Backend procedures: login, me, logout, getAssignedOrders
 - Driver sessions stored in driver_sessions table with expiration
 - Session token stored in localStorage (not HTTP-only cookie) for browser persistence
-- Tested with actual driver data: Farzam Hasti (License: AL123456)
+- Tested with actual driver data: Farzam Hasti (License: AL123456) and Negin Pezhooli (License: NP1223456)
 - Database initialization fixed: removed backtick escaping issues
 - Session persists across page refresh, cleared on logout
 - Fixed missing React imports in DriverDashboard component
+- **FIXED:** Changed from HTTP-only cookies to localStorage-based session tokens
+  * Backend now returns sessionToken in login response
+  * Frontend stores token in localStorage and passes it to queries/mutations
+  * All driver procedures (me, logout, getAssignedOrders) accept optional sessionToken parameter
+  * Fixes issue where cookies weren't being sent between requests
+- **TESTED:** Both drivers successfully log in and see personalized dashboards
