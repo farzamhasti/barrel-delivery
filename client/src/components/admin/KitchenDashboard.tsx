@@ -105,6 +105,13 @@ export default function KitchenDashboard() {
                               {order.orderItems?.length || 0} items
                             </span>
                           </div>
+                          {/* Delivery Time Display */}
+                          {order.hasDeliveryTime && order.deliveryTime && (
+                            <div className="flex items-center gap-2 mt-2 text-xs text-green-700 bg-green-50 p-2 rounded">
+                              <Clock className="w-3 h-3" />
+                              <span>{new Date(order.deliveryTime).toLocaleString()}</span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </button>

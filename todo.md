@@ -869,3 +869,24 @@
 - [x] Cache invalidation mechanism integrated (invalidateOrderCache)
 - [x] Kitchen Dashboard shows latest data without manual refresh
 - [x] Standalone Kitchen Dashboard accessible at /kitchen URL
+
+
+## TEST - End-to-End Delivery Time Synchronization
+- [x] Create new order with delivery time and verify it appears in Kitchen Dashboard
+- [x] Edit delivery time on existing order and verify update appears in Kitchen Dashboard
+- [x] Verify delivery time is visible across all three dashboards (Orders, Order Tracking, Kitchen)
+- [x] Confirm real-time synchronization works without manual refresh
+- [x] Test delivery time removal and verify it disappears from all dashboards
+
+
+## REQUIREMENT - Display Delivery Time on Kitchen Dashboard Order Cards
+- [x] Add delivery time display to Kitchen Dashboard order cards (not just in details panel)
+- [x] Show delivery time prominently on each order card alongside:
+  - Order number
+  - Customer address
+  - Order items
+- [x] Format delivery time clearly with Clock icon and visual styling
+- [x] Handle orders without delivery time gracefully (show placeholder or hide)
+- [x] Verify delivery time appears on all pending orders
+- [x] Test real-time updates when delivery time is added/changed
+- [x] Ensure no manual refresh required for delivery time updates
