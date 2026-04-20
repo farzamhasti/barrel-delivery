@@ -6,6 +6,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import AdminDashboard from "./pages/AdminDashboard";
 import DriverPanel from "./pages/DriverPanel";
+import KitchenDashboard from "./components/admin/KitchenDashboard";
 import NotFound from "./pages/NotFound";
 import { useAuth } from "./_core/hooks/useAuth";
 import { Loader2 } from "lucide-react";
@@ -38,6 +39,7 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/admin/*" component={AdminDashboard} />
       <Route path="/driver/*" component={DriverPanel} />
+      <Route path="/kitchen" component={KitchenDashboard} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

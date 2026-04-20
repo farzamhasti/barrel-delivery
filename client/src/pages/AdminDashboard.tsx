@@ -11,7 +11,7 @@ import DriverManagement from "@/components/admin/DriverManagement";
 import Dashboard from "@/components/admin/Dashboard";
 import CreateOrder from "@/components/admin/CreateOrder";
 import OrderTrackingWithMap from "@/components/admin/OrderTrackingWithMap";
-import KitchenDashboard from "@/components/admin/KitchenDashboard";
+
 
 // Helper hook to get window width
 function useWindowWidth() {
@@ -142,7 +142,7 @@ export default function AdminDashboard() {
                 {currentTab === "orders" && <Orders />}
                 {currentTab === "drivers" && <DriverManagement />}
                 {currentTab === "order-tracking" && <OrderTrackingWithMap />}
-                {currentTab === "kitchen" && <KitchenDashboard />}
+
               </div>
             </div>
           </div>
@@ -199,12 +199,7 @@ function SidebarContent({
           label="Order Tracking"
           active={currentTab === "order-tracking"}
         />
-        <NavItem
-          href="/admin/kitchen"
-          icon={<Settings className="w-5 h-5" />}
-          label="Kitchen"
-          active={currentTab === "kitchen"}
-        />
+
       </nav>
 
       {/* Footer */}

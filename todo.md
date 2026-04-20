@@ -850,3 +850,22 @@
 - [x] Verified polling mechanism works (3-second refetch interval)
 - [x] Confirmed no manual refresh required - delivery time appears automatically
 - [x] All three dashboards (Orders, Order Tracking, Kitchen) now show consistent delivery time data
+
+
+## CHANGE - Remove Kitchen Tab from Admin Dashboard (COMPLETED)
+- [x] Remove Kitchen tab/menu item from AdminDashboard sidebar
+- [x] Remove Kitchen dashboard rendering logic from AdminDashboard content section
+- [x] Verify no Kitchen references remain in AdminDashboard.tsx
+- [x] Test Admin dashboard loads without Kitchen tab
+- [x] Ensure no broken links or navigation issues
+- [x] Added standalone Kitchen Dashboard route at /kitchen
+
+## REQUIREMENT - Kitchen Dashboard Real-Time Delivery Time Synchronization (COMPLETED)
+- [x] Verify Kitchen Dashboard uses getTodayOrdersWithItems for delivery time data
+- [x] Ensure polling mechanism is active (3-second refetch interval)
+- [x] Kitchen Dashboard component uses trpc.orders.getTodayOrdersWithItems.useQuery()
+- [x] Auto-refetch every 3 seconds for real-time updates
+- [x] Delivery time displays with Clock icon and green background
+- [x] Cache invalidation mechanism integrated (invalidateOrderCache)
+- [x] Kitchen Dashboard shows latest data without manual refresh
+- [x] Standalone Kitchen Dashboard accessible at /kitchen URL
