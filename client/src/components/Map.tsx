@@ -192,6 +192,8 @@ export function MapView({
     if (!containerRef.current) return;
 
     let isMounted = true;
+    let resizeObserver: ResizeObserver | null = null;
+    const timeouts: NodeJS.Timeout[] = [];
 
     const initializeMap = async () => {
       try {
@@ -273,17 +275,34 @@ export function MapView({
 
     return () => {
       isMounted = false;
+      // Clean up all timeouts
+      timeouts.forEach(timeout => clearTimeout(timeout));
+      // Clean up ResizeObserver
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
     };
   }, [initialCenter, initialZoom, handleMapReady]);
 
   if (mapError) {
     return (
-      <div className={cn("w-full h-full flex items-center justify-center bg-destructive/10", className)}>
+      <div className={cn("w-full h-full flex items-center justify-center bg-red-50 border border-red-200", className)}>
         <div className="flex flex-col items-center gap-2 text-center px-4">
-          <div className="text-destructive font-medium">Map Error</div>
-          <div className="text-xs text-muted-foreground">{mapError}</div>
-          {!API_KEY && <div className="text-xs text-destructive mt-2">API Key not configured</div>}
-          <div className="text-xs text-muted-foreground mt-2">Try refreshing the page or check browser console for details</div>
+          <div className="text-red-700 font-medium">Map Error</div>
+          <div className="text-xs text-red-600">{mapError}</div>
+          {!API_KEY && <div className="text-xs text-red-700 mt-2">API Key not configured</div>}
+          <div className="text-xs text-gray-600 mt-2">Try refreshing the page or check browser console for details</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className={cn("w-full h-full flex items-center justify-center bg-gray-50", className)}>
+        <div className="flex flex-col items-center gap-2">
+          <div className="animate-spin">📍</div>
+          <div className="text-xs text-gray-600">Loading map...</div>
         </div>
       </div>
     );

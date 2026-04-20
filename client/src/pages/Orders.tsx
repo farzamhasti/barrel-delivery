@@ -219,9 +219,15 @@ export function Orders() {
       // Get the current order to access customerId
       const currentOrder = allOrders?.find((o: any) => o.id === editingOrderId);
       
+      // Ensure we have a valid current order with customerId
+      if (!currentOrder || !currentOrder.customerId) {
+        toast.error("Error: Could not find order or customer information");
+        return;
+      }
+      
       await updateOrderMutation.mutateAsync({
         orderId: editingOrderId,
-        customerId: currentOrder?.customerId,
+        customerId: currentOrder.customerId,
         status: formData.status,
         notes: formData.notes,
         totalPrice: priceCalculations.total,
@@ -254,7 +260,7 @@ export function Orders() {
     // Fetch order details with items
     try {
       const orderDetails = await utils.orders.getById.fetch({ orderId: order.id });
-      if (orderDetails?.items) {
+      if (orderDetails && orderDetails.items && Array.isArray(orderDetails.items)) {
         const items = orderDetails.items.map((item: any) => ({
           menuItemId: item.menuItemId,
           quantity: item.quantity,
@@ -262,9 +268,13 @@ export function Orders() {
         }));
         setEditingItems(items);
         setOriginalItems(items); // Store original items to track deletions
+      } else {
+        setEditingItems([]);
+        setOriginalItems([]);
       }
     } catch (error) {
       console.error("Error fetching order details:", error);
+      toast.error("Failed to load order details");
       setEditingItems([]);
       setOriginalItems([]);
     }
@@ -283,10 +293,15 @@ export function Orders() {
   const handleDeleteOrderItem = async (orderId: number, itemId: number) => {
     try {
       await deleteOrderItemMutation.mutateAsync({ itemId });
-      setEditingItems(editingItems.filter((_, idx) => idx !== editingItems.findIndex((item) => item.menuItemId === itemId)));
+      // Filter out the item by index, not by menuItemId comparison
+      const itemIndex = editingItems.findIndex((item) => item.menuItemId === itemId);
+      if (itemIndex >= 0) {
+        setEditingItems(editingItems.filter((_, idx) => idx !== itemIndex));
+      }
       invalidateOrderCache(utils);
     } catch (error) {
       console.error("Error deleting item:", error);
+      toast.error("Failed to remove item");
     }
   };
 

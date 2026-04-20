@@ -14,26 +14,40 @@ const redirectToLoginIfUnauthorized = (error: unknown) => {
   if (!(error instanceof TRPCClientError)) return;
   if (typeof window === "undefined") return;
 
-  const isUnauthorized = error.message === UNAUTHED_ERR_MSG;
+  // Only redirect on explicit unauthorized errors, not transient failures
+  const isUnauthorized = error.message === UNAUTHED_ERR_MSG && error.data?.code === 'UNAUTHORIZED';
 
   if (!isUnauthorized) return;
 
+  console.warn('[Auth] Redirecting to login due to unauthorized error');
   window.location.href = getLoginUrl();
 };
 
 queryClient.getQueryCache().subscribe(event => {
   if (event.type === "updated" && event.action.type === "error") {
     const error = event.query.state.error;
-    redirectToLoginIfUnauthorized(error);
-    console.error("[API Query Error]", error);
+    // Only redirect on auth errors, not on other failures
+    if (error instanceof TRPCClientError && error.data?.code === 'UNAUTHORIZED') {
+      redirectToLoginIfUnauthorized(error);
+    }
+    // Log all errors for debugging but don't treat them as fatal
+    if (error) {
+      console.error("[API Query Error]", error instanceof Error ? error.message : String(error));
+    }
   }
 });
 
 queryClient.getMutationCache().subscribe(event => {
   if (event.type === "updated" && event.action.type === "error") {
     const error = event.mutation.state.error;
-    redirectToLoginIfUnauthorized(error);
-    console.error("[API Mutation Error]", error);
+    // Only redirect on auth errors, not on other failures
+    if (error instanceof TRPCClientError && error.data?.code === 'UNAUTHORIZED') {
+      redirectToLoginIfUnauthorized(error);
+    }
+    // Log all errors for debugging but don't treat them as fatal
+    if (error) {
+      console.error("[API Mutation Error]", error instanceof Error ? error.message : String(error));
+    }
   }
 });
 

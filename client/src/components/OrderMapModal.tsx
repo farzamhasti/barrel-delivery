@@ -1,4 +1,3 @@
-import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -6,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { MapPin, Phone, Clock, AlertCircle, Loader2 } from "lucide-react";
 import { MapView } from "@/components/Map";
 import { trpc } from "@/lib/trpc";
+import { useRef, useEffect, useState } from "react";
 
 export interface OrderMapModalProps {
   open: boolean;
@@ -40,14 +40,32 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
   const mapRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.Marker[]>([]);
   const infoWindowsRef = useRef<google.maps.InfoWindow[]>([]);
+  const timeoutsRef = useRef<NodeJS.Timeout[]>([]);
   const [geocodedLocation, setGeocodedLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [isGeocoding, setIsGeocoding] = useState(false);
   const [geocodeError, setGeocodeError] = useState<string | null>(null);
   const [mapReady, setMapReady] = useState(false);
+  const isMountedRef = useRef(true);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+      // Clear all scheduled timeouts
+      timeoutsRef.current.forEach(timeout => clearTimeout(timeout));
+      timeoutsRef.current = [];
+      // Clear markers and info windows
+      markersRef.current.forEach(marker => marker.setMap(null));
+      infoWindowsRef.current.forEach(infoWindow => infoWindow.close());
+      markersRef.current = [];
+      infoWindowsRef.current = [];
+    };
+  }, []);
 
   // Use geocoding mutation to convert address to coordinates
   const geocodeMutation = (trpc as any).maps.geocode.useMutation({
     onSuccess: (result: any) => {
+      if (!isMountedRef.current) return;
       console.log('[OrderMapModal] Geocoding succeeded:', result);
       if ("error" in result) {
         setGeocodeError(result.error);
@@ -62,6 +80,7 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
       }
     },
     onError: (error: any) => {
+      if (!isMountedRef.current) return;
       console.error('[OrderMapModal] Geocoding failed:', error);
       setGeocodeError(error.message || "Failed to geocode address");
       setIsGeocoding(false);
@@ -107,14 +126,16 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
       const lng = parseFloat(order.customer.longitude as any);
       if (!isNaN(lat) && !isNaN(lng)) {
         console.log('[OrderMapModal] Using customer coordinates:', { lat, lng });
-        setGeocodedLocation({ lat, lng });
+        if (isMountedRef.current) {
+          setGeocodedLocation({ lat, lng });
+        }
         return;
       }
     }
 
     // Otherwise, geocode the address
     const address = order.customerAddress || order.customer?.address;
-    if (address) {
+    if (address && isMountedRef.current) {
       console.log('[OrderMapModal] Geocoding address:', address);
       setIsGeocoding(true);
       geocodeMutation.mutate({ address });
@@ -123,7 +144,7 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
 
   // Update map markers when location changes
   useEffect(() => {
-    if (!mapReady || !mapRef.current || !geocodedLocation || !open) return;
+    if (!mapReady || !mapRef.current || !geocodedLocation || !open || !isMountedRef.current) return;
 
     console.log('[OrderMapModal] Order changed, updating markers for order:', order.id);
     console.log('[OrderMapModal] New geocoded location:', geocodedLocation);
@@ -136,35 +157,46 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
     console.log('[OrderMapModal] Cleared previous markers and info windows');
 
     // Trigger map resize to ensure it renders properly when order changes
-    google.maps.event.trigger(mapRef.current, 'resize');
-    console.log('[OrderMapModal] Triggered map resize event');
+    try {
+      google.maps.event.trigger(mapRef.current, 'resize');
+      console.log('[OrderMapModal] Triggered map resize event');
+    } catch (error) {
+      console.error('[OrderMapModal] Error triggering map resize:', error);
+    }
 
     try {
+      // Safely escape HTML content to prevent injection
+      const escapeHtml = (text: string) => {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      };
+
       // Create info window for customer location with detailed order information
       const customerInfoContent = document.createElement('div');
       customerInfoContent.style.cssText = 'font-family: Arial, sans-serif; width: 280px;';
       customerInfoContent.innerHTML = `
         <div style="padding: 12px;">
           <div style="font-weight: bold; font-size: 16px; margin-bottom: 8px; color: #1f2937;">
-            Order #${order.id}
+            Order #${escapeHtml(String(order.id))}
           </div>
           <div style="font-size: 13px; margin-bottom: 6px;">
-            <strong>Customer:</strong> ${order.customer?.name || 'N/A'}
+            <strong>Customer:</strong> ${escapeHtml(order.customer?.name || 'N/A')}
           </div>
           <div style="font-size: 13px; margin-bottom: 6px;">
-            <strong>Address:</strong> ${order.customerAddress || order.customer?.address || 'N/A'}
+            <strong>Address:</strong> ${escapeHtml(order.customerAddress || order.customer?.address || 'N/A')}
           </div>
           <div style="font-size: 13px; margin-bottom: 6px;">
-            <strong>Area:</strong> ${order.area || 'N/A'}
+            <strong>Area:</strong> ${escapeHtml(order.area || 'N/A')}
           </div>
           <div style="font-size: 13px; margin-bottom: 8px; padding-top: 8px; border-top: 1px solid #e5e7eb;">
             <strong>Status:</strong> 
             <span style="display: inline-block; margin-left: 4px; padding: 4px 8px; background-color: #fbbf24; border-radius: 4px; font-weight: bold; color: #78350f;">
-              ${order.status}
+              ${escapeHtml(order.status)}
             </span>
           </div>
           ${order.notes ? `<div style="font-size: 12px; color: #6b7280; font-style: italic; margin-top: 6px; padding-top: 6px; border-top: 1px solid #e5e7eb;">
-            <strong>Notes:</strong> ${order.notes}
+            <strong>Notes:</strong> ${escapeHtml(order.notes)}
           </div>` : ''}
         </div>
       `;
@@ -174,11 +206,12 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
       });
 
       // Add customer location marker with larger, more visible styling
+      if (!mapRef.current || !isMountedRef.current) return;
       console.log('Creating customer marker at:', geocodedLocation);
       const customerMarker = new google.maps.Marker({
         map: mapRef.current,
         position: geocodedLocation,
-        title: `Order #${order.id} - ${order.customer?.name}`,
+        title: `Order #${order.id} - ${order.customer?.name || 'Customer'}`,
         label: {
           text: `#${order.id}`,
           color: "white",
@@ -201,11 +234,15 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
       customerMarker.addListener('click', () => {
         // Close all other info windows
         infoWindowsRef.current.forEach(iw => iw.close());
-        customerInfoWindow.open(mapRef.current, customerMarker);
+        if (mapRef.current) {
+          customerInfoWindow.open(mapRef.current, customerMarker);
+        }
       });
 
       // Open info window by default
-      customerInfoWindow.open(mapRef.current, customerMarker);
+      if (mapRef.current) {
+        customerInfoWindow.open(mapRef.current, customerMarker);
+      }
       infoWindowsRef.current.push(customerInfoWindow);
       markersRef.current.push(customerMarker);
       console.log('Customer marker added to map, total markers:', markersRef.current.length);
@@ -229,6 +266,7 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
       });
 
       // Add restaurant marker with larger, more visible styling
+      if (!mapRef.current || !isMountedRef.current) return;
       console.log('Creating restaurant marker at:', RESTAURANT_LOCATION);
       const restaurantMarker = new google.maps.Marker({
         map: mapRef.current,
@@ -254,7 +292,9 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
       restaurantMarker.addListener('click', () => {
         // Close all other info windows
         infoWindowsRef.current.forEach(iw => iw.close());
-        restaurantInfoWindow.open(mapRef.current, restaurantMarker);
+        if (mapRef.current) {
+          restaurantInfoWindow.open(mapRef.current, restaurantMarker);
+        }
       });
 
       infoWindowsRef.current.push(restaurantInfoWindow);
@@ -269,30 +309,37 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
       console.log('[OrderMapModal] Bounds created, fitting to map');
       
       // Use setTimeout to ensure map is ready before fitting bounds
-      setTimeout(() => {
-        if (mapRef.current) {
-          console.log('[OrderMapModal] Fitting bounds on map');
-          mapRef.current.fitBounds(bounds, { top: 100, right: 100, bottom: 100, left: 100 });
-          
-          // Trigger multiple resizes to ensure proper rendering
-          setTimeout(() => {
-            if (mapRef.current) {
-              google.maps.event.trigger(mapRef.current, 'resize');
-              console.log('[OrderMapModal] First resize after fitBounds');
-            }
-          }, 100);
-          
-          setTimeout(() => {
-            if (mapRef.current) {
-              google.maps.event.trigger(mapRef.current, 'resize');
-              console.log('[OrderMapModal] Second resize after fitBounds');
-            }
-          }, 300);
-        }
-      }, 100);
+      if (mapRef.current && isMountedRef.current) {
+        const timeout1 = setTimeout(() => {
+          if (mapRef.current && isMountedRef.current) {
+            console.log('[OrderMapModal] Fitting bounds on map');
+            mapRef.current.fitBounds(bounds, { top: 100, right: 100, bottom: 100, left: 100 });
+            
+            // Trigger multiple resizes to ensure proper rendering
+            const timeout2 = setTimeout(() => {
+              if (mapRef.current && isMountedRef.current) {
+                google.maps.event.trigger(mapRef.current, 'resize');
+                console.log('[OrderMapModal] First resize after fitBounds');
+              }
+            }, 100);
+            
+            const timeout3 = setTimeout(() => {
+              if (mapRef.current && isMountedRef.current) {
+                google.maps.event.trigger(mapRef.current, 'resize');
+                console.log('[OrderMapModal] Second resize after fitBounds');
+              }
+            }, 300);
+            
+            timeoutsRef.current.push(timeout2, timeout3);
+          }
+        }, 100);
+        timeoutsRef.current.push(timeout1);
+      }
     } catch (error) {
       console.error("[OrderMapModal] Error creating markers:", error);
-      setGeocodeError("Failed to display markers on map");
+      if (isMountedRef.current) {
+        setGeocodeError("Failed to display markers on map");
+      }
     }
   }, [mapReady, geocodedLocation, order.id, order.customer?.name, order.status, order.area, order.notes, open]);
 
@@ -301,200 +348,163 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
       case "Pending":
         return "bg-yellow-100 text-yellow-800";
       case "Ready":
-        return "bg-blue-100 text-blue-800";
-      case "On the Way":
-        return "bg-purple-100 text-purple-800";
-      case "Delivered":
         return "bg-green-100 text-green-800";
+      case "On the Way":
+        return "bg-blue-100 text-blue-800";
+      case "Delivered":
+        return "bg-gray-100 text-gray-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "Pending":
-        return "⏱️";
-      case "Ready":
-        return "✅";
-      case "On the Way":
-        return "🚗";
-      case "Delivered":
-        return "🎉";
-      default:
-        return "📦";
-    }
-  };
-
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[95vh] overflow-hidden p-2 sm:p-4 md:p-6 flex flex-col w-[calc(100%-1rem)] sm:w-auto">
-        <DialogHeader className="flex-shrink-0">
-          <DialogTitle className="text-lg sm:text-xl">Order #{order.id} - Map View</DialogTitle>
+    <Dialog open={open} onOpenChange={(newOpen) => {
+      if (!newOpen) {
+        // Clean up when closing
+        timeoutsRef.current.forEach(timeout => clearTimeout(timeout));
+        timeoutsRef.current = [];
+      }
+      onOpenChange(newOpen);
+    }}>
+      <DialogContent className="max-w-4xl h-[90vh] flex flex-col">
+        <DialogHeader>
+          <DialogTitle>Order #{order.id} - Map View</DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto min-h-0 grid grid-cols-1 lg:grid-cols-3 gap-2 sm:gap-4">
+        <div className="flex-1 flex gap-4 overflow-hidden">
           {/* Map Section */}
-          <div className="lg:col-span-2 flex flex-col min-h-0">
-            <Card className="overflow-hidden flex-1 min-h-0 h-[250px] sm:h-[350px] md:h-[400px] lg:h-auto">
-              {isGeocoding ? (
-                <div className="flex items-center justify-center h-full bg-muted">
-                  <div className="flex flex-col items-center gap-2">
-                    <Loader2 className="w-8 h-8 animate-spin text-accent" />
-                    <p className="text-sm text-muted-foreground">Loading map...</p>
-                  </div>
-                </div>
-              ) : geocodeError ? (
-                <div className="flex items-center justify-center h-full bg-destructive/10">
-                  <div className="flex flex-col items-center gap-2 text-center px-4">
-                    <AlertCircle className="w-8 h-8 text-destructive" />
-                    <p className="text-sm text-destructive font-medium">Map Error</p>
-                    <p className="text-xs text-muted-foreground">{geocodeError}</p>
-                  </div>
-                </div>
-              ) : (
-                <MapView
-                  key={`map-${order.id}`}
-                  className="w-full h-full"
-                  initialCenter={geocodedLocation || RESTAURANT_LOCATION}
-                  initialZoom={geocodedLocation ? 15 : 13}
-                  onMapReady={(map) => {
-                    console.log('[OrderMapModal] Map ready callback triggered for order:', order.id);
-                    mapRef.current = map;
-                    setMapReady(true);
-                    
-                    // Trigger multiple resizes for mobile compatibility
-                    // First resize immediately
-                    setTimeout(() => {
-                      if (map) {
-                        google.maps.event.trigger(map, 'resize');
-                        console.log('[OrderMapModal] First resize triggered on map ready');
-                      }
-                    }, 50);
-                    
-                    // Second resize after a longer delay for mobile
-                    setTimeout(() => {
-                      if (map) {
-                        google.maps.event.trigger(map, 'resize');
-                        console.log('[OrderMapModal] Second resize triggered for mobile');
-                      }
-                    }, 200);
-                  }}
-                />
-              )}
-            </Card>
+          <div className="flex-1 flex flex-col gap-2">
+            {isGeocoding && (
+              <div className="flex items-center justify-center gap-2 p-4 bg-blue-50 rounded-lg">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span className="text-sm text-blue-700">Locating address...</span>
+              </div>
+            )}
+
+            {geocodeError && (
+              <div className="flex items-center gap-2 p-3 bg-red-50 rounded-lg">
+                <AlertCircle className="w-4 h-4 text-red-600" />
+                <span className="text-sm text-red-700">{geocodeError}</span>
+              </div>
+            )}
+
+            {mapReady && !geocodeError ? (
+              <MapView
+                key={`map-${order.id}`}
+                initialCenter={geocodedLocation || RESTAURANT_LOCATION}
+                initialZoom={14}
+                onMapReady={(map) => {
+                  if (!isMountedRef.current) return;
+                  mapRef.current = map;
+                  setMapReady(true);
+                  // Trigger resize events for proper rendering with cleanup
+                  const timeout1 = setTimeout(() => {
+                    if (map && isMountedRef.current) {
+                      google.maps.event.trigger(map, 'resize');
+                    }
+                  }, 50);
+                  const timeout2 = setTimeout(() => {
+                    if (map && isMountedRef.current) {
+                      google.maps.event.trigger(map, 'resize');
+                    }
+                  }, 150);
+                  timeoutsRef.current.push(timeout1, timeout2);
+                }}
+              />
+            ) : (
+              <div className="flex-1 bg-gray-100 rounded-lg flex items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+              </div>
+            )}
           </div>
 
           {/* Order Details Section */}
-          <div className="space-y-2 sm:space-y-4 overflow-y-auto lg:overflow-y-visible">
+          <div className="w-80 flex flex-col gap-3 overflow-y-auto pr-2">
             {/* Status Card */}
-            <Card className="p-3 sm:p-4 bg-gradient-to-br from-accent/10 to-accent/5 flex-shrink-0">
-              <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
-                <span className="text-xl sm:text-2xl flex-shrink-0">{getStatusIcon(order.status)}</span>
-                <div className="min-w-0">
-                  <p className="text-xs text-muted-foreground font-medium">Current Status</p>
-                  <Badge className={getStatusColor(order.status)}>
-                    {order.status}
-                  </Badge>
-                </div>
+            <Card className="p-4">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="font-semibold text-sm">Status</h3>
+                <Badge className={getStatusColor(order.status)}>
+                  {order.status}
+                </Badge>
               </div>
             </Card>
 
-            {/* Customer Info Card */}
-            <Card className="p-3 sm:p-4 space-y-2 sm:space-y-3 flex-shrink-0">
-              <div>
-                <p className="text-xs text-muted-foreground font-medium mb-1">Customer</p>
-                <p className="font-semibold text-foreground truncate">{order.customer?.name}</p>
-              </div>
-
-              {order.customer?.phone && (
-                <div className="flex items-start gap-2 min-w-0">
-                  <Phone className="w-4 h-4 mt-0.5 text-muted-foreground flex-shrink-0" />
-                  <div className="min-w-0">
-                    <p className="text-xs text-muted-foreground">Phone</p>
-                  <a
-                    href={`tel:${order.customer.phone}`}
-                    className="text-sm font-medium text-accent hover:underline break-all"
-                  >
-                    {order.customer.phone}
-                  </a>
+            {/* Customer Card */}
+            <Card className="p-4">
+              <h3 className="font-semibold text-sm mb-3">Customer Info</h3>
+              <div className="space-y-2 text-sm">
+                {order.customer?.name && (
+                  <div className="flex items-start gap-2">
+                    <span className="text-gray-600 min-w-fit">Name:</span>
+                    <span className="font-medium">{order.customer.name}</span>
                   </div>
-                </div>
-              )}
-
-            <div className="flex items-start gap-2 min-w-0">
-              <MapPin className="w-4 h-4 mt-0.5 text-muted-foreground flex-shrink-0" />
-              <div className="min-w-0">
-                <p className="text-xs text-muted-foreground">Address</p>
-                <p className="text-sm font-medium text-foreground line-clamp-2 break-words">
-                  {order.customerAddress || order.customer?.address}
-                </p>
+                )}
+                {order.customer?.phone && (
+                  <div className="flex items-center gap-2">
+                    <Phone className="w-4 h-4 text-gray-600" />
+                    <span className="font-medium">{order.customer.phone}</span>
+                  </div>
+                )}
+                {(order.customerAddress || order.customer?.address) && (
+                  <div className="flex items-start gap-2">
+                    <MapPin className="w-4 h-4 text-gray-600 mt-0.5" />
+                    <span className="font-medium">{order.customerAddress || order.customer?.address}</span>
+                  </div>
+                )}
+                {order.area && (
+                  <div className="flex items-start gap-2">
+                    <span className="text-gray-600 min-w-fit">Area:</span>
+                    <span className="font-medium">{order.area}</span>
+                  </div>
+                )}
               </div>
-            </div>
-
-              {order.area && (
-                <div>
-                  <p className="text-xs text-muted-foreground font-medium mb-1">Area</p>
-                  <Badge variant="outline" className="text-xs">{order.area}</Badge>
-                </div>
-              )}
             </Card>
 
-            {/* Order Summary Card */}
-            <Card className="p-3 sm:p-4 space-y-2 sm:space-y-3 flex-shrink-0">
-              <div>
-                <p className="text-xs text-muted-foreground font-medium mb-1 sm:mb-2">Items</p>
-                <div className="space-y-1 text-sm">
-                  {order.items?.map((item, idx) => (
-                    <div key={idx} className="flex justify-between gap-2">
-                      <span className="text-foreground truncate">{item.quantity}x {item.menuItemName}</span>
+            {/* Items Card */}
+            {order.items && order.items.length > 0 && (
+              <Card className="p-4">
+                <h3 className="font-semibold text-sm mb-3">Items</h3>
+                <div className="space-y-2">
+                  {order.items.map((item, idx) => (
+                    <div key={idx} className="flex justify-between text-sm">
+                      <span>{item.menuItemName}</span>
+                      <span className="text-gray-600">x{item.quantity}</span>
                     </div>
                   ))}
                 </div>
-              </div>
-
-              <div className="pt-2 border-t border-border">
-                <div className="flex justify-between items-center">
-                  <p className="text-sm font-medium text-foreground">Total</p>
-                  <p className="text-lg font-bold text-accent">${typeof order.totalPrice === 'number' ? order.totalPrice.toFixed(2) : (parseFloat(String(order.totalPrice || 0))).toFixed(2)}</p>
-                </div>
-              </div>
-            </Card>
-
-            {order.notes && (
-              <Card className="p-3 sm:p-4 space-y-2 bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800 flex-shrink-0">
-                <p className="text-xs text-muted-foreground font-medium mb-1">Special Instructions</p>
-                <p className="text-sm text-foreground break-words">{order.notes}</p>
               </Card>
             )}
 
-            {/* Action Buttons */}
-            <div className="flex gap-2 flex-shrink-0">
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex-1 text-xs sm:text-sm"
-                onClick={() => {
-                  const address = order.customerAddress || order.customer?.address;
-                  if (address) {
-                    window.open(
-                      `https://www.google.com/maps/search/${encodeURIComponent(address)}`,
-                      "_blank"
-                    );
-                  }
-                }}
-              >
-                Open in Maps
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex-1 text-xs sm:text-sm"
-                onClick={() => onOpenChange(false)}
-              >
-                Close
-              </Button>
-            </div>
+            {/* Notes Card */}
+            {order.notes && (
+              <Card className="p-4 bg-amber-50">
+                <h3 className="font-semibold text-sm mb-2">Notes</h3>
+                <p className="text-sm text-gray-700">{order.notes}</p>
+              </Card>
+            )}
+
+            {/* Total Card */}
+            {order.totalPrice && (
+              <Card className="p-4 bg-green-50">
+                <div className="flex justify-between items-center">
+                  <span className="font-semibold text-sm">Total</span>
+                  <span className="font-bold text-lg text-green-700">
+                    ${order.totalPrice.toFixed(2)}
+                  </span>
+                </div>
+              </Card>
+            )}
+
+            {/* Close Button */}
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => onOpenChange(false)}
+            >
+              Close
+            </Button>
           </div>
         </div>
       </DialogContent>
