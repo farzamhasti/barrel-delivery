@@ -1028,3 +1028,24 @@
 - [x] Modal closes cleanly without errors
 - [x] No infinite loading or circular dependencies
 - [x] Map controls (zoom, satellite, fullscreen) are accessible
+
+
+## CRITICAL BUG - Markers Not Visible on Map (FIXED)
+- [x] Investigate why customer and restaurant markers are not showing on map
+- [x] Check if markers are being created but positioned off-screen
+- [x] Verify geocoding is returning valid coordinates
+- [x] Check if map bounds fitting is working correctly
+- [x] Debug marker visibility with console logs
+- [x] Ensure markers have proper icons and styling
+- [x] Test marker creation on multiple orders
+- [x] Verify info windows are displaying correctly
+- [x] Fix any coordinate system mismatches
+- [x] Ensure map is properly initialized before adding markers
+
+## SOLUTION - Customer Coordinates Population (COMPLETED)
+- [x] Identified root cause: customer records had NULL latitude/longitude values
+- [x] Added customerLatitude and customerLongitude to database queries
+- [x] Created script to populate customer coordinates from addresses
+- [x] Updated 9 customer records with valid coordinates for Fort Erie, ON
+- [x] Verified markers now display on both main map and modal
+- [x] Confirmed markers are clickable and show info windows

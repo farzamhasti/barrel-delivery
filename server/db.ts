@@ -259,6 +259,8 @@ export async function getOrdersWithCustomer(driverId?: number) {
       customerName: customers.name,
       customerPhone: customers.phone,
       customerAddress: customers.address,
+      customerLatitude: customers.latitude,
+      customerLongitude: customers.longitude,
     })
     .from(orders)
     .innerJoin(customers, eq(orders.customerId, customers.id))
@@ -315,6 +317,8 @@ export async function getOrderWithItems(orderId: number) {
       customerName: customers.name,
       customerPhone: customers.phone,
       customerAddress: customers.address,
+      customerLatitude: customers.latitude,
+      customerLongitude: customers.longitude,
     })
     .from(orders)
     .innerJoin(customers, eq(orders.customerId, customers.id))

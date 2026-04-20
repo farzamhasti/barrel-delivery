@@ -124,13 +124,24 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
     ) {
       const lat = parseFloat(order.customer.latitude as any);
       const lng = parseFloat(order.customer.longitude as any);
+      console.log('[OrderMapModal] Parsed coordinates:', { lat, lng, isNaN_lat: isNaN(lat), isNaN_lng: isNaN(lng) });
       if (!isNaN(lat) && !isNaN(lng)) {
         console.log('[OrderMapModal] Using customer coordinates:', { lat, lng });
         if (isMountedRef.current) {
           setGeocodedLocation({ lat, lng });
         }
         return;
+      } else {
+        console.warn('[OrderMapModal] Customer coordinates are invalid (NaN):', { lat, lng });
       }
+    } else {
+      console.warn('[OrderMapModal] No customer coordinates available:', {
+        hasCustomer: !!order.customer,
+        hasLatitude: !!order.customer?.latitude,
+        hasLongitude: !!order.customer?.longitude,
+        latitude: order.customer?.latitude,
+        longitude: order.customer?.longitude,
+      });
     }
 
     // Otherwise, geocode the address
@@ -305,15 +316,27 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
       if (mapRef.current && markersRef.current.length > 0) {
         const bounds = new google.maps.LatLngBounds();
         markersRef.current.forEach(marker => {
-          bounds.extend(marker.getPosition()!);
+          const pos = marker.getPosition();
+          console.log('[OrderMapModal] Marker position:', pos?.toJSON());
+          if (pos) bounds.extend(pos);
         });
+        console.log('[OrderMapModal] Bounds:', bounds.toJSON());
         mapRef.current.fitBounds(bounds);
         console.log('[OrderMapModal] Map bounds fitted to markers');
+      } else {
+        console.warn('[OrderMapModal] Cannot fit bounds:', {
+          hasMap: !!mapRef.current,
+          markerCount: markersRef.current.length,
+        });
       }
     } catch (error) {
       console.error('[OrderMapModal] Error displaying markers on map:', error);
+      console.error('[OrderMapModal] Error details:', {
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       if (isMountedRef.current) {
-        setGeocodeError("Failed to display markers on map");
+        setGeocodeError(`Failed to display markers on map: ${error instanceof Error ? error.message : String(error)}`);
       }
     }
   }, [mapReady, geocodedLocation, order.id, order.customer?.name, order.status, order.area, order.notes, open]);
