@@ -1187,12 +1187,12 @@
 - 3-second auto-refresh for real-time order updates
 
 
-## FEATURE - Logout & Homepage Navigation Buttons (IN PROGRESS)
-- [ ] Add logout button to Admin Dashboard
-- [ ] Add logout button to Kitchen Dashboard  
-- [ ] Add logout button to Driver Dashboard
-- [ ] Add return to homepage button to Admin Login page
-- [ ] Add return to homepage button to Kitchen Login page
-- [ ] Add return to homepage button to Driver Login page
-- [ ] Test logout functionality on all dashboards
-- [ ] Test homepage navigation from all login pages
+## FEATURE - Logout & Homepage Navigation Buttons (COMPLETE)
+- [x] Add logout button to Admin Dashboard
+- [x] Add logout button to Kitchen Dashboard  
+- [x] Add logout button to Driver Dashboard
+- [x] Add return to homepage button to Admin Login page
+- [x] Add return to homepage button to Kitchen Login page
+- [x] Add return to homepage button to Driver Login page
+- [x] Test logout functionality on all dashboards
+- [x] Test homepage navigation from all login pages
