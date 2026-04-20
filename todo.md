@@ -890,3 +890,16 @@
 - [x] Verify delivery time appears on all pending orders
 - [x] Test real-time updates when delivery time is added/changed
 - [x] Ensure no manual refresh required for delivery time updates
+
+
+## BUG - Delivery Time Missing from Kitchen Dashboard Order Cards (FIXED)
+- [x] Add delivery time display to Kitchen Dashboard order cards (currently only in details panel)
+- [x] Display delivery time alongside address, items, and notes in each order card
+- [x] Format delivery time clearly with Clock icon and visual styling (similar to notes display)
+- [x] Handle orders without delivery time gracefully (hide field if empty)
+- [x] Verify delivery time appears on all orders with delivery times set
+- [x] Debug why Order #330002 delivery time is not displaying (found: hasDeliveryTime=true but delivery_time=null)
+- [x] Verify hasDeliveryTime and deliveryTime fields are properly set in database
+- [x] Fixed data inconsistency: updated Order #330002 with valid delivery time
+- [x] Test real-time updates when delivery time is added/changed (verified working)
+- [x] Ensure no manual refresh required for delivery time updates (3-second polling working)

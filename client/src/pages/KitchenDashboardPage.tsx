@@ -199,6 +199,21 @@ export default function KitchenDashboardPage() {
                   </div>
                 )}
 
+                {/* Delivery Time */}
+                {order.hasDeliveryTime && order.deliveryTime && (
+                  <div className="mb-4 pb-4 border-t border-border pt-4">
+                    <div className="flex items-start gap-2">
+                      <Clock className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-xs font-semibold text-green-700 mb-1">DELIVERY TIME:</p>
+                        <p className="text-sm font-semibold text-green-800 bg-green-50 p-2 rounded border border-green-200">
+                          {new Date(order.deliveryTime).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Action Button */}
                 {order.status === "Pending" && (
                   <Button
