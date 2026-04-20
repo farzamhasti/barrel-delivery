@@ -1049,3 +1049,24 @@
 - [x] Updated 9 customer records with valid coordinates for Fort Erie, ON
 - [x] Verified markers now display on both main map and modal
 - [x] Confirmed markers are clickable and show info windows
+
+
+## BUG - Incorrect Map Marker Positions (FIXED)
+- [x] Identify which addresses have inaccurate coordinates
+- [x] Get accurate geocoded coordinates from Google Maps API
+- [x] Validate latitude/longitude format (no swapping)
+- [x] Update database with correct coordinates
+- [x] Test markers point to exact customer locations
+- [x] Implement automatic geocoding when address is edited
+- [x] Add validation to prevent coordinate swaps
+- [x] Log coordinates for debugging and verification
+- [x] Ensure all customer records have accurate coordinates
+
+## SOLUTION - Accurate Geocoding Implementation (COMPLETED)
+- [x] Retrieved exact coordinates from Google Maps for both addresses
+- [x] 354 Albany St, L2A 1L4: 42.8983679, -78.9256336
+- [x] 255 Emerick Ave, L2A 2W4: 42.9325015, -78.9229757
+- [x] Updated 9 customer records with accurate coordinates
+- [x] Verified markers now display at exact customer locations
+- [x] Confirmed map modal shows correct marker positions
+- [x] Validated coordinate format (latitude, longitude) is correct
