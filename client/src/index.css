@@ -40,15 +40,26 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --color-orange: var(--orange);
+  --color-orange-light: var(--orange-light);
+  --color-green: var(--green);
+  --color-red-light: var(--red-light);
 }
 
 :root {
-  /* Elegant color palette - Deep blue & refined neutrals */
+  /* Modern color palette - Orange accent with refined neutrals */
   --primary: oklch(0.55 0.2 259);
   --primary-foreground: oklch(0.98 0.001 0);
   --sidebar-primary: oklch(0.50 0.18 259);
   --sidebar-primary-foreground: oklch(0.98 0.001 0);
-  --chart-1: oklch(0.65 0.15 259);
+  
+  /* Orange accent colors for delivery app */
+  --orange: oklch(0.65 0.22 39);
+  --orange-light: oklch(0.88 0.08 39);
+  --green: oklch(0.65 0.18 142);
+  --red-light: oklch(0.75 0.15 27);
+  
+  --chart-1: oklch(0.65 0.22 39);
   --chart-2: oklch(0.55 0.2 259);
   --chart-3: oklch(0.50 0.18 259);
   --chart-4: oklch(0.45 0.16 259);
@@ -66,19 +77,19 @@
   --secondary-foreground: oklch(0.30 0.02 259);
   --muted: oklch(0.94 0.005 259);
   --muted-foreground: oklch(0.55 0.01 259);
-  --accent: oklch(0.55 0.2 259);
+  --accent: oklch(0.65 0.22 39);
   --accent-foreground: oklch(0.98 0.001 0);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.985 0 0);
   --border: oklch(0.92 0.005 259);
   --input: oklch(0.96 0.003 259);
-  --ring: oklch(0.55 0.2 259);
+  --ring: oklch(0.65 0.22 39);
   --sidebar: oklch(0.98 0.001 0);
   --sidebar-foreground: oklch(0.20 0.01 259);
   --sidebar-accent: oklch(0.94 0.005 259);
-  --sidebar-accent-foreground: oklch(0.55 0.2 259);
+  --sidebar-accent-foreground: oklch(0.65 0.22 39);
   --sidebar-border: oklch(0.92 0.005 259);
-  --sidebar-ring: oklch(0.55 0.2 259);
+  --sidebar-ring: oklch(0.65 0.22 39);
 }
 
 .dark {
@@ -96,13 +107,13 @@
   --secondary-foreground: oklch(0.85 0.005 259);
   --muted: oklch(0.28 0.008 259);
   --muted-foreground: oklch(0.70 0.01 259);
-  --accent: oklch(0.65 0.15 259);
+  --accent: oklch(0.65 0.22 39);
   --accent-foreground: oklch(0.12 0.01 259);
   --destructive: oklch(0.704 0.191 22.216);
   --destructive-foreground: oklch(0.985 0 0);
   --border: oklch(0.25 0.01 259);
   --input: oklch(0.22 0.008 259);
-  --ring: oklch(0.65 0.15 259);
+  --ring: oklch(0.65 0.22 39);
   --chart-1: oklch(0.70 0.16 259);
   --chart-2: oklch(0.65 0.15 259);
   --chart-3: oklch(0.60 0.14 259);
@@ -113,7 +124,7 @@
   --sidebar-accent: oklch(0.28 0.008 259);
   --sidebar-accent-foreground: oklch(0.92 0.005 259);
   --sidebar-border: oklch(0.25 0.01 259);
-  --sidebar-ring: oklch(0.65 0.15 259);
+  --sidebar-ring: oklch(0.65 0.22 39);
 }
 
 @layer base {
@@ -164,6 +175,60 @@
   .flex {
     min-height: 0;
     min-width: 0;
+  }
+
+  /* Status badge styles */
+  .badge-preparing {
+    @apply inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium bg-orange-light text-orange;
+  }
+
+  .badge-on-delivery {
+    @apply inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium bg-green/15 text-green;
+  }
+
+  .badge-pending {
+    @apply inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium bg-orange-light text-orange;
+  }
+
+  .badge-available {
+    @apply inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium bg-green/15 text-green;
+  }
+
+  .badge-off-duty {
+    @apply inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium bg-gray-200 text-gray-600;
+  }
+
+  .badge-delivered {
+    @apply inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium bg-green/15 text-green;
+  }
+
+  /* Order card styles */
+  .order-card {
+    @apply bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md transition-shadow;
+  }
+
+  /* Menu item card styles */
+  .menu-item-card {
+    @apply bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md transition-shadow cursor-pointer hover:border-orange/30;
+  }
+
+  /* Driver card styles */
+  .driver-card {
+    @apply bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md transition-shadow;
+  }
+
+  /* Price text styles */
+  .price-text {
+    @apply text-orange font-bold text-xl;
+  }
+
+  /* Button styles */
+  .btn-primary {
+    @apply bg-green text-white px-6 py-3 rounded-lg font-medium hover:bg-green/90 transition-colors;
+  }
+
+  .btn-cancel {
+    @apply bg-red-light text-red-700 px-6 py-3 rounded-lg font-medium hover:bg-red-light/80 transition-colors;
   }
 
   @media (min-width: 640px) {

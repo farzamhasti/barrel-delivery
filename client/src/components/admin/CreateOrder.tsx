@@ -290,22 +290,20 @@ export default function CreateOrder() {
             {categories.map((category: any) => (
               <div key={category.id}>
                 <h3 className="font-semibold text-lg mb-2">{category.name}</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                   {menuItems
                     .filter((item: any) => item.categoryId === category.id)
                     .map((item: any) => (
-                      <Button
+                      <button
                         key={item.id}
                         type="button"
-                        variant="outline"
                         onClick={() => handleAddItem(item.id)}
-                        className="text-left h-auto py-2 px-3"
+                        className="menu-item-card text-left hover:ring-2 hover:ring-orange/50 transition-all"
                       >
-                        <div className="text-sm">
-                          <div className="font-medium">{item.name}</div>
-                          <div className="text-xs text-gray-600">${parseFloat(item.price).toFixed(2)}</div>
-                        </div>
-                      </Button>
+                        <div className="text-3xl mb-2">🍕</div>
+                        <div className="font-medium text-foreground">{item.name}</div>
+                        <div className="price-text mt-2">${parseFloat(item.price).toFixed(2)}</div>
+                      </button>
                     ))}
                 </div>
               </div>

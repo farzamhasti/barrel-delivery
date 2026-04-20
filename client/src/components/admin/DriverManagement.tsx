@@ -226,11 +226,9 @@ export default function DriverManagement() {
                     <td className="py-3 px-4">{driver.licenseNumber || "—"}</td>
                     <td className="py-3 px-4">{driver.vehicleType || "—"}</td>
                     <td className="py-3 px-4 text-center">
-                      {driver.isActive ? (
-                        <span className="text-green-600 font-semibold">✓ Active</span>
-                      ) : (
-                        <span className="text-gray-500">Inactive</span>
-                      )}
+                      <div className={driver.isActive ? "badge-available" : "badge-off-duty"}>
+                        {driver.isActive ? "Available" : "Off-duty"}
+                      </div>
                     </td>
                     <td className="py-3 px-4">
                       <div className="flex gap-2 justify-center">

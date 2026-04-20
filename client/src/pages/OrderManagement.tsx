@@ -200,33 +200,37 @@ export function OrderManagement() {
         <CardHeader className="border-b">
           <CardTitle>Orders</CardTitle>
         </CardHeader>
-        <div className="flex-1 overflow-y-auto">
-          {orders?.map((order: any) => (
-            <div
-              key={order.id}
-              onClick={() => handleSelectOrder(order.id)}
-              className={`p-3 border-b cursor-pointer hover:bg-muted transition-colors ${
-                selectedOrderId === order.id ? "bg-muted" : ""
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <div className="font-medium text-sm">Order #{order.id}</div>
-                  <div className="text-xs text-muted-foreground">
-                    ${(Number(order.totalPrice) || 0).toFixed(2)}
+        <div className="flex-1 overflow-y-auto p-3 space-y-2">
+          {orders?.map((order: any) => {
+            const getStatusBadge = (status: string) => {
+              if (status === "Delivered") return "badge-delivered";
+              if (status === "On the Way") return "badge-on-delivery";
+              return "badge-pending";
+            };
+            
+            return (
+              <div
+                key={order.id}
+                onClick={() => handleSelectOrder(order.id)}
+                className={`order-card cursor-pointer transition-all ${
+                  selectedOrderId === order.id ? "ring-2 ring-orange" : ""
+                }`}
+              >
+                <div className="flex items-start justify-between mb-2">
+                  <div>
+                    <div className="font-bold text-lg">#{order.id}</div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      {new Date(order.createdAt).toLocaleDateString()}
+                    </div>
                   </div>
-                  <div className={`text-xs font-medium mt-1 ${
-                    order.status === "Delivered" ? "text-green-600" :
-                    order.status === "On the Way" ? "text-blue-600" :
-                    "text-yellow-600"
-                  }`}>
+                  <div className={getStatusBadge(order.status)}>
                     {order.status}
                   </div>
                 </div>
-                {selectedOrderId === order.id && <ChevronRight className="w-4 h-4" />}
+                <div className="price-text">${(Number(order.totalPrice) || 0).toFixed(2)}</div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
