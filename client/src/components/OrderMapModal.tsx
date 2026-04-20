@@ -389,34 +389,29 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
               </div>
             )}
 
-            {mapReady && !geocodeError ? (
-              <MapView
-                key={`map-${order.id}`}
-                initialCenter={geocodedLocation || RESTAURANT_LOCATION}
-                initialZoom={14}
-                onMapReady={(map) => {
-                  if (!isMountedRef.current) return;
-                  mapRef.current = map;
-                  setMapReady(true);
-                  // Trigger resize events for proper rendering with cleanup
-                  const timeout1 = setTimeout(() => {
-                    if (map && isMountedRef.current) {
-                      google.maps.event.trigger(map, 'resize');
-                    }
-                  }, 50);
-                  const timeout2 = setTimeout(() => {
-                    if (map && isMountedRef.current) {
-                      google.maps.event.trigger(map, 'resize');
-                    }
-                  }, 150);
-                  timeoutsRef.current.push(timeout1, timeout2);
-                }}
-              />
-            ) : (
-              <div className="flex-1 bg-gray-100 rounded-lg flex items-center justify-center">
-                <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
-              </div>
-            )}
+            <MapView
+              key={`map-${order.id}`}
+              className="flex-1 rounded-lg"
+              initialCenter={geocodedLocation || RESTAURANT_LOCATION}
+              initialZoom={14}
+              onMapReady={(map) => {
+                if (!isMountedRef.current) return;
+                mapRef.current = map;
+                setMapReady(true);
+                // Trigger resize events for proper rendering with cleanup
+                const timeout1 = setTimeout(() => {
+                  if (map && isMountedRef.current) {
+                    google.maps.event.trigger(map, 'resize');
+                  }
+                }, 50);
+                const timeout2 = setTimeout(() => {
+                  if (map && isMountedRef.current) {
+                    google.maps.event.trigger(map, 'resize');
+                  }
+                }, 150);
+                timeoutsRef.current.push(timeout1, timeout2);
+              }}
+            />
           </div>
 
           {/* Order Details Section */}

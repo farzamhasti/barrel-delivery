@@ -280,35 +280,38 @@ export function MapView({
     };
   }, [initialCenter, initialZoom, handleMapReady]);
 
-  if (mapError) {
-    return (
-      <div className={cn("w-full h-full flex items-center justify-center bg-red-50 border border-red-200", className)}>
-        <div className="flex flex-col items-center gap-2 text-center px-4">
-          <div className="text-red-700 font-medium">Map Error</div>
-          <div className="text-xs text-red-600">{mapError}</div>
-          {!API_KEY && <div className="text-xs text-red-700 mt-2">API Key not configured</div>}
-          <div className="text-xs text-gray-600 mt-2">Try refreshing the page or check browser console for details</div>
-        </div>
-      </div>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <div className={cn("w-full h-full flex items-center justify-center bg-gray-50", className)}>
-        <div className="flex flex-col items-center gap-2">
-          <div className="animate-spin">📍</div>
-          <div className="text-xs text-gray-600">Loading map...</div>
-        </div>
-      </div>
-    );
-  }
-
+  // Always render the map container so useEffect can initialize it
+  // Show loading/error overlays on top if needed
   return (
-    <div
-      ref={containerRef}
-      className={cn("w-full h-full bg-muted", className)}
-      style={{ display: "block", minHeight: "200px" }}
-    />
+    <div className="relative w-full h-full" style={{ minHeight: "200px" }}>
+      {/* Map container - always rendered so useEffect can access it */}
+      <div
+        ref={containerRef}
+        className={cn("w-full h-full bg-muted", className)}
+        style={{ display: "block" }}
+      />
+      
+      {/* Error overlay */}
+      {mapError && (
+        <div className="absolute inset-0 flex items-center justify-center bg-red-50 border border-red-200 rounded">
+          <div className="flex flex-col items-center gap-2 text-center px-4">
+            <div className="text-red-700 font-medium">Map Error</div>
+            <div className="text-xs text-red-600">{mapError}</div>
+            {!API_KEY && <div className="text-xs text-red-700 mt-2">API Key not configured</div>}
+            <div className="text-xs text-gray-600 mt-2">Try refreshing the page or check browser console for details</div>
+          </div>
+        </div>
+      )}
+      
+      {/* Loading overlay */}
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-50 bg-opacity-80">
+          <div className="flex flex-col items-center gap-2">
+            <div className="animate-spin">📍</div>
+            <div className="text-xs text-gray-600">Loading map...</div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

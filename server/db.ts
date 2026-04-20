@@ -376,6 +376,8 @@ export async function getTodayOrdersWithItems() {
       customerName: customers.name,
       customerPhone: customers.phone,
       customerAddress: customers.address,
+      customerLatitude: customers.latitude,
+      customerLongitude: customers.longitude,
     })
     .from(orders)
     .innerJoin(customers, eq(orders.customerId, customers.id))
@@ -403,6 +405,13 @@ export async function getTodayOrdersWithItems() {
         taxPercentage: Number(order.taxPercentage),
         taxAmount: Number(order.taxAmount),
         totalPrice: Number(order.totalPrice),
+        customer: {
+          name: order.customerName,
+          phone: order.customerPhone,
+          address: order.customerAddress,
+          latitude: order.customerLatitude,
+          longitude: order.customerLongitude,
+        },
         items: items.map(item => ({
           ...item,
           priceAtOrder: Number(item.priceAtOrder),
