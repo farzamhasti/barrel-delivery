@@ -220,7 +220,7 @@ export default function KitchenDashboardPage() {
             </TabsTrigger>
             <TabsTrigger value="ready" className="flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4" />
-              Ready Orders ({readyOrders.length})
+              Prepared Orders ({readyOrders.length})
             </TabsTrigger>
           </TabsList>
 
@@ -241,14 +241,14 @@ export default function KitchenDashboardPage() {
             )}
           </TabsContent>
 
-          {/* Ready Orders Tab */}
+          {/* Prepared Orders Tab */}
           <TabsContent value="ready" className="space-y-4">
             {isLoading ? (
               <div className="text-center py-8">
                 <p className="text-muted-foreground">Loading orders...</p>
               </div>
             ) : sortedReadyOrders.length === 0 ? (
-              <EmptyState message="No Ready Orders" />
+              <EmptyState message="No Prepared Orders" />
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 auto-rows-max">
                 {sortedReadyOrders.map((order: any) => (
