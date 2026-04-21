@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LogOut, ChefHat, MapPin, Clock, AlertCircle, CheckCircle2, Flame } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
+import { LogOut, ChefHat, MapPin, Clock, AlertCircle, CheckCircle2, Flame, X, Calendar } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
@@ -13,6 +14,7 @@ export default function KitchenDashboard() {
   const [, setLocation] = useLocation();
   const utils = trpc.useUtils();
   const [activeTab, setActiveTab] = useState("active");
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
 
   const handleLogout = () => {
     // Clear session
@@ -114,7 +116,7 @@ export default function KitchenDashboard() {
     return (
       <Card
         className={`p-3 cursor-pointer transition-all border-2 flex flex-col ${getUrgencyColor(urgency)}`}
-        onClick={() => {}}
+        onClick={() => setSelectedOrder(order)}
       >
         {/* Order Header with Number and Urgency Badge */}
         <div className="flex items-start justify-between gap-2 mb-2">
@@ -173,6 +175,146 @@ export default function KitchenDashboard() {
       <p className="text-sm text-muted-foreground mt-2">Great job! Keep up the good work.</p>
     </div>
   );
+
+  const OrderDetailModal = ({ order }: { order: any }) => {
+    if (!order) return null;
+    
+    const urgency = getUrgencyLevel(order.deliveryTime);
+    const deliveryTime = order.deliveryTime ? new Date(order.deliveryTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "N/A";
+    const deliveryDate = order.deliveryTime ? new Date(order.deliveryTime).toLocaleDateString() : "N/A";
+
+    return (
+      <Dialog open={!!order} onOpenChange={(open) => !open && setSelectedOrder(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <div className="flex items-center justify-between w-full">
+              <div className="flex items-center gap-3">
+                <DialogTitle className="text-2xl">Order #{order.id}</DialogTitle>
+                {urgency !== "normal" && (
+                  <Badge className={`${getUrgencyBadgeColor(urgency)} text-xs px-2 py-0.5 flex items-center gap-1`}>
+                    {urgency === "late" && <AlertCircle className="w-3 h-3" />}
+                    {urgency === "urgent" && <Flame className="w-3 h-3" />}
+                    {urgency === "soon" && <Clock className="w-3 h-3" />}
+                    {urgency === "late" ? "LATE" : urgency === "urgent" ? "URGENT" : "SOON"}
+                  </Badge>
+                )}
+              </div>
+              <DialogClose className="text-muted-foreground hover:text-foreground" asChild>
+                <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                  <X className="h-4 w-4" />
+                </Button>
+              </DialogClose>
+            </div>
+          </DialogHeader>
+
+          <div className="space-y-6">
+            {/* Customer Information Section */}
+            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+              <h3 className="text-sm font-semibold text-purple-900 mb-3">Customer Information</h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-start gap-2">
+                  <span className="text-purple-700 font-medium min-w-20">Name:</span>
+                  <span className="text-purple-900">{order.customerName || "N/A"}</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-purple-700 font-medium min-w-20">Phone:</span>
+                  <span className="text-purple-900">{order.customerPhone || "N/A"}</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-purple-700 font-medium min-w-20">Address:</span>
+                  <span className="text-purple-900 break-words">{order.customerAddress || "N/A"}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Delivery Time Section */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h3 className="text-sm font-semibold text-blue-900 mb-3">Delivery Time</h3>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <Clock className="w-5 h-5 text-blue-600" />
+                  <div>
+                    <p className="text-xs text-blue-700">Time</p>
+                    <p className="text-lg font-bold text-blue-900">{deliveryTime}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-5 h-5 text-blue-600" />
+                  <div>
+                    <p className="text-xs text-blue-700">Date</p>
+                    <p className="text-lg font-bold text-blue-900">{deliveryDate}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Order Items Section */}
+            <div>
+              <h3 className="text-sm font-semibold text-foreground mb-3">Order Items</h3>
+              <div className="space-y-2">
+                {order.items && order.items.length > 0 ? (
+                  order.items.map((item: any, idx: number) => (
+                    <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                      <div className="flex-1">
+                        <p className="font-medium text-foreground">{item.menuItemName}</p>
+                        <p className="text-xs text-muted-foreground">Qty: {item.quantity}</p>
+                      </div>
+                      <p className="font-semibold text-foreground">${item.price_at_order?.toFixed(2) || "0.00"}</p>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground">No items</p>
+                )}
+              </div>
+            </div>
+
+            {/* Order Summary Section */}
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+              <h3 className="text-sm font-semibold text-orange-900 mb-3">Order Summary</h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-orange-700">Subtotal:</span>
+                  <span className="font-medium text-orange-900">${order.subtotal?.toFixed(2) || "0.00"}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-orange-700">Tax ({order.tax_percentage}%):</span>
+                  <span className="font-medium text-orange-900">${order.tax_amount?.toFixed(2) || "0.00"}</span>
+                </div>
+                <div className="border-t border-orange-200 pt-2 flex justify-between">
+                  <span className="font-semibold text-orange-900">Total:</span>
+                  <span className="font-bold text-lg text-orange-900">${order.total_price?.toFixed(2) || "0.00"}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Notes Section */}
+            {order.notes && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <h3 className="text-sm font-semibold text-yellow-900 mb-2">Special Notes</h3>
+                <p className="text-sm text-yellow-800">{order.notes}</p>
+              </div>
+            )}
+
+            {/* Mark Ready Button */}
+            <Button
+              className="w-full bg-green-600 hover:bg-green-700 text-white"
+              onClick={(e) => {
+                e.stopPropagation();
+                updateStatusMutation.mutate({
+                  orderId: order.id,
+                  status: "Ready",
+                });
+                setSelectedOrder(null);
+              }}
+              disabled={updateStatusMutation.isPending}
+            >
+              {updateStatusMutation.isPending ? "Updating..." : "Mark Ready"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100 p-4 md:p-6">
@@ -277,6 +419,9 @@ export default function KitchenDashboard() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Order Detail Modal */}
+      <OrderDetailModal order={selectedOrder} />
     </div>
   );
 }
