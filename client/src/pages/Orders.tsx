@@ -246,12 +246,12 @@ export function Orders() {
   const handleEditOrder = async (order: any) => {
     setEditingOrderId(order.id);
     setFormData({
-      customerName: order.customerName,
-      customerPhone: order.customerPhone,
-      customerAddress: order.customerAddress,
+      customerName: order.customerName || "",
+      customerPhone: order.customerPhone || "",
+      customerAddress: order.customerAddress || "",
       status: order.status,
       notes: order.notes || "",
-      area: order.area,
+      area: order.area || "",
       taxPercentage: order.taxPercentage || 13,
       hasDeliveryTime: !!order.deliveryTime,
       deliveryTime: order.deliveryTime ? new Date(order.deliveryTime).toISOString().slice(0, 16) : "",

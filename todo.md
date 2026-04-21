@@ -1395,3 +1395,25 @@
 - Better visual distinction between customer and restaurant locations
 - Improved user experience with animated marker drops
 - Markers display correctly on both desktop and mobile
+
+
+## BUG FIX - Null Input Values on Orders Page (COMPLETED)
+
+### Problem:
+- React console error on /admin/orders page: "value prop on input should not be null"
+- When editing orders, some fields (customerName, customerPhone, customerAddress, area) were being set to null from the database
+- This caused React controlled component warnings
+
+### Solution:
+- [x] Fixed handleEditOrder function to convert null values to empty strings
+- [x] Changed `order.customerName` → `order.customerName || ""`
+- [x] Changed `order.customerPhone` → `order.customerPhone || ""`
+- [x] Changed `order.customerAddress` → `order.customerAddress || ""`
+- [x] Changed `order.area` → `order.area || ""`
+- [x] Dev server updated with HMR
+- [x] No console errors on /admin/orders page
+
+### Result:
+- All input fields now have proper string values (empty string when null)
+- No React warnings about null values
+- Orders page works smoothly without console errors
