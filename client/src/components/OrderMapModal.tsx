@@ -455,7 +455,7 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
 
             {/* Total Card */}
             {order.totalPrice && (
-              <Card className="p-2 md:p-3 bg-green-50 border-green-200">
+              <Card className="p-3 bg-green-50 border-green-200">
                 <h3 className="font-semibold text-xs text-gray-600 mb-2">Total</h3>
                 <div className="text-lg font-bold text-green-700">${order.totalPrice.toFixed(2)}</div>
               </Card>
@@ -464,10 +464,10 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
 
           {/* Items and Notes Row */}
           {(order.items?.length || order.notes) && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {/* Items Card */}
               {order.items && order.items.length > 0 && (
-                <Card className="p-2 md:p-3">
+                <Card className="p-3">
                   <h3 className="font-semibold text-xs text-gray-600 mb-2">Items</h3>
                   <div className="space-y-1">
                     {order.items.map((item, idx) => (
