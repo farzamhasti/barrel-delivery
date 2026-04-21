@@ -59,13 +59,16 @@ export default function KitchenDashboard() {
   const sortedPendingOrders = sortByDeliveryTime(pendingOrders);
   const sortedReadyOrders = sortByDeliveryTime(readyOrders);
 
-  // Auto-refetch every 3 seconds for real-time updates
+  // Auto-refetch every 3 seconds for real-time updates (but pause when modal is open)
   useEffect(() => {
-    const interval = setInterval(() => {
-      refetch();
-    }, 3000);
-    return () => clearInterval(interval);
-  }, []);
+    // Only refetch if no modal is open
+    if (!selectedOrder) {
+      const interval = setInterval(() => {
+        refetch();
+      }, 3000);
+      return () => clearInterval(interval);
+    }
+  }, [selectedOrder]);
 
   // Calculate urgency level based on delivery time
   const getUrgencyLevel = (deliveryTime: string | null) => {

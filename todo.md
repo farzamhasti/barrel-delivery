@@ -111,6 +111,9 @@
 - [x] Fix modal state stability - no more blinking/flashing
 - [x] Test modal open/close transitions - smooth and stable
 - [x] Verify modal stays open until explicitly closed
+- [x] Pause auto-refetch when modal is open to prevent data update conflicts
+- [x] Resume auto-refetch when modal is closed
+- [x] Verify modal is completely stable with no flickering
 
 ## Current Issues
 - [x] Fix API error on /admin/menu - Fixed by implementing automatic database initialization
