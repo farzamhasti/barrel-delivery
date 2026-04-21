@@ -382,14 +382,15 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
       }
       onOpenChange(newOpen);
     }}>
-      <DialogContent className="w-[95vw] max-w-5xl h-[95vh] md:w-auto flex flex-col p-0">
-        <DialogHeader className="px-6 pt-4 pb-2">
-          <DialogTitle>Order #{order.id} - Map View</DialogTitle>
+      <DialogContent className="w-[95vw] max-w-5xl h-[95vh] md:h-auto md:max-h-[90vh] md:w-auto flex flex-col p-0">
+        <DialogHeader className="px-3 md:px-6 pt-3 md:pt-4 pb-2 flex-shrink-0">
+          <DialogTitle className="text-base md:text-lg">Order #{order.id} - Map View</DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 flex flex-col gap-4 overflow-hidden px-2 md:px-6 pb-6">
-          {/* Map Section - Full Width and Height */}
-          <div className="flex-1 flex flex-col gap-2 min-h-0 bg-gray-100 rounded-lg overflow-hidden relative">
+        {/* Mobile: Scrollable content area | Desktop: Flex layout */}
+        <div className="flex-1 flex flex-col gap-3 md:gap-4 overflow-y-auto md:overflow-hidden px-2 md:px-6 pb-3 md:pb-6">
+          {/* Map Section - Takes priority on mobile (visible first), shares space on desktop */}
+          <div className="flex-1 flex flex-col gap-2 min-h-[300px] md:min-h-0 bg-gray-100 rounded-lg overflow-hidden relative flex-shrink-0 md:flex-shrink">
             {isGeocoding && (
               <div className="absolute top-2 left-2 md:top-4 md:left-4 z-10 flex items-center justify-center gap-2 p-2 md:p-3 bg-blue-50 rounded-lg shadow-md text-xs md:text-sm">
                 <Loader2 className="w-3 h-3 md:w-4 md:h-4 animate-spin" />
@@ -429,11 +430,11 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
             />
           </div>
 
-          {/* Order Details Section - Below Map */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3">
+          {/* Order Details Section - Below Map on mobile, scrollable */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3 flex-shrink-0">
             {/* Status Card */}
-            <Card className="p-3">
-              <h3 className="font-semibold text-xs text-gray-600 mb-2">Status</h3>
+            <Card className="p-2 md:p-3">
+              <h3 className="font-semibold text-xs md:text-sm text-gray-600 mb-2">Status</h3>
               <Badge className={`${getStatusColor(order.status)} w-full justify-center`}>
                 {order.status}
               </Badge>
@@ -441,7 +442,7 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
 
             {/* Customer Info Card */}
             <Card className="p-2 md:p-3 sm:col-span-2 lg:col-span-2">
-              <h3 className="font-semibold text-xs text-gray-600 mb-2">Customer Info</h3>
+              <h3 className="font-semibold text-xs md:text-sm text-gray-600 mb-2">Customer Info</h3>
               <div className="space-y-1 text-xs">
                 {order.customer?.name && (
                   <div className="flex items-start gap-1">
@@ -473,7 +474,7 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
             {/* Total Card */}
             {order.totalPrice && (
               <Card className="p-2 md:p-3 bg-green-50 border-green-200">
-                <h3 className="font-semibold text-xs text-gray-600 mb-2">Total</h3>
+                <h3 className="font-semibold text-xs md:text-sm text-gray-600 mb-2">Total</h3>
                 <div className="text-lg font-bold text-green-700">${order.totalPrice.toFixed(2)}</div>
               </Card>
             )}
@@ -481,11 +482,11 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
 
           {/* Items and Notes Row */}
           {(order.items?.length || order.notes) && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-3 flex-shrink-0">
               {/* Items Card */}
               {order.items && order.items.length > 0 && (
                 <Card className="p-2 md:p-3">
-                  <h3 className="font-semibold text-xs text-gray-600 mb-2">Items</h3>
+                  <h3 className="font-semibold text-xs md:text-sm text-gray-600 mb-2">Items</h3>
                   <div className="space-y-1">
                     {order.items.map((item, idx) => (
                       <div key={idx} className="flex justify-between text-xs">
@@ -499,8 +500,8 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
 
               {/* Notes Card */}
               {order.notes && (
-                <Card className="p-3">
-                  <h3 className="font-semibold text-xs text-gray-600 mb-2">Notes</h3>
+                <Card className="p-2 md:p-3">
+                  <h3 className="font-semibold text-xs md:text-sm text-gray-600 mb-2">Notes</h3>
                   <p className="text-xs text-gray-700">{order.notes}</p>
                 </Card>
               )}
@@ -510,7 +511,7 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
           {/* Close Button */}
           <Button
             onClick={() => onOpenChange(false)}
-            className="w-full"
+            className="w-full flex-shrink-0"
             variant="outline"
             size="sm"
           >

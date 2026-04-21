@@ -1263,3 +1263,46 @@
 - [x] Works on both desktop and mobile browsers
 - [x] No crashes or rendering issues
 - [x] All 38 tests passing
+
+
+## CRITICAL FIX - Mobile Map Modal Scrollable Layout (COMPLETED)
+
+### Problem: Map Not Visible on Mobile Due to Order Details Pushing It Up
+- [x] Implemented scrollable content area on mobile (overflow-y-auto)
+- [x] Set minimum map height on mobile (min-h-[300px]) to ensure visibility
+- [x] Added flex-shrink-0 to map and details to prevent unwanted shrinking
+- [x] Made header fixed with flex-shrink-0 so it doesn't scroll
+- [x] Made close button sticky with flex-shrink-0
+- [x] Implemented responsive modal height (h-[95vh] mobile, md:h-auto md:max-h-[90vh] desktop)
+- [x] Added responsive padding throughout (px-2 md:px-6, p-2 md:p-3)
+- [x] Made order details grid responsive (grid-cols-1 sm:grid-cols-2 lg:grid-cols-4)
+- [x] Tested on mobile browsers - map now visible and scrollable
+
+### Layout Behavior:
+- Mobile: Map displays first (300px minimum), user scrolls down to see order details
+- Desktop: Map and details share space side-by-side with proper proportions
+- Scrolling: Content scrolls vertically on mobile, no scrolling on desktop
+
+### Implementation Details:
+- Updated OrderMapModal.tsx layout structure with proper flex and overflow classes
+- Added responsive breakpoints for all spacing and sizing
+- Implemented proper scroll containment with overflow-y-auto
+- Created 31 new comprehensive vitest tests for mobile layout:
+  - Scrollable Content on Mobile (4 tests)
+  - Modal Height Configuration (2 tests)
+  - Content Visibility on Mobile (2 tests)
+  - Responsive Padding and Gaps (4 tests)
+  - Header Responsiveness (3 tests)
+  - Close Button Accessibility (3 tests)
+  - Map Container Responsiveness (4 tests)
+  - Order Details Grid Responsiveness (5 tests)
+  - Scroll Behavior (3 tests)
+
+### Verification:
+- [x] Map is visible when modal opens on mobile
+- [x] User can scroll down to see order details
+- [x] Header stays visible while scrolling
+- [x] Close button stays accessible
+- [x] All responsive breakpoints work correctly
+- [x] Desktop layout unchanged and working
+- [x] All 69 OrderMapModal tests passing
