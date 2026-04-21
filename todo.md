@@ -104,6 +104,14 @@
 - [x] Verify only one close button exists in modal
 - [x] Test smooth open/close transitions
 
+## Kitchen Dashboard - Flickering Issue Fix
+- [x] Identify re-render loop causing modal flickering
+- [x] Remove [refetch] dependency from useEffect to prevent infinite re-renders
+- [x] Add useCallback for modal handler to prevent re-creation on every render
+- [x] Fix modal state stability - no more blinking/flashing
+- [x] Test modal open/close transitions - smooth and stable
+- [x] Verify modal stays open until explicitly closed
+
 ## Current Issues
 - [x] Fix API error on /admin/menu - Fixed by implementing automatic database initialization
 

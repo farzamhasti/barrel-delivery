@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -65,7 +65,7 @@ export default function KitchenDashboard() {
       refetch();
     }, 3000);
     return () => clearInterval(interval);
-  }, [refetch]);
+  }, []);
 
   // Calculate urgency level based on delivery time
   const getUrgencyLevel = (deliveryTime: string | null) => {
@@ -176,6 +176,13 @@ export default function KitchenDashboard() {
     </div>
   );
 
+  // Memoize the modal handler to prevent re-creation on every render
+  const handleModalOpenChange = useCallback((open: boolean) => {
+    if (!open) {
+      setSelectedOrder(null);
+    }
+  }, []);
+
   const OrderDetailModal = ({ order }: { order: any }) => {
     if (!order) return null;
     
@@ -184,11 +191,7 @@ export default function KitchenDashboard() {
     const deliveryDate = order.deliveryTime ? new Date(order.deliveryTime).toLocaleDateString() : "N/A";
 
     return (
-      <Dialog open={!!order} onOpenChange={(open) => {
-        if (!open) {
-          setSelectedOrder(null);
-        }
-      }}>
+      <Dialog open={!!order} onOpenChange={handleModalOpenChange}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" showCloseButton={false}>
           <DialogHeader>
             <div className="flex items-center justify-between w-full">
