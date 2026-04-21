@@ -1465,3 +1465,43 @@
 - Desktop page scrolls properly with full content visible
 - Mobile layout preserved and working
 - Map centers on customer location with both markers visible
+
+
+## BUG FIX - Map Markers Not Updating When Switching Orders (COMPLETED)
+
+### Problem:
+- Map worked correctly for the first selected order
+- When user clicked on another order, the map did NOT update
+- New location was not shown
+- User had to switch tabs and return to see updates
+- Root cause: Map was initialized only once, markers not updated on subsequent clicks
+
+### Solution Implemented:
+- [x] Added new useEffect that triggers when selectedOrderId changes
+- [x] Effect finds the selected order and pans map to its location
+- [x] Map zooms to level 16 for better visibility
+- [x] Selected marker is highlighted in red (larger size, different color)
+- [x] Other markers reset to default blue color
+- [x] Selected marker has higher zIndex to appear on top
+
+### Technical Details:
+- New effect depends on [selectedOrderId, orders]
+- Highlights selected marker: scale 20, fillColor #dc2626 (red)
+- Resets other markers: scale 16, fillColor #3b82f6 (blue)
+- Uses mapRef.current.panTo() for smooth panning
+- Uses mapRef.current.setZoom(16) for consistent zoom level
+
+### Files Modified:
+- client/src/components/admin/OrderTrackingWithMap.tsx: Added marker update effect
+
+### Testing:
+- [x] Dev server running without errors
+- [x] TypeScript compilation successful
+- [x] HMR updates applied correctly
+- [x] No console errors
+
+### Result:
+- Map updates instantly when switching between orders
+- Selected marker is visually highlighted
+- No need to refresh or change tabs
+- Smooth and responsive user experience

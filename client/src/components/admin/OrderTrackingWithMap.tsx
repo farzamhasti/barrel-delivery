@@ -89,6 +89,52 @@ export default function OrderTrackingWithMap() {
     });
   }, [orders]);
 
+  // Update map when selected order changes
+  useEffect(() => {
+    if (!mapRef.current || !selectedOrderId) return;
+
+    // Find the selected order
+    const selectedOrder = orders.find((o: any) => o.id === selectedOrderId);
+    if (!selectedOrder || !selectedOrder.customer?.latitude || !selectedOrder.customer?.longitude) return;
+
+    // Pan and zoom to selected order
+    const position = {
+      lat: parseFloat(selectedOrder.customer.latitude as any),
+      lng: parseFloat(selectedOrder.customer.longitude as any),
+    };
+
+    mapRef.current.panTo(position);
+    mapRef.current.setZoom(16);
+
+    // Highlight selected marker by changing its color
+    markersRef.current.forEach((marker, idx) => {
+      const order = orders[idx];
+      if (order.id === selectedOrderId) {
+        // Highlight selected marker
+        marker.setIcon({
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 20,
+          fillColor: "#dc2626",
+          fillOpacity: 1,
+          strokeColor: "white",
+          strokeWeight: 3,
+        });
+        marker.setZIndex(100);
+      } else {
+        // Reset other markers
+        marker.setIcon({
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 16,
+          fillColor: "#3b82f6",
+          fillOpacity: 1,
+          strokeColor: "white",
+          strokeWeight: 2,
+        });
+        marker.setZIndex(1);
+      }
+    });
+  }, [selectedOrderId, orders]);
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "Pending":
