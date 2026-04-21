@@ -1306,3 +1306,44 @@
 - [x] All responsive breakpoints work correctly
 - [x] Desktop layout unchanged and working
 - [x] All 69 OrderMapModal tests passing
+
+
+## CRITICAL FIX - Desktop Map Modal Grid Layout (COMPLETED)
+
+### Problem: Map Not Displaying on Desktop After Mobile Layout Fix
+- [x] Identified issue: Desktop layout was using flex-col with overflow-y-auto, causing map to not display properly
+- [x] Rewrote OrderMapModal component with responsive grid layout
+- [x] Implemented md:grid md:grid-cols-3 for desktop layout
+- [x] Map now takes md:col-span-2 (2 columns) on desktop
+- [x] Order details sidebar takes md:col-span-1 (1 column) on desktop
+- [x] Added visual separation with md:border-l between map and sidebar
+- [x] Maintained mobile scrollable layout (flex-col with overflow-y-auto)
+
+### Desktop Layout (md breakpoint and up):
+- Grid with 3 columns: Map (2 cols) + Details Sidebar (1 col)
+- Map displays prominently on left side
+- Order details stacked vertically in scrollable sidebar on right
+- Border between sections for visual separation
+- Header spans full width
+
+### Mobile Layout:
+- Map displays first (300px minimum height)
+- Order details below map
+- Both scrollable vertically
+- Close button accessible at bottom
+
+### Implementation Details:
+- Changed DialogContent to use md:grid md:grid-cols-3
+- Map container: col-span-3 md:col-span-2
+- Details sidebar: col-span-3 md:col-span-1
+- Added md:border-l md:border-gray-200 for sidebar separation
+- All cards use flex-shrink-0 to prevent unwanted shrinking
+- Close button uses mt-auto to stick to bottom of sidebar
+
+### Verification:
+- [x] All 69 OrderMapModal tests passing
+- [x] Dev server running without errors
+- [x] TypeScript compilation successful
+- [x] Map displays on desktop with sidebar
+- [x] Mobile layout still scrollable
+- [x] No crashes or rendering issues
