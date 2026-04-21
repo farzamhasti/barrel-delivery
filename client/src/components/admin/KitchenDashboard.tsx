@@ -189,7 +189,7 @@ export default function KitchenDashboard() {
           setSelectedOrder(null);
         }
       }}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" showCloseButton={false}>
           <DialogHeader>
             <div className="flex items-center justify-between w-full">
               <div className="flex items-center gap-3">

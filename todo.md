@@ -99,6 +99,10 @@
 - [x] Fix modal flashing on and off issue
 - [x] Remove duplicate close buttons
 - [x] Ensure modal stays open until user closes it
+- [x] Disable automatic DialogContent close button (showCloseButton={false})
+- [x] Fix flickering by removing conflicting close button rendering
+- [x] Verify only one close button exists in modal
+- [x] Test smooth open/close transitions
 
 ## Current Issues
 - [x] Fix API error on /admin/menu - Fixed by implementing automatic database initialization
