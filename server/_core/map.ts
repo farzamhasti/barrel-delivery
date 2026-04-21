@@ -317,3 +317,36 @@ export type RoadsResult = {
 
 
 
+
+
+// ============================================================================
+// Helper Functions
+// ============================================================================
+
+/**
+ * Geocode an address to get latitude and longitude coordinates
+ * @param address - The address to geocode
+ * @returns Object with lat and lng, or null if geocoding fails
+ */
+export async function geocodeAddress(address: string): Promise<LatLng | null> {
+  try {
+    const result = await makeRequest<GeocodingResult>(
+      "/maps/api/geocode/json",
+      { address }
+    );
+
+    if (result.status === "OK" && result.results.length > 0) {
+      const location = result.results[0].geometry.location;
+      return {
+        lat: location.lat,
+        lng: location.lng,
+      };
+    }
+
+    console.warn(`[Maps] Geocoding returned status: ${result.status}`);
+    return null;
+  } catch (error) {
+    console.error("[Maps] Geocoding error:", error);
+    return null;
+  }
+}
