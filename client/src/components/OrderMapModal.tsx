@@ -134,6 +134,12 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
       infoWindowsRef.current = [];
 
       console.log('[OrderMapModal] Creating markers with geocoded location:', geocodedLocation);
+      
+      // Pan map to geocoded location
+      if (mapRef.current) {
+        mapRef.current.panTo(geocodedLocation);
+        mapRef.current.setZoom(16);
+      }
 
       // Escape HTML to prevent XSS
       const escapeHtml = (text: string) => {
@@ -224,6 +230,16 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
       infoWindowsRef.current.push(customerInfoWindow);
       markersRef.current.push(customerMarker);
       console.log('Customer marker added to map, total markers:', markersRef.current.length);
+      
+      // Fit bounds to show both markers
+      if (mapRef.current && markersRef.current.length > 1) {
+        const bounds = new google.maps.LatLngBounds();
+        markersRef.current.forEach(marker => {
+          const pos = marker.getPosition();
+          if (pos) bounds.extend(pos);
+        });
+        mapRef.current.fitBounds(bounds);
+      }
 
       // Create info window for restaurant
       const restaurantInfoContent = document.createElement('div');
@@ -280,6 +296,17 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
       infoWindowsRef.current.push(restaurantInfoWindow);
       markersRef.current.push(restaurantMarker);
       console.log('Restaurant marker added to map, total markers:', markersRef.current.length);
+      
+      // Fit bounds to show both markers
+      if (mapRef.current && markersRef.current.length > 1) {
+        const bounds = new google.maps.LatLngBounds();
+        markersRef.current.forEach(marker => {
+          const pos = marker.getPosition();
+          if (pos) bounds.extend(pos);
+        });
+        const padding = 50;
+        mapRef.current.fitBounds(bounds, padding);
+      }
 
       // Fit bounds to show both markers
       if (mapRef.current && markersRef.current.length > 0) {
@@ -349,9 +376,8 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
           )}
 
           <MapView
-            key={`map-${order.id}`}
             className="w-full h-full"
-            initialCenter={geocodedLocation || RESTAURANT_LOCATION}
+            initialCenter={RESTAURANT_LOCATION}
             initialZoom={14}
             onMapReady={(map) => {
               if (!isMountedRef.current) return;

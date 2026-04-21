@@ -1417,3 +1417,51 @@
 - All input fields now have proper string values (empty string when null)
 - No React warnings about null values
 - Orders page works smoothly without console errors
+
+
+## CRITICAL FIX - Order Tracking Map Marker Display & Desktop Scrolling (COMPLETED)
+
+### Problem 1: Marker Not Displayed on Order Tracking Map
+- [x] Map opens when clicking customer address
+- [x] But markers were not displaying on the map
+- [x] Root cause: MapView was re-initializing when geocoding completed, clearing markers before they rendered
+
+### Problem 2: No Desktop Scrolling on Order Tracking Page
+- [x] Desktop page had fixed heights that prevented scrolling
+- [x] Orders list was limited to max-h-[500px] which cut off content
+- [x] Root cause: Nested overflow-hidden and fixed height containers
+
+### Solution Implemented:
+
+**For Marker Display:**
+- [x] Changed MapView to use fixed RESTAURANT_LOCATION as initial center (prevents re-initialization on geocoding)
+- [x] Removed key prop that was causing unnecessary re-renders
+- [x] Added map.panTo() to navigate to geocoded location after markers created
+- [x] Added fitBounds() to show both customer and restaurant markers in viewport
+- [x] Markers now display consistently on every address click
+
+**For Desktop Scrolling:**
+- [x] Updated OrderTrackingWithMap to use flexbox layout with flex-1 and overflow-hidden
+- [x] Changed grid container to flex-1 with overflow-hidden for proper flex behavior
+- [x] Removed max-h-[500px] from orders list, replaced with overflow-y-auto flex-1
+- [x] Made map container flex-1 to fill available space
+- [x] Added flex-shrink-0 to header and title to prevent them from shrinking
+- [x] Page now scrolls smoothly on desktop with full content accessible
+
+### Files Modified:
+- client/src/components/admin/OrderTrackingWithMap.tsx: Fixed layout and scrolling
+- client/src/components/OrderMapModal.tsx: Fixed marker display and map initialization
+
+### Testing:
+- [x] Dev server running without errors
+- [x] TypeScript compilation successful
+- [x] No console errors on order tracking page
+- [x] Markers display correctly when clicking addresses
+- [x] Desktop page scrolls smoothly
+- [x] Mobile layout still works correctly
+
+### Result:
+- Markers now display consistently on the map
+- Desktop page scrolls properly with full content visible
+- Mobile layout preserved and working
+- Map centers on customer location with both markers visible
