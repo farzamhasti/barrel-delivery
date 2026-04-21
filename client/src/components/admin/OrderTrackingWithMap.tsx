@@ -133,6 +133,25 @@ export default function OrderTrackingWithMap() {
         marker.setZIndex(1);
       }
     });
+
+    // Force map to redraw by triggering resize events
+    setTimeout(() => {
+      if (mapRef.current) {
+        google.maps.event.trigger(mapRef.current, 'resize');
+      }
+    }, 0);
+
+    setTimeout(() => {
+      if (mapRef.current) {
+        google.maps.event.trigger(mapRef.current, 'resize');
+      }
+    }, 50);
+
+    setTimeout(() => {
+      if (mapRef.current) {
+        google.maps.event.trigger(mapRef.current, 'resize');
+      }
+    }, 150);
   }, [selectedOrderId, orders]);
 
   const getStatusColor = (status: string) => {
