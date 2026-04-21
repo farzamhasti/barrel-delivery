@@ -1598,3 +1598,12 @@
 - [x] Ensure instant tab switching between pending and ready orders
 - [x] Test with high-volume order scenarios (20+ orders) - 31 tests passing
 - [x] Verify order movement between tabs is instant and real-time
+
+
+## BUG FIX - Kitchen Dashboard Order Status Update
+
+- [x] Fixed mutation callback to immediately invalidate cache when order marked as ready
+- [x] Added automatic refetch to ensure UI updates instantly
+- [x] Orders now move from "Active Orders" tab to "Ready Orders" tab immediately
+- [x] No page refresh or manual tab switching required
+- [x] Created comprehensive tests for order status updates and tab switching

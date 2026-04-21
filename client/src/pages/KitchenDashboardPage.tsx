@@ -21,9 +21,11 @@ export default function KitchenDashboardPage() {
 
   // Mutation to update order status to ready
   const updateStatusMutation = trpc.orders.updateStatus.useMutation({
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success("Order marked as ready!");
-      invalidateOrderCache(utils);
+      // Immediately invalidate the cache and refetch
+      await utils.orders.getTodayOrdersWithItems.invalidate();
+      await refetch();
     },
     onError: (error) => {
       toast.error(error.message || "Failed to update order status");
