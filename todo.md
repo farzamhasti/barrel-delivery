@@ -1682,3 +1682,11 @@
 - [x] Active Orders list below map (full width)
 - [x] Fetch and display active drivers from database
 - [x] Display driver count and status in Active Drivers section
+
+## Kitchen Dashboard - Active Drivers Stat Card
+- [x] Fetch active drivers data using trpc.drivers.list.useQuery()
+- [x] Calculate active drivers count (filter where isActive = true)
+- [x] Add Active Drivers stat card to stats bar
+- [x] Update grid layout from 3 columns to 4 columns
+- [x] Display active driver count in blue color
+- [ ] Test the new stat card displays correctly

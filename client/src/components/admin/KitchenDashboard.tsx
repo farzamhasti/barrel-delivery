@@ -28,6 +28,10 @@ export default function KitchenDashboard() {
   // Fetch today's orders with items
   const { data: allOrders = [], isLoading, refetch } = trpc.orders.getTodayOrdersWithItems.useQuery();
 
+  // Fetch active drivers
+  const { data: drivers = [] } = trpc.drivers.list.useQuery();
+  const activeDrivers = drivers.filter((d: any) => d.isActive).length;
+
   // Mutation to update order status to ready
   const updateStatusMutation = trpc.orders.updateStatus.useMutation({
     onSuccess: async () => {
@@ -350,7 +354,7 @@ export default function KitchenDashboard() {
         </div>
 
         {/* Stats Bar */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <Card className="p-3 bg-white/80 backdrop-blur">
             <p className="text-xs text-muted-foreground">Pending Orders</p>
             <p className="text-2xl font-bold text-orange-600">{pendingOrders.length}</p>
@@ -362,6 +366,10 @@ export default function KitchenDashboard() {
           <Card className="p-3 bg-white/80 backdrop-blur">
             <p className="text-xs text-muted-foreground">Total Orders</p>
             <p className="text-2xl font-bold text-foreground">{allOrders.length}</p>
+          </Card>
+          <Card className="p-3 bg-white/80 backdrop-blur">
+            <p className="text-xs text-muted-foreground">Active Drivers</p>
+            <p className="text-2xl font-bold text-blue-600">{activeDrivers}</p>
           </Card>
         </div>
       </div>
