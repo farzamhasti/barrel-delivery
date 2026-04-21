@@ -189,19 +189,22 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
         title: `Order #${order.id} - ${order.customer?.name || 'Customer'}`,
         label: {
           text: `#${order.id}`,
-          color: "white",
-          fontSize: "18px",
+          color: "#000000",
+          fontSize: "20px",
           fontWeight: "bold",
+          className: "marker-label",
         },
         icon: {
           path: google.maps.SymbolPath.CIRCLE,
-          scale: 24,
-          fillColor: "#2563eb",
+          scale: 32,
+          fillColor: "#1d4ed8",
           fillOpacity: 1,
-          strokeColor: "white",
-          strokeWeight: 4,
+          strokeColor: "#ffffff",
+          strokeWeight: 5,
         },
         animation: google.maps.Animation.DROP,
+        optimized: false,
+        zIndex: 100,
       });
       console.log('Customer marker created successfully');
 
@@ -249,17 +252,19 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
         title: "Restaurant",
         label: {
           text: "🍽️",
-          fontSize: "20px",
+          fontSize: "24px",
         },
         icon: {
           path: google.maps.SymbolPath.CIRCLE,
-          scale: 22,
-          fillColor: "#dc2626",
+          scale: 30,
+          fillColor: "#b91c1c",
           fillOpacity: 1,
-          strokeColor: "white",
-          strokeWeight: 4,
+          strokeColor: "#ffffff",
+          strokeWeight: 5,
         },
         animation: google.maps.Animation.DROP,
+        optimized: false,
+        zIndex: 99,
       });
       console.log('Restaurant marker created successfully');
 
