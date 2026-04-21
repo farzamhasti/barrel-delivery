@@ -84,6 +84,11 @@
 - [x] Test tab switching and order management after login
 - [x] Remove demo credentials display from login page for security
 
+## Kitchen Dashboard - UI Cleanup
+- [x] Remove Urgent Orders stat card from stats bar
+- [x] Update grid layout from 4 columns to 3 columns
+- [x] Verify dashboard displays correctly with 3 stat cards only
+
 ## Current Issues
 - [x] Fix API error on /admin/menu - Fixed by implementing automatic database initialization
 

@@ -195,7 +195,7 @@ export default function KitchenDashboard() {
         </div>
 
         {/* Stats Bar */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           <Card className="p-3 bg-white/80 backdrop-blur">
             <p className="text-xs text-muted-foreground">Pending Orders</p>
             <p className="text-2xl font-bold text-orange-600">{pendingOrders.length}</p>
@@ -203,12 +203,6 @@ export default function KitchenDashboard() {
           <Card className="p-3 bg-white/80 backdrop-blur">
             <p className="text-xs text-muted-foreground">Ready Orders</p>
             <p className="text-2xl font-bold text-green-600">{readyOrders.length}</p>
-          </Card>
-          <Card className="p-3 bg-white/80 backdrop-blur">
-            <p className="text-xs text-muted-foreground">Urgent Orders</p>
-            <p className="text-2xl font-bold text-red-600">
-              {pendingOrders.filter((o: any) => getUrgencyLevel(o.deliveryTime) === "late").length}
-            </p>
           </Card>
           <Card className="p-3 bg-white/80 backdrop-blur">
             <p className="text-xs text-muted-foreground">Total Orders</p>
