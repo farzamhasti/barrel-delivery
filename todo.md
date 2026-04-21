@@ -1715,3 +1715,18 @@
 - [x] Test database persistence of status changes
 - [x] Update seed data to include license numbers and status field
 - [x] Verify tRPC procedures work correctly
+
+
+## Restaurant Admin Dashboard - Active Drivers Section Update
+
+- [x] Update active drivers filter to use status = "online" instead of isActive
+- [x] Replace stat card with detailed Active Drivers list matching Order Tracking design
+- [x] Update grid layout to show stats cards (2/3 width) and drivers section (1/3 width)
+- [x] Display driver cards with name, phone, vehicle type, and status badge
+- [x] Implement scrollable driver list with hover effects
+- [x] Add empty state handling (No active drivers message)
+- [x] Add real-time driver status updates every 5 seconds
+- [x] Fix vehicle property name from driver.vehicle to driver.vehicleType
+- [x] Test Restaurant Admin Dashboard Active Drivers displays correctly
+- [x] Verify visual consistency with Order Tracking tab
+- [x] All driver status tests passing (6/6)

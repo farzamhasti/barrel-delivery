@@ -1,5 +1,6 @@
-import { Card } from "@/components/ui/card";
+import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 import { Package2, Truck, TrendingUp } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 
@@ -16,18 +17,65 @@ export default function Dashboard() {
     return orderDate.getTime() === today.getTime();
   });
 
+  const utils = trpc.useUtils();
   const pendingOrders = todayOrders.filter((o: any) => o.status === "Pending").length;
   const onTheWayOrders = todayOrders.filter((o: any) => o.status === "On the Way").length;
   const deliveredOrders = todayOrders.filter((o: any) => o.status === "Delivered").length;
-  const activeDrivers = drivers.filter((d: any) => d.isActive).length;
+  const activeDrivers = drivers.filter((d: any) => d.status === "online" && d.isActive);
+  const activeDriverCount = activeDrivers.length;
+
+  // Auto-refetch drivers every 5 seconds for real-time updates
+  useEffect(() => {
+    const interval = setInterval(() => {
+      utils.drivers.list.invalidate();
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [utils.drivers.list]);
 
   return (
     <div className="space-y-4 md:space-y-6">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-        <StatCard icon={<Package2 className="w-6 h-6" />} label="Pending" value={pendingOrders} color="bg-yellow-100 text-yellow-700" />
-        <StatCard icon={<Truck className="w-6 h-6" />} label="On the Way" value={onTheWayOrders} color="bg-blue-100 text-blue-700" />
-        <StatCard icon={<TrendingUp className="w-6 h-6" />} label="Delivered" value={deliveredOrders} color="bg-green-100 text-green-700" />
-        <StatCard icon={<Truck className="w-6 h-6" />} label="Active Drivers" value={activeDrivers} color="bg-purple-100 text-purple-700" />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4">
+        {/* Stats Cards - 2/3 width */}
+        <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
+          <StatCard icon={<Package2 className="w-6 h-6" />} label="Pending" value={pendingOrders} color="bg-yellow-100 text-yellow-700" />
+          <StatCard icon={<Truck className="w-6 h-6" />} label="On the Way" value={onTheWayOrders} color="bg-blue-100 text-blue-700" />
+          <StatCard icon={<TrendingUp className="w-6 h-6" />} label="Delivered" value={deliveredOrders} color="bg-green-100 text-green-700" />
+        </div>
+
+        {/* Active Drivers Section - 1/3 width */}
+        <div className="flex flex-col overflow-hidden">
+          <Card className="overflow-hidden flex-1 flex flex-col">
+            <div className="p-4 border-b border-border flex-shrink-0">
+              <h3 className="text-lg font-semibold text-foreground">Active Drivers ({activeDriverCount})</h3>
+            </div>
+            
+            {activeDriverCount === 0 ? (
+              <div className="p-6 text-center flex-1 flex items-center justify-center">
+                <p className="text-muted-foreground">No active drivers</p>
+              </div>
+            ) : (
+              <div className="space-y-2 overflow-y-auto flex-1 p-4">
+                {activeDrivers.map((driver: any) => (
+                  <div
+                    key={driver.id}
+                    className="p-3 bg-muted rounded-lg border border-border hover:border-accent/50 transition-colors"
+                  >
+                    <div className="flex items-start justify-between mb-1">
+                      <div>
+                        <h4 className="font-semibold text-foreground text-sm">{driver.name}</h4>
+                        <p className="text-xs text-muted-foreground">{driver.phone}</p>
+                      </div>
+                      <Badge className="bg-green-100 text-green-800 text-xs">Online</Badge>
+                    </div>
+                    {driver.vehicleType && (
+                      <p className="text-xs text-muted-foreground mt-1">{driver.vehicleType}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+        </div>
       </div>
 
       <Card className="p-4 md:p-6">
