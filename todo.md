@@ -82,6 +82,7 @@
 - [x] Verify authentication flow works correctly
 - [x] Confirm Kitchen Dashboard loads after successful login
 - [x] Test tab switching and order management after login
+- [x] Remove demo credentials display from login page for security
 
 ## Current Issues
 - [x] Fix API error on /admin/menu - Fixed by implementing automatic database initialization
