@@ -182,7 +182,24 @@ export async function deleteDriver(id: number) {
 export async function createCustomer(data: InsertCustomer) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db.insert(customers).values(data);
+  
+  // If no coordinates provided but address exists, attempt to geocode
+  let finalData = { ...data };
+  if ((!data.latitude || !data.longitude) && data.address) {
+    try {
+      const { geocodeAddress } = await import('./_core/map');
+      const coords = await geocodeAddress(data.address);
+      if (coords) {
+        finalData.latitude = coords.lat as any;
+        finalData.longitude = coords.lng as any;
+      }
+    } catch (error) {
+      console.warn('[Database] Geocoding failed for address:', data.address, error);
+      // Continue without coordinates if geocoding fails
+    }
+  }
+  
+  const result = await db.insert(customers).values(finalData);
   // Extract insertId from the result
   const insertId = (result as any)[0]?.insertId;
   if (insertId) {
