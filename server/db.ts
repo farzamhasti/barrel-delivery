@@ -838,3 +838,38 @@ export async function deleteSystemSession(sessionToken: string) {
   
   return await db.delete(systemSessions).where(eq(systemSessions.sessionToken, sessionToken));
 }
+
+
+// Geocode all customers without coordinates
+export async function geocodeAllCustomers() {
+  const db = await getDb();
+  if (!db) return { geocodedCount: 0, totalCustomers: 0 };
+
+  try {
+    const { geocodeAddress } = await import('./_core/map');
+    const allCustomers = await db.select().from(customers);
+    let geocodedCount = 0;
+
+    for (const customer of allCustomers) {
+      if (!customer.latitude && !customer.longitude && customer.address) {
+        try {
+          const coords = await geocodeAddress(customer.address);
+          if (coords) {
+            await db.update(customers).set({
+              latitude: coords.lat as any,
+              longitude: coords.lng as any,
+            }).where(eq(customers.id, customer.id));
+            geocodedCount++;
+          }
+        } catch (error) {
+          console.warn(`[Database] Failed to geocode customer ${customer.id}:`, error);
+        }
+      }
+    }
+
+    return { geocodedCount, totalCustomers: allCustomers.length };
+  } catch (error) {
+    console.error('[Database] Error geocoding customers:', error);
+    return { geocodedCount: 0, totalCustomers: 0 };
+  }
+}
