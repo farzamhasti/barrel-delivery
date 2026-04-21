@@ -1673,3 +1673,13 @@
 - [x] Ensured tabs switch content when clicked
 - [x] Active Orders tab shows pending orders
 - [x] Prepared Orders tab shows ready orders
+
+## Restaurant Admin Dashboard - Layout Reorganization
+- [x] Move Active Orders section below the map
+- [x] Remove Active Drivers section from dashboard
+- [x] Add Order Tracking tab on right side of map
+- [x] Test responsive layout with high number of orders
+- [x] Verify all functionality works after layout changes
+- [x] Integrate map and order tracking into main dashboard
+- [x] Verify stat cards display correctly (3 columns)
+- [x] Confirm Today's Orders table appears below map
