@@ -6,15 +6,14 @@ import { MapPin, Eye, EyeOff, Clock } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { invalidateOrderCache } from "@/lib/invalidation";
 import { MapView } from "@/components/Map";
-import { OrderMapModal } from "@/components/OrderMapModal";
+
 
 const FORT_ERIE_CENTER = { lat: 42.905191, lng: -78.9225479 };
 const RESTAURANT_ADDRESS = { lat: 42.905191, lng: -78.9225479 }; // 224 Garrison Rd, Fort Erie, ON L2A 1M7
 
 export default function OrderTrackingWithMap() {
   const utils = trpc.useUtils();
-  const [mapModalOpen, setMapModalOpen] = useState(false);
-  const [selectedOrderForMap, setSelectedOrderForMap] = useState<any>(null);
+
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
   const [showMap, setShowMap] = useState(true);
   const mapRef = useRef<google.maps.Map | null>(null);
@@ -268,8 +267,7 @@ export default function OrderTrackingWithMap() {
                     <div className="flex-1">
                       <button
                         onClick={() => {
-                          setSelectedOrderForMap(order);
-                          setMapModalOpen(true);
+                          // Address click disabled - main map provides this functionality
                         }}
                         className="line-clamp-2 text-left hover:text-accent hover:underline transition-colors cursor-pointer"
                       >
@@ -331,13 +329,7 @@ export default function OrderTrackingWithMap() {
         </div>
       </div>
 
-      {selectedOrderForMap && (
-        <OrderMapModal
-          open={mapModalOpen}
-          onOpenChange={setMapModalOpen}
-          order={selectedOrderForMap}
-        />
-      )}
+
     </div>
   );
 }

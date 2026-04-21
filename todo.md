@@ -1505,3 +1505,27 @@
 - Selected marker is visually highlighted
 - No need to refresh or change tabs
 - Smooth and responsive user experience
+
+
+## FEATURE REMOVAL - Redundant Map Modal (COMPLETED)
+
+### Problem:
+- Separate map modal opened when clicking order addresses
+- Redundant with main map on order tracking page
+- Unnecessary complexity and duplicate functionality
+
+### Solution Implemented:
+- [x] Removed OrderMapModal import from OrderTrackingWithMap
+- [x] Removed mapModalOpen state variable
+- [x] Removed selectedOrderForMap state variable
+- [x] Disabled address click handler
+- [x] Removed OrderMapModal component rendering
+
+### Files Modified:
+- client/src/components/admin/OrderTrackingWithMap.tsx: Removed modal-related code
+
+### Result:
+- Simplified UI with no redundant features
+- Main map on order tracking page is the single source for map interactions
+- Cleaner component structure
+- Reduced code complexity
