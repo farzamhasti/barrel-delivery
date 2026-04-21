@@ -1692,6 +1692,10 @@
 - [x] Add empty state handling ("No active drivers" message)
 - [x] Test the new Active Drivers section displays correctly
 - [x] Verify visual consistency with Order Tracking tab Active Drivers section
+- [x] Update Kitchen Dashboard to filter by status = online instead of isActive
+- [x] Change badge from Active to Online to match Order Tracking
+- [x] Fix vehicle property name from driver.vehicle to driver.vehicleType
+- [x] Add real-time driver status updates every 3 seconds
 
 
 ## FEATURE - Driver Online/Offline Status Tracking

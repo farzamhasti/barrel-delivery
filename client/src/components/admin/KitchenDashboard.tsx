@@ -30,7 +30,7 @@ export default function KitchenDashboard() {
 
   // Fetch active drivers
   const { data: drivers = [] } = trpc.drivers.list.useQuery();
-  const activeDrivers = drivers.filter((d: any) => d.status === "online" && d.isActive).length;
+  const activeDrivers = drivers.filter((d: any) => d.status === "online" && d.isActive);
 
   // Mutation to update order status to ready
   const updateStatusMutation = trpc.orders.updateStatus.useMutation({
@@ -69,10 +69,12 @@ export default function KitchenDashboard() {
     if (!selectedOrder) {
       const interval = setInterval(() => {
         refetch();
+        // Also refetch drivers to get real-time status updates
+        utils.drivers.list.invalidate();
       }, 3000);
       return () => clearInterval(interval);
     }
-  }, [selectedOrder]);
+  }, [selectedOrder, utils.drivers.list]);
 
   // Calculate urgency level based on delivery time
   const getUrgencyLevel = (deliveryTime: string | null) => {
@@ -375,16 +377,16 @@ export default function KitchenDashboard() {
           <div className="flex flex-col overflow-hidden">
             <Card className="overflow-hidden flex-1 flex flex-col bg-white/80 backdrop-blur">
               <div className="p-4 border-b border-border flex-shrink-0">
-                <h3 className="text-lg font-semibold text-foreground">Active Drivers ({drivers.filter((d: any) => d.isActive).length})</h3>
+                <h3 className="text-lg font-semibold text-foreground">Active Drivers ({activeDrivers.length})</h3>
               </div>
               
-              {drivers.filter((d: any) => d.isActive).length === 0 ? (
+              {activeDrivers.length === 0 ? (
                 <div className="p-6 text-center flex-1 flex items-center justify-center">
                   <p className="text-muted-foreground">No active drivers</p>
                 </div>
               ) : (
                 <div className="space-y-2 overflow-y-auto flex-1 p-4">
-                  {drivers.filter((d: any) => d.isActive).map((driver: any) => (
+                  {activeDrivers.map((driver: any) => (
                     <div
                       key={driver.id}
                       className="p-3 bg-muted rounded-lg border border-border hover:border-accent/50 transition-colors"
@@ -394,10 +396,10 @@ export default function KitchenDashboard() {
                           <h4 className="font-semibold text-foreground text-sm">{driver.name}</h4>
                           <p className="text-xs text-muted-foreground">{driver.phone}</p>
                         </div>
-                        <Badge className="bg-green-100 text-green-800 text-xs">Active</Badge>
+                        <Badge className="bg-green-100 text-green-800 text-xs">Online</Badge>
                       </div>
-                      {driver.vehicle && (
-                        <p className="text-xs text-muted-foreground mt-1">{driver.vehicle}</p>
+                      {driver.vehicleType && (
+                        <p className="text-xs text-muted-foreground mt-1">{driver.vehicleType}</p>
                       )}
                     </div>
                   ))}
