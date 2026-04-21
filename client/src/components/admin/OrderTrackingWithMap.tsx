@@ -24,7 +24,7 @@ export default function OrderTrackingWithMap() {
   
   // Fetch drivers for Active Drivers section
   const { data: drivers = [], isLoading: driversLoading } = trpc.drivers.list.useQuery();
-  const activeDrivers = drivers.filter((d: any) => d.isActive);
+  const activeDrivers = drivers.filter((d: any) => d.status === "online" && d.isActive);
 
   // Fetch selected order with items
   const { data: selectedOrderData } = trpc.orders.getById.useQuery(
@@ -237,7 +237,7 @@ export default function OrderTrackingWithMap() {
             <div className="flex flex-col overflow-hidden">
               <Card className="overflow-hidden flex-1 flex flex-col">
                 <div className="p-4 border-b border-border flex-shrink-0">
-                  <h3 className="text-lg font-semibold text-foreground">Active Drivers ({activeDrivers.length})</h3>
+                  <h3 className="text-lg font-semibold text-foreground">Active Drivers ({activeDrivers.filter((d: any) => d.status === "online").length})</h3>
                 </div>
                 
                 {driversLoading ? (

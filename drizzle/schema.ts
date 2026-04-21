@@ -73,6 +73,7 @@ export const drivers = mysqlTable("drivers", {
   licenseNumber: varchar("license_number", { length: 50 }),
   vehicleType: varchar("vehicle_type", { length: 100 }),
   isActive: boolean("is_active").default(true),
+  status: mysqlEnum("status", ["online", "offline"]).default("offline").notNull(),
   currentLatitude: decimal("current_latitude", { precision: 10, scale: 8 }),
   currentLongitude: decimal("current_longitude", { precision: 11, scale: 8 }),
   lastLocationUpdate: timestamp("last_location_update"),

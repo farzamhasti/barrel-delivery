@@ -117,4 +117,43 @@ export const driverRouter = router({
       return [];
     }
   }),
+
+  updateStatus: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().optional(),
+      status: z.enum(["online", "offline"]),
+    }))
+    .mutation(async ({ input }) => {
+      try {
+        let sessionToken = input.sessionToken;
+        if (!sessionToken) {
+          throw new Error("Session token is required");
+        }
+        
+        const driver = await db.getDriverBySessionToken(sessionToken);
+        if (!driver) {
+          throw new Error("Driver not found");
+        }
+        
+        // Update driver status
+        await db.updateDriverStatus(driver.id, input.status);
+        
+        return {
+          success: true,
+          status: input.status,
+          driverId: driver.id,
+        };
+      } catch (error: any) {
+        throw new Error(error.message || "Failed to update driver status");
+      }
+    }),
+
+  getActiveDrivers: publicProcedure
+    .query(async () => {
+      try {
+        return db.getActiveDrivers();
+      } catch (error) {
+        return [];
+      }
+    }),
 });

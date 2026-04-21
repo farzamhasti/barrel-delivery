@@ -1692,3 +1692,22 @@
 - [x] Add empty state handling ("No active drivers" message)
 - [x] Test the new Active Drivers section displays correctly
 - [x] Verify visual consistency with Order Tracking tab Active Drivers section
+
+
+## FEATURE - Driver Online/Offline Status Tracking
+
+- [x] Add status field to drivers table schema (online/offline enum)
+- [x] Create database migration for status field
+- [x] Add updateDriverStatus function to db.ts
+- [x] Add getActiveDrivers function to db.ts
+- [x] Create updateStatus tRPC procedure in driverRouter
+- [x] Create getActiveDrivers tRPC procedure in driverRouter
+- [x] Add Online/Offline toggle buttons to Driver Dashboard
+- [x] Implement status state management in Driver Dashboard
+- [x] Add visual status indicator (green badge for online, gray for offline)
+- [x] Update Order Tracking active drivers filter to use status = "online"
+- [x] Update Kitchen Dashboard active drivers filter to use status = "online"
+- [x] Write comprehensive vitest tests for driver status (6 tests passing)
+- [x] Test database persistence of status changes
+- [x] Update seed data to include license numbers and status field
+- [x] Verify tRPC procedures work correctly

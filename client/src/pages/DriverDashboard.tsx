@@ -42,6 +42,24 @@ export default function DriverDashboard() {
     { enabled: !!currentDriver && !!sessionToken }
   );
 
+  // Driver status management
+  const [driverStatus, setDriverStatus] = useState<"online" | "offline">("offline");
+  const updateStatusMutation = trpc.driver.updateStatus.useMutation({
+    onSuccess: (result) => {
+      setDriverStatus(result.status);
+    },
+    onError: (error) => {
+      console.error("Failed to update status:", error);
+    },
+  });
+
+  // Initialize driver status from currentDriver
+  useEffect(() => {
+    if (currentDriver?.status) {
+      setDriverStatus(currentDriver.status as "online" | "offline");
+    }
+  }, [currentDriver]);
+
   useEffect(() => {
     if (currentDriver) {
       setIsLoggedIn(true);
@@ -188,8 +206,41 @@ export default function DriverDashboard() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        {/* Status and Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+          {/* Status Card */}
+          <Card className={driverStatus === "online" ? "border-green-200 bg-green-50" : "border-gray-200"}>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-gray-600">Status</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between mb-4">
+                <Badge className={driverStatus === "online" ? "bg-green-600" : "bg-gray-500"}>
+                  {driverStatus === "online" ? "Online" : "Offline"}
+                </Badge>
+              </div>
+              <div className="space-y-2">
+                <Button
+                  size="sm"
+                  className="w-full bg-green-600 hover:bg-green-700 text-white"
+                  onClick={() => sessionToken && updateStatusMutation.mutate({ sessionToken, status: "online" })}
+                  disabled={driverStatus === "online" || updateStatusMutation.isPending}
+                >
+                  Go Online
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => sessionToken && updateStatusMutation.mutate({ sessionToken, status: "offline" })}
+                  disabled={driverStatus === "offline" || updateStatusMutation.isPending}
+                >
+                  Go Offline
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-gray-600">Assigned Orders</CardTitle>

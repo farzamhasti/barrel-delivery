@@ -39,9 +39,9 @@ export async function seedSampleData() {
 
       // Add sample drivers
       const driverValues = [
-        { name: "John Smith", phone: "555-0101", isActive: true } as any,
-        { name: "Maria Garcia", phone: "555-0102", isActive: true } as any,
-        { name: "Ahmed Hassan", phone: "555-0103", isActive: true } as any,
+        { name: "John Smith", phone: "555-0101", licenseNumber: "DL001", vehicleType: "Car", isActive: true, status: "offline" } as any,
+        { name: "Maria Garcia", phone: "555-0102", licenseNumber: "DL002", vehicleType: "Motorcycle", isActive: true, status: "offline" } as any,
+        { name: "Ahmed Hassan", phone: "555-0103", licenseNumber: "DL003", vehicleType: "Truck", isActive: true, status: "offline" } as any,
       ];
       for (const driver of driverValues) {
         await db.insert(drivers).values(driver);

@@ -178,6 +178,18 @@ export async function deleteDriver(id: number) {
   return db.delete(drivers).where(eq(drivers.id, id));
 }
 
+export async function updateDriverStatus(id: number, status: "online" | "offline") {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.update(drivers).set({ status }).where(eq(drivers.id, id));
+}
+
+export async function getActiveDrivers() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(drivers).where(eq(drivers.status, "online")).orderBy(drivers.name);
+}
+
 // Customers
 export async function createCustomer(data: InsertCustomer) {
   const db = await getDb();

@@ -43,6 +43,7 @@ export async function initializeDatabase() {
         licenseNumber varchar(50),
         vehicleType varchar(50),
         isActive boolean DEFAULT true,
+        status enum('online','offline') DEFAULT 'offline' NOT NULL,
         createdAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updatedAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         PRIMARY KEY(id)
@@ -116,6 +117,8 @@ export async function initializeDatabase() {
       
       `ALTER TABLE orders ADD COLUMN IF NOT EXISTS area varchar(50)`,
       
+      `ALTER TABLE drivers ADD COLUMN IF NOT EXISTS status enum('online','offline') DEFAULT 'offline' NOT NULL`,
+      
       `CREATE TABLE IF NOT EXISTS system_credentials (
         id int AUTO_INCREMENT NOT NULL,
         username varchar(255) NOT NULL UNIQUE,
@@ -126,6 +129,11 @@ export async function initializeDatabase() {
         updatedAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         PRIMARY KEY(id)
       )`,
+      
+      `ALTER TABLE drivers ADD COLUMN IF NOT EXISTS current_latitude decimal(10,8)`,
+      `ALTER TABLE drivers ADD COLUMN IF NOT EXISTS current_longitude decimal(11,8)`,
+      `ALTER TABLE drivers ADD COLUMN IF NOT EXISTS last_location_update timestamp NULL`,
+      `ALTER TABLE drivers ADD COLUMN IF NOT EXISTS user_id int`,
       
       `CREATE TABLE IF NOT EXISTS system_sessions (
         id int AUTO_INCREMENT NOT NULL,

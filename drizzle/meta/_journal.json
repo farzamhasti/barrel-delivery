@@ -50,6 +50,13 @@
       "when": 1776660520434,
       "tag": "0006_curved_firebrand",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1776748479431,
+      "tag": "0007_strong_silver_fox",
+      "breakpoints": true
     }
   ]
 }
