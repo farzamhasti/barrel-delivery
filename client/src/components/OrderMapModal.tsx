@@ -66,23 +66,40 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
   const geocodeMutation = (trpc as any).maps.geocode.useMutation({
     onSuccess: (result: any) => {
       if (!isMountedRef.current) return;
-      console.log('[OrderMapModal] Geocoding succeeded:', result);
-      if ("error" in result) {
-        setGeocodeError(result.error);
+      console.log('[OrderMapModal] Geocoding response received:', result);
+      
+      // Check if result has error field (geocoding service returned error)
+      if (result && 'error' in result) {
+        console.error('[OrderMapModal] Geocoding service error:', result.error);
+        setGeocodeError(`Geocoding failed: ${result.error}`);
         setIsGeocoding(false);
-      } else {
+        return;
+      }
+      
+      // Check if we have valid coordinates
+      if (result && typeof result.latitude === 'number' && typeof result.longitude === 'number') {
+        console.log('[OrderMapModal] Geocoding success:', { lat: result.latitude, lng: result.longitude });
         setGeocodedLocation({
           lat: result.latitude,
           lng: result.longitude,
         });
         setGeocodeError(null);
         setIsGeocoding(false);
+      } else {
+        console.error('[OrderMapModal] Invalid response format:', result);
+        setGeocodeError('Invalid geocoding response format');
+        setIsGeocoding(false);
       }
     },
     onError: (error: any) => {
       if (!isMountedRef.current) return;
-      console.error('[OrderMapModal] Geocoding failed:', error);
-      setGeocodeError(error.message || "Failed to geocode address");
+      console.error('[OrderMapModal] Geocoding mutation error:', error);
+      console.error('[OrderMapModal] Error details:', {
+        message: error?.message,
+        code: error?.code,
+        data: error?.data,
+      });
+      setGeocodeError(error?.message || "Failed to geocode address");
       setIsGeocoding(false);
     },
   });
@@ -365,25 +382,25 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
       }
       onOpenChange(newOpen);
     }}>
-      <DialogContent className="max-w-5xl h-[95vh] flex flex-col p-0">
+      <DialogContent className="w-[95vw] max-w-5xl h-[95vh] md:w-auto flex flex-col p-0">
         <DialogHeader className="px-6 pt-4 pb-2">
           <DialogTitle>Order #{order.id} - Map View</DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 flex flex-col gap-4 overflow-hidden px-6 pb-6">
+        <div className="flex-1 flex flex-col gap-4 overflow-hidden px-2 md:px-6 pb-6">
           {/* Map Section - Full Width and Height */}
-          <div className="flex-1 flex flex-col gap-2 min-h-0 bg-gray-100 rounded-lg overflow-hidden">
+          <div className="flex-1 flex flex-col gap-2 min-h-0 bg-gray-100 rounded-lg overflow-hidden relative">
             {isGeocoding && (
-              <div className="absolute top-4 left-4 z-10 flex items-center justify-center gap-2 p-3 bg-blue-50 rounded-lg shadow-md">
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span className="text-sm text-blue-700">Locating address...</span>
+              <div className="absolute top-2 left-2 md:top-4 md:left-4 z-10 flex items-center justify-center gap-2 p-2 md:p-3 bg-blue-50 rounded-lg shadow-md text-xs md:text-sm">
+                <Loader2 className="w-3 h-3 md:w-4 md:h-4 animate-spin" />
+                <span className="text-blue-700">Locating address...</span>
               </div>
             )}
 
             {geocodeError && (
-              <div className="absolute top-4 left-4 z-10 flex items-center gap-2 p-3 bg-red-50 rounded-lg shadow-md">
-                <AlertCircle className="w-4 h-4 text-red-600" />
-                <span className="text-sm text-red-700">{geocodeError}</span>
+              <div className="absolute top-2 left-2 md:top-4 md:left-4 z-10 flex items-center gap-2 p-2 md:p-3 bg-red-50 rounded-lg shadow-md text-xs md:text-sm">
+                <AlertCircle className="w-3 h-3 md:w-4 md:h-4 text-red-600" />
+                <span className="text-red-700">{geocodeError}</span>
               </div>
             )}
 
@@ -413,7 +430,7 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
           </div>
 
           {/* Order Details Section - Below Map */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3">
             {/* Status Card */}
             <Card className="p-3">
               <h3 className="font-semibold text-xs text-gray-600 mb-2">Status</h3>
@@ -423,7 +440,7 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
             </Card>
 
             {/* Customer Info Card */}
-            <Card className="p-3 lg:col-span-2">
+            <Card className="p-2 md:p-3 sm:col-span-2 lg:col-span-2">
               <h3 className="font-semibold text-xs text-gray-600 mb-2">Customer Info</h3>
               <div className="space-y-1 text-xs">
                 {order.customer?.name && (
@@ -464,7 +481,7 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
 
           {/* Items and Notes Row */}
           {(order.items?.length || order.notes) && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-3">
               {/* Items Card */}
               {order.items && order.items.length > 0 && (
                 <Card className="p-2 md:p-3">

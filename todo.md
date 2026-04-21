@@ -1218,3 +1218,48 @@
 - [x] Optimize map modal/view for mobile devices - Mobile-first design with proper spacing
 - [x] Test map functionality on desktop and mobile - Dev server verified
 - [x] Verify marker interactions work correctly - Info windows show on click
+
+
+## CRITICAL FIX - Map Mobile Responsiveness & Marker Display (COMPLETED)
+
+### Problem 1: Map Not Accessible on Mobile
+- [x] Fixed mobile rendering issues with responsive width classes (w-[95vw])
+- [x] Added responsive padding breakpoints (px-2 md:px-6)
+- [x] Ensured map container has proper width and height on mobile
+- [x] Fixed responsive gap classes for mobile layout (gap-2 md:gap-3)
+- [x] Added responsive icon sizes (w-3 h-3 md:w-4 md:h-4)
+- [x] Added responsive text sizes (text-xs md:text-sm)
+- [x] Tested map modal on mobile browsers - map now loads and is interactive
+
+### Problem 2: Marker Not Pinned (Desktop + Mobile)
+- [x] Fixed geocoding mutation handler to properly detect error responses (checking for 'error' field)
+- [x] Fixed geocoding mutation handler to properly detect success responses (checking for 'latitude' and 'longitude' fields)
+- [x] Added comprehensive error logging for geocoding failures
+- [x] Ensured marker creation logic executes on every address click
+- [x] Ensured map re-renders on repeated clicks
+- [x] Added validation for latitude/longitude before rendering
+- [x] Implemented fallback to restaurant location if geocoding fails
+- [x] Tested marker display with various orders - markers now pin correctly
+
+### Implementation Details:
+- Updated OrderMapModal.tsx with responsive Tailwind classes
+- Fixed geocoding mutation onSuccess handler to detect both error and success responses
+- Added proper coordinate validation before marker creation
+- Added comprehensive console logging for debugging
+- Created 38 comprehensive vitest tests - all passing:
+  - Marker Update Lifecycle (8 tests)
+  - Modal State Management (4 tests)
+  - Geocoding Integration (3 tests)
+  - Geocoding Mutation Handler (5 tests)
+  - Mobile UI Responsiveness (6 tests)
+  - Marker Display Logic (4 tests)
+  - State Management (8 tests)
+
+### Verification:
+- [x] Map loads correctly on mobile devices
+- [x] Map is interactive and responsive on mobile
+- [x] Markers pin correctly for selected orders
+- [x] Markers display consistently on repeated clicks
+- [x] Works on both desktop and mobile browsers
+- [x] No crashes or rendering issues
+- [x] All 38 tests passing

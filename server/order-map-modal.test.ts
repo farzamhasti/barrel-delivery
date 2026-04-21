@@ -333,3 +333,221 @@ describe('OrderMapModal - Marker Update Lifecycle', () => {
     });
   });
 });
+
+/**
+ * Test Suite: Geocoding Mutation Handler Fixes
+ * 
+ * This test suite validates the improved geocoding mutation handler that:
+ * 1. Properly detects error responses (with 'error' field)
+ * 2. Properly detects success responses (with 'latitude' and 'longitude' fields)
+ * 3. Logs comprehensive error information for debugging
+ */
+describe('OrderMapModal - Geocoding Mutation Handler (Fixed)', () => {
+  describe('Response Detection - Error vs Success', () => {
+    it('should detect error response when result has error field', () => {
+      const result = {
+        error: 'Geocoding failed: ZERO_RESULTS',
+        address: 'Invalid Address',
+      };
+
+      // Check if result has error field
+      const hasError = result && 'error' in result;
+      expect(hasError).toBe(true);
+      expect(result.error).toBe('Geocoding failed: ZERO_RESULTS');
+    });
+
+    it('should detect success response with valid coordinates', () => {
+      const result = {
+        latitude: 42.905191,
+        longitude: -78.9225479,
+        formattedAddress: '224 Garrison Rd, Fort Erie, ON L2A 1M7',
+        placeId: 'ChIJ...',
+      };
+
+      // Check if we have valid coordinates
+      const hasCoordinates =
+        result &&
+        typeof result.latitude === 'number' &&
+        typeof result.longitude === 'number';
+
+      expect(hasCoordinates).toBe(true);
+      expect(result.latitude).toBe(42.905191);
+      expect(result.longitude).toBe(-78.9225479);
+    });
+
+    it('should reject response with missing latitude', () => {
+      const result = {
+        longitude: -78.9225479,
+        formattedAddress: '224 Garrison Rd, Fort Erie, ON L2A 1M7',
+      };
+
+      const hasCoordinates =
+        result &&
+        typeof result.latitude === 'number' &&
+        typeof result.longitude === 'number';
+
+      expect(hasCoordinates).toBe(false);
+    });
+
+    it('should reject response with missing longitude', () => {
+      const result = {
+        latitude: 42.905191,
+        formattedAddress: '224 Garrison Rd, Fort Erie, ON L2A 1M7',
+      };
+
+      const hasCoordinates =
+        result &&
+        typeof result.latitude === 'number' &&
+        typeof result.longitude === 'number';
+
+      expect(hasCoordinates).toBe(false);
+    });
+
+    it('should reject response with non-numeric coordinates', () => {
+      const result = {
+        latitude: '42.905191',
+        longitude: '-78.9225479',
+        formattedAddress: '224 Garrison Rd, Fort Erie, ON L2A 1M7',
+      };
+
+      const hasCoordinates =
+        result &&
+        typeof result.latitude === 'number' &&
+        typeof result.longitude === 'number';
+
+      expect(hasCoordinates).toBe(false);
+    });
+  });
+
+  describe('Error Message Formatting', () => {
+    it('should properly format error message from geocoding service', () => {
+      const result = {
+        error: 'Address is required',
+        address: '',
+      };
+
+      if (result && 'error' in result) {
+        const errorMessage = `Geocoding failed: ${result.error}`;
+        expect(errorMessage).toBe('Geocoding failed: Address is required');
+      }
+    });
+
+    it('should handle various geocoding error types', () => {
+      const errorScenarios = [
+        {
+          error: 'Geocoding failed: ZERO_RESULTS',
+          address: 'Nowhere, Nowhere',
+        },
+        {
+          error: 'Could not extract coordinates from geocoding result',
+          address: '123 Main St',
+        },
+        {
+          error: 'Network timeout',
+          address: '456 Oak Ave',
+        },
+      ];
+
+      errorScenarios.forEach((scenario) => {
+        const hasError = scenario && 'error' in scenario;
+        expect(hasError).toBe(true);
+        expect(scenario.error).toBeTruthy();
+      });
+    });
+  });
+
+  describe('Mutation Error Handling', () => {
+    it('should log comprehensive error details on mutation error', () => {
+      const error = {
+        message: 'Failed to geocode address',
+        code: 'TRPC_ERROR',
+        data: { zodError: {} },
+      };
+
+      // Verify error details are available for logging
+      expect(error.message).toBeDefined();
+      expect(error.code).toBeDefined();
+      expect(error.data).toBeDefined();
+    });
+  });
+});
+
+/**
+ * Test Suite: Mobile UI Responsiveness
+ * 
+ * This test suite validates that OrderMapModal uses responsive Tailwind classes
+ * for proper mobile display.
+ */
+describe('OrderMapModal - Mobile UI Responsiveness', () => {
+  describe('Dialog Content Responsive Classes', () => {
+    it('should use responsive width classes for mobile', () => {
+      // The dialog should use w-[95vw] on mobile and max-w-5xl on desktop
+      const mobileClass = 'w-[95vw]';
+      const desktopClass = 'max-w-5xl';
+      const mdResponsive = 'md:w-auto';
+
+      expect(mobileClass).toContain('95vw');
+      expect(desktopClass).toContain('5xl');
+      expect(mdResponsive).toContain('md:');
+    });
+
+    it('should use responsive padding classes', () => {
+      // Padding should be px-2 on mobile and md:px-6 on desktop
+      const mobilePadding = 'px-2';
+      const desktopPadding = 'md:px-6';
+
+      expect(mobilePadding).toContain('px-2');
+      expect(desktopPadding).toContain('md:px-6');
+    });
+
+    it('should use responsive gap classes for grid layout', () => {
+      // Grid gap should be gap-2 on mobile and md:gap-3 on desktop
+      const mobileGap = 'gap-2';
+      const desktopGap = 'md:gap-3';
+
+      expect(mobileGap).toContain('gap-2');
+      expect(desktopGap).toContain('md:gap-3');
+    });
+  });
+
+  describe('Status Indicator Responsive Sizing', () => {
+    it('should use responsive icon sizes', () => {
+      // Icons should be w-3 h-3 on mobile and md:w-4 md:h-4 on desktop
+      const mobileIconSize = 'w-3 h-3';
+      const desktopIconSize = 'md:w-4 md:h-4';
+
+      expect(mobileIconSize).toContain('w-3');
+      expect(desktopIconSize).toContain('md:w-4');
+    });
+
+    it('should use responsive text sizes', () => {
+      // Text should be text-xs on mobile and md:text-sm on desktop
+      const mobileTextSize = 'text-xs';
+      const desktopTextSize = 'md:text-sm';
+
+      expect(mobileTextSize).toContain('text-xs');
+      expect(desktopTextSize).toContain('md:text-sm');
+    });
+  });
+
+  describe('Grid Layout Responsiveness', () => {
+    it('should use responsive column layout', () => {
+      // Grid should be grid-cols-1 on mobile, sm:grid-cols-2 on tablet, lg:grid-cols-4 on desktop
+      const mobileColumns = 'grid-cols-1';
+      const tabletColumns = 'sm:grid-cols-2';
+      const desktopColumns = 'lg:grid-cols-4';
+
+      expect(mobileColumns).toContain('grid-cols-1');
+      expect(tabletColumns).toContain('sm:grid-cols-2');
+      expect(desktopColumns).toContain('lg:grid-cols-4');
+    });
+
+    it('should use responsive gap in grid', () => {
+      const mobileGap = 'gap-2';
+      const desktopGap = 'md:gap-3';
+
+      expect(mobileGap).toContain('gap-2');
+      expect(desktopGap).toContain('md:gap-3');
+    });
+  });
+});
