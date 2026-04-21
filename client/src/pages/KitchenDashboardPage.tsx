@@ -212,8 +212,8 @@ export default function KitchenDashboardPage() {
 
       {/* Tabs */}
       <div className="max-w-7xl mx-auto">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full" defaultValue="active">
+          <TabsList className="grid w-full grid-cols-2 mb-6 bg-white rounded-lg shadow-sm">
             <TabsTrigger value="active" className="flex items-center gap-2">
               <ChefHat className="w-4 h-4" />
               Active Orders ({pendingOrders.length})
@@ -225,7 +225,7 @@ export default function KitchenDashboardPage() {
           </TabsList>
 
           {/* Active Orders Tab */}
-          <TabsContent value="active" className="space-y-4">
+          <TabsContent value="active" className="space-y-4 mt-6">
             {isLoading ? (
               <div className="text-center py-8">
                 <p className="text-muted-foreground">Loading orders...</p>
@@ -242,7 +242,7 @@ export default function KitchenDashboardPage() {
           </TabsContent>
 
           {/* Prepared Orders Tab */}
-          <TabsContent value="ready" className="space-y-4">
+          <TabsContent value="ready" className="space-y-4 mt-6">
             {isLoading ? (
               <div className="text-center py-8">
                 <p className="text-muted-foreground">Loading orders...</p>

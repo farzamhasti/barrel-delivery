@@ -1616,3 +1616,13 @@
 - [x] Orders move from Active Orders to Prepared Orders when marked ready
 - [x] Orders disappear from main tab when moved to Prepared Orders tab
 - [x] Real-time tab switching with cache invalidation
+
+
+## BUG FIX - Kitchen Dashboard Tab Switching
+
+- [x] Fixed tab content display by adding explicit styling to TabsContent
+- [x] Added mt-6 margin to TabsContent for proper spacing
+- [x] Added bg-white and shadow to TabsList for better visibility
+- [x] Ensured tabs switch content when clicked
+- [x] Active Orders tab shows pending orders
+- [x] Prepared Orders tab shows ready orders
