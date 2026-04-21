@@ -21,6 +21,10 @@ export default function OrderTrackingWithMap() {
 
   // Fetch today's orders with items for complete data
   const { data: allOrders = [], isLoading, refetch } = trpc.orders.getTodayOrdersWithItems.useQuery();
+  
+  // Fetch drivers for Active Drivers section
+  const { data: drivers = [], isLoading: driversLoading } = trpc.drivers.list.useQuery();
+  const activeDrivers = drivers.filter((d: any) => d.isActive);
 
   // Fetch selected order with items
   const { data: selectedOrderData } = trpc.orders.getById.useQuery(
@@ -193,43 +197,83 @@ export default function OrderTrackingWithMap() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 overflow-hidden">
-        {/* Map Section */}
+      <div className="flex flex-col gap-6 flex-1 overflow-hidden">
+        {/* Map and Drivers Side-by-Side */}
         {showMap && (
-          <div className="lg:col-span-2 flex flex-col overflow-hidden">
-            <Card className="overflow-hidden flex-1">
-              <MapView
-                initialCenter={FORT_ERIE_CENTER}
-                initialZoom={14}
-                onMapReady={(map) => {
-                  mapRef.current = map;
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-96 overflow-hidden">
+            {/* Map Section - 2/3 width */}
+            <div className="lg:col-span-2 flex flex-col overflow-hidden">
+              <Card className="overflow-hidden flex-1">
+                <MapView
+                  initialCenter={FORT_ERIE_CENTER}
+                  initialZoom={14}
+                  onMapReady={(map) => {
+                    mapRef.current = map;
 
-                  // Add restaurant marker
-                  new google.maps.Marker({
-                    map,
-                    position: RESTAURANT_ADDRESS,
-                    title: "Restaurant",
-                    label: {
-                      text: "🍽️",
-                      fontSize: "18px",
-                    },
-                    icon: {
-                      path: google.maps.SymbolPath.CIRCLE,
-                      scale: 18,
-                      fillColor: "#ef4444",
-                      fillOpacity: 1,
-                      strokeColor: "white",
-                      strokeWeight: 3,
-                    },
-                  });
-                }}
-              />
-            </Card>
+                    // Add restaurant marker
+                    new google.maps.Marker({
+                      map,
+                      position: RESTAURANT_ADDRESS,
+                      title: "Restaurant",
+                      label: {
+                        text: "🍽️",
+                        fontSize: "18px",
+                      },
+                      icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 18,
+                        fillColor: "#ef4444",
+                        fillOpacity: 1,
+                        strokeColor: "white",
+                        strokeWeight: 3,
+                      },
+                    });
+                  }}
+                />
+              </Card>
+            </div>
+            
+            {/* Active Drivers Section - 1/3 width */}
+            <div className="flex flex-col overflow-hidden">
+              <Card className="overflow-hidden flex-1 flex flex-col">
+                <div className="p-4 border-b border-border flex-shrink-0">
+                  <h3 className="text-lg font-semibold text-foreground">Active Drivers ({activeDrivers.length})</h3>
+                </div>
+                
+                {driversLoading ? (
+                  <div className="flex items-center justify-center py-8 flex-1">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
+                  </div>
+                ) : activeDrivers.length === 0 ? (
+                  <div className="p-6 text-center flex-1 flex items-center justify-center">
+                    <p className="text-muted-foreground">No active drivers</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2 overflow-y-auto flex-1 p-4">
+                    {activeDrivers.map((driver: any) => (
+                      <div
+                        key={driver.id}
+                        className="p-3 bg-muted rounded-lg border border-border hover:border-accent/50 transition-colors"
+                      >
+                        <div className="flex items-start justify-between mb-1">
+                          <div>
+                            <h4 className="font-semibold text-foreground text-sm">{driver.name}</h4>
+                            <p className="text-xs text-muted-foreground">{driver.phone}</p>
+                          </div>
+                          <Badge className="bg-green-100 text-green-800 text-xs">Active</Badge>
+                        </div>
+                        {driver.vehicle && (
+                          <p className="text-xs text-muted-foreground mt-1">{driver.vehicle}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </Card>
+            </div>
           </div>
-        )}
-
-        {/* Orders List */}
-        <div className={`${showMap ? "lg:col-span-1" : "lg:col-span-3"} flex flex-col overflow-hidden`}>
+        )}        {/* Orders List - Below Map */}
+        <div className="flex flex-col overflow-hidden flex-1">
           <h3 className="text-lg font-semibold text-foreground mb-4 flex-shrink-0">Active Orders ({orders?.length || 0})</h3>
 
           {isLoading ? (

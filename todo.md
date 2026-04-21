@@ -1673,3 +1673,12 @@
 - [x] Ensured tabs switch content when clicked
 - [x] Active Orders tab shows pending orders
 - [x] Prepared Orders tab shows ready orders
+
+## Restaurant Admin Dashboard - Order Tracking Layout
+- [x] Revert Dashboard component to original state
+- [x] Move Active Orders to bottom of map in Order Tracking tab
+- [x] Add Active Drivers section to right of map in Order Tracking tab
+- [x] Implement side-by-side layout: Map (2/3 width) + Drivers (1/3 width)
+- [x] Active Orders list below map (full width)
+- [x] Fetch and display active drivers from database
+- [x] Display driver count and status in Active Drivers section
