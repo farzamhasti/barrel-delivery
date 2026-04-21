@@ -1683,10 +1683,12 @@
 - [x] Fetch and display active drivers from database
 - [x] Display driver count and status in Active Drivers section
 
-## Kitchen Dashboard - Active Drivers Stat Card
+## Kitchen Dashboard - Active Drivers Section Redesign
 - [x] Fetch active drivers data using trpc.drivers.list.useQuery()
-- [x] Calculate active drivers count (filter where isActive = true)
-- [x] Add Active Drivers stat card to stats bar
-- [x] Update grid layout from 3 columns to 4 columns
-- [x] Display active driver count in blue color
-- [ ] Test the new stat card displays correctly
+- [x] Replace simple stat card with detailed drivers list matching Order Tracking design
+- [x] Update grid layout to show stats cards (2/3 width) and drivers section (1/3 width) side-by-side
+- [x] Display driver cards with name, phone, vehicle, and status badge
+- [x] Implement scrollable driver list with hover effects
+- [x] Add empty state handling ("No active drivers" message)
+- [x] Test the new Active Drivers section displays correctly
+- [x] Verify visual consistency with Order Tracking tab Active Drivers section

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -353,24 +353,58 @@ export default function KitchenDashboard() {
           </Button>
         </div>
 
-        {/* Stats Bar */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <Card className="p-3 bg-white/80 backdrop-blur">
-            <p className="text-xs text-muted-foreground">Pending Orders</p>
-            <p className="text-2xl font-bold text-orange-600">{pendingOrders.length}</p>
-          </Card>
-          <Card className="p-3 bg-white/80 backdrop-blur">
-            <p className="text-xs text-muted-foreground">Ready Orders</p>
-            <p className="text-2xl font-bold text-green-600">{readyOrders.length}</p>
-          </Card>
-          <Card className="p-3 bg-white/80 backdrop-blur">
-            <p className="text-xs text-muted-foreground">Total Orders</p>
-            <p className="text-2xl font-bold text-foreground">{allOrders.length}</p>
-          </Card>
-          <Card className="p-3 bg-white/80 backdrop-blur">
-            <p className="text-xs text-muted-foreground">Active Drivers</p>
-            <p className="text-2xl font-bold text-blue-600">{activeDrivers}</p>
-          </Card>
+        {/* Stats Bar with Active Drivers Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+          {/* Left: Stats Cards (3 columns) */}
+          <div className="lg:col-span-2 grid grid-cols-2 md:grid-cols-3 gap-3">
+            <Card className="p-3 bg-white/80 backdrop-blur">
+              <p className="text-xs text-muted-foreground">Pending Orders</p>
+              <p className="text-2xl font-bold text-orange-600">{pendingOrders.length}</p>
+            </Card>
+            <Card className="p-3 bg-white/80 backdrop-blur">
+              <p className="text-xs text-muted-foreground">Ready Orders</p>
+              <p className="text-2xl font-bold text-green-600">{readyOrders.length}</p>
+            </Card>
+            <Card className="p-3 bg-white/80 backdrop-blur">
+              <p className="text-xs text-muted-foreground">Total Orders</p>
+              <p className="text-2xl font-bold text-foreground">{allOrders.length}</p>
+            </Card>
+          </div>
+
+          {/* Right: Active Drivers Section */}
+          <div className="flex flex-col overflow-hidden">
+            <Card className="overflow-hidden flex-1 flex flex-col bg-white/80 backdrop-blur">
+              <div className="p-4 border-b border-border flex-shrink-0">
+                <h3 className="text-lg font-semibold text-foreground">Active Drivers ({drivers.filter((d: any) => d.isActive).length})</h3>
+              </div>
+              
+              {drivers.filter((d: any) => d.isActive).length === 0 ? (
+                <div className="p-6 text-center flex-1 flex items-center justify-center">
+                  <p className="text-muted-foreground">No active drivers</p>
+                </div>
+              ) : (
+                <div className="space-y-2 overflow-y-auto flex-1 p-4">
+                  {drivers.filter((d: any) => d.isActive).map((driver: any) => (
+                    <div
+                      key={driver.id}
+                      className="p-3 bg-muted rounded-lg border border-border hover:border-accent/50 transition-colors"
+                    >
+                      <div className="flex items-start justify-between mb-1">
+                        <div>
+                          <h4 className="font-semibold text-foreground text-sm">{driver.name}</h4>
+                          <p className="text-xs text-muted-foreground">{driver.phone}</p>
+                        </div>
+                        <Badge className="bg-green-100 text-green-800 text-xs">Active</Badge>
+                      </div>
+                      {driver.vehicle && (
+                        <p className="text-xs text-muted-foreground mt-1">{driver.vehicle}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Card>
+          </div>
         </div>
       </div>
 
