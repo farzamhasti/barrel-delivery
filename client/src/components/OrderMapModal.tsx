@@ -190,16 +190,16 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
         label: {
           text: `#${order.id}`,
           color: "white",
-          fontSize: "16px",
+          fontSize: "18px",
           fontWeight: "bold",
         },
         icon: {
           path: google.maps.SymbolPath.CIRCLE,
-          scale: 18,
-          fillColor: "#3b82f6",
+          scale: 24,
+          fillColor: "#2563eb",
           fillOpacity: 1,
           strokeColor: "white",
-          strokeWeight: 3,
+          strokeWeight: 4,
         },
         animation: google.maps.Animation.DROP,
       });
@@ -249,15 +249,15 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
         title: "Restaurant",
         label: {
           text: "🍽️",
-          fontSize: "18px",
+          fontSize: "20px",
         },
         icon: {
           path: google.maps.SymbolPath.CIRCLE,
-          scale: 16,
-          fillColor: "#ef4444",
+          scale: 22,
+          fillColor: "#dc2626",
           fillOpacity: 1,
           strokeColor: "white",
-          strokeWeight: 3,
+          strokeWeight: 4,
         },
         animation: google.maps.Animation.DROP,
       });

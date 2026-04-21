@@ -1376,3 +1376,22 @@
 - [x] Desktop sidebar scrolls independently
 - [x] Mobile layout still scrollable
 - [x] No crashes or rendering issues
+
+
+## ENHANCEMENT - Marker Visibility Improvements (COMPLETED)
+
+### Improvements Made:
+- [x] Increased customer marker size from 18 to 24 scale
+- [x] Increased restaurant marker size from 16 to 22 scale
+- [x] Improved customer marker color from #3b82f6 to darker #2563eb
+- [x] Improved restaurant marker color from #ef4444 to darker #dc2626
+- [x] Increased stroke weight from 3 to 4 for better visibility
+- [x] Increased label font sizes (18px for orders, 20px for restaurant emoji)
+- [x] Added DROP animation to markers for visual feedback
+- [x] All 69 tests passing with no functionality broken
+
+### Results:
+- Markers are now more prominent and easier to spot on the map
+- Better visual distinction between customer and restaurant locations
+- Improved user experience with animated marker drops
+- Markers display correctly on both desktop and mobile
