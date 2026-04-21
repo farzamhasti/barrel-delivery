@@ -184,7 +184,11 @@ export default function KitchenDashboard() {
     const deliveryDate = order.deliveryTime ? new Date(order.deliveryTime).toLocaleDateString() : "N/A";
 
     return (
-      <Dialog open={!!order} onOpenChange={(open) => !open && setSelectedOrder(null)}>
+      <Dialog open={!!order} onOpenChange={(open) => {
+        if (!open) {
+          setSelectedOrder(null);
+        }
+      }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <div className="flex items-center justify-between w-full">
@@ -199,11 +203,14 @@ export default function KitchenDashboard() {
                   </Badge>
                 )}
               </div>
-              <DialogClose className="text-muted-foreground hover:text-foreground" asChild>
-                <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                  <X className="h-4 w-4" />
-                </Button>
-              </DialogClose>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
+                onClick={() => setSelectedOrder(null)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
             </div>
           </DialogHeader>
 

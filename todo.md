@@ -96,6 +96,9 @@
 - [x] Integrate click handler to open modal when order card is clicked
 - [x] Test modal opening and closing functionality
 - [x] Verify order details display correctly in modal
+- [x] Fix modal flashing on and off issue
+- [x] Remove duplicate close buttons
+- [x] Ensure modal stays open until user closes it
 
 ## Current Issues
 - [x] Fix API error on /admin/menu - Fixed by implementing automatic database initialization
