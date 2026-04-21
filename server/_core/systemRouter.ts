@@ -24,6 +24,7 @@ export const systemRouter = router({
       })
     )
     .mutation(async ({ input }) => {
+      console.log(`[Login] Attempting login for username: ${input.username}, role: ${input.role}`);
       // Get credentials from database
       const credentials = await getSystemCredentials(input.username);
       
@@ -88,6 +89,23 @@ export const systemRouter = router({
     .mutation(async ({ input }) => {
       await deleteSystemSession(input.sessionToken);
       return { success: true };
+    }),
+
+  createSystemCredentials: adminProcedure
+    .input(
+      z.object({
+        username: z.string().min(1, "username is required"),
+        password: z.string().min(6, "password must be at least 6 characters"),
+        role: z.enum(["admin", "kitchen"]),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const { createSystemCredentials } = await import("../db");
+      const result = await createSystemCredentials(input.username, input.password, input.role);
+      return {
+        success: !!result,
+        message: result ? `${input.role} credentials created successfully` : "Failed to create credentials",
+      };
     }),
 
   notifyOwner: adminProcedure

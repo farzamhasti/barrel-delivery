@@ -1576,3 +1576,13 @@
 - Active (pending) orders are easy to manage
 - Ready orders are separated automatically
 - Workflow becomes faster and more efficient
+
+
+## BUG FIX - Kitchen Login Credentials Error
+
+- [x] Added demo credentials hint to KitchenLogin page (barrel_kitchen / kitchen123)
+- [x] Added createSystemCredentials function to db.ts for creating system credentials
+- [x] Added createSystemCredentials endpoint to systemRouter for admin use
+- [x] Added logging to login mutation for debugging
+- [x] Created seed script to initialize kitchen credentials
+- [x] Kitchen login page now displays demo credentials for easy access

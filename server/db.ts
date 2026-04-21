@@ -873,3 +873,29 @@ export async function geocodeAllCustomers() {
     return { geocodedCount: 0, totalCustomers: 0 };
   }
 }
+
+
+export async function createSystemCredentials(username: string, password: string, role: "admin" | "kitchen") {
+  const db = await getDb();
+  if (!db) return null;
+  
+  // Check if user already exists
+  const existing = await db.select().from(systemCredentials).where(eq(systemCredentials.username, username));
+  if (existing.length > 0) {
+    return existing[0];
+  }
+  
+  // Hash password: sha256$salt$hash
+  const salt = `${username}_salt_${Date.now()}`;
+  const hash = createHash("sha256").update(salt + password).digest("hex");
+  const passwordHash = `sha256$${salt}$${hash}`;
+  
+  const result = await db.insert(systemCredentials).values({
+    username,
+    passwordHash,
+    role,
+    isActive: true,
+  });
+  
+  return result;
+}

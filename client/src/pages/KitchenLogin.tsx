@@ -128,6 +128,13 @@ export default function KitchenLogin() {
               )}
             </Button>
 
+            {/* Demo Credentials Info */}
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-xs font-semibold text-blue-800 mb-2">Demo Credentials:</p>
+              <p className="text-xs text-blue-700">Username: <code className="bg-blue-100 px-1 rounded">barrel_kitchen</code></p>
+              <p className="text-xs text-blue-700">Password: <code className="bg-blue-100 px-1 rounded">kitchen123</code></p>
+            </div>
+
             {/* Back Link */}
             <div className="text-center">
               <button
