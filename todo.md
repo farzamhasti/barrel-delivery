@@ -1347,3 +1347,32 @@
 - [x] Map displays on desktop with sidebar
 - [x] Mobile layout still scrollable
 - [x] No crashes or rendering issues
+
+
+## CRITICAL FIX - Marker Display & Desktop Scrolling (COMPLETED)
+
+### Problem 1: Markers Not Displaying
+- [x] Fixed geocoding trigger with proper dependency array
+- [x] Added !isGeocoding check to prevent duplicate geocoding calls
+- [x] Simplified marker effect dependencies to [geocodedLocation, mapReady, order.id]
+- [x] Removed excessive dependencies that caused repeated effect runs
+- [x] Ensured marker creation only runs when geocoding completes and map is ready
+
+### Problem 2: No Scrolling on Desktop Sidebar
+- [x] Added md:max-h-[calc(85vh-60px)] to sidebar for proper height constraint
+- [x] Sidebar now scrolls independently on desktop while map stays visible
+- [x] Mobile layout unchanged - full scrollable content
+
+### Implementation Details:
+- Fixed geocoding useEffect: Added all proper dependencies (open, order.customerAddress, geocodedLocation, isGeocoding, geocodeMutation)
+- Simplified marker effect: Only depends on geocodedLocation, mapReady, and order.id
+- Desktop sidebar: Now has max-height constraint with overflow-y-auto for scrolling
+- Map stays fixed on desktop while sidebar scrolls independently
+
+### Verification:
+- [x] All 69 OrderMapModal tests passing
+- [x] Geocoding triggers correctly when modal opens
+- [x] Markers display after geocoding completes
+- [x] Desktop sidebar scrolls independently
+- [x] Mobile layout still scrollable
+- [x] No crashes or rendering issues

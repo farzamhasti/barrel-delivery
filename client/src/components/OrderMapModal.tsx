@@ -108,12 +108,12 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
 
   // Trigger geocoding when modal opens and address is available
   useEffect(() => {
-    if (open && order.customerAddress && !geocodedLocation) {
+    if (open && order.customerAddress && !geocodedLocation && !isGeocoding) {
       console.log('[OrderMapModal] Triggering geocoding for address:', order.customerAddress);
       setIsGeocoding(true);
       geocodeMutation.mutate({ address: order.customerAddress });
     }
-  }, [open, order.customerAddress]);
+  }, [open, order.customerAddress, geocodedLocation, isGeocoding, geocodeMutation]);
 
   // Add markers when geocoded location is ready
   useEffect(() => {
@@ -296,7 +296,7 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
     } catch (error) {
       console.error('[OrderMapModal] Error displaying markers on map:', error);
     }
-  }, [geocodedLocation, mapReady, order.id, order.customer?.name, order.customerAddress, order.area, order.status, order.notes]);
+  }, [geocodedLocation, mapReady, order.id]);
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -369,7 +369,7 @@ export function OrderMapModal({ open, onOpenChange, order }: OrderMapModalProps)
         </div>
 
         {/* Order Details Sidebar - Below map on mobile, right side on desktop */}
-        <div className="col-span-3 md:col-span-1 flex flex-col gap-2 md:gap-3 overflow-y-auto md:overflow-y-auto px-2 md:px-4 pb-3 md:pb-6 md:border-l md:border-gray-200">
+        <div className="col-span-3 md:col-span-1 flex flex-col gap-2 md:gap-3 overflow-y-auto px-2 md:px-4 pb-3 md:pb-6 md:border-l md:border-gray-200 md:max-h-[calc(85vh-60px)]">
           {/* Status Card */}
           <Card className="p-2 md:p-3 flex-shrink-0">
             <h3 className="font-semibold text-xs md:text-sm text-gray-600 mb-2">Status</h3>
