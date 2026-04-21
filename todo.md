@@ -68,6 +68,15 @@
 - [x] Modify Home page to show Admin Dashboard and Driver Panel directly without login requirement
 
 
+## Kitchen Dashboard - Tab Filtering Fix
+- [x] Create separate tabs for Pending Orders (Active) and Ready Orders (Prepared)
+- [x] Filter orders by status in each tab
+- [x] Real-time order movement between tabs when status changes
+- [x] Update tab counts and counters when orders move
+- [x] Sort orders by delivery time with urgency indicators
+- [x] Write comprehensive tests for tab filtering and real-time updates (8 tests passing)
+- [x] Verify no full page reload required for tab switching
+
 ## Current Issues
 - [x] Fix API error on /admin/menu - Fixed by implementing automatic database initialization
 

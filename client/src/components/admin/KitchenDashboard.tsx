@@ -1,15 +1,19 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, CheckCircle2, Clock, MapPin, LogOut } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { LogOut, ChefHat, MapPin, Clock, AlertCircle, CheckCircle2, Flame } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 
 export default function KitchenDashboard() {
   const [, setLocation] = useLocation();
-  
+  const utils = trpc.useUtils();
+  const [activeTab, setActiveTab] = useState("active");
+
   const handleLogout = () => {
     // Clear session
     localStorage.removeItem("systemSessionToken");
@@ -18,25 +22,40 @@ export default function KitchenDashboard() {
     // Redirect to kitchen login
     setLocation("/kitchen-login");
   };
-  
-  // Fetch all orders with items and delivery time for today
+
+  // Fetch today's orders with items
   const { data: allOrders = [], isLoading, refetch } = trpc.orders.getTodayOrdersWithItems.useQuery();
-  
-  // Filter to orders that need preparation
-  const orders = allOrders.filter((o: any) => 
-    ["Pending", "Ready"].includes(o.status)
-  );
 
   // Mutation to update order status to ready
   const updateStatusMutation = trpc.orders.updateStatus.useMutation({
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success("Order marked as ready!");
-      refetch();
+      // Immediately invalidate the cache and refetch
+      await utils.orders.getTodayOrdersWithItems.invalidate();
+      await refetch();
     },
     onError: (error) => {
       toast.error(error.message || "Failed to update order status");
     },
   });
+
+  // Filter to pending orders only (for active view)
+  const pendingOrders = allOrders.filter((o: any) => o.status === "Pending");
+
+  // Filter to ready orders only
+  const readyOrders = allOrders.filter((o: any) => o.status === "Ready");
+
+  // Sort by delivery time (priority)
+  const sortByDeliveryTime = (orders: any[]) => {
+    return [...orders].sort((a, b) => {
+      const timeA = a.deliveryTime ? new Date(a.deliveryTime).getTime() : Infinity;
+      const timeB = b.deliveryTime ? new Date(b.deliveryTime).getTime() : Infinity;
+      return timeA - timeB;
+    });
+  };
+
+  const sortedPendingOrders = sortByDeliveryTime(pendingOrders);
+  const sortedReadyOrders = sortByDeliveryTime(readyOrders);
 
   // Auto-refetch every 3 seconds for real-time updates
   useEffect(() => {
@@ -46,199 +65,223 @@ export default function KitchenDashboard() {
     return () => clearInterval(interval);
   }, [refetch]);
 
-  const pendingCount = orders.filter((o: any) => o.status === "Pending").length;
-  const readyCount = orders.filter((o: any) => o.status === "Ready").length;
+  // Calculate urgency level based on delivery time
+  const getUrgencyLevel = (deliveryTime: string | null) => {
+    if (!deliveryTime) return "normal";
+    
+    const now = new Date();
+    const delivery = new Date(deliveryTime);
+    const minutesUntilDelivery = (delivery.getTime() - now.getTime()) / (1000 * 60);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Pending":
-        return "bg-yellow-100 text-yellow-800";
-      case "Ready":
-        return "bg-blue-100 text-blue-800";
+    if (minutesUntilDelivery < 0) return "late"; // Past delivery time
+    if (minutesUntilDelivery < 15) return "urgent"; // Less than 15 minutes
+    if (minutesUntilDelivery < 30) return "soon"; // Less than 30 minutes
+    return "normal"; // 30+ minutes
+  };
+
+  const getUrgencyColor = (urgency: string) => {
+    switch (urgency) {
+      case "late":
+        return "border-red-500 bg-red-50 hover:bg-red-100";
+      case "urgent":
+        return "border-orange-500 bg-orange-50 hover:bg-orange-100";
+      case "soon":
+        return "border-yellow-500 bg-yellow-50 hover:bg-yellow-100";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "border-green-500 bg-green-50 hover:bg-green-100";
     }
   };
 
-  const handleMarkReady = (orderId: number) => {
-    updateStatusMutation.mutate({
-      orderId,
-      status: "Ready",
-    });
+  const getUrgencyBadgeColor = (urgency: string) => {
+    switch (urgency) {
+      case "late":
+        return "bg-red-500 text-white";
+      case "urgent":
+        return "bg-orange-500 text-white";
+      case "soon":
+        return "bg-yellow-500 text-white";
+      default:
+        return "bg-green-500 text-white";
+    }
   };
 
-  return (
-    <div className="space-y-6 p-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold text-foreground">Kitchen Dashboard</h2>
-          <p className="text-muted-foreground mt-1">Manage orders and mark them as ready</p>
+  const CompactOrderCard = ({ order }: { order: any }) => {
+    const urgency = getUrgencyLevel(order.deliveryTime);
+    const itemsPreview = order.items?.slice(0, 2).map((item: any) => item.menuItemName).join(", ") || "No items";
+    const hasMoreItems = (order.items?.length || 0) > 2;
+    const deliveryTime = order.deliveryTime ? new Date(order.deliveryTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "N/A";
+
+    return (
+      <Card
+        className={`p-3 cursor-pointer transition-all border-2 flex flex-col ${getUrgencyColor(urgency)}`}
+        onClick={() => {}}
+      >
+        {/* Order Header with Number and Urgency Badge */}
+        <div className="flex items-start justify-between gap-2 mb-2">
+          <h3 className="text-lg font-bold text-foreground">#{order.id}</h3>
+          {urgency !== "normal" && (
+            <Badge className={`${getUrgencyBadgeColor(urgency)} text-xs px-2 py-0.5 flex items-center gap-1`}>
+              {urgency === "late" && <AlertCircle className="w-3 h-3" />}
+              {urgency === "urgent" && <Flame className="w-3 h-3" />}
+              {urgency === "soon" && <Clock className="w-3 h-3" />}
+              {urgency === "late" ? "LATE" : urgency === "urgent" ? "URGENT" : "SOON"}
+            </Badge>
+          )}
         </div>
-        <Button
-          variant="outline"
-          onClick={handleLogout}
-          className="gap-2"
-        >
-          <LogOut className="w-4 h-4" />
-          Logout
-        </Button>
-      </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Pending Orders */}
-        <Card className="bg-yellow-50 border-yellow-200">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Pending Orders</p>
-                <p className="text-3xl font-bold text-yellow-800">{pendingCount}</p>
-              </div>
-              <AlertCircle className="w-8 h-8 text-yellow-600" />
-            </div>
-          </CardContent>
-        </Card>
+        {/* Items Preview */}
+        <div className="mb-2">
+          <p className="text-xs text-muted-foreground line-clamp-1">{itemsPreview}{hasMoreItems ? "..." : ""}</p>
+        </div>
 
-        {/* Ready Orders */}
-        <Card className="bg-blue-50 border-blue-200">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Ready Orders</p>
-                <p className="text-3xl font-bold text-blue-800">{readyCount}</p>
-              </div>
-              <CheckCircle2 className="w-8 h-8 text-blue-600" />
-            </div>
-          </CardContent>
-        </Card>
+        {/* Delivery Time */}
+        <div className="flex items-center gap-1 mb-3 text-xs text-muted-foreground">
+          <Clock className="w-3 h-3" />
+          <span className="font-semibold">{deliveryTime}</span>
+        </div>
 
-        {/* Total Orders */}
-        <Card className="bg-green-50 border-green-200">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Total Orders</p>
-                <p className="text-3xl font-bold text-green-800">{orders.length}</p>
-              </div>
-              <Clock className="w-8 h-8 text-green-600" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Orders Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {isLoading ? (
-          <div className="col-span-full flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
+        {/* Notes (if exists) */}
+        {order.notes && (
+          <div className="mb-3 p-2 bg-white/50 rounded text-xs text-muted-foreground line-clamp-2">
+            📝 {order.notes}
           </div>
-        ) : orders.length === 0 ? (
-          <Card className="col-span-full p-12 text-center bg-green-50 border-green-200">
-            <div className="text-4xl mb-4">✓</div>
-            <p className="text-lg font-semibold text-green-800">All Orders Complete!</p>
-            <p className="text-sm text-green-700 mt-2">No pending orders at the moment.</p>
+        )}
+
+        {/* Mark Ready Button */}
+        <Button
+          size="sm"
+          className="w-full mt-auto bg-green-600 hover:bg-green-700 text-white"
+          onClick={(e) => {
+            e.stopPropagation();
+            updateStatusMutation.mutate({
+              orderId: order.id,
+              status: "Ready",
+            });
+          }}
+          disabled={updateStatusMutation.isPending}
+        >
+          {updateStatusMutation.isPending ? "Updating..." : "Mark Ready"}
+        </Button>
+      </Card>
+    );
+  };
+
+  const EmptyState = ({ message }: { message: string }) => (
+    <div className="flex flex-col items-center justify-center py-12 text-center">
+      <CheckCircle2 className="w-12 h-12 text-green-500 mb-4" />
+      <p className="text-lg font-semibold text-foreground">{message}</p>
+      <p className="text-sm text-muted-foreground mt-2">Great job! Keep up the good work.</p>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100 p-4 md:p-6">
+      {/* Header */}
+      <div className="max-w-7xl mx-auto mb-6">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <ChefHat className="w-8 h-8 text-orange-600" />
+            <h1 className="text-3xl md:text-4xl font-bold text-foreground">Kitchen Dashboard</h1>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleLogout()}
+            className="flex items-center gap-2"
+          >
+            <LogOut className="w-4 h-4" />
+            Logout
+          </Button>
+        </div>
+
+        {/* Stats Bar */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <Card className="p-3 bg-white/80 backdrop-blur">
+            <p className="text-xs text-muted-foreground">Pending Orders</p>
+            <p className="text-2xl font-bold text-orange-600">{pendingOrders.length}</p>
           </Card>
-        ) : (
-          orders.map((order: any) => (
-            <Card
-              key={order.id}
-              className={`p-6 border-2 flex flex-col ${
-                order.status === "Pending"
-                  ? "border-yellow-300 bg-yellow-50"
-                  : "border-blue-300 bg-blue-50"
-              }`}
-            >
-              {/* Order Header */}
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <h3 className="text-2xl font-bold text-foreground">Order #{order.id}</h3>
-                  <p className="text-sm text-muted-foreground">{order.customer?.name}</p>
-                </div>
-                <Badge className={`${getStatusColor(order.status)} text-sm px-3 py-1`}>
-                  {order.status}
-                </Badge>
+          <Card className="p-3 bg-white/80 backdrop-blur">
+            <p className="text-xs text-muted-foreground">Ready Orders</p>
+            <p className="text-2xl font-bold text-green-600">{readyOrders.length}</p>
+          </Card>
+          <Card className="p-3 bg-white/80 backdrop-blur">
+            <p className="text-xs text-muted-foreground">Urgent Orders</p>
+            <p className="text-2xl font-bold text-red-600">
+              {pendingOrders.filter((o: any) => getUrgencyLevel(o.deliveryTime) === "late").length}
+            </p>
+          </Card>
+          <Card className="p-3 bg-white/80 backdrop-blur">
+            <p className="text-xs text-muted-foreground">Total Orders</p>
+            <p className="text-2xl font-bold text-foreground">{allOrders.length}</p>
+          </Card>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="max-w-7xl mx-auto">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-6 bg-white rounded-lg shadow-md">
+            <TabsTrigger value="active" className="flex items-center gap-2">
+              <ChefHat className="w-4 h-4" />
+              Active Orders ({pendingOrders.length})
+            </TabsTrigger>
+            <TabsTrigger value="ready" className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4" />
+              Prepared Orders ({readyOrders.length})
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Active Orders Tab */}
+          <TabsContent value="active" className="mt-6">
+            {isLoading ? (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">Loading orders...</p>
               </div>
-
-              {/* Customer Address */}
-              <div className="flex items-start gap-2 mb-4 pb-4 border-b border-border">
-                <MapPin className="w-5 h-5 text-muted-foreground flex-shrink-0 mt-0.5" />
-                <div className="flex-1">
-                  <p className="text-sm text-muted-foreground line-clamp-2">{order.customerAddress || order.customer?.address}</p>
-                  {order.area && <p className="text-xs font-semibold text-accent mt-1">Area: {order.area}</p>}
-                </div>
+            ) : sortedPendingOrders.length === 0 ? (
+              <EmptyState message="All Orders Prepared! 🎉" />
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 auto-rows-max">
+                {sortedPendingOrders.map((order: any) => (
+                  <CompactOrderCard key={order.id} order={order} />
+                ))}
               </div>
+            )}
+          </TabsContent>
 
-              {/* Order Items */}
-              <div className="mb-4 flex-1">
-                <h4 className="font-semibold text-foreground mb-2">Items:</h4>
-                {order.items?.length ? (
-                  <div className="space-y-1">
-                    {order.items.map((item: any, idx: number) => (
-                      <div key={idx} className="flex items-center justify-between text-sm">
-                        <span className="text-foreground">{item.menuItemName}</span>
-                        <span className="font-semibold text-accent">x{item.quantity}</span>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">No items</p>
-                )}
+          {/* Prepared Orders Tab */}
+          <TabsContent value="ready" className="mt-6">
+            {isLoading ? (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">Loading orders...</p>
               </div>
-
-              {/* Customer Notes */}
-              {order.notes && (
-                <div className="mb-4 pb-4 border-t border-border pt-4">
-                  <p className="text-xs font-semibold text-muted-foreground mb-1">NOTES:</p>
-                  <p className="text-sm text-foreground bg-yellow-100 p-2 rounded border border-yellow-300">
-                    {order.notes}
-                  </p>
-                </div>
-              )}
-
-              {/* Delivery Time */}
-              {order.hasDeliveryTime && order.deliveryTime && (
-                <div className="mb-4 pb-4 border-t border-border pt-4">
-                  <div className="flex items-start gap-2">
-                    <Clock className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-xs font-semibold text-green-700 mb-1">DELIVERY TIME:</p>
-                      <p className="text-sm font-semibold text-green-800 bg-green-100 p-2 rounded border border-green-300">
-                        {new Date(order.deliveryTime).toLocaleString()}
+            ) : sortedReadyOrders.length === 0 ? (
+              <EmptyState message="No Prepared Orders" />
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 auto-rows-max">
+                {sortedReadyOrders.map((order: any) => (
+                  <Card key={order.id} className="p-3 border-2 border-green-500 bg-green-50">
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <h3 className="text-lg font-bold text-foreground">#{order.id}</h3>
+                      <Badge className="bg-green-600 text-white text-xs px-2 py-0.5">Ready</Badge>
+                    </div>
+                    <div className="mb-2">
+                      <p className="text-xs text-muted-foreground line-clamp-1">
+                        {order.items?.slice(0, 2).map((item: any) => item.menuItemName).join(", ")}
+                        {(order.items?.length || 0) > 2 ? "..." : ""}
                       </p>
                     </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Action Button */}
-              {order.status === "Pending" && (
-                <Button
-                  className="w-full gap-2 bg-green-600 hover:bg-green-700 text-white"
-                  onClick={() => handleMarkReady(order.id)}
-                  disabled={updateStatusMutation.isPending}
-                >
-                  {updateStatusMutation.isPending ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      Updating...
-                    </>
-                  ) : (
-                    <>
-                      ✓ Mark Ready
-                    </>
-                  )}
-                </Button>
-              )}
-
-              {order.status === "Ready" && (
-                <div className="w-full p-3 bg-blue-100 border border-blue-300 rounded text-center">
-                  <p className="text-sm font-semibold text-blue-800">Ready for Pickup</p>
-                </div>
-              )}
-            </Card>
-          ))
-        )}
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <Clock className="w-3 h-3" />
+                      <span className="font-semibold">
+                        {order.deliveryTime ? new Date(order.deliveryTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "N/A"}
+                      </span>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
