@@ -398,16 +398,35 @@ export async function getTodayOrdersWithItems() {
   
   const parts = formatter.formatToParts(now);
   const year = parseInt(parts.find((p) => p.type === "year")?.value || "2024");
-  const month = parseInt(parts.find((p) => p.type === "month")?.value || "1") - 1;
+  const month = parseInt(parts.find((p) => p.type === "month")?.value || "1");
   const day = parseInt(parts.find((p) => p.type === "day")?.value || "1");
   
-  // Create start and end of day in UTC that corresponds to America/Toronto midnight
-  const localDate = new Date(year, month, day, 0, 0, 0, 0);
-  const utcDate = new Date(localDate.toLocaleString("en-US", { timeZone: "UTC" }));
-  const tzDate = new Date(localDate.toLocaleString("en-US", { timeZone: "America/Toronto" }));
-  const offset = utcDate.getTime() - tzDate.getTime();
+  // Calculate start of day (00:00:00) in America/Toronto timezone
+  // We need to find what UTC time corresponds to midnight Toronto time
+  const torontoMidnight = new Date(year, month - 1, day, 0, 0, 0, 0);
   
-  const startOfDay = new Date(localDate.getTime() - offset);
+  // Get what time the torontoMidnight date shows in Toronto timezone
+  const torontoFormatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Toronto",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
+  
+  const torontoParts = torontoFormatter.formatToParts(torontoMidnight);
+  const torontoHour = parseInt(torontoParts.find((p) => p.type === "hour")?.value || "0");
+  const torontoMinute = parseInt(torontoParts.find((p) => p.type === "minute")?.value || "0");
+  const torontoSecond = parseInt(torontoParts.find((p) => p.type === "second")?.value || "0");
+  
+  // Calculate the offset in milliseconds
+  const offsetMs = (torontoHour * 60 + torontoMinute) * 60 * 1000 + torontoSecond * 1000;
+  
+  // Start of day in UTC = midnight Toronto time
+  const startOfDay = new Date(torontoMidnight.getTime() - offsetMs);
   const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000);
   
   const todayOrders = await db
