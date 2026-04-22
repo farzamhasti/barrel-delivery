@@ -1933,3 +1933,20 @@
 - [x] Removed phone and vehicleType from KitchenDashboard Active Drivers
 - [x] Removed Vehicle and Phone cards from DriverDashboard personal info
 - [x] Added "Est. Return" time display with Clock icon to both dashboards
+
+
+## FEATURE - Convert Active Drivers to Table Format
+
+- [x] Convert "Active Drivers" section in Admin Dashboard to table format
+- [x] Add columns: Name, Status, Est. Return (no Vehicle column)
+- [x] Remove phone number column
+- [x] Remove vehicle type from driver name display
+- [x] Display estimated return time as a separate column
+- [x] Format table with proper headers and rows
+- [x] Ensure responsive design for mobile
+- [x] Test table display on all screen sizes
+- [x] Verify data privacy with new table format
+- [x] Write comprehensive Active Drivers table tests (11 tests passing)
+- [x] Verified table headers and structure
+- [x] Confirmed phone and vehicle columns removed
+- [x] Validated responsive design and hover effects
