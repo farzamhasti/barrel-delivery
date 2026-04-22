@@ -2,12 +2,16 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Package2, Truck, ChefHat } from "lucide-react";
+import { DeveloperCredit } from "@/components/DeveloperCredit";
 
 export default function Home() {
   const [, setLocation] = useLocation();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-card to-muted/30 flex flex-col">
+      {/* Developer Credit */}
+      <DeveloperCredit />
+      
       {/* Header */}
       <header className="border-b border-border/40 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">

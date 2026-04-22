@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { AlertCircle, Lock, User, ChefHat } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+import { DeveloperCredit } from "@/components/DeveloperCredit";
 
 export default function KitchenLogin() {
   const [, setLocation] = useLocation();
@@ -49,7 +50,9 @@ export default function KitchenLogin() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-100 flex flex-col">
+      <DeveloperCredit />
+      <div className="flex-1 flex items-center justify-center p-4">
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="space-y-2">
           <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-orange-600 mx-auto mb-4">
@@ -141,6 +144,7 @@ export default function KitchenLogin() {
           </form>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }

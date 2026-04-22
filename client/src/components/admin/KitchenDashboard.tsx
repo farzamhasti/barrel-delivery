@@ -9,6 +9,7 @@ import { LogOut, ChefHat, MapPin, Clock, AlertCircle, CheckCircle2, Flame, X, Ca
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
+import { DeveloperCredit } from "@/components/DeveloperCredit";
 
 export default function KitchenDashboard() {
   const [, setLocation] = useLocation();
@@ -349,7 +350,12 @@ export default function KitchenDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100 p-4 md:p-6">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100 flex flex-col">
+      {/* Developer Credit */}
+      <DeveloperCredit />
+      
+      {/* Main Content */}
+      <div className="flex-1 p-4 md:p-6">
       {/* Header */}
       <div className="max-w-7xl mx-auto mb-6">
         <div className="flex items-center justify-between mb-6">
@@ -492,6 +498,7 @@ export default function KitchenDashboard() {
 
       {/* Order Detail Modal */}
       <OrderDetailModal order={selectedOrder} />
+      </div>
     </div>
   );
 }

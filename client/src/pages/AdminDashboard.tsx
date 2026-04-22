@@ -3,6 +3,7 @@ import { useRoute } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/useMobile";
+import { DeveloperCredit } from "@/components/DeveloperCredit";
 
 import { Menu, Package2, Truck, LogOut, Settings, Plus, Map, X } from "lucide-react";
 import MenuManagement from "@/components/admin/MenuManagement";
@@ -56,6 +57,9 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      {/* Developer Credit */}
+      <DeveloperCredit />
+      
       {/* Mobile Header - Always visible on mobile */}
       {isMobile && (
         <header className="border-b border-border bg-card px-4 py-3 flex items-center justify-between sticky top-0 z-40">

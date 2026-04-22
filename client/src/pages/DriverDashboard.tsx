@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useLocation } from "wouter";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DeveloperCredit } from "@/components/DeveloperCredit";
 
 const DRIVER_SESSION_KEY = "driver_session_token";
 
@@ -147,7 +148,9 @@ export default function DriverDashboard() {
   // Login Form
   if (!isLoggedIn || !currentDriver) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col">
+        <DeveloperCredit />
+        <div className="flex-1 flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl">Driver Login</CardTitle>
@@ -206,13 +209,15 @@ export default function DriverDashboard() {
             </form>
           </CardContent>
         </Card>
+        </div>
       </div>
     );
   }
 
   // Driver Dashboard
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <DeveloperCredit />
       {/* Header */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
