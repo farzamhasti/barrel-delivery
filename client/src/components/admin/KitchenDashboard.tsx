@@ -145,10 +145,18 @@ export default function KitchenDashboard() {
           <p className="text-xs text-muted-foreground line-clamp-1">{itemsPreview}{hasMoreItems ? "..." : ""}</p>
         </div>
 
-        {/* Delivery Time */}
-        <div className="flex items-center gap-1 mb-3 text-xs text-muted-foreground">
-          <Clock className="w-3 h-3" />
-          <span className="font-semibold">{deliveryTime}</span>
+        {/* Area and Delivery Time */}
+        <div className="flex items-center gap-2 mb-3 text-xs">
+          {order.area && (
+            <div className="flex items-center gap-1 px-2 py-1 bg-orange-100 text-orange-700 rounded font-semibold">
+              <MapPin className="w-3 h-3" />
+              <span>{order.area}</span>
+            </div>
+          )}
+          <div className="flex items-center gap-1 text-muted-foreground">
+            <Clock className="w-3 h-3" />
+            <span className="font-semibold">{deliveryTime}</span>
+          </div>
         </div>
 
         {/* Notes (if exists) */}
