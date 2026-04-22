@@ -1950,3 +1950,17 @@
 - [x] Verified table headers and structure
 - [x] Confirmed phone and vehicle columns removed
 - [x] Validated responsive design and hover effects
+
+
+## FEATURE - Update Drivers Table in Order Tracking and Kitchen Dashboard
+
+- [x] Convert Order Tracking Active Drivers to table format
+- [x] Convert Kitchen Dashboard Active Drivers to table format
+- [x] Use same table structure: Name, Status, Est. Return columns
+- [x] Remove phone and vehicle information
+- [x] Ensure consistent styling across all dashboards
+- [x] Test responsive design on mobile and desktop
+- [x] Verify data privacy improvements
+- [x] Write comprehensive tests for Order Tracking table format (8 tests passing)
+- [x] Write comprehensive tests for Kitchen Dashboard table format (8 tests passing)
+- [x] All 16 new tests passing with 100% success rate

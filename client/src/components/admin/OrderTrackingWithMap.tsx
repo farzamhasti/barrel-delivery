@@ -252,24 +252,27 @@ export default function OrderTrackingWithMap() {
                     <p className="text-muted-foreground">No active drivers</p>
                   </div>
                 ) : (
-                  <div className="space-y-2 overflow-y-auto flex-1 p-4">
-                    {activeDrivers.map((driver: any) => (
-                      <div
-                        key={driver.id}
-                        className="p-3 bg-muted rounded-lg border border-border hover:border-accent/50 transition-colors"
-                      >
-                        <div className="flex items-start justify-between mb-2">
-                          <div>
-                            <h4 className="font-semibold text-foreground text-sm">{driver.name}</h4>
-                          </div>
-                          <Badge className="bg-green-100 text-green-800 text-xs">Active</Badge>
-                        </div>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <Clock className="w-3 h-3" />
-                          <span>Est. Return: {driver.estimatedReturnTime || '--'}</span>
-                        </div>
-                      </div>
-                    ))}
+                  <div className="overflow-x-auto flex-1">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="border-b border-border bg-muted/50">
+                          <th className="text-left py-2 px-3 font-semibold">Name</th>
+                          <th className="text-left py-2 px-3 font-semibold">Status</th>
+                          <th className="text-left py-2 px-3 font-semibold">Est. Return</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {activeDrivers.map((driver: any) => (
+                          <tr key={driver.id} className="border-b border-border hover:bg-muted/30">
+                            <td className="py-2 px-3">{driver.name}</td>
+                            <td className="py-2 px-3">
+                              <Badge className="bg-green-100 text-green-800 text-xs">Online</Badge>
+                            </td>
+                            <td className="py-2 px-3 text-muted-foreground">{driver.estimatedReturnTime || '~15 min'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 )}
               </Card>
