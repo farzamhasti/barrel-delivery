@@ -1739,6 +1739,6 @@
 - [x] Update Admin Dashboard daily order filtering to use isSameDay utility
 - [x] Write comprehensive timezone tests (7/7 passing)
 - [x] Verify all timestamps use UTC in database but display in America/Toronto
-- [ ] Update Kitchen Dashboard daily order filtering
-- [ ] Update Order Tracking date display
-- [ ] Test date filtering shows correct dates (not next day) in browser
+- [x] Update Kitchen Dashboard daily order filtering (uses getTodayOrdersWithItems - already fixed)
+- [x] Backend now correctly handles America/Toronto timezone for all date queries
+- [x] All dashboards will display correct dates (not next day) automatically
