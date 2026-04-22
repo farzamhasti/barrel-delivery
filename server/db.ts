@@ -579,7 +579,10 @@ export async function updateOrderStatus(orderId: number, status: any) {
 export async function assignOrderToDriver(orderId: number, driverId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  return db.update(orders).set({ driverId }).where(eq(orders.id, orderId));
+  return db.update(orders).set({ 
+    driverId,
+    status: "On the Way"
+  }).where(eq(orders.id, orderId));
 }
 
 // Order Items

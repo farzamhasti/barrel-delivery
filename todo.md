@@ -1743,3 +1743,19 @@
 - [x] Update Kitchen Dashboard daily order filtering (uses getTodayOrdersWithItems - already fixed)
 - [x] Backend now correctly handles America/Toronto timezone for all date queries
 - [x] All dashboards will display correct dates (not next day) automatically
+
+
+## FEATURE - Driver Assignment in Order Tracking
+
+- [x] Create assignOrderToDriver tRPC procedure in server/routers.ts (already exists as assignDriver)
+- [x] Update assignOrderToDriver function to set status = "On the Way" in server/db.ts
+- [x] Create DriverSelectionModal component for driver selection
+- [x] Add "Send to Driver" button to each order card in Order Tracking
+- [x] Implement online driver filtering (status = online only) in modal
+- [x] Update order status to "On the Way" after assignment
+- [x] Update driver_id field when assigning order
+- [x] Implement real-time cache invalidation after assignment (utils.orders.getTodayOrdersWithItems.invalidate)
+- [x] Write comprehensive driver assignment tests (6 tests)
+- [ ] Test driver assignment workflow in browser
+- [ ] Verify driver sees assigned order in their dashboard immediately
+- [ ] Verify order disappears from waiting/ready state after assignment

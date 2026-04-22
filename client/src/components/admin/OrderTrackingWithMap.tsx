@@ -2,10 +2,11 @@ import { useState, useRef, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MapPin, Eye, EyeOff, Clock } from "lucide-react";
+import { MapPin, Eye, EyeOff, Clock, Send } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { invalidateOrderCache } from "@/lib/invalidation";
 import { MapView } from "@/components/Map";
+import { DriverSelectionModal } from "@/components/DriverSelectionModal";
 
 
 const FORT_ERIE_CENTER = { lat: 42.905191, lng: -78.9225479 };
@@ -16,6 +17,8 @@ export default function OrderTrackingWithMap() {
 
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
   const [showMap, setShowMap] = useState(true);
+  const [showDriverModal, setShowDriverModal] = useState(false);
+  const [orderToAssign, setOrderToAssign] = useState<number | null>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.Marker[]>([]);
 
@@ -363,6 +366,18 @@ export default function OrderTrackingWithMap() {
                             <p className="text-muted-foreground">Notes: {selectedOrderData.notes}</p>
                           </div>
                         )}
+                        <div className="pt-3 border-t border-border mt-3">
+                          <Button
+                            onClick={() => {
+                              setOrderToAssign(order.id);
+                              setShowDriverModal(true);
+                            }}
+                            className="w-full bg-accent hover:bg-accent/90 text-white flex items-center justify-center gap-2"
+                          >
+                            <Send className="w-4 h-4" />
+                            Send to Driver
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   )}
@@ -374,6 +389,20 @@ export default function OrderTrackingWithMap() {
       </div>
 
 
+      {orderToAssign && (
+        <DriverSelectionModal
+          isOpen={showDriverModal}
+          orderId={orderToAssign}
+          onClose={() => {
+            setShowDriverModal(false);
+            setOrderToAssign(null);
+          }}
+          onAssign={() => {
+            refetch();
+            utils.orders.getTodayOrdersWithItems.invalidate();
+          }}
+        />
+      )}
     </div>
   );
 }
