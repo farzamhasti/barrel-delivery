@@ -156,10 +156,17 @@ export default function KitchenDashboard() {
           </div>
         )}
 
-        {/* Delivery Time */}
-        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-          <Clock className="w-3 h-3" />
-          <span className="font-semibold">{deliveryTime}</span>
+        {/* Delivery Time and Price */}
+        <div className="flex items-center justify-between gap-2 mb-2 text-xs">
+          <div className="flex items-center gap-1 text-muted-foreground">
+            <Clock className="w-3 h-3" />
+            <span className="font-semibold">{deliveryTime}</span>
+          </div>
+          {order.total && (
+            <div className="text-lg font-bold text-green-600 bg-green-50 px-2 py-1 rounded">
+              ${order.total.toFixed(2)}
+            </div>
+          )}
         </div>
 
         {/* Notes (if exists) */}

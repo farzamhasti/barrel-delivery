@@ -1770,3 +1770,5 @@
 - [x] Enhance area badge in compact order card (larger icon, bold text, left border)
 - [x] Add dedicated area section to order detail modal (3xl font, prominent display)
 - [x] Make area display clearer and more visible in both modes
+- [x] Add total price display to compact order card (green badge)
+- [x] Position price next to delivery time for easy visibility
