@@ -127,7 +127,6 @@ export const orders = mysqlTable("orders", {
   area: varchar("area", { length: 50 }),
   pickedUpAt: timestamp("picked_up_at"),
   deliveredAt: timestamp("delivered_at"),
-  shippedAt: timestamp("shipped_at"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

@@ -2040,3 +2040,12 @@
 - [x] Average delivery time now shows real values (e.g., 15 minutes)
 - [x] New orders will automatically record timestamps when status changes
 - [x] System is now tracking real delivery times from On the Way to Delivered
+
+
+## BUG FIX - Order Creation Error (shipped_at Column)
+
+- [x] Identified error: shipped_at column in schema but not in database
+- [x] Removed shippedAt from orders schema (not needed - using pickedUpAt/deliveredAt)
+- [x] Verified order creation now works without shipped_at
+- [x] Dev server running without errors
+- [x] Order creation mutation fixed and functional
