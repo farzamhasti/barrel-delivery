@@ -16,7 +16,7 @@ export default function OrderTrackingWithMap() {
   const utils = trpc.useUtils();
 
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
-  const [showMap, setShowMap] = useState(true);
+  const [showMap, setShowMap] = useState(typeof window !== 'undefined' ? window.innerWidth >= 1024 : true);
   const [showDriverModal, setShowDriverModal] = useState(false);
   const [orderToAssign, setOrderToAssign] = useState<number | null>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
@@ -203,7 +203,7 @@ export default function OrderTrackingWithMap() {
       <div className="flex flex-col gap-6 flex-1 overflow-hidden">
         {/* Map and Drivers Side-by-Side */}
         {showMap && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-96 overflow-hidden">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-96 lg:h-96 overflow-hidden flex-shrink-0">
             {/* Map Section - 2/3 width */}
             <div className="lg:col-span-2 flex flex-col overflow-hidden">
               <Card className="overflow-hidden flex-1">
@@ -275,20 +275,22 @@ export default function OrderTrackingWithMap() {
               </Card>
             </div>
           </div>
-        )}        {/* Orders List - Below Map */}
-        <div className="flex flex-col overflow-hidden flex-1">
+        )}
+        
+        {/* Orders List - Below Map */}
+        <div className="flex flex-col overflow-hidden flex-1 min-h-0">
           <h3 className="text-lg font-semibold text-foreground mb-4 flex-shrink-0">Active Orders ({orders?.length || 0})</h3>
 
           {isLoading ? (
-            <div className="flex items-center justify-center py-8 flex-1">
+            <div className="flex items-center justify-center py-8 flex-1 min-h-0">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
             </div>
           ) : !orders || orders.length === 0 ? (
-            <Card className="p-6 text-center flex-1 flex items-center justify-center">
+            <Card className="p-6 text-center flex-1 flex items-center justify-center min-h-0">
               <p className="text-muted-foreground">No active orders</p>
             </Card>
           ) : (
-            <div className="space-y-3 overflow-y-auto flex-1">
+            <div className="space-y-3 overflow-y-auto flex-1 min-h-0">
               {orders.map((order: any) => (
                 <Card
                   key={order.id}
