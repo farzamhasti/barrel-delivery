@@ -2,9 +2,11 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, TrendingUp, Truck, CheckCircle2 } from "lucide-react";
+import { Calendar, TrendingUp, Truck, CheckCircle2, Download, BarChart3 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { OrderTimelineTable } from "@/components/OrderTimelineTable";
+import { DeliveryGanttChart } from "@/components/DeliveryGanttChart";
+import { DriverPerformanceTable } from "@/components/DriverPerformanceTable";
 
 export function DeliveryReportTab() {
   const [dateRange, setDateRange] = useState({
@@ -44,6 +46,41 @@ export function DeliveryReportTab() {
       day: "numeric",
       year: "numeric",
     });
+  };
+
+  const exportToCSV = () => {
+    if (!timelines || timelines.length === 0) {
+      alert("No data to export");
+      return;
+    }
+
+    const headers = ["Order ID", "Customer", "Address", "Pending Time", "Ready Time", "On Way Time", "Delivered Time", "Total Duration"];
+    const rows = timelines.map((timeline: any) => [
+      timeline.orderId,
+      timeline.customerName,
+      timeline.address,
+      timeline.pendingTime || "N/A",
+      timeline.readyTime || "N/A",
+      timeline.onWayTime || "N/A",
+      timeline.deliveredTime || "N/A",
+      timeline.totalDuration || "N/A",
+    ]);
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map((row) => row.map((cell) => `"${cell}"`).join(",")),
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `delivery-report-${new Date().toISOString().split("T")[0]}.csv`;
+    link.click();
+  };
+
+  const exportToPDF = () => {
+    alert("PDF export feature coming soon. Please use CSV export for now.");
   };
 
   return (
@@ -178,6 +215,63 @@ export function DeliveryReportTab() {
           </CardContent>
         </Card>
       )}
+
+      {/* Export Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Download className="w-5 h-5" />
+            Export Report
+          </CardTitle>
+          <CardDescription>
+            Download delivery report in your preferred format
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex gap-2">
+          <Button variant="outline" onClick={exportToCSV}
+            className="flex items-center gap-2">
+            <Download className="w-4 h-4" />
+            Export as CSV
+          </Button>
+          <Button variant="outline" onClick={exportToPDF}
+            className="flex items-center gap-2">
+            <Download className="w-4 h-4" />
+            Export as PDF
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Timeline Visualization */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="w-5 h-5" />
+            Delivery Timeline Visualization
+          </CardTitle>
+          <CardDescription>
+            Visual representation of order progression over time
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <DeliveryGanttChart timelines={timelines || []} isLoading={timelinesLoading} />
+        </CardContent>
+      </Card>
+
+      {/* Driver Performance Breakdown */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Truck className="w-5 h-5" />
+            Driver Performance Breakdown
+          </CardTitle>
+          <CardDescription>
+            Individual driver metrics and performance comparison
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <DriverPerformanceTable timelines={timelines || []} isLoading={timelinesLoading} />
+        </CardContent>
+      </Card>
 
       {/* Order Timeline Table */}
       <Card>
