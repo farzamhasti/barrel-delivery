@@ -123,8 +123,13 @@ export default function DriverDashboard() {
       localStorage.removeItem(DRIVER_SESSION_KEY);
       setSessionToken(null);
       setIsLoggedIn(false);
+      
+      // Redirect to home page
+      setLocation("/");
     } catch (error) {
       console.error("Logout failed:", error);
+      // Redirect to home page even if logout fails
+      setLocation("/");
     }
   };
 

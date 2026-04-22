@@ -1880,3 +1880,16 @@
 - [x] Fixed timezone offset calculation to use actual current time instead of midnight
 - [x] Improved logging to show timezone calculation details
 - [x] Dev server still finding 5 orders correctly with fixed calculation
+
+
+## FEATURE - Logout Redirect to Home Page
+
+- [x] Update admin dashboard logout to redirect to home page instead of email sign-in
+- [x] Update kitchen dashboard logout to redirect to home page
+- [x] Update driver dashboard logout to redirect to home page
+- [x] Verify logout redirects work on all dashboards
+- [x] Test logout on mobile and desktop
+- [x] Ensure home page loads correctly after logout
+- [x] Write comprehensive logout redirect tests (8 tests passing)
+- [x] Verified all session data is cleared properly
+- [x] Tested error handling for logout failures

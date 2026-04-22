@@ -21,8 +21,8 @@ export default function KitchenDashboard() {
     localStorage.removeItem("systemSessionToken");
     localStorage.removeItem("systemRole");
     localStorage.removeItem("systemUsername");
-    // Redirect to kitchen login
-    setLocation("/kitchen-login");
+    // Redirect to home page
+    setLocation("/");
   };
 
   // Fetch today's orders with items
