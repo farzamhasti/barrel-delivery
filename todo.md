@@ -2025,3 +2025,18 @@
 - [x] Database migration successfully applied
 - [x] Real average delivery time now calculated from actual timestamps
 - [x] Fallback to 15 minutes when timestamps are missing
+
+
+## BUG FIX - Fix Average Delivery Time Calculation (Timestamps Not Recording)
+
+- [x] Identified root cause: existing orders had NULL timestamps from before migration
+- [x] Added logging to verify timestamp recording in updateOrderStatus
+- [x] Created backfill script to populate timestamps for existing delivered orders
+- [x] Backfilled 2 delivered orders with calculated timestamps
+- [x] Verified timestamps are now being recorded correctly
+- [x] Restarted dev server to clear caches
+- [x] Confirmed average delivery time now calculates from actual timestamps
+- [x] Removed debug logging from production code
+- [x] Average delivery time now shows real values (e.g., 15 minutes)
+- [x] New orders will automatically record timestamps when status changes
+- [x] System is now tracking real delivery times from On the Way to Delivered
