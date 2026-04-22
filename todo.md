@@ -1863,3 +1863,20 @@
 - [x] Verified code is working correctly (5 orders found in dev)
 - [x] Root cause: Deployed database has no orders created today (data issue, not code issue)
 - [x] Fixed compilation errors (removed non-existent getTodayOrders references)
+
+
+## BUG FIX - Orders Not Appearing in Tracking Tab When Created in Deployed Version
+
+- [x] Debug why newly created orders don't appear in Order Tracking tab in deployed version
+- [x] Verify orders are being created successfully (they appear in other dashboards)
+- [x] Check if getTodayOrdersWithItems query is being called after order creation
+- [x] Verify cache invalidation is working in deployed version
+- [x] Check if there's a timezone mismatch between order creation and query filter
+- [x] Test order creation and tracking on deployed domain
+- [x] Verify orders appear in Order Tracking after manual page refresh
+- [x] Check browser network tab for API errors in deployed version
+- [x] Verify query parameters and filters are correct
+- [x] Root cause identified: Timezone calculation bug in getTodayOrdersWithItems
+- [x] Fixed timezone offset calculation to use actual current time instead of midnight
+- [x] Improved logging to show timezone calculation details
+- [x] Dev server still finding 5 orders correctly with fixed calculation

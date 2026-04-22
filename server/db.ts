@@ -393,25 +393,10 @@ export async function getTodayOrdersWithItems() {
     return [];
   }
   
-  // Get today's date in America/Toronto timezone
+  // Get today's date in America/Toronto timezone using a more reliable method
   const now = new Date();
-  const formatter = new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/Toronto",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  });
   
-  const parts = formatter.formatToParts(now);
-  const year = parseInt(parts.find((p) => p.type === "year")?.value || "2024");
-  const month = parseInt(parts.find((p) => p.type === "month")?.value || "1");
-  const day = parseInt(parts.find((p) => p.type === "day")?.value || "1");
-  
-  // Calculate start of day (00:00:00) in America/Toronto timezone
-  // We need to find what UTC time corresponds to midnight Toronto time
-  const torontoMidnight = new Date(year, month - 1, day, 0, 0, 0, 0);
-  
-  // Get what time the torontoMidnight date shows in Toronto timezone
+  // Create formatter for full date/time in Toronto timezone
   const torontoFormatter = new Intl.DateTimeFormat("en-US", {
     timeZone: "America/Toronto",
     year: "numeric",
@@ -423,23 +408,35 @@ export async function getTodayOrdersWithItems() {
     hour12: false,
   });
   
-  const torontoParts = torontoFormatter.formatToParts(torontoMidnight);
-  const torontoHour = parseInt(torontoParts.find((p) => p.type === "hour")?.value || "0");
-  const torontoMinute = parseInt(torontoParts.find((p) => p.type === "minute")?.value || "0");
-  const torontoSecond = parseInt(torontoParts.find((p) => p.type === "second")?.value || "0");
+  const torontoParts = torontoFormatter.formatToParts(now);
+  const year = parseInt(torontoParts.find((p) => p.type === "year")?.value || "2024");
+  const month = parseInt(torontoParts.find((p) => p.type === "month")?.value || "1");
+  const day = parseInt(torontoParts.find((p) => p.type === "day")?.value || "1");
+  const hour = parseInt(torontoParts.find((p) => p.type === "hour")?.value || "0");
+  const minute = parseInt(torontoParts.find((p) => p.type === "minute")?.value || "0");
+  const second = parseInt(torontoParts.find((p) => p.type === "second")?.value || "0");
   
-  // Calculate the offset in milliseconds
-  const offsetMs = (torontoHour * 60 + torontoMinute) * 60 * 1000 + torontoSecond * 1000;
+  // Calculate offset: difference between current UTC time and current Toronto time
+  // When we format 'now' in Toronto timezone, we get the Toronto local time
+  // The offset is how much we need to add to Toronto time to get UTC
+  const torontoTimeMs = new Date(year, month - 1, day, hour, minute, second).getTime();
+  const offsetMs = now.getTime() - torontoTimeMs;
   
-  // Start of day in UTC = midnight Toronto time
-  const startOfDay = new Date(torontoMidnight.getTime() - offsetMs);
+  // Start of day in UTC: midnight Toronto time + offset
+  const midnightTorontoMs = new Date(year, month - 1, day, 0, 0, 0, 0).getTime();
+  const startOfDay = new Date(midnightTorontoMs + offsetMs);
   const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000);
   
-  console.log('[getTodayOrdersWithItems] Date range:', {
+  console.log('[getTodayOrdersWithItems] Timezone calculation:', {
     torontoDate: `${year}-${month}-${day}`,
+    torontoTime: `${hour}:${minute}:${second}`,
+    offsetMs,
+    nowUTC: now.toISOString(),
+  });
+  
+  console.log('[getTodayOrdersWithItems] Date range:', {
     startOfDay: startOfDay.toISOString(),
     endOfDay: endOfDay.toISOString(),
-    offsetMs,
   });
   
   console.log('[getTodayOrdersWithItems] Querying orders between', startOfDay.toISOString(), 'and', endOfDay.toISOString());
