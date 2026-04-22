@@ -145,18 +145,21 @@ export default function KitchenDashboard() {
           <p className="text-xs text-muted-foreground line-clamp-1">{itemsPreview}{hasMoreItems ? "..." : ""}</p>
         </div>
 
-        {/* Area and Delivery Time */}
-        <div className="flex items-center gap-2 mb-3 text-xs">
-          {order.area && (
-            <div className="flex items-center gap-1 px-2 py-1 bg-orange-100 text-orange-700 rounded font-semibold">
-              <MapPin className="w-3 h-3" />
-              <span>{order.area}</span>
+        {/* Area Display */}
+        {order.area && (
+          <div className="mb-3 flex items-center gap-2 px-3 py-2 bg-orange-100 border-l-4 border-orange-500 rounded">
+            <MapPin className="w-5 h-5 text-orange-600 flex-shrink-0" />
+            <div>
+              <p className="text-xs text-orange-700 font-medium">Area</p>
+              <p className="text-lg font-bold text-orange-900">{order.area}</p>
             </div>
-          )}
-          <div className="flex items-center gap-1 text-muted-foreground">
-            <Clock className="w-3 h-3" />
-            <span className="font-semibold">{deliveryTime}</span>
           </div>
+        )}
+
+        {/* Delivery Time */}
+        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+          <Clock className="w-3 h-3" />
+          <span className="font-semibold">{deliveryTime}</span>
         </div>
 
         {/* Notes (if exists) */}
@@ -253,6 +256,20 @@ export default function KitchenDashboard() {
                 </div>
               </div>
             </div>
+
+            {/* Area Section */}
+            {order.area && (
+              <div className="bg-orange-50 border-2 border-orange-300 rounded-lg p-5">
+                <h3 className="text-sm font-semibold text-orange-900 mb-3">Delivery Area</h3>
+                <div className="flex items-center gap-3">
+                  <MapPin className="w-8 h-8 text-orange-600" />
+                  <div>
+                    <p className="text-xs text-orange-700 font-medium">Area</p>
+                    <p className="text-3xl font-bold text-orange-900">{order.area}</p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Delivery Time Section */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
