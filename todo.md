@@ -1772,3 +1772,4 @@
 - [x] Make area display clearer and more visible in both modes
 - [x] Add total price display to compact order card (green badge)
 - [x] Position price next to delivery time for easy visibility
+- [x] Remove Order Summary section from Kitchen Dashboard order detail modal

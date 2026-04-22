@@ -319,25 +319,6 @@ export default function KitchenDashboard() {
               </div>
             </div>
 
-            {/* Order Summary Section */}
-            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-              <h3 className="text-sm font-semibold text-orange-900 mb-3">Order Summary</h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-orange-700">Subtotal:</span>
-                  <span className="font-medium text-orange-900">${order.subtotal?.toFixed(2) || "0.00"}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-orange-700">Tax ({order.tax_percentage}%):</span>
-                  <span className="font-medium text-orange-900">${order.tax_amount?.toFixed(2) || "0.00"}</span>
-                </div>
-                <div className="border-t border-orange-200 pt-2 flex justify-between">
-                  <span className="font-semibold text-orange-900">Total:</span>
-                  <span className="font-bold text-lg text-orange-900">${order.total_price?.toFixed(2) || "0.00"}</span>
-                </div>
-              </div>
-            </div>
-
             {/* Notes Section */}
             {order.notes && (
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
