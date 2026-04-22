@@ -1833,3 +1833,15 @@
 - [x] Verify all order details display correctly
 - [x] Use correct field names (menuItemName and priceAtOrder) from database
 - [x] Add fallback handling for missing fields
+
+
+## BUG FIX - Order Items Showing "Unknown Item" Instead of Actual Name
+
+- [x] Debug why order items show "Unknown Item" instead of actual item name
+- [x] Check getAssignedOrders procedure to verify items are included with menuItemName
+- [x] Verify order items are fetched with menu item names from database
+- [x] Check if items array is being populated correctly in driver dashboard
+- [x] Ensure menuItemName field is included in order response
+- [x] Test order items display with actual item names (5 tests passing)
+- [x] Changed getAssignedOrders to use getOrderItemsWithMenuNames
+- [x] Verified items display correctly with item names and prices

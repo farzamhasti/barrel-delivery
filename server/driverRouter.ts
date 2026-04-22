@@ -134,10 +134,10 @@ export const driverRouter = router({
         // Get all orders assigned to this driver with full details including items
         const orders = await db.getOrdersByDateRange(new Date().toISOString().split("T")[0], new Date().toISOString().split("T")[0], driver.id);
         
-        // Fetch items for each order
+        // Fetch items for each order with menu item names
         const ordersWithItems = await Promise.all(
           orders.map(async (order: any) => {
-            const items = await db.getOrderItems(order.id);
+            const items = await db.getOrderItemsWithMenuNames(order.id);
             return { ...order, items };
           })
         );
