@@ -16,11 +16,25 @@ export default function OrderTrackingWithMap() {
   const utils = trpc.useUtils();
 
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
-  const [showMap, setShowMap] = useState(typeof window !== 'undefined' ? window.innerWidth >= 1024 : true);
+  const [showMap, setShowMap] = useState(false); // Default to false, will be set by useEffect
   const [showDriverModal, setShowDriverModal] = useState(false);
   const [orderToAssign, setOrderToAssign] = useState<number | null>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.Marker[]>([]);
+
+  // Detect window size and show/hide map accordingly
+  useEffect(() => {
+    const handleResize = () => {
+      setShowMap(window.innerWidth >= 1024);
+    };
+
+    // Set initial state
+    handleResize();
+
+    // Add resize listener
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Fetch today's orders with items for complete data
   const { data: allOrders = [], isLoading, refetch } = trpc.orders.getTodayOrdersWithItems.useQuery();
@@ -36,14 +50,30 @@ export default function OrderTrackingWithMap() {
   );
 
   // Filter to active orders
-  const orders = Array.isArray(allOrders) ? allOrders.filter((o: any) =>
-    ["Pending", "Ready", "On the Way"].includes(o.status)
-  ) : [];
+  const orders = Array.isArray(allOrders) ? allOrders.filter((o: any) => {
+    const isActive = ["Pending", "Ready", "On the Way"].includes(o.status);
+    if (!isActive && o.id) {
+      console.log('Order', o.id, 'filtered out - status:', o.status);
+    }
+    return isActive;
+  }) : [];
+
+  // Debug logging
+  useEffect(() => {
+    console.log('OrderTracking Debug:', {
+      allOrdersCount: allOrders?.length || 0,
+      filteredOrdersCount: orders?.length || 0,
+      showMap,
+      windowWidth: typeof window !== 'undefined' ? window.innerWidth : 'N/A',
+      isLoading,
+    });
+  }, [allOrders, orders, showMap, isLoading]);
 
   // Auto-refetch every 5 seconds for real-time updates
   // Also listen for cache invalidation from other components
   useEffect(() => {
     const interval = setInterval(() => {
+      console.log('Auto-refetching orders...');
       refetch();
     }, 5000);
     return () => clearInterval(interval);

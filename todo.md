@@ -1860,3 +1860,7 @@
 - [x] Added min-h-0 to orders container to enable proper scrolling
 - [x] Write comprehensive mobile layout tests (7 tests passing)
 - [x] Verified orders fetch correctly with all required data
+- [x] Added useEffect to properly detect window size on mobile
+- [x] Added debug logging to diagnose order fetching issues
+- [x] Fixed initial showMap state to false, set by useEffect on mount
+- [x] Added resize event listener for responsive behavior
