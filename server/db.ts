@@ -1,7 +1,7 @@
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, menuCategories, InsertMenuCategory, menuItems, InsertMenuItem, drivers, InsertDriver, customers, InsertCustomer, orders, InsertOrder, orderItems, InsertOrderItem, systemCredentials, systemSessions } from "../drizzle/schema";
+import { InsertUser, users, menuCategories, InsertMenuCategory, menuItems, InsertMenuItem, drivers, InsertDriver, customers, InsertCustomer, orders, InsertOrder, orderItems, InsertOrderItem, systemCredentials, systemSessions, orderStatusHistory, InsertOrderStatusHistory } from "../drizzle/schema";
 import { ENV } from './_core/env';
-import { eq, and, desc, gte, lt, inArray, gt } from "drizzle-orm";
+import { eq, and, desc, gte, lt, inArray, gt, isNull } from "drizzle-orm";
 import { createHash, timingSafeEqual } from 'crypto';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -1050,5 +1050,107 @@ export async function getDriverPerformanceMetrics(driverId: number) {
       averageDeliveryTime: 0,
       completionRate: 0,
     };
+  }
+}
+
+
+// Order Status History tracking
+export async function logOrderStatusChange(orderId: number, previousStatus: string | null, newStatus: string) {
+  const db = await getDb();
+  if (!db) return null;
+
+  try {
+    const result = await db.insert(orderStatusHistory).values({
+      orderId,
+      previousStatus: previousStatus as any,
+      newStatus: newStatus as any,
+      transitionTime: new Date(),
+    });
+    return result;
+  } catch (error) {
+    console.error("[Database] Error logging order status change:", error);
+    return null;
+  }
+}
+
+export async function getOrderStatusTimeline(orderId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  try {
+    const timeline = await db
+      .select()
+      .from(orderStatusHistory)
+      .where(eq(orderStatusHistory.orderId, orderId))
+      .orderBy(desc(orderStatusHistory.transitionTime));
+    
+    return timeline;
+  } catch (error) {
+    console.error("[Database] Error fetching order status timeline:", error);
+    return [];
+  }
+}
+
+export async function getDeliveryReportMetrics(startDate: Date, endDate: Date) {
+  const db = await getDb();
+  if (!db) return null;
+
+  try {
+    // Get all delivered orders in the date range
+    const deliveredOrders = await db
+      .select()
+      .from(orders)
+      .where(
+        and(
+          eq(orders.status, "Delivered"),
+          gte(orders.updatedAt, startDate),
+          lt(orders.updatedAt, endDate)
+        )
+      );
+
+    // Get all orders in the date range
+    const totalOrders = await db
+      .select()
+      .from(orders)
+      .where(
+        and(
+          gte(orders.createdAt, startDate),
+          lt(orders.createdAt, endDate)
+        )
+      );
+
+    // Calculate metrics
+    const totalCount = totalOrders.length;
+    const deliveredCount = deliveredOrders.length;
+    const deliveryRate = totalCount > 0 ? Math.round((deliveredCount / totalCount) * 100) : 0;
+
+    // Calculate average delivery time
+    let totalDeliveryTime = 0;
+    let ordersWithTime = 0;
+
+    for (const order of deliveredOrders) {
+      if (order.pickedUpAt && order.deliveredAt) {
+        const timeMs = new Date(order.deliveredAt).getTime() - new Date(order.pickedUpAt).getTime();
+        const timeMinutes = Math.round(timeMs / (1000 * 60));
+        totalDeliveryTime += timeMinutes;
+        ordersWithTime++;
+      }
+    }
+
+    const averageDeliveryTime = ordersWithTime > 0 ? Math.round(totalDeliveryTime / ordersWithTime) : 0;
+
+    return {
+      totalOrders: totalCount,
+      deliveredOrders: deliveredCount,
+      deliveryRate,
+      averageDeliveryTime,
+      dateRange: {
+        start: startDate,
+        end: endDate,
+      },
+    };
+  } catch (error) {
+    console.error("[Database] Error calculating delivery report metrics:", error);
+    return null;
   }
 }

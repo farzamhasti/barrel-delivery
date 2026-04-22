@@ -64,6 +64,13 @@
       "when": 1776883339876,
       "tag": "0008_cloudy_punisher",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "5",
+      "when": 1776885453466,
+      "tag": "0009_harsh_living_lightning",
+      "breakpoints": true
     }
   ]
 }

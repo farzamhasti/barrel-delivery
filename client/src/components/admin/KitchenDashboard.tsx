@@ -10,6 +10,7 @@ import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 import { DeveloperCredit } from "@/components/DeveloperCredit";
+import { DeliveryReportTab } from "@/components/DeliveryReportTab";
 
 export default function KitchenDashboard() {
   const [, setLocation] = useLocation();
@@ -435,7 +436,7 @@ export default function KitchenDashboard() {
       {/* Tabs */}
       <div className="max-w-7xl mx-auto">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-6 bg-white rounded-lg shadow-md">
+          <TabsList className="grid w-full grid-cols-3 mb-6 bg-white rounded-lg shadow-md">
             <TabsTrigger value="active" className="flex items-center gap-2">
               <ChefHat className="w-4 h-4" />
               Active Orders ({pendingOrders.length})
@@ -443,6 +444,10 @@ export default function KitchenDashboard() {
             <TabsTrigger value="ready" className="flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4" />
               Prepared Orders ({readyOrders.length})
+            </TabsTrigger>
+            <TabsTrigger value="delivery-report" className="flex items-center gap-2">
+              <Calendar className="w-4 h-4" />
+              Delivery Report
             </TabsTrigger>
           </TabsList>
 
@@ -493,11 +498,7 @@ export default function KitchenDashboard() {
                     </div>
                   </Card>
                 ))}
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
-      </div>
+              </div>            )}\n          </TabsContent>\n\n          {/* Delivery Report Tab */}\n          <TabsContent value="delivery-report" className="mt-6">\n            <DeliveryReportTab />\n          </TabsContent>\n        </Tabs>      </div>
 
       {/* Order Detail Modal */}
       <OrderDetailModal order={selectedOrder} />

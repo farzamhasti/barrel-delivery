@@ -10,6 +10,16 @@ import { driverRouter } from "./driverRouter";
 export const appRouter = router({
   system: systemRouter,
   driver: driverRouter,
+  kitchen: router({
+    getDeliveryReportMetrics: protectedProcedure
+      .input(z.object({
+        startDate: z.date(),
+        endDate: z.date(),
+      }))
+      .query(async ({ input }) => {
+        return db.getDeliveryReportMetrics(input.startDate, input.endDate);
+      }),
+  }),
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {

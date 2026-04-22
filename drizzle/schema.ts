@@ -147,6 +147,19 @@ export const orderItems = mysqlTable("order_items", {
 export type OrderItem = typeof orderItems.$inferSelect;
 export type InsertOrderItem = typeof orderItems.$inferInsert;
 
+// Order Status History (tracks status transitions with timestamps)
+export const orderStatusHistory = mysqlTable("order_status_history", {
+  id: int("id").autoincrement().primaryKey(),
+  orderId: int("order_id").notNull(),
+  previousStatus: mysqlEnum("previous_status", ["Pending", "Ready", "On the Way", "Delivered"]),
+  newStatus: mysqlEnum("new_status", ["Pending", "Ready", "On the Way", "Delivered"]).notNull(),
+  transitionTime: timestamp("transition_time").defaultNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type OrderStatusHistory = typeof orderStatusHistory.$inferSelect;
+export type InsertOrderStatusHistory = typeof orderStatusHistory.$inferInsert;
+
 // Relations
 export const menuItemsRelations = relations(menuItems, ({ one }) => ({
   category: one(menuCategories, {

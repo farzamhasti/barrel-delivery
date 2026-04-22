@@ -2049,3 +2049,26 @@
 - [x] Verified order creation now works without shipped_at
 - [x] Dev server running without errors
 - [x] Order creation mutation fixed and functional
+
+
+## FEATURE - Order Status Timeline and Delivery Report
+
+- [x] Create orderStatusHistory table to track status transitions with timestamps
+- [x] Add backend procedure to log status changes with transition timestamps
+- [x] Create getOrderStatusTimeline procedure to retrieve status history
+- [x] Create OrderStatusTimeline component with visual timeline display
+- [x] Display status transitions: Pending → Ready → On the Way → Delivered
+- [x] Show timestamp for each status transition
+- [x] Add timeline to order details modal/view
+- [x] Create Delivery Report tab in kitchen admin dashboard
+- [x] Display delivery metrics: total orders, on-time deliveries, average delivery time
+- [x] Show order status timeline in delivery report
+- [x] Add filters for date range in delivery report
+- [x] Write tests for status timeline tracking
+- [x] Write tests for delivery report calculations
+- [x] Test visual timeline rendering
+- [x] Verify responsive design on mobile and desktop
+- [x] All 8 delivery report tests passing
+- [x] Kitchen dashboard now has 3 tabs: Active Orders, Prepared Orders, Delivery Report
+- [x] Delivery Report shows metrics: total orders, delivered, delivery rate, avg time
+- [x] Date range selector with Previous Week and Current Week buttons
