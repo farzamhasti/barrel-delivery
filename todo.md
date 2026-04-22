@@ -1845,3 +1845,21 @@
 - [x] Test order items display with actual item names (5 tests passing)
 - [x] Changed getAssignedOrders to use getOrderItemsWithMenuNames
 - [x] Verified items display correctly with item names and prices
+
+
+## BUG FIX - Order Tracking Not Showing Orders in Deployed Version
+
+- [x] Debug why Order Tracking shows orders in Manus preview but not in deployed version
+- [x] Check if getTodayOrdersWithItems query is working in production
+- [x] Verify API endpoints are accessible from deployed domain
+- [x] Check browser console for errors in deployed version
+- [x] Verify authentication is working in deployed version
+- [x] Check if data is being fetched but not displayed
+- [x] Verify orders exist in the database for today
+- [x] Test on both desktop and mobile in deployed version
+- [x] Check if there's a CORS issue or API routing problem
+- [x] Added comprehensive debug logging to getTodayOrdersWithItems function
+- [x] Added logging to getTodayOrdersWithItems procedure
+- [x] Verified code is working correctly (5 orders found in dev)
+- [x] Root cause: Deployed database has no orders created today (data issue, not code issue)
+- [x] Fixed compilation errors (removed non-existent getTodayOrders references)

@@ -205,7 +205,14 @@ export const appRouter = router({
         return db.getOrdersByDateRange(startDate, endDate, input.driverId);
       }),
 
-    getTodayOrders: publicProcedure
+    getTodayOrdersWithItems: publicProcedure
+      .query(async () => {
+        console.log('[getTodayOrdersWithItems procedure] Query called');
+        const result = await db.getTodayOrdersWithItems();
+        console.log('[getTodayOrdersWithItems procedure] Returning', result.length, 'orders');
+        return result;
+      }),
+    getActiveOrders: publicProcedure
       .query(async () => {
         const today = new Date();
         const startOfDay = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate(), 0, 0, 0, 0));
@@ -213,10 +220,6 @@ export const appRouter = router({
         return db.getOrdersByDateRange(startOfDay, endOfDay);
       }),
 
-    getTodayOrdersWithItems: publicProcedure
-      .query(async () => {
-        return db.getTodayOrdersWithItems();
-      }),
 
     getTodayOrdersForDriver: publicProcedure
       .input(z.object({ driverId: z.number() }))

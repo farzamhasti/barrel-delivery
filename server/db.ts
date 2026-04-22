@@ -388,7 +388,10 @@ export async function getOrderWithItems(orderId: number) {
 
 export async function getTodayOrdersWithItems() {
   const db = await getDb();
-  if (!db) return [];
+  if (!db) {
+    console.error('[getTodayOrdersWithItems] Database not available');
+    return [];
+  }
   
   // Get today's date in America/Toronto timezone
   const now = new Date();
@@ -432,6 +435,15 @@ export async function getTodayOrdersWithItems() {
   const startOfDay = new Date(torontoMidnight.getTime() - offsetMs);
   const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000);
   
+  console.log('[getTodayOrdersWithItems] Date range:', {
+    torontoDate: `${year}-${month}-${day}`,
+    startOfDay: startOfDay.toISOString(),
+    endOfDay: endOfDay.toISOString(),
+    offsetMs,
+  });
+  
+  console.log('[getTodayOrdersWithItems] Querying orders between', startOfDay.toISOString(), 'and', endOfDay.toISOString());
+  
   const todayOrders = await db
     .select({
       id: orders.id,
@@ -457,7 +469,11 @@ export async function getTodayOrdersWithItems() {
     .from(orders)
     .innerJoin(customers, eq(orders.customerId, customers.id))
     .where(and(gte(orders.createdAt, startOfDay), lt(orders.createdAt, endOfDay)))
-    .orderBy(desc(orders.createdAt))
+    .orderBy(desc(orders.createdAt));
+  
+  console.log('[getTodayOrdersWithItems] Found', todayOrders.length, 'orders');
+  
+  console.log('[getTodayOrdersWithItems] Processing', todayOrders.length, 'orders with items');
   
   const ordersWithItems = await Promise.all(
     todayOrders.map(async (order) => {

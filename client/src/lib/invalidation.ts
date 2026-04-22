@@ -14,7 +14,6 @@ export function invalidateOrderCache(utils: ReturnType<typeof trpc.useUtils>) {
   utils.orders.getByDateRange.invalidate();
 
   // Invalidate today's orders queries
-  utils.orders.getTodayOrders.invalidate();
   utils.orders.getTodayOrdersWithItems.invalidate();
 
   // Invalidate driver-specific order queries
@@ -41,7 +40,6 @@ export function invalidateOrderById(
 
   // Also invalidate list queries as the order may appear in lists
   utils.orders.list.invalidate();
-  utils.orders.getTodayOrders.invalidate();
   utils.orders.getTodayOrdersWithItems.invalidate();
   utils.orders.getTodayOrdersForDriver.invalidate();
   utils.orders.getByDateRange.invalidate();
@@ -57,7 +55,6 @@ export function invalidateCustomerCache(
 ) {
   // Invalidate all order queries as they may contain customer data
   utils.orders.list.invalidate();
-  utils.orders.getTodayOrders.invalidate();
   utils.orders.getTodayOrdersWithItems.invalidate();
   utils.orders.getTodayOrdersForDriver.invalidate();
   utils.orders.getByDateRange.invalidate();
@@ -74,7 +71,6 @@ export function invalidateMenuCache(utils: ReturnType<typeof trpc.useUtils>) {
 
   // Also invalidate order queries as they may contain menu item references
   utils.orders.list.invalidate();
-  utils.orders.getTodayOrders.invalidate();
   utils.orders.getTodayOrdersWithItems.invalidate();
   utils.orders.getTodayOrdersForDriver.invalidate();
   utils.orders.getByDateRange.invalidate();
@@ -90,7 +86,6 @@ export function invalidateDriverCache(utils: ReturnType<typeof trpc.useUtils>) {
 
   // Also invalidate order queries as they may contain driver assignments
   utils.orders.list.invalidate();
-  utils.orders.getTodayOrders.invalidate();
   utils.orders.getTodayOrdersWithItems.invalidate();
   utils.orders.getTodayOrdersForDriver.invalidate();
   utils.orders.getByDateRange.invalidate();
