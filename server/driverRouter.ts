@@ -3,6 +3,7 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { z } from "zod";
 import * as db from "./db";
 import crypto from "crypto";
+import { TRPCError } from "@trpc/server";
 
 export const driverRouter = router({
   login: publicProcedure
@@ -44,7 +45,10 @@ export const driverRouter = router({
           phone: driver.phone,
         };
       } catch (error: any) {
-        throw new Error(error.message || "Login failed");
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error.message || "Login failed",
+        });
       }
     }),
 
@@ -53,70 +57,99 @@ export const driverRouter = router({
       sessionToken: z.string().optional(),
     }).optional())
     .query(async ({ input, ctx }) => {
-    try {
-      // Try to get session token from cookie first, then from input (localStorage)
-      let sessionToken = ctx.req.cookies?.driver_session;
-      if (!sessionToken && input?.sessionToken) {
-        sessionToken = input.sessionToken;
+      try {
+        // Try to get session token from cookie first, then from input (localStorage)
+        let sessionToken = ctx.req.cookies?.driver_session;
+        if (!sessionToken && input?.sessionToken) {
+          sessionToken = input.sessionToken;
+        }
+        
+        if (!sessionToken) return null;
+        
+        const driver = await db.getDriverBySessionToken(sessionToken);
+        return driver || null;
+      } catch (error: any) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error.message || "Failed to fetch driver info",
+        });
       }
-      
-      if (!sessionToken) return null;
-      
-      const driver = await db.getDriverBySessionToken(sessionToken);
-      return driver || null;
-    } catch (error) {
-      return null;
-    }
-  }),
+    }),
 
   logout: publicProcedure
     .input(z.object({
       sessionToken: z.string().optional(),
     }).optional())
     .mutation(async ({ input, ctx }) => {
-    try {
-      // Try to get session token from cookie first, then from input
-      let sessionToken = ctx.req.cookies?.driver_session;
-      if (!sessionToken && input?.sessionToken) {
-        sessionToken = input.sessionToken;
+      try {
+        // Try to get session token from cookie first, then from input
+        let sessionToken = ctx.req.cookies?.driver_session;
+        if (!sessionToken && input?.sessionToken) {
+          sessionToken = input.sessionToken;
+        }
+        
+        if (sessionToken) {
+          await db.deleteDriverSession(sessionToken);
+        }
+        
+        const cookieOptions = getSessionCookieOptions(ctx.req);
+        ctx.res.clearCookie("driver_session", { ...cookieOptions, maxAge: -1 });
+        
+        return { success: true };
+      } catch (error: any) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error.message || "Logout failed",
+        });
       }
-      
-      if (sessionToken) {
-        await db.deleteDriverSession(sessionToken);
-      }
-      
-      const cookieOptions = getSessionCookieOptions(ctx.req);
-      ctx.res.clearCookie("driver_session", { ...cookieOptions, maxAge: -1 });
-      
-      return { success: true };
-    } catch (error) {
-      return { success: false };
-    }
-  }),
+    }),
 
   getAssignedOrders: publicProcedure
     .input(z.object({
       sessionToken: z.string().optional(),
     }).optional())
     .query(async ({ input, ctx }) => {
-    try {
-      // Try to get session token from cookie first, then from input
-      let sessionToken = ctx.req.cookies?.driver_session;
-      if (!sessionToken && input?.sessionToken) {
-        sessionToken = input.sessionToken;
+      try {
+        // Try to get session token from cookie first, then from input
+        let sessionToken = ctx.req.cookies?.driver_session;
+        if (!sessionToken && input?.sessionToken) {
+          sessionToken = input.sessionToken;
+        }
+        
+        if (!sessionToken) {
+          throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message: "Session token is required",
+          });
+        }
+        
+        const driver = await db.getDriverBySessionToken(sessionToken);
+        if (!driver) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Driver not found",
+          });
+        }
+        
+        // Get all orders assigned to this driver with full details including items
+        const orders = await db.getOrdersByDateRange(new Date().toISOString().split("T")[0], new Date().toISOString().split("T")[0], driver.id);
+        
+        // Fetch items for each order
+        const ordersWithItems = await Promise.all(
+          orders.map(async (order: any) => {
+            const items = await db.getOrderItems(order.id);
+            return { ...order, items };
+          })
+        );
+        
+        return ordersWithItems;
+      } catch (error: any) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error.message || "Failed to fetch assigned orders",
+        });
       }
-      
-      if (!sessionToken) return [];
-      
-      const driver = await db.getDriverBySessionToken(sessionToken);
-      if (!driver) return [];
-      
-      // Get all orders assigned to this driver
-      return db.getOrdersByDateRange(new Date().toISOString().split("T")[0], new Date().toISOString().split("T")[0], driver.id);
-    } catch (error) {
-      return [];
-    }
-  }),
+    }),
 
   updateStatus: publicProcedure
     .input(z.object({
@@ -144,7 +177,10 @@ export const driverRouter = router({
           driverId: driver.id,
         };
       } catch (error: any) {
-        throw new Error(error.message || "Failed to update driver status");
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error.message || "Failed to update driver status",
+        });
       }
     }),
 
@@ -152,8 +188,39 @@ export const driverRouter = router({
     .query(async () => {
       try {
         return db.getActiveDrivers();
-      } catch (error) {
-        return [];
+      } catch (error: any) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error.message || "Failed to fetch active drivers",
+        });
+      }
+    }),
+
+  markOrderDelivered: publicProcedure
+    .input(z.object({
+      sessionToken: z.string(),
+      orderId: z.number(),
+    }))
+    .mutation(async ({ input }) => {
+      try {
+        const driver = await db.getDriverBySessionToken(input.sessionToken);
+        if (!driver) {
+          throw new Error("Driver not found");
+        }
+
+        // Update order status to "Delivered"
+        const result = await db.updateOrderStatus(input.orderId, "Delivered");
+        
+        return {
+          success: true,
+          orderId: input.orderId,
+          status: "Delivered",
+        };
+      } catch (error: any) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error.message || "Failed to mark order as delivered",
+        });
       }
     }),
 });

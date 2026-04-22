@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useLocation } from "wouter";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const DRIVER_SESSION_KEY = "driver_session_token";
 
@@ -37,10 +38,26 @@ export default function DriverDashboard() {
   const loginMutation = trpc.driver.login.useMutation();
   const logoutMutation = trpc.driver.logout.useMutation();
   
-  const { data: assignedOrders = [], isLoading: ordersLoading } = trpc.driver.getAssignedOrders.useQuery(
+  const { data: assignedOrders = [], isLoading: ordersLoading, refetch: refetchOrders } = trpc.driver.getAssignedOrders.useQuery(
     sessionToken ? { sessionToken } : undefined,
     { enabled: !!currentDriver && !!sessionToken }
   );
+
+  // Modal state for order details
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+
+  // Mutation for marking order as delivered
+  const markDeliveredMutation = trpc.driver.markOrderDelivered.useMutation({
+    onSuccess: () => {
+      setIsDetailsModalOpen(false);
+      setSelectedOrder(null);
+      refetchOrders();
+    },
+    onError: (error: any) => {
+      console.error("Failed to mark order as delivered:", error);
+    },
+  });
 
   // Driver status management
   const [driverStatus, setDriverStatus] = useState<"online" | "offline">("offline");
@@ -315,9 +332,32 @@ export default function DriverDashboard() {
                         <p className="text-gray-600 text-sm">Total</p>
                         <p className="font-bold text-lg">${Number(order.totalPrice).toFixed(2)}</p>
                       </div>
-                      <Button size="sm" variant="outline">
-                        View Details
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => {
+                            setSelectedOrder(order);
+                            setIsDetailsModalOpen(true);
+                          }}
+                        >
+                          View Details
+                        </Button>
+                        {order.status !== "Delivered" && (
+                          <Button 
+                            size="sm" 
+                            className="bg-green-600 hover:bg-green-700 text-white"
+                            onClick={() => {
+                              if (sessionToken) {
+                                markDeliveredMutation.mutate({ sessionToken, orderId: order.id });
+                              }
+                            }}
+                            disabled={markDeliveredMutation.isPending}
+                          >
+                            {markDeliveredMutation.isPending ? "Marking..." : "Delivered"}
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -325,6 +365,97 @@ export default function DriverDashboard() {
             )}
           </CardContent>
         </Card>
+
+        {/* Order Details Modal */}
+        <Dialog open={isDetailsModalOpen} onOpenChange={setIsDetailsModalOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Order Details</DialogTitle>
+              <DialogDescription>Order #{selectedOrder?.id}</DialogDescription>
+            </DialogHeader>
+            {selectedOrder && (
+              <div className="space-y-4">
+                {/* Customer Information */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-600">Customer Name</p>
+                    <p className="font-semibold">{selectedOrder.customerName}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Phone</p>
+                    <p className="font-semibold">{selectedOrder.customerPhone}</p>
+                  </div>
+                </div>
+
+                {/* Address */}
+                <div>
+                  <p className="text-sm text-gray-600">Delivery Address</p>
+                  <p className="font-semibold">{selectedOrder.customerAddress}</p>
+                </div>
+
+                {/* Order Items */}
+                <div>
+                  <p className="text-sm font-semibold text-gray-600 mb-2">Order Items</p>
+                  {selectedOrder.items && selectedOrder.items.length > 0 ? (
+                    <div className="space-y-2">
+                      {selectedOrder.items.map((item: any, index: number) => (
+                        <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                          <div>
+                            <p className="font-medium">{item.itemName}</p>
+                            <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
+                          </div>
+                          <p className="font-semibold">${Number(item.price).toFixed(2)}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-gray-600">No items in this order</p>
+                  )}
+                </div>
+
+                {/* Special Notes */}
+                {selectedOrder.notes && (
+                  <div>
+                    <p className="text-sm font-semibold text-gray-600">Special Notes</p>
+                    <p className="text-sm text-gray-700 p-2 bg-yellow-50 rounded">{selectedOrder.notes}</p>
+                  </div>
+                )}
+
+                {/* Order Total */}
+                <div className="border-t pt-4">
+                  <div className="flex justify-between items-center">
+                    <p className="font-semibold">Total</p>
+                    <p className="text-xl font-bold">${Number(selectedOrder.totalPrice).toFixed(2)}</p>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-2 pt-4">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setIsDetailsModalOpen(false)}
+                    className="flex-1"
+                  >
+                    Close
+                  </Button>
+                  {selectedOrder.status !== "Delivered" && (
+                    <Button 
+                      className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                      onClick={() => {
+                        if (sessionToken) {
+                          markDeliveredMutation.mutate({ sessionToken, orderId: selectedOrder.id });
+                        }
+                      }}
+                      disabled={markDeliveredMutation.isPending}
+                    >
+                      {markDeliveredMutation.isPending ? "Marking as Delivered..." : "Mark as Delivered"}
+                    </Button>
+                  )}
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

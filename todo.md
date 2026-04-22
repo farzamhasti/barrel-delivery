@@ -1773,3 +1773,22 @@
 - [x] Add total price display to compact order card (green badge)
 - [x] Position price next to delivery time for easy visibility
 - [x] Remove Order Summary section from Kitchen Dashboard order detail modal
+
+
+## FEATURE - Driver Dashboard View Details and Delivered Button
+
+- [x] Add markOrderDelivered procedure to driverRouter
+- [x] Create View Details modal component in DriverDashboard
+- [x] Display order details in modal (customer info, address, items, notes, total)
+- [x] Add Delivered button to each order card
+- [x] Implement mark as delivered functionality
+- [x] Update order status to "Delivered" when driver clicks button
+- [x] Hide Delivered button for already delivered orders
+- [x] Implement real-time cache invalidation after marking delivered
+- [x] Fix implicit any type errors in error handlers
+- [x] Fix uuid package import issue (replaced with crypto.randomBytes)
+- [x] Write comprehensive driver dashboard tests (6 tests passing)
+- [x] Test View Details modal opens and displays order items correctly
+- [x] Test Delivered button updates order status in admin dashboard
+- [x] Verify order items display with names and quantities in modal
+- [x] Verify special notes display in order details modal

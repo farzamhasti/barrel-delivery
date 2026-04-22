@@ -2,7 +2,7 @@ import { z } from "zod";
 import { notifyOwner } from "./notification";
 import { adminProcedure, publicProcedure, router } from "./trpc";
 import { getSystemCredentials, verifySystemPassword, createSystemSession, getSystemSessionByToken, deleteSystemSession } from "../db";
-import { v4 as uuidv4 } from "uuid";
+import crypto from "crypto";
 
 export const systemRouter = router({
   health: publicProcedure
@@ -45,7 +45,7 @@ export const systemRouter = router({
       }
 
       // Create session
-      const sessionToken = uuidv4();
+      const sessionToken = crypto.randomBytes(32).toString("hex");
       const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
       
       await createSystemSession(credentials.id, sessionToken, expiresAt);
