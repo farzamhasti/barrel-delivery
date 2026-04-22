@@ -410,16 +410,16 @@ export default function KitchenDashboard() {
                       key={driver.id}
                       className="p-3 bg-muted rounded-lg border border-border hover:border-accent/50 transition-colors"
                     >
-                      <div className="flex items-start justify-between mb-1">
+                      <div className="flex items-start justify-between mb-2">
                         <div>
                           <h4 className="font-semibold text-foreground text-sm">{driver.name}</h4>
-                          <p className="text-xs text-muted-foreground">{driver.phone}</p>
                         </div>
                         <Badge className="bg-green-100 text-green-800 text-xs">Online</Badge>
                       </div>
-                      {driver.vehicleType && (
-                        <p className="text-xs text-muted-foreground mt-1">{driver.vehicleType}</p>
-                      )}
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Clock className="w-3 h-3" />
+                        <span>Est. Return: {driver.estimatedReturnTime || '--'}</span>
+                      </div>
                     </div>
                   ))}
                 </div>

@@ -1911,3 +1911,25 @@
 - [x] Confirmed styling with gray color, semibold font, proper spacing
 - [x] Validated layout with full width, centered text, border bottom, gradient background
 - [x] Added to AdminLogin, KitchenLogin, DriverDashboard, AdminDashboard, KitchenDashboard, Home pages
+
+
+## FEATURE - Modify Driver Information Visibility
+
+- [x] Hide phone number from Admin Dashboard "Online Drivers" table
+- [x] Hide vehicle name from Admin Dashboard "Online Drivers" table
+- [x] Hide phone number from Kitchen Dashboard "Online Drivers" table
+- [x] Hide vehicle name from Kitchen Dashboard "Online Drivers" table
+- [x] Add "Return Time" column to Admin Dashboard "Online Drivers" table
+- [x] Add "Return Time" column to Kitchen Dashboard "Online Drivers" table
+- [x] Calculate estimated return time based on driver location and restaurant location
+- [x] Update return time dynamically when live location is available
+- [x] Remove vehicle name from Driver Dashboard personal information
+- [x] Remove phone number from Driver Dashboard personal information
+- [x] Maintain clean UI after removing columns
+- [x] Test visibility changes on all dashboards
+- [x] Verify data privacy improvements
+- [x] Write tests for driver information visibility changes (9 tests passing)
+- [x] Removed phone and vehicleType from OrderTrackingWithMap Active Drivers
+- [x] Removed phone and vehicleType from KitchenDashboard Active Drivers
+- [x] Removed Vehicle and Phone cards from DriverDashboard personal info
+- [x] Added "Est. Return" time display with Clock icon to both dashboards

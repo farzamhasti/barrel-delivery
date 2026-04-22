@@ -277,23 +277,7 @@ export default function DriverDashboard() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-gray-600">Vehicle</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-lg font-semibold">{currentDriver?.vehicleType || "N/A"}</div>
-            </CardContent>
-          </Card>
 
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-gray-600">Phone</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-lg font-semibold">{currentDriver?.phone || "N/A"}</div>
-            </CardContent>
-          </Card>
         </div>
 
         {/* Orders List */}
