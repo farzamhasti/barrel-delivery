@@ -1792,3 +1792,16 @@
 - [x] Test Delivered button updates order status in admin dashboard
 - [x] Verify order items display with names and quantities in modal
 - [x] Verify special notes display in order details modal
+
+
+## BUG FIX - Driver Deletion Foreign Key Constraint
+
+- [x] Fix driver deletion error caused by foreign key constraint from orders.driver_id
+- [x] Implement soft delete for drivers (add isActive field if not present)
+- [x] Update deleteDriver function to set isActive = false instead of hard delete
+- [x] Update getDrivers to filter out inactive drivers (isActive = true)
+- [x] Update getActiveDrivers to filter by status = online AND isActive = true
+- [x] Test driver deletion doesn't cause foreign key error
+- [x] Verify deleted drivers don't appear in driver lists
+- [x] Verify assigned orders still reference the driver (for historical tracking)
+- [x] Write comprehensive driver deletion tests (8 tests passing)

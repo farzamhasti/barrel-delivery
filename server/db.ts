@@ -151,7 +151,8 @@ export async function deleteMenuItem(id: number) {
 export async function getDrivers() {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(drivers).orderBy(drivers.createdAt);
+  // Only return active drivers (soft delete support)
+  return db.select().from(drivers).where(eq(drivers.isActive, true)).orderBy(drivers.createdAt);
 }
 
 export async function createDriver(data: InsertDriver) {
@@ -175,7 +176,8 @@ export async function updateDriver(id: number, data: Partial<InsertDriver>) {
 export async function deleteDriver(id: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  return db.delete(drivers).where(eq(drivers.id, id));
+  // Soft delete: set isActive to false instead of hard delete to preserve foreign key references
+  return db.update(drivers).set({ isActive: false }).where(eq(drivers.id, id));
 }
 
 export async function updateDriverStatus(id: number, status: "online" | "offline") {
@@ -187,7 +189,8 @@ export async function updateDriverStatus(id: number, status: "online" | "offline
 export async function getActiveDrivers() {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(drivers).where(eq(drivers.status, "online")).orderBy(drivers.name);
+  // Return only active (not deleted) drivers with online status
+  return db.select().from(drivers).where(and(eq(drivers.status, "online"), eq(drivers.isActive, true))).orderBy(drivers.name);
 }
 
 // Customers
