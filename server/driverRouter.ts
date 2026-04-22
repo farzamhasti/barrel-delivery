@@ -223,4 +223,40 @@ export const driverRouter = router({
         });
       }
     }),
+
+  getPerformanceMetrics: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().optional(),
+    }).optional())
+    .query(async ({ input, ctx }) => {
+      try {
+        let sessionToken = ctx.req.cookies?.driver_session;
+        if (!sessionToken && input?.sessionToken) {
+          sessionToken = input.sessionToken;
+        }
+        
+        if (!sessionToken) {
+          throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message: "Session token is required",
+          });
+        }
+        
+        const driver = await db.getDriverBySessionToken(sessionToken);
+        if (!driver) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Driver not found",
+          });
+        }
+        
+        const metrics = await db.getDriverPerformanceMetrics(driver.id);
+        return metrics;
+      } catch (error: any) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error.message || "Failed to fetch performance metrics",
+        });
+      }
+    }),
 });

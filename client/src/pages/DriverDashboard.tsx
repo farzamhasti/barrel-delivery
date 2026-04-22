@@ -45,6 +45,12 @@ export default function DriverDashboard() {
     { enabled: !!currentDriver && !!sessionToken }
   );
 
+  // Fetch performance metrics
+  const { data: performanceMetrics = { todayDeliveryCount: 0, averageDeliveryTime: 0, completionRate: 0 }, isLoading: metricsLoading } = trpc.driver.getPerformanceMetrics.useQuery(
+    sessionToken ? { sessionToken } : undefined,
+    { enabled: !!currentDriver && !!sessionToken }
+  );
+
   // Modal state for order details
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
@@ -288,6 +294,47 @@ export default function DriverDashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Performance Analytics Card */}
+        <Card className="mb-8 border-blue-200 bg-blue-50">
+          <CardHeader>
+            <CardTitle className="text-lg">Today's Performance</CardTitle>
+            <CardDescription>Track your delivery metrics for today</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {metricsLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Delivery Count */}
+                <div className="flex flex-col items-center p-4 bg-white rounded-lg border border-blue-100">
+                  <p className="text-sm text-gray-600 mb-2">Deliveries Completed</p>
+                  <p className="text-4xl font-bold text-blue-600">{performanceMetrics.todayDeliveryCount}</p>
+                  <p className="text-xs text-gray-500 mt-2">Today</p>
+                </div>
+
+                {/* Average Delivery Time */}
+                <div className="flex flex-col items-center p-4 bg-white rounded-lg border border-blue-100">
+                  <p className="text-sm text-gray-600 mb-2">Avg. Delivery Time</p>
+                  <p className="text-4xl font-bold text-blue-600">{performanceMetrics.averageDeliveryTime}</p>
+                  <p className="text-xs text-gray-500 mt-2">minutes</p>
+                </div>
+
+                {/* Completion Rate */}
+                <div className="flex flex-col items-center p-4 bg-white rounded-lg border border-blue-100">
+                  <p className="text-sm text-gray-600 mb-2">Completion Rate</p>
+                  <div className="flex items-baseline gap-1">
+                    <p className="text-4xl font-bold text-blue-600">{performanceMetrics.completionRate}</p>
+                    <p className="text-2xl text-gray-600">%</p>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">of assigned orders</p>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Orders Tabs */}
         <Card>
