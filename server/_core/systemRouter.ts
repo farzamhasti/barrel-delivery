@@ -29,18 +29,24 @@ export const systemRouter = router({
       const credentials = await getSystemCredentials(input.username);
       
       if (!credentials) {
+        console.error(`[Login] User not found: ${input.username}`);
         throw new Error("Invalid username or password");
       }
 
+      console.log(`[Login] User found: ${credentials.username}, role: ${credentials.role}`);
+
       // Verify password
       const isPasswordValid = await verifySystemPassword(input.password, credentials.passwordHash);
+      console.log(`[Login] Password verification result: ${isPasswordValid}`);
       
       if (!isPasswordValid) {
+        console.error(`[Login] Invalid password for user: ${input.username}`);
         throw new Error("Invalid username or password");
       }
 
       // Check role matches
       if (credentials.role !== input.role) {
+        console.error(`[Login] Role mismatch. Expected: ${input.role}, Got: ${credentials.role}`);
         throw new Error("Invalid role for this account");
       }
 
