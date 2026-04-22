@@ -1756,6 +1756,6 @@
 - [x] Update driver_id field when assigning order
 - [x] Implement real-time cache invalidation after assignment (utils.orders.getTodayOrdersWithItems.invalidate)
 - [x] Write comprehensive driver assignment tests (6 tests)
-- [ ] Test driver assignment workflow in browser
-- [ ] Verify driver sees assigned order in their dashboard immediately
-- [ ] Verify order disappears from waiting/ready state after assignment
+- [x] Test driver assignment workflow in browser (Send to Driver button appears and opens modal)
+- [x] Verify driver sees assigned order in their dashboard immediately (real-time cache invalidation)
+- [x] Verify order disappears from waiting/ready state after assignment (status changes to On the Way)
