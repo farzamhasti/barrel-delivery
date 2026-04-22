@@ -401,10 +401,10 @@ export default function DriverDashboard() {
                       {selectedOrder.items.map((item: any, index: number) => (
                         <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded">
                           <div>
-                            <p className="font-medium">{item.itemName}</p>
+                            <p className="font-medium">{item.menuItemName || item.itemName || 'Unknown Item'}</p>
                             <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
                           </div>
-                          <p className="font-semibold">${Number(item.price).toFixed(2)}</p>
+                          <p className="font-semibold">${Number(item.priceAtOrder || item.price || 0).toFixed(2)}</p>
                         </div>
                       ))}
                     </div>
