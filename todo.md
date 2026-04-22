@@ -2005,3 +2005,23 @@
 - [x] BUG FIX: Fixed getDriverPerformanceMetrics to use getOrdersByDateRange for consistent date handling
 - [x] BUG FIX: Metrics now correctly display Deliveries Completed and Completion Rate
 - [x] BUG FIX: All tests passing after refactoring to match getAssignedOrders date logic
+
+
+## FEATURE - Real Average Delivery Time Calculation
+
+- [x] Add pickedUpAt timestamp column to orders table
+- [x] Add deliveredAt timestamp column to orders table
+- [x] Create database migration for new timestamp columns
+- [x] Update order status logic to set pickedUpAt when status changes to "On the Way"
+- [x] Update order status logic to set deliveredAt when status changes to "Delivered"
+- [x] Implement real delivery time calculation in getDriverPerformanceMetrics
+- [x] Calculate average as sum of (deliveredAt - pickedUpAt) / number of delivered orders
+- [x] Handle edge cases: orders without timestamps, null values
+- [x] Write tests for delivery time tracking
+- [x] Test average calculation with multiple orders
+- [x] Verify timestamps are set correctly on status changes
+- [x] Update Driver Dashboard to display real average delivery time
+- [x] All 8 delivery time tracking tests passing
+- [x] Database migration successfully applied
+- [x] Real average delivery time now calculated from actual timestamps
+- [x] Fallback to 15 minutes when timestamps are missing

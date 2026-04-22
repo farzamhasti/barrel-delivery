@@ -589,7 +589,17 @@ export async function getOrdersByDateRange(startDate: Date | string, endDate: Da
 export async function updateOrderStatus(orderId: number, status: any) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  return db.update(orders).set({ status }).where(eq(orders.id, orderId));
+  
+  // Set timestamps based on status changes
+  const updateData: any = { status };
+  
+  if (status === "On the Way") {
+    updateData.pickedUpAt = new Date();
+  } else if (status === "Delivered") {
+    updateData.deliveredAt = new Date();
+  }
+  
+  return db.update(orders).set(updateData).where(eq(orders.id, orderId));
 }
 
 export async function assignOrderToDriver(orderId: number, driverId: number) {
@@ -597,7 +607,8 @@ export async function assignOrderToDriver(orderId: number, driverId: number) {
   if (!db) throw new Error("Database not available");
   return db.update(orders).set({ 
     driverId,
-    status: "On the Way"
+    status: "On the Way",
+    pickedUpAt: new Date()
   }).where(eq(orders.id, orderId));
 }
 
@@ -981,10 +992,47 @@ export async function getDriverPerformanceMetrics(driverId: number) {
     const deliveredOrders = todayOrders.filter((order: any) => order.status === "Delivered");
     const todayDeliveryCount = deliveredOrders.length;
 
-    // Calculate average delivery time (in minutes)
-    // For now, we'll use a default estimate of 15 minutes per delivery
-    // In a real scenario, you'd calculate based on actual delivery timestamps
-    const averageDeliveryTime = todayDeliveryCount > 0 ? 15 : 0;
+    // Calculate real average delivery time (in minutes)
+    let averageDeliveryTime = 0;
+    if (todayDeliveryCount > 0) {
+      // Get the raw order data with timestamps from database
+      const db = await getDb();
+      if (db) {
+        const ordersWithTimestamps = await db
+          .select({
+            id: orders.id,
+            pickedUpAt: orders.pickedUpAt,
+            deliveredAt: orders.deliveredAt,
+          })
+          .from(orders)
+          .where(and(
+            eq(orders.driverId, driverId),
+            eq(orders.status, "Delivered"),
+            gte(orders.createdAt, new Date(todayDateStr)),
+            lt(orders.createdAt, new Date(new Date(todayDateStr).getTime() + 24 * 60 * 60 * 1000))
+          ));
+
+        // Calculate average delivery time from actual timestamps
+        let totalDeliveryTime = 0;
+        let ordersWithValidTimestamps = 0;
+
+        for (const order of ordersWithTimestamps) {
+          if (order.pickedUpAt && order.deliveredAt) {
+            const deliveryTimeMs = new Date(order.deliveredAt).getTime() - new Date(order.pickedUpAt).getTime();
+            const deliveryTimeMinutes = Math.round(deliveryTimeMs / (1000 * 60));
+            totalDeliveryTime += deliveryTimeMinutes;
+            ordersWithValidTimestamps++;
+          }
+        }
+
+        if (ordersWithValidTimestamps > 0) {
+          averageDeliveryTime = Math.round(totalDeliveryTime / ordersWithValidTimestamps);
+        } else {
+          // Fallback to 15 minutes if no valid timestamps
+          averageDeliveryTime = 15;
+        }
+      }
+    }
 
     // Calculate completion rate
     const totalOrders = todayOrders.length;

@@ -125,6 +125,8 @@ export const orders = mysqlTable("orders", {
   hasDeliveryTime: boolean("has_delivery_time").default(false),
   notes: text("notes"),
   area: varchar("area", { length: 50 }),
+  pickedUpAt: timestamp("picked_up_at"),
+  deliveredAt: timestamp("delivered_at"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

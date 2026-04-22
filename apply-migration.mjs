@@ -15,7 +15,9 @@ async function applyMigration() {
     "ALTER TABLE `orders` ADD COLUMN `tax_amount` decimal(10,2) DEFAULT '0' NOT NULL",
     "ALTER TABLE `orders` ADD COLUMN `delivery_time` timestamp",
     "ALTER TABLE `orders` ADD COLUMN `has_delivery_time` boolean DEFAULT false",
-    "ALTER TABLE `orders` MODIFY COLUMN `status` enum('Pending','Ready','On the Way','Delivered') NOT NULL DEFAULT 'Pending'"
+    "ALTER TABLE `orders` MODIFY COLUMN `status` enum('Pending','Ready','On the Way','Delivered') NOT NULL DEFAULT 'Pending'",
+    "ALTER TABLE `orders` ADD COLUMN `picked_up_at` timestamp NULL",
+    "ALTER TABLE `orders` ADD COLUMN `delivered_at` timestamp NULL"
   ];
 
   for (const statement of statements) {
