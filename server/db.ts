@@ -972,52 +972,10 @@ export async function createSystemCredentials(username: string, password: string
 
 // Driver Performance Metrics
 export async function getDriverPerformanceMetrics(driverId: number) {
-  const db = await getDb();
-  if (!db) {
-    return {
-      todayDeliveryCount: 0,
-      averageDeliveryTime: 0,
-      completionRate: 0,
-    };
-  }
-
   try {
-    // Get today's date in America/Toronto timezone
-    const now = new Date();
-    const torontoFormatter = new Intl.DateTimeFormat("en-US", {
-      timeZone: "America/Toronto",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: false,
-    });
-
-    const torontoParts = torontoFormatter.formatToParts(now);
-    const year = parseInt(torontoParts.find((p) => p.type === "year")?.value || "2024");
-    const month = parseInt(torontoParts.find((p) => p.type === "month")?.value || "1");
-    const day = parseInt(torontoParts.find((p) => p.type === "day")?.value || "1");
-
-    // Calculate offset
-    const torontoTimeMs = new Date(year, month - 1, day, 0, 0, 0, 0).getTime();
-    const offsetMs = now.getTime() - torontoTimeMs;
-
-    // Start and end of day
-    const midnightTorontoMs = new Date(year, month - 1, day, 0, 0, 0, 0).getTime();
-    const startOfDay = new Date(midnightTorontoMs + offsetMs);
-    const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000);
-
-    // Get all orders for this driver today
-    const todayOrders = await db
-      .select()
-      .from(orders)
-      .where(and(
-        eq(orders.driverId, driverId),
-        gte(orders.createdAt, startOfDay),
-        lt(orders.createdAt, endOfDay)
-      ));
+    // Get today's orders using the same method as getAssignedOrders
+    const todayDateStr = new Date().toISOString().split("T")[0];
+    const todayOrders = await getOrdersByDateRange(todayDateStr, todayDateStr, driverId);
 
     // Count delivered orders
     const deliveredOrders = todayOrders.filter((order: any) => order.status === "Delivered");
