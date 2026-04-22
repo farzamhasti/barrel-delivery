@@ -1,6 +1,4 @@
 import { trpc } from "@/lib/trpc";
-import { useAuth } from "@/_core/hooks/useAuth";
-import { useLocation } from "wouter";
 import { invalidateOrderCache, invalidateCustomerCache } from "@/lib/invalidation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +11,7 @@ import { Trash2, Edit2, Plus, Save, X, ChevronDown, ChevronUp, Loader2, Calendar
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { useState, useMemo } from "react";
-import { formatDateInTimezone } from "@shared/timezone";
+
 
 interface OrderFormData {
   customerName: string;
@@ -34,9 +32,6 @@ interface OrderItemFormData {
 }
 
 export function Orders() {
-  const { user } = useAuth();
-  const [, setLocation] = useLocation();
-  
   // Get trpc utils for cache invalidation
   const utils = trpc.useUtils();
 
@@ -91,11 +86,6 @@ export function Orders() {
 
   // Queries
   const { data: allOrders = [], refetch: refetchOrders, isLoading: isLoadingOrders } = trpc.orders.list.useQuery();
-  
-  // Redirect if not authenticated
-  if (!user) {
-    return <div>Loading...</div>;
-  }
   
   // Filter orders by selected date using America/Toronto timezone
   const orders = useMemo(() => {
