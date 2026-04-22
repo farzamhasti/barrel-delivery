@@ -1730,3 +1730,15 @@
 - [x] Test Restaurant Admin Dashboard Active Drivers displays correctly
 - [x] Verify visual consistency with Order Tracking tab
 - [x] All driver status tests passing (6/6)
+
+
+## BUGFIX - Timezone Handling (America/Toronto)
+
+- [x] Create timezone utility functions for consistent date handling (shared/timezone.ts)
+- [x] Fix backend date filtering to use America/Toronto timezone (getTodayOrdersWithItems)
+- [x] Update Admin Dashboard daily order filtering to use isSameDay utility
+- [x] Write comprehensive timezone tests (7/7 passing)
+- [x] Verify all timestamps use UTC in database but display in America/Toronto
+- [ ] Update Kitchen Dashboard daily order filtering
+- [ ] Update Order Tracking date display
+- [ ] Test date filtering shows correct dates (not next day) in browser

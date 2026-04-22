@@ -387,9 +387,28 @@ export async function getTodayOrdersWithItems() {
   const db = await getDb();
   if (!db) return [];
   
-  const today = new Date();
-  const startOfDay = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate(), 0, 0, 0, 0));
-  const endOfDay = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() + 1, 0, 0, 0, 0));
+  // Get today's date in America/Toronto timezone
+  const now = new Date();
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Toronto",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  
+  const parts = formatter.formatToParts(now);
+  const year = parseInt(parts.find((p) => p.type === "year")?.value || "2024");
+  const month = parseInt(parts.find((p) => p.type === "month")?.value || "1") - 1;
+  const day = parseInt(parts.find((p) => p.type === "day")?.value || "1");
+  
+  // Create start and end of day in UTC that corresponds to America/Toronto midnight
+  const localDate = new Date(year, month, day, 0, 0, 0, 0);
+  const utcDate = new Date(localDate.toLocaleString("en-US", { timeZone: "UTC" }));
+  const tzDate = new Date(localDate.toLocaleString("en-US", { timeZone: "America/Toronto" }));
+  const offset = utcDate.getTime() - tzDate.getTime();
+  
+  const startOfDay = new Date(localDate.getTime() - offset);
+  const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000);
   
   const todayOrders = await db
     .select({

@@ -3,19 +3,14 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Package2, Truck, TrendingUp } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import { getTodayInTimezone, isSameDay } from "@shared/timezone";
 
 export default function Dashboard() {
   const { data: orders = [] } = trpc.orders.list.useQuery();
   const { data: drivers = [] } = trpc.drivers.list.useQuery();
 
-  // Filter orders for today
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const todayOrders = orders.filter((o: any) => {
-    const orderDate = new Date(o.createdAt);
-    orderDate.setHours(0, 0, 0, 0);
-    return orderDate.getTime() === today.getTime();
-  });
+  // Filter orders for today using America/Toronto timezone
+  const todayOrders = orders.filter((o: any) => isSameDay(o.createdAt, new Date()));
 
   const utils = trpc.useUtils();
   const pendingOrders = todayOrders.filter((o: any) => o.status === "Pending").length;
