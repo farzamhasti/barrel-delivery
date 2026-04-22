@@ -16,25 +16,11 @@ export default function OrderTrackingWithMap() {
   const utils = trpc.useUtils();
 
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
-  const [showMap, setShowMap] = useState(false); // Default to false, will be set by useEffect
+  const [showMap, setShowMap] = useState(true);
   const [showDriverModal, setShowDriverModal] = useState(false);
   const [orderToAssign, setOrderToAssign] = useState<number | null>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.Marker[]>([]);
-
-  // Detect window size and show/hide map accordingly
-  useEffect(() => {
-    const handleResize = () => {
-      setShowMap(window.innerWidth >= 1024);
-    };
-
-    // Set initial state
-    handleResize();
-
-    // Add resize listener
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   // Fetch today's orders with items for complete data
   const { data: allOrders = [], isLoading, refetch } = trpc.orders.getTodayOrdersWithItems.useQuery();
@@ -50,30 +36,14 @@ export default function OrderTrackingWithMap() {
   );
 
   // Filter to active orders
-  const orders = Array.isArray(allOrders) ? allOrders.filter((o: any) => {
-    const isActive = ["Pending", "Ready", "On the Way"].includes(o.status);
-    if (!isActive && o.id) {
-      console.log('Order', o.id, 'filtered out - status:', o.status);
-    }
-    return isActive;
-  }) : [];
-
-  // Debug logging
-  useEffect(() => {
-    console.log('OrderTracking Debug:', {
-      allOrdersCount: allOrders?.length || 0,
-      filteredOrdersCount: orders?.length || 0,
-      showMap,
-      windowWidth: typeof window !== 'undefined' ? window.innerWidth : 'N/A',
-      isLoading,
-    });
-  }, [allOrders, orders, showMap, isLoading]);
+  const orders = Array.isArray(allOrders) ? allOrders.filter((o: any) =>
+    ["Pending", "Ready", "On the Way"].includes(o.status)
+  ) : [];
 
   // Auto-refetch every 5 seconds for real-time updates
   // Also listen for cache invalidation from other components
   useEffect(() => {
     const interval = setInterval(() => {
-      console.log('Auto-refetching orders...');
       refetch();
     }, 5000);
     return () => clearInterval(interval);
@@ -233,7 +203,7 @@ export default function OrderTrackingWithMap() {
       <div className="flex flex-col gap-6 flex-1 overflow-hidden">
         {/* Map and Drivers Side-by-Side */}
         {showMap && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-96 lg:h-96 overflow-hidden flex-shrink-0">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-96 overflow-hidden">
             {/* Map Section - 2/3 width */}
             <div className="lg:col-span-2 flex flex-col overflow-hidden">
               <Card className="overflow-hidden flex-1">
@@ -305,22 +275,20 @@ export default function OrderTrackingWithMap() {
               </Card>
             </div>
           </div>
-        )}
-        
-        {/* Orders List - Below Map */}
-        <div className="flex flex-col overflow-hidden flex-1 min-h-0">
+        )}        {/* Orders List - Below Map */}
+        <div className="flex flex-col overflow-hidden flex-1">
           <h3 className="text-lg font-semibold text-foreground mb-4 flex-shrink-0">Active Orders ({orders?.length || 0})</h3>
 
           {isLoading ? (
-            <div className="flex items-center justify-center py-8 flex-1 min-h-0">
+            <div className="flex items-center justify-center py-8 flex-1">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
             </div>
           ) : !orders || orders.length === 0 ? (
-            <Card className="p-6 text-center flex-1 flex items-center justify-center min-h-0">
+            <Card className="p-6 text-center flex-1 flex items-center justify-center">
               <p className="text-muted-foreground">No active orders</p>
             </Card>
           ) : (
-            <div className="space-y-3 overflow-y-auto flex-1 min-h-0">
+            <div className="space-y-3 overflow-y-auto flex-1">
               {orders.map((order: any) => (
                 <Card
                   key={order.id}
