@@ -1,4 +1,6 @@
 import { trpc } from "@/lib/trpc";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { useLocation } from "wouter";
 import { invalidateOrderCache, invalidateCustomerCache } from "@/lib/invalidation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +13,7 @@ import { Trash2, Edit2, Plus, Save, X, ChevronDown, ChevronUp, Loader2, Calendar
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { useState, useMemo } from "react";
+import { formatDateInTimezone } from "@shared/timezone";
 
 interface OrderFormData {
   customerName: string;
@@ -31,6 +34,9 @@ interface OrderItemFormData {
 }
 
 export function Orders() {
+  const { user } = useAuth();
+  const [, setLocation] = useLocation();
+  
   // Get trpc utils for cache invalidation
   const utils = trpc.useUtils();
 
@@ -40,7 +46,22 @@ export function Orders() {
   const [editingOrderId, setEditingOrderId] = useState<number | null>(null);
   const [editingItemIndex, setEditingItemIndex] = useState<number | null>(null);
   const [showAddItemDialog, setShowAddItemDialog] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  // Initialize with today's date in America/Toronto timezone
+  const getTodayDateString = () => {
+    const now = new Date();
+    const formatter = new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/Toronto",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+    const parts = formatter.formatToParts(now);
+    const year = parts.find((p) => p.type === "year")?.value;
+    const month = parts.find((p) => p.type === "month")?.value;
+    const day = parts.find((p) => p.type === "day")?.value;
+    return `${year}-${month}-${day}`;
+  };
+  const [selectedDate, setSelectedDate] = useState<string>(getTodayDateString());
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
   // Form data
@@ -71,14 +92,26 @@ export function Orders() {
   // Queries
   const { data: allOrders = [], refetch: refetchOrders, isLoading: isLoadingOrders } = trpc.orders.list.useQuery();
   
-  // Filter orders by selected date on the client side
+  // Redirect if not authenticated
+  if (!user) {
+    return <div>Loading...</div>;
+  }
+  
+  // Filter orders by selected date using America/Toronto timezone
   const orders = useMemo(() => {
     return allOrders.filter((order: any) => {
       const orderDate = new Date(order.createdAt);
-      const orderYear = orderDate.getUTCFullYear();
-      const orderMonth = String(orderDate.getUTCMonth() + 1).padStart(2, '0');
-      const orderDay = String(orderDate.getUTCDate()).padStart(2, '0');
-      const orderDateStr = `${orderYear}-${orderMonth}-${orderDay}`;
+      const formatter = new Intl.DateTimeFormat("en-US", {
+        timeZone: "America/Toronto",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      });
+      const parts = formatter.formatToParts(orderDate);
+      const year = parts.find((p) => p.type === "year")?.value;
+      const month = parts.find((p) => p.type === "month")?.value;
+      const day = parts.find((p) => p.type === "day")?.value;
+      const orderDateStr = `${year}-${month}-${day}`;
       return orderDateStr === selectedDate;
     });
   }, [allOrders, selectedDate]);

@@ -1737,6 +1737,7 @@
 - [x] Create timezone utility functions for consistent date handling (shared/timezone.ts)
 - [x] Fix backend date filtering to use America/Toronto timezone (getTodayOrdersWithItems)
 - [x] Update Admin Dashboard daily order filtering to use isSameDay utility
+- [x] Update Orders page date filtering to use America/Toronto timezone
 - [x] Write comprehensive timezone tests (7/7 passing)
 - [x] Verify all timestamps use UTC in database but display in America/Toronto
 - [x] Update Kitchen Dashboard daily order filtering (uses getTodayOrdersWithItems - already fixed)
