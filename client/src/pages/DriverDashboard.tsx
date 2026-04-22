@@ -8,6 +8,7 @@ import { useLocation } from "wouter";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DeveloperCredit } from "@/components/DeveloperCredit";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const DRIVER_SESSION_KEY = "driver_session_token";
 
@@ -47,6 +48,9 @@ export default function DriverDashboard() {
   // Modal state for order details
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+
+  // Tab state
+  const [activeTab, setActiveTab] = useState("on-the-way");
 
   // Mutation for marking order as delivered
   const markDeliveredMutation = trpc.driver.markOrderDelivered.useMutation({
@@ -214,6 +218,10 @@ export default function DriverDashboard() {
     );
   }
 
+  // Filter orders by status
+  const onTheWayOrders = assignedOrders.filter((order: any) => order.status !== "Delivered");
+  const deliveredOrders = assignedOrders.filter((order: any) => order.status === "Delivered");
+
   // Driver Dashboard
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -233,8 +241,8 @@ export default function DriverDashboard() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Status and Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        {/* Status Card */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
           {/* Status Card */}
           <Card className={driverStatus === "online" ? "border-green-200 bg-green-50" : "border-gray-200"}>
             <CardHeader className="pb-3">
@@ -270,93 +278,160 @@ export default function DriverDashboard() {
 
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-gray-600">Assigned Orders</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-600">Total Orders</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">{assignedOrders.length}</div>
+              <p className="text-sm text-gray-600 mt-2">
+                {onTheWayOrders.length} on the way • {deliveredOrders.length} delivered
+              </p>
             </CardContent>
           </Card>
-
-
         </div>
 
-        {/* Orders List */}
+        {/* Orders Tabs */}
         <Card>
           <CardHeader>
-            <CardTitle>Your Assigned Orders</CardTitle>
-            <CardDescription>Orders assigned to you for delivery</CardDescription>
+            <CardTitle>Your Orders</CardTitle>
+            <CardDescription>Manage your assigned deliveries</CardDescription>
           </CardHeader>
           <CardContent>
-            {ordersLoading ? (
-              <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-                <p className="text-gray-600">Loading orders...</p>
-              </div>
-            ) : assignedOrders.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-gray-600">No orders assigned yet</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {assignedOrders.map((order: any) => (
-                  <div key={order.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                    <div className="flex justify-between items-start mb-3">
-                      <div>
-                        <h3 className="font-semibold text-lg">Order #{order.id}</h3>
-                        <p className="text-gray-600 text-sm">{order.customerName}</p>
-                      </div>
-                      <Badge variant={order.status === "Delivered" ? "default" : "secondary"}>
-                        {order.status}
-                      </Badge>
-                    </div>
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-2 mb-6 bg-gray-100 rounded-lg">
+                <TabsTrigger value="on-the-way" className="flex items-center gap-2">
+                  On the Way ({onTheWayOrders.length})
+                </TabsTrigger>
+                <TabsTrigger value="delivered" className="flex items-center gap-2">
+                  Delivered ({deliveredOrders.length})
+                </TabsTrigger>
+              </TabsList>
 
-                    <div className="grid grid-cols-2 gap-4 text-sm mb-3">
-                      <div>
-                        <p className="text-gray-600">Address</p>
-                        <p className="font-medium">{order.customerAddress}</p>
-                      </div>
-                      <div>
-                        <p className="text-gray-600">Phone</p>
-                        <p className="font-medium">{order.customerPhone}</p>
-                      </div>
-                    </div>
+              {/* On the Way Tab */}
+              <TabsContent value="on-the-way" className="space-y-4">
+                {ordersLoading ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+                    <p className="text-gray-600">Loading orders...</p>
+                  </div>
+                ) : onTheWayOrders.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-gray-600">No orders on the way</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {onTheWayOrders.map((order: any) => (
+                      <div key={order.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                        <div className="flex justify-between items-start mb-3">
+                          <div>
+                            <h3 className="font-semibold text-lg">Order #{order.id}</h3>
+                            <p className="text-gray-600 text-sm">{order.customerName}</p>
+                          </div>
+                          <Badge variant="secondary">{order.status}</Badge>
+                        </div>
 
-                    <div className="flex justify-between items-center pt-3 border-t border-gray-100">
-                      <div>
-                        <p className="text-gray-600 text-sm">Total</p>
-                        <p className="font-bold text-lg">${Number(order.totalPrice).toFixed(2)}</p>
+                        <div className="grid grid-cols-2 gap-4 text-sm mb-3">
+                          <div>
+                            <p className="text-gray-600">Address</p>
+                            <p className="font-medium">{order.customerAddress}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-600">Phone</p>
+                            <p className="font-medium">{order.customerPhone}</p>
+                          </div>
+                        </div>
+
+                        <div className="flex justify-between items-center pt-3 border-t border-gray-100">
+                          <div>
+                            <p className="text-gray-600 text-sm">Total</p>
+                            <p className="font-bold text-lg">${Number(order.totalPrice).toFixed(2)}</p>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => {
+                                setSelectedOrder(order);
+                                setIsDetailsModalOpen(true);
+                              }}
+                            >
+                              View Details
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              className="bg-green-600 hover:bg-green-700 text-white"
+                              onClick={() => {
+                                if (sessionToken) {
+                                  markDeliveredMutation.mutate({ sessionToken, orderId: order.id });
+                                }
+                              }}
+                              disabled={markDeliveredMutation.isPending}
+                            >
+                              {markDeliveredMutation.isPending ? "Marking..." : "Delivered"}
+                            </Button>
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex gap-2">
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          onClick={() => {
-                            setSelectedOrder(order);
-                            setIsDetailsModalOpen(true);
-                          }}
-                        >
-                          View Details
-                        </Button>
-                        {order.status !== "Delivered" && (
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+
+              {/* Delivered Tab */}
+              <TabsContent value="delivered" className="space-y-4">
+                {ordersLoading ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+                    <p className="text-gray-600">Loading orders...</p>
+                  </div>
+                ) : deliveredOrders.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-gray-600">No delivered orders yet</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {deliveredOrders.map((order: any) => (
+                      <div key={order.id} className="border border-gray-200 rounded-lg p-4 bg-green-50 hover:shadow-md transition-shadow">
+                        <div className="flex justify-between items-start mb-3">
+                          <div>
+                            <h3 className="font-semibold text-lg">Order #{order.id}</h3>
+                            <p className="text-gray-600 text-sm">{order.customerName}</p>
+                          </div>
+                          <Badge className="bg-green-600">Delivered</Badge>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4 text-sm mb-3">
+                          <div>
+                            <p className="text-gray-600">Address</p>
+                            <p className="font-medium">{order.customerAddress}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-600">Phone</p>
+                            <p className="font-medium">{order.customerPhone}</p>
+                          </div>
+                        </div>
+
+                        <div className="flex justify-between items-center pt-3 border-t border-gray-100">
+                          <div>
+                            <p className="text-gray-600 text-sm">Total</p>
+                            <p className="font-bold text-lg">${Number(order.totalPrice).toFixed(2)}</p>
+                          </div>
                           <Button 
                             size="sm" 
-                            className="bg-green-600 hover:bg-green-700 text-white"
+                            variant="outline"
                             onClick={() => {
-                              if (sessionToken) {
-                                markDeliveredMutation.mutate({ sessionToken, orderId: order.id });
-                              }
+                              setSelectedOrder(order);
+                              setIsDetailsModalOpen(true);
                             }}
-                            disabled={markDeliveredMutation.isPending}
                           >
-                            {markDeliveredMutation.isPending ? "Marking..." : "Delivered"}
+                            View Details
                           </Button>
-                        )}
+                        </div>
                       </div>
-                    </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            )}
+                )}
+              </TabsContent>
+            </Tabs>
           </CardContent>
         </Card>
 
