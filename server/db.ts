@@ -1154,3 +1154,110 @@ export async function getDeliveryReportMetrics(startDate: Date, endDate: Date) {
     return null;
   }
 }
+
+
+export async function getOrderTimelinesForReport(startDate: Date, endDate: Date) {
+  const db = await getDb();
+  if (!db) return null;
+
+  try {
+    // Get all orders in the date range with customer info
+    const orderList = await db
+      .select({
+        id: orders.id,
+        customerId: orders.customerId,
+        status: orders.status,
+        createdAt: orders.createdAt,
+        updatedAt: orders.updatedAt,
+        pickedUpAt: orders.pickedUpAt,
+        deliveredAt: orders.deliveredAt,
+      })
+      .from(orders)
+      .where(
+        and(
+          gte(orders.createdAt, startDate),
+          lt(orders.createdAt, endDate)
+        )
+      );
+
+    // Get customer info for each order
+    const customerIdSet = new Set(orderList.map(o => o.customerId));
+    const customerIds = Array.from(customerIdSet);
+    const customerList = await db
+      .select()
+      .from(customers)
+      .where(inArray(customers.id, customerIds));
+
+    const customerMap = new Map(customerList.map(c => [c.id, c]));
+
+    // Get status history for each order
+    const orderIds = orderList.map(o => o.id);
+    const statusHistories = await db
+      .select()
+      .from(orderStatusHistory)
+      .where(inArray(orderStatusHistory.orderId, orderIds));
+
+    // Group status histories by order
+    const historyMap = new Map<number, typeof statusHistories>();
+    for (const history of statusHistories) {
+      if (!historyMap.has(history.orderId)) {
+        historyMap.set(history.orderId, []);
+      }
+      historyMap.get(history.orderId)!.push(history);
+    }
+
+    // Build timeline data for each order
+    const timelines = orderList.map(order => {
+      const customer = customerMap.get(order.customerId);
+      const history = historyMap.get(order.id) || [];
+
+      // Sort history by timestamp
+      history.sort((a, b) => new Date(a.transitionTime).getTime() - new Date(b.transitionTime).getTime());
+
+      // Extract timestamps for each status
+      const statusTimes: Record<string, Date | null> = {
+        pending: null,
+        ready: null,
+        onTheWay: null,
+        delivered: null,
+      };
+
+      for (const entry of history) {
+        if (entry.newStatus === "Pending") statusTimes.pending = entry.transitionTime;
+        if (entry.newStatus === "Ready") statusTimes.ready = entry.transitionTime;
+        if (entry.newStatus === "On the Way") statusTimes.onTheWay = entry.transitionTime;
+        if (entry.newStatus === "Delivered") statusTimes.delivered = entry.transitionTime;
+      }
+
+      // Calculate durations between statuses
+      const calculateDuration = (from: Date | null, to: Date | null) => {
+        if (!from || !to) return null;
+        const ms = new Date(to).getTime() - new Date(from).getTime();
+        return Math.round(ms / (1000 * 60)); // Convert to minutes
+      };
+
+      return {
+        orderId: order.id,
+        customerName: customer?.name || "Unknown",
+        customerAddress: customer?.address || "",
+        status: order.status,
+        timestamps: {
+          pending: statusTimes.pending,
+          ready: statusTimes.ready,
+          onTheWay: statusTimes.onTheWay,
+          delivered: statusTimes.delivered,
+        },
+        durations: {
+          pendingToReady: calculateDuration(statusTimes.pending, statusTimes.ready),
+          readyToOnTheWay: calculateDuration(statusTimes.ready, statusTimes.onTheWay),
+          onTheWayToDelivered: calculateDuration(statusTimes.onTheWay, statusTimes.delivered),
+        },
+      };
+    });
+
+    return timelines;
+  } catch (error) {
+    console.error("[Database] Error fetching order timelines:", error);
+    return null;
+  }
+}

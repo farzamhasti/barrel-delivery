@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, TrendingUp, Truck, CheckCircle2 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import { OrderTimelineTable } from "@/components/OrderTimelineTable";
 
 export function DeliveryReportTab() {
   const [dateRange, setDateRange] = useState({
@@ -13,6 +14,12 @@ export function DeliveryReportTab() {
 
   // Fetch delivery report metrics
   const { data: metrics, isLoading } = trpc.kitchen.getDeliveryReportMetrics.useQuery({
+    startDate: dateRange.start,
+    endDate: dateRange.end,
+  });
+
+  // Fetch order timelines
+  const { data: timelines, isLoading: timelinesLoading } = trpc.kitchen.getOrderTimelines.useQuery({
     startDate: dateRange.start,
     endDate: dateRange.end,
   });
@@ -171,6 +178,19 @@ export function DeliveryReportTab() {
           </CardContent>
         </Card>
       )}
+
+      {/* Order Timeline Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Order Status Timeline</CardTitle>
+          <CardDescription>
+            Detailed timeline showing each order's progression through all statuses
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <OrderTimelineTable timelines={timelines || []} isLoading={timelinesLoading} />
+        </CardContent>
+      </Card>
     </div>
   );
 }

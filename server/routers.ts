@@ -19,6 +19,14 @@ export const appRouter = router({
       .query(async ({ input }) => {
         return db.getDeliveryReportMetrics(input.startDate, input.endDate);
       }),
+    getOrderTimelines: protectedProcedure
+      .input(z.object({
+        startDate: z.date(),
+        endDate: z.date(),
+      }))
+      .query(async ({ input }) => {
+        return db.getOrderTimelinesForReport(input.startDate, input.endDate);
+      }),
   }),
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),

@@ -2075,3 +2075,25 @@
 - [x] Moved Delivery Report from Kitchen Dashboard to Restaurant Admin Dashboard
 - [x] Added Delivery Report menu item to admin sidebar with Calendar icon
 - [x] Kitchen Dashboard reverted to 2 tabs: Active Orders, Prepared Orders
+
+
+## FEATURE - Order Status Timeline Table in Delivery Report
+
+- [x] Create backend procedure to fetch order timelines with all status transitions
+- [x] Retrieve Pending, Ready, On the Way, and Delivered timestamps for each order
+- [x] Create OrderTimelineTable component with detailed status columns
+- [x] Display Order ID, Customer Name, and status transition times in table format
+- [x] Show time duration between each status transition
+- [x] Format timestamps as readable date/time (e.g., "Apr 22, 3:45 PM")
+- [x] Add table sorting by order ID, customer, or status times
+- [x] Add table filtering by date range and status
+- [x] Display "N/A" for statuses not yet reached
+- [x] Add color coding for status columns (Pending: gray, Ready: yellow, On Way: blue, Delivered: green)
+- [x] Make table responsive on mobile and desktop
+- [x] Write tests for order timeline retrieval
+- [x] Write tests for timeline table rendering
+- [x] Verify accurate timestamp display for all orders
+- [x] All 9 order timeline table tests passing
+- [x] OrderTimelineTable component displays 11 columns with status transitions
+- [x] Delivery Report tab now includes detailed order timeline table
+- [x] Backend getOrderTimelinesForReport procedure retrieves all order transitions
