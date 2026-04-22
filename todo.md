@@ -2072,3 +2072,6 @@
 - [x] Kitchen dashboard now has 3 tabs: Active Orders, Prepared Orders, Delivery Report
 - [x] Delivery Report shows metrics: total orders, delivered, delivery rate, avg time
 - [x] Date range selector with Previous Week and Current Week buttons
+- [x] Moved Delivery Report from Kitchen Dashboard to Restaurant Admin Dashboard
+- [x] Added Delivery Report menu item to admin sidebar with Calendar icon
+- [x] Kitchen Dashboard reverted to 2 tabs: Active Orders, Prepared Orders
