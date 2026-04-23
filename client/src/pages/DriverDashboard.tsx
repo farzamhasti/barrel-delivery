@@ -163,8 +163,15 @@ export default function DriverDashboard() {
         <div className="flex-1 flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
+            <div className="flex justify-center mb-4">
+              <img 
+                src="/manus-storage/logo_dceb0304.png" 
+                alt="The Barrel Restaurant (Pizza & Pasta)" 
+                className="h-16 w-auto object-contain"
+              />
+            </div>
             <CardTitle className="text-2xl">Driver Login</CardTitle>
-            <CardDescription>Enter your credentials to access your dashboard</CardDescription>
+            <CardDescription>The Barrel Restaurant (Pizza & Pasta)</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-4">
@@ -233,11 +240,18 @@ export default function DriverDashboard() {
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <DeveloperCredit />
       {/* Header */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="bg-white/95 backdrop-blur-sm border-b border-border/40 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Driver Dashboard</h1>
-            <p className="text-gray-600 mt-1">Welcome, {currentDriver?.name}</p>
+          <div className="flex items-center gap-4">
+            <img 
+              src="/manus-storage/logo_dceb0304.png" 
+              alt="The Barrel Restaurant (Pizza & Pasta)" 
+              className="h-12 w-auto object-contain"
+            />
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Driver Dashboard</h1>
+              <p className="text-gray-600 mt-1">Welcome, {currentDriver?.name}</p>
+            </div>
           </div>
           <Button variant="outline" onClick={handleLogout}>
             Logout

@@ -358,10 +358,17 @@ export default function KitchenDashboard() {
       <div className="flex-1 p-4 md:p-6">
       {/* Header */}
       <div className="max-w-7xl mx-auto mb-6">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <ChefHat className="w-8 h-8 text-orange-600" />
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground">Kitchen Dashboard</h1>
+        <div className="flex items-center justify-between mb-6 bg-white/95 backdrop-blur-sm rounded-lg shadow-sm p-4 border border-border/40">
+          <div className="flex items-center gap-4">
+            <img 
+              src="/manus-storage/logo_dceb0304.png" 
+              alt="The Barrel Restaurant (Pizza & Pasta)" 
+              className="h-12 w-auto object-contain"
+            />
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold text-foreground">Kitchen Dashboard</h1>
+              <p className="text-xs text-muted-foreground">The Barrel Restaurant (Pizza & Pasta)</p>
+            </div>
           </div>
           <Button
             variant="outline"

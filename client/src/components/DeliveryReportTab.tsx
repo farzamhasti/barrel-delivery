@@ -145,26 +145,7 @@ export function DeliveryReportTab() {
         </div>
       )}
 
-      {/* Export Buttons */}
-      <div className="flex gap-2 w-full">
-        <Button 
-          onClick={handleExportCSV}
-          className="flex-1"
-          variant="outline"
-        >
-          <Download className="w-4 h-4 mr-2" />
-          Export as CSV
-        </Button>
-        <Button 
-          onClick={handleExportPDF}
-          className="flex-1"
-          variant="default"
-          disabled={isGeneratingPDF || !metrics || !timelines}
-        >
-          <FileText className="w-4 h-4 mr-2" />
-          {isGeneratingPDF ? "Generating PDF..." : "Export as PDF"}
-        </Button>
-      </div>
+
 
       {/* Delivery Gantt Chart */}
       <Card>

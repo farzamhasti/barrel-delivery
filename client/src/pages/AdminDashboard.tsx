@@ -63,8 +63,18 @@ export default function AdminDashboard() {
       
       {/* Mobile Header - Always visible on        {/* Mobile Header with Menu Toggle */}
         {isMobile && (
-          <header className="border-b border-border bg-card px-4 py-3 flex items-center justify-between flex-shrink-0">
-            <h1 className="text-lg font-bold text-foreground">Admin Dashboard</h1>
+          <header className="border-b border-border/40 backdrop-blur-sm bg-white/95 shadow-sm px-4 py-3 flex items-center justify-between flex-shrink-0">
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <img 
+                src="/manus-storage/logo_dceb0304.png" 
+                alt="The Barrel Restaurant (Pizza & Pasta)" 
+                className="h-8 w-auto object-contain"
+              />
+              <div className="flex flex-col min-w-0">
+                <h1 className="text-sm font-bold text-foreground truncate">Barrel Delivery</h1>
+                <p className="text-xs text-muted-foreground truncate">Admin Dashboard</p>
+              </div>
+            </div>
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
@@ -122,10 +132,18 @@ export default function AdminDashboard() {
               `}
             >
               {/* Desktop Header */}
-              <div className="p-4 border-b border-border flex items-center justify-between">
-                <h2 className="font-bold text-foreground text-sm lg:text-base">
-                  Barrel Delivery
-                </h2>
+              <div className="p-4 border-b border-border flex items-center gap-3">
+                <img 
+                  src="/manus-storage/logo_dceb0304.png" 
+                  alt="The Barrel Restaurant (Pizza & Pasta)" 
+                  className="h-8 w-auto object-contain"
+                />
+                <div className="flex-1 min-w-0">
+                  <h2 className="font-bold text-foreground text-sm truncate">
+                    Barrel Delivery
+                  </h2>
+                  <p className="text-xs text-muted-foreground truncate">Admin</p>
+                </div>
               </div>
               <SidebarContent currentTab={currentTab} logout={logout} />
             </aside>
@@ -136,10 +154,20 @@ export default function AdminDashboard() {
         <main className="flex-1 flex flex-col overflow-hidden">
           {/* Desktop Header */}
           {!isMobile && (
-            <header className="border-b border-border bg-card px-4 md:px-6 py-3 md:py-4 flex items-center justify-between flex-shrink-0">
-              <h1 className="text-xl md:text-2xl font-bold text-foreground">
-                Admin Dashboard
-              </h1>
+            <header className="border-b border-border/40 backdrop-blur-sm bg-white/95 shadow-sm px-4 md:px-6 py-3 md:py-4 flex items-center justify-between flex-shrink-0">
+              <div className="flex items-center gap-3">
+                <img 
+                  src="/manus-storage/logo_dceb0304.png" 
+                  alt="The Barrel Restaurant (Pizza & Pasta)" 
+                  className="h-10 w-auto object-contain"
+                />
+                <div>
+                  <h1 className="text-lg md:text-xl font-bold text-foreground">
+                    Admin Dashboard
+                  </h1>
+                  <p className="text-xs text-muted-foreground">The Barrel Restaurant</p>
+                </div>
+              </div>
               <Button
                 variant="outline"
                 className="gap-2 text-sm h-9"

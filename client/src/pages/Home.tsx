@@ -13,16 +13,16 @@ export default function Home() {
       <DeveloperCredit />
       
       {/* Header */}
-      <header className="border-b border-border/40 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+      <header className="border-b border-border/40 backdrop-blur-sm sticky top-0 z-50 bg-white/95 shadow-sm">
+        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img 
               src="/manus-storage/logo_dceb0304.png" 
               alt="The Barrel Restaurant (Pizza & Pasta)" 
-              className="h-10 w-auto"
+              className="h-12 w-auto object-contain"
             />
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Barrel Delivery</h1>
+              <h1 className="text-xl font-bold text-foreground">Barrel Delivery</h1>
               <p className="text-xs text-muted-foreground">The Barrel Restaurant (Pizza & Pasta)</p>
             </div>
           </div>
@@ -31,10 +31,17 @@ export default function Home() {
 
       {/* Main Content */}
       <main className="flex-1 flex items-center justify-center px-4 py-12">
-        <div className="w-full max-w-md">
-          {/* Hero Section */}
+        <div className="w-full max-w-2xl">
+          {/* Hero Section with Large Logo */}
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-foreground mb-4">Restaurant Delivery Management</h2>
+            <div className="mb-8 flex justify-center">
+              <img 
+                src="/manus-storage/logo_dceb0304.png" 
+                alt="The Barrel Restaurant (Pizza & Pasta)" 
+                className="h-32 w-auto object-contain drop-shadow-lg"
+              />
+            </div>
+            <h2 className="text-5xl font-bold text-foreground mb-4">Restaurant Delivery Management</h2>
             <p className="text-lg text-muted-foreground mb-8">
               Elegant platform for managing restaurant orders, drivers, and real-time delivery tracking.
             </p>
@@ -42,7 +49,7 @@ export default function Home() {
 
           {/* Role Selection */}
           <div className="space-y-4">
-            <div className="bg-card rounded-xl border border-border p-6 hover:border-accent/50 transition-colors">
+            <div className="bg-card rounded-xl border border-border p-6 hover:border-accent/50 transition-all hover:shadow-md">
               <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
                 <Package2 className="w-5 h-5 text-accent" />
                 Restaurant Admin
@@ -59,7 +66,7 @@ export default function Home() {
               </Button>
             </div>
 
-            <div className="bg-card rounded-xl border border-border p-6 hover:border-accent/50 transition-colors">
+            <div className="bg-card rounded-xl border border-border p-6 hover:border-accent/50 transition-all hover:shadow-md">
               <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
                 <Truck className="w-5 h-5 text-accent" />
                 Delivery Driver
@@ -76,7 +83,7 @@ export default function Home() {
               </Button>
             </div>
 
-            <div className="bg-card rounded-xl border border-border p-6 hover:border-accent/50 transition-colors">
+            <div className="bg-card rounded-xl border border-border p-6 hover:border-accent/50 transition-all hover:shadow-md">
               <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
                 <ChefHat className="w-5 h-5 text-accent" />
                 Kitchen
