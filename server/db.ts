@@ -1,8 +1,9 @@
 import { drizzle } from "drizzle-orm/mysql2";
 import { InsertUser, users, menuCategories, InsertMenuCategory, menuItems, InsertMenuItem, drivers, InsertDriver, customers, InsertCustomer, orders, InsertOrder, orderItems, InsertOrderItem, systemCredentials, systemSessions, orderStatusHistory, InsertOrderStatusHistory } from "../drizzle/schema";
 import { ENV } from './_core/env';
-import { eq, and, desc, gte, lt, inArray, gt, isNull } from "drizzle-orm";
+import { eq, and, desc, gte, lt, inArray, gt, isNull, lte } from "drizzle-orm";
 import { createHash, timingSafeEqual } from 'crypto';
+import { format, startOfWeek, startOfMonth } from 'date-fns';
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -1269,4 +1270,134 @@ export async function getOrderTimelinesForReport(startDate: Date, endDate: Date)
     console.error("[Database] Error fetching order timelines:", error);
     return null;
   }
+}
+
+
+// Get aggregated delivery report by time period (daily, weekly, monthly)
+export async function getAggregatedDeliveryReport(
+  startDate: Date,
+  endDate: Date,
+  reportType: "daily" | "weekly" | "monthly"
+) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const ordersList = await db
+    .select({
+      id: orders.id,
+      customerId: orders.customerId,
+      status: orders.status,
+      createdAt: orders.createdAt,
+      pickedUpAt: orders.pickedUpAt,
+      deliveredAt: orders.deliveredAt,
+    })
+    .from(orders)
+    .where(
+      and(
+        gte(orders.createdAt, startDate),
+        lte(orders.createdAt, endDate)
+      )
+    );
+
+  // Group orders by time period
+  const groupedByPeriod = new Map<
+    string,
+    {
+      date: string;
+      totalOrders: number;
+      deliveredOrders: number;
+      avgDeliveryTime: number;
+      completionRate: number;
+    }
+  >();
+
+  for (const order of ordersList) {
+    const orderDate = new Date(order.createdAt);
+    let periodKey: string;
+
+    if (reportType === "daily") {
+      periodKey = format(orderDate, "yyyy-MM-dd");
+    } else if (reportType === "weekly") {
+      const weekStart = startOfWeek(orderDate, { weekStartsOn: 0 });
+      periodKey = format(weekStart, "yyyy-MM-dd");
+    } else {
+      // monthly
+      const monthStart = startOfMonth(orderDate);
+      periodKey = format(monthStart, "yyyy-MM");
+    }
+
+    if (!groupedByPeriod.has(periodKey)) {
+      groupedByPeriod.set(periodKey, {
+        date: periodKey,
+        totalOrders: 0,
+        deliveredOrders: 0,
+        avgDeliveryTime: 0,
+        completionRate: 0,
+      });
+    }
+
+    const period = groupedByPeriod.get(periodKey)!;
+    period.totalOrders += 1;
+
+    if (order.status === "Delivered" && order.pickedUpAt && order.deliveredAt) {
+      period.deliveredOrders += 1;
+      const deliveryTime =
+        (new Date(order.deliveredAt).getTime() -
+          new Date(order.pickedUpAt).getTime()) /
+        60000; // minutes
+      period.avgDeliveryTime =
+        (period.avgDeliveryTime * (period.deliveredOrders - 1) + deliveryTime) /
+        period.deliveredOrders;
+    }
+
+    period.completionRate =
+      period.totalOrders > 0
+        ? Math.round((period.deliveredOrders / period.totalOrders) * 100)
+        : 0;
+  }
+
+  return Array.from(groupedByPeriod.values()).sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+  );
+}
+
+// Get detailed order timelines for a specific date range with aggregation
+export async function getDetailedOrderTimelinesForPeriod(
+  startDate: Date,
+  endDate: Date,
+  reportType: "daily" | "weekly" | "monthly"
+) {
+  const timelines = await getOrderTimelinesForReport(startDate, endDate) || [];
+
+  // Group timelines by period
+  const groupedByPeriod = new Map<string, typeof timelines>();
+
+  for (const timeline of timelines) {
+    // Use the first timestamp available for grouping
+    const orderDate = timeline.timestamps.pending || new Date();
+    let periodKey: string;
+
+    if (reportType === "daily") {
+      periodKey = format(orderDate, "yyyy-MM-dd");
+    } else if (reportType === "weekly") {
+      const weekStart = startOfWeek(orderDate, { weekStartsOn: 0 });
+      periodKey = format(weekStart, "yyyy-MM-dd");
+    } else {
+      // monthly
+      const monthStart = startOfMonth(orderDate);
+      periodKey = format(monthStart, "yyyy-MM");
+    }
+
+    if (!groupedByPeriod.has(periodKey)) {
+      groupedByPeriod.set(periodKey, []);
+    }
+
+    groupedByPeriod.get(periodKey)!.push(timeline);
+  }
+
+  return Array.from(groupedByPeriod.entries()).map(([period, ordersList]) => ({
+    period,
+    orders: ordersList,
+    count: ordersList.length,
+  }));
 }

@@ -2171,3 +2171,31 @@
 - [x] Mobile: Logout button in top right header next to menu toggle
 - [x] Button styled with outline variant and LogOut icon
 - [x] Responsive design: Full text on desktop, icon-only on small screens
+
+
+## FEATURE - Flexible Daily, Weekly, and Monthly Delivery Reports
+
+- [x] Create advanced date range selector component with multiple options
+- [x] Add preset options: Today, Yesterday, Last 7 days, Last 30 days, This week, Last week, This month, Last month
+- [x] Add custom date range picker for specific date ranges
+- [x] Implement report type selection: Daily, Weekly, Monthly
+- [x] Create backend procedure to aggregate reports by time period
+- [x] For Daily reports: Show metrics for each individual day
+- [x] For Weekly reports: Show metrics aggregated by week
+- [x] For Monthly reports: Show metrics aggregated by month
+- [x] Display order count, delivery rate, average delivery time per period
+- [x] Show trend indicators (up/down) comparing to previous period
+- [x] Create timeline table showing orders grouped by report period
+- [x] Add export functionality for each report type
+- [x] Write tests for date range calculations
+- [x] Write tests for report aggregation logic
+- [x] Test with various date ranges and report types
+- [x] Verify accurate calculations for all time periods
+- [x] AdvancedDateRangeSelector component with 8 preset buttons
+- [x] Custom date range picker with calendar interface
+- [x] Report type selector (Daily, Weekly, Monthly)
+- [x] Backend getAggregatedDeliveryReport function for time-based grouping
+- [x] Backend getDetailedOrderTimelinesForPeriod function for timeline aggregation
+- [x] DeliveryReportTab integrated with flexible date selection
+- [x] CSV export with selected date range and report type
+- [x] Metrics cards display aggregated data by selected period
