@@ -2158,3 +2158,16 @@
 - [x] Each column shows duration in MM:SS format with descriptive label
 - [x] Added legend explaining each column's meaning
 - [x] Color-coded columns for visual clarity (blue, yellow, blue, green)
+
+
+## UI IMPROVEMENT - Admin Dashboard Logout Button
+
+- [x] Move logout button from current location to top right of screen
+- [x] Ensure logout button is always visible and accessible
+- [x] Maintain consistent styling with dashboard theme
+- [x] Test on mobile, tablet, and desktop viewports
+- [x] Verify logout functionality works from new position
+- [x] Desktop: Logout button in top right header next to Admin Dashboard title
+- [x] Mobile: Logout button in top right header next to menu toggle
+- [x] Button styled with outline variant and LogOut icon
+- [x] Responsive design: Full text on desktop, icon-only on small screens

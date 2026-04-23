@@ -61,27 +61,33 @@ export default function AdminDashboard() {
       {/* Developer Credit */}
       <DeveloperCredit />
       
-      {/* Mobile Header - Always visible on mobile */}
-      {isMobile && (
-        <header className="border-b border-border bg-card px-4 py-3 flex items-center justify-between sticky top-0 z-40">
-          <h1 className="text-lg font-bold text-foreground truncate flex-1">
-            Barrel Delivery
-          </h1>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="ml-2 flex-shrink-0"
-          >
-            {sidebarOpen ? (
-              <X className="w-5 h-5" />
-            ) : (
-              <Menu className="w-5 h-5" />
-            )}
-          </Button>
-        </header>
-      )}
-
+      {/* Mobile Header - Always visible on        {/* Mobile Header with Menu Toggle */}
+        {isMobile && (
+          <header className="border-b border-border bg-card px-4 py-3 flex items-center justify-between flex-shrink-0">
+            <h1 className="text-lg font-bold text-foreground">Admin Dashboard</h1>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2 text-xs h-8"
+                onClick={() => logout()}
+              >
+                <LogOut className="w-4 h-4" />
+                <span className="hidden xs:inline">Logout</span>
+              </Button>
+              <button
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="p-2 hover:bg-accent rounded-md transition-colors"
+              >
+                {sidebarOpen ? (
+                  <X className="w-5 h-5" />
+                ) : (
+                  <Menu className="w-5 h-5" />
+                )}
+              </button>
+            </div>
+          </header>
+        )}
       {/* Main Layout Container */}
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar - Mobile: Fixed overlay, Desktop: Static */}
@@ -134,6 +140,14 @@ export default function AdminDashboard() {
               <h1 className="text-xl md:text-2xl font-bold text-foreground">
                 Admin Dashboard
               </h1>
+              <Button
+                variant="outline"
+                className="gap-2 text-sm h-9"
+                onClick={() => logout()}
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Logout</span>
+              </Button>
             </header>
           )}
 
@@ -215,16 +229,7 @@ function SidebarContent({
       </nav>
 
       {/* Footer */}
-      <div className="p-3 border-t border-border flex-shrink-0">
-        <Button
-          variant="outline"
-          className="w-full gap-2 justify-center text-sm h-9"
-          onClick={() => logout()}
-        >
-          <LogOut className="w-4 h-4" />
-          <span className="hidden sm:inline">Logout</span>
-        </Button>
-      </div>
+      {/* Logout button moved to top right header on desktop */}
     </>
   );
 }
