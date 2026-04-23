@@ -45,6 +45,8 @@ interface PDFReportTemplateProps {
  * PDFReportTemplate component renders a professional PDF report layout
  * This component is designed to be rendered to HTML and then converted to PDF
  * using html2canvas and jsPDF
+ * 
+ * NOTE: Uses inline styles only to avoid OKLCH color parsing issues with html2canvas
  */
 export const PDFReportTemplate = React.forwardRef<
   HTMLDivElement,
@@ -61,11 +63,27 @@ export const PDFReportTemplate = React.forwardRef<
   return (
     <div
       ref={ref}
-      className="w-full bg-white p-12 text-black"
-      style={{ fontSize: "12px", lineHeight: "1.6" }}
+      style={{
+        width: "100%",
+        backgroundColor: "#ffffff",
+        padding: "48px",
+        color: "#000000",
+        fontSize: "12px",
+        lineHeight: "1.6",
+        fontFamily: "Arial, sans-serif",
+      }}
     >
       {/* Header with Logo */}
-      <div className="mb-8 pb-8 border-b-2 border-gray-300 flex items-center gap-6">
+      <div
+        style={{
+          marginBottom: "32px",
+          paddingBottom: "32px",
+          borderBottom: "2px solid #d1d5db",
+          display: "flex",
+          alignItems: "center",
+          gap: "24px",
+        }}
+      >
         <img
           src="/manus-storage/logo_dceb0304.png"
           alt="The Barrel Restaurant (Pizza & Pasta)"
@@ -75,16 +93,23 @@ export const PDFReportTemplate = React.forwardRef<
           <h1 style={{ fontSize: "28px", fontWeight: "bold", margin: "0 0 4px 0" }}>
             The Barrel Restaurant (Pizza & Pasta)
           </h1>
-          <p style={{ fontSize: "14px", color: "#666", margin: "0" }}>
+          <p style={{ fontSize: "14px", color: "#666666", margin: "0" }}>
             Delivery Management Report
           </p>
         </div>
       </div>
 
       {/* Report Info */}
-      <div className="mb-8 grid grid-cols-3 gap-4">
+      <div
+        style={{
+          marginBottom: "32px",
+          display: "grid",
+          gridTemplateColumns: "repeat(3, 1fr)",
+          gap: "16px",
+        }}
+      >
         <div>
-          <p style={{ fontSize: "11px", color: "#999", margin: "0 0 4px 0" }}>
+          <p style={{ fontSize: "11px", color: "#999999", margin: "0 0 4px 0" }}>
             Report Type
           </p>
           <p style={{ fontSize: "14px", fontWeight: "bold", margin: "0" }}>
@@ -92,7 +117,7 @@ export const PDFReportTemplate = React.forwardRef<
           </p>
         </div>
         <div>
-          <p style={{ fontSize: "11px", color: "#999", margin: "0 0 4px 0" }}>
+          <p style={{ fontSize: "11px", color: "#999999", margin: "0 0 4px 0" }}>
             Date Range
           </p>
           <p style={{ fontSize: "14px", fontWeight: "bold", margin: "0" }}>
@@ -100,7 +125,7 @@ export const PDFReportTemplate = React.forwardRef<
           </p>
         </div>
         <div>
-          <p style={{ fontSize: "11px", color: "#999", margin: "0 0 4px 0" }}>
+          <p style={{ fontSize: "11px", color: "#999999", margin: "0 0 4px 0" }}>
             Generated
           </p>
           <p style={{ fontSize: "14px", fontWeight: "bold", margin: "0" }}>
@@ -110,20 +135,26 @@ export const PDFReportTemplate = React.forwardRef<
       </div>
 
       {/* Metrics Summary */}
-      <div className="mb-8">
+      <div style={{ marginBottom: "32px" }}>
         <h2 style={{ fontSize: "16px", fontWeight: "bold", marginBottom: "12px" }}>
           Performance Summary
         </h2>
-        <div className="grid grid-cols-4 gap-4">
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(4, 1fr)",
+            gap: "16px",
+          }}
+        >
           <div
             style={{
-              border: "1px solid #ddd",
+              border: "1px solid #e5e7eb",
               padding: "12px",
               borderRadius: "4px",
-              backgroundColor: "#f9f9f9",
+              backgroundColor: "#f3f4f6",
             }}
           >
-            <p style={{ fontSize: "11px", color: "#666", margin: "0 0 4px 0" }}>
+            <p style={{ fontSize: "11px", color: "#666666", margin: "0 0 4px 0" }}>
               Total Orders
             </p>
             <p style={{ fontSize: "20px", fontWeight: "bold", margin: "0" }}>
@@ -132,13 +163,13 @@ export const PDFReportTemplate = React.forwardRef<
           </div>
           <div
             style={{
-              border: "1px solid #ddd",
+              border: "1px solid #e5e7eb",
               padding: "12px",
               borderRadius: "4px",
-              backgroundColor: "#f9f9f9",
+              backgroundColor: "#f3f4f6",
             }}
           >
-            <p style={{ fontSize: "11px", color: "#666", margin: "0 0 4px 0" }}>
+            <p style={{ fontSize: "11px", color: "#666666", margin: "0 0 4px 0" }}>
               Delivered
             </p>
             <p style={{ fontSize: "20px", fontWeight: "bold", margin: "0" }}>
@@ -147,13 +178,13 @@ export const PDFReportTemplate = React.forwardRef<
           </div>
           <div
             style={{
-              border: "1px solid #ddd",
+              border: "1px solid #e5e7eb",
               padding: "12px",
               borderRadius: "4px",
-              backgroundColor: "#f9f9f9",
+              backgroundColor: "#f3f4f6",
             }}
           >
-            <p style={{ fontSize: "11px", color: "#666", margin: "0 0 4px 0" }}>
+            <p style={{ fontSize: "11px", color: "#666666", margin: "0 0 4px 0" }}>
               Delivery Rate
             </p>
             <p style={{ fontSize: "20px", fontWeight: "bold", margin: "0" }}>
@@ -162,13 +193,13 @@ export const PDFReportTemplate = React.forwardRef<
           </div>
           <div
             style={{
-              border: "1px solid #ddd",
+              border: "1px solid #e5e7eb",
               padding: "12px",
               borderRadius: "4px",
-              backgroundColor: "#f9f9f9",
+              backgroundColor: "#f3f4f6",
             }}
           >
-            <p style={{ fontSize: "11px", color: "#666", margin: "0 0 4px 0" }}>
+            <p style={{ fontSize: "11px", color: "#666666", margin: "0 0 4px 0" }}>
               Avg. Delivery Time
             </p>
             <p style={{ fontSize: "20px", fontWeight: "bold", margin: "0" }}>
@@ -180,7 +211,7 @@ export const PDFReportTemplate = React.forwardRef<
 
       {/* Order Timeline Table */}
       {orderTimelines.length > 0 && (
-        <div className="mb-8">
+        <div style={{ marginBottom: "32px" }}>
           <h2 style={{ fontSize: "16px", fontWeight: "bold", marginBottom: "12px" }}>
             Order Timeline Details
           </h2>
@@ -192,13 +223,13 @@ export const PDFReportTemplate = React.forwardRef<
             }}
           >
             <thead>
-              <tr style={{ backgroundColor: "#f0f0f0", borderBottom: "2px solid #333" }}>
+              <tr style={{ backgroundColor: "#f0f0f0", borderBottom: "2px solid #333333" }}>
                 <th
                   style={{
                     padding: "8px",
                     textAlign: "left",
                     fontWeight: "bold",
-                    borderRight: "1px solid #ddd",
+                    borderRight: "1px solid #dddddd",
                   }}
                 >
                   Order ID
@@ -208,7 +239,7 @@ export const PDFReportTemplate = React.forwardRef<
                     padding: "8px",
                     textAlign: "left",
                     fontWeight: "bold",
-                    borderRight: "1px solid #ddd",
+                    borderRight: "1px solid #dddddd",
                   }}
                 >
                   Customer
@@ -218,7 +249,7 @@ export const PDFReportTemplate = React.forwardRef<
                     padding: "8px",
                     textAlign: "left",
                     fontWeight: "bold",
-                    borderRight: "1px solid #ddd",
+                    borderRight: "1px solid #dddddd",
                   }}
                 >
                   Address
@@ -228,7 +259,7 @@ export const PDFReportTemplate = React.forwardRef<
                     padding: "8px",
                     textAlign: "left",
                     fontWeight: "bold",
-                    borderRight: "1px solid #ddd",
+                    borderRight: "1px solid #dddddd",
                   }}
                 >
                   Status Timeline
@@ -249,32 +280,32 @@ export const PDFReportTemplate = React.forwardRef<
                 <tr
                   key={order.orderId}
                   style={{
-                    borderBottom: "1px solid #ddd",
-                    backgroundColor: idx % 2 === 0 ? "#fff" : "#f9f9f9",
+                    borderBottom: "1px solid #dddddd",
+                    backgroundColor: idx % 2 === 0 ? "#ffffff" : "#f9f9f9",
                   }}
                 >
                   <td
                     style={{
                       padding: "8px",
-                      borderRight: "1px solid #ddd",
+                      borderRight: "1px solid #dddddd",
                       fontWeight: "bold",
                     }}
                   >
                     #{order.orderId}
                   </td>
-                  <td style={{ padding: "8px", borderRight: "1px solid #ddd" }}>
+                  <td style={{ padding: "8px", borderRight: "1px solid #dddddd" }}>
                     {order.customerName}
                   </td>
-                  <td style={{ padding: "8px", borderRight: "1px solid #ddd" }}>
+                  <td style={{ padding: "8px", borderRight: "1px solid #dddddd" }}>
                     {order.customerAddress}
                   </td>
-                  <td style={{ padding: "8px", borderRight: "1px solid #ddd" }}>
+                  <td style={{ padding: "8px", borderRight: "1px solid #dddddd" }}>
                     <div style={{ fontSize: "10px", lineHeight: "1.4" }}>
                       {order.statuses.map((s, i) => (
                         <div key={i}>
                           <span style={{ fontWeight: "bold" }}>{s.status}</span>
                           {s.durationMinutes !== undefined && s.durationSeconds !== undefined && (
-                            <span style={{ color: "#666" }}>
+                            <span style={{ color: "#666666" }}>
                               {" "}
                               ({formatDuration(s.durationMinutes, s.durationSeconds)})
                             </span>
@@ -295,7 +326,7 @@ export const PDFReportTemplate = React.forwardRef<
 
       {/* Driver Performance Table */}
       {driverPerformance.length > 0 && (
-        <div className="mb-8">
+        <div style={{ marginBottom: "32px" }}>
           <h2 style={{ fontSize: "16px", fontWeight: "bold", marginBottom: "12px" }}>
             Driver Performance Breakdown
           </h2>
@@ -307,13 +338,13 @@ export const PDFReportTemplate = React.forwardRef<
             }}
           >
             <thead>
-              <tr style={{ backgroundColor: "#f0f0f0", borderBottom: "2px solid #333" }}>
+              <tr style={{ backgroundColor: "#f0f0f0", borderBottom: "2px solid #333333" }}>
                 <th
                   style={{
                     padding: "8px",
                     textAlign: "left",
                     fontWeight: "bold",
-                    borderRight: "1px solid #ddd",
+                    borderRight: "1px solid #dddddd",
                   }}
                 >
                   Driver Name
@@ -323,7 +354,7 @@ export const PDFReportTemplate = React.forwardRef<
                     padding: "8px",
                     textAlign: "center",
                     fontWeight: "bold",
-                    borderRight: "1px solid #ddd",
+                    borderRight: "1px solid #dddddd",
                   }}
                 >
                   Total Deliveries
@@ -333,7 +364,7 @@ export const PDFReportTemplate = React.forwardRef<
                     padding: "8px",
                     textAlign: "center",
                     fontWeight: "bold",
-                    borderRight: "1px solid #ddd",
+                    borderRight: "1px solid #dddddd",
                   }}
                 >
                   Completed
@@ -343,7 +374,7 @@ export const PDFReportTemplate = React.forwardRef<
                     padding: "8px",
                     textAlign: "center",
                     fontWeight: "bold",
-                    borderRight: "1px solid #ddd",
+                    borderRight: "1px solid #dddddd",
                   }}
                 >
                   Completion Rate
@@ -364,18 +395,18 @@ export const PDFReportTemplate = React.forwardRef<
                 <tr
                   key={driver.driverId}
                   style={{
-                    borderBottom: "1px solid #ddd",
-                    backgroundColor: idx % 2 === 0 ? "#fff" : "#f9f9f9",
+                    borderBottom: "1px solid #dddddd",
+                    backgroundColor: idx % 2 === 0 ? "#ffffff" : "#f9f9f9",
                   }}
                 >
-                  <td style={{ padding: "8px", borderRight: "1px solid #ddd" }}>
+                  <td style={{ padding: "8px", borderRight: "1px solid #dddddd" }}>
                     {driver.driverName}
                   </td>
                   <td
                     style={{
                       padding: "8px",
                       textAlign: "center",
-                      borderRight: "1px solid #ddd",
+                      borderRight: "1px solid #dddddd",
                     }}
                   >
                     {driver.totalDeliveries}
@@ -384,7 +415,7 @@ export const PDFReportTemplate = React.forwardRef<
                     style={{
                       padding: "8px",
                       textAlign: "center",
-                      borderRight: "1px solid #ddd",
+                      borderRight: "1px solid #dddddd",
                     }}
                   >
                     {driver.completedDeliveries}
@@ -393,7 +424,7 @@ export const PDFReportTemplate = React.forwardRef<
                     style={{
                       padding: "8px",
                       textAlign: "center",
-                      borderRight: "1px solid #ddd",
+                      borderRight: "1px solid #dddddd",
                     }}
                   >
                     {driver.completionRate.toFixed(1)}%
@@ -413,9 +444,9 @@ export const PDFReportTemplate = React.forwardRef<
         style={{
           marginTop: "24px",
           paddingTop: "12px",
-          borderTop: "1px solid #ddd",
+          borderTop: "1px solid #dddddd",
           fontSize: "10px",
-          color: "#999",
+          color: "#999999",
           textAlign: "center",
         }}
       >
