@@ -1,13 +1,9 @@
 import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
 import { PDFMetrics, PDFOrderTimeline, PDFDriverPerformance } from "@/components/PDFReportTemplate";
 
 /**
- * Generates a PDF report from an HTML element
- * @param element - The HTML element to convert to PDF
- * @param filename - The filename for the downloaded PDF
- * @param reportType - Type of report (Daily, Weekly, Monthly)
- * @param dateRange - Date range for the report
+ * Generates a PDF report directly using jsPDF without html2canvas
+ * This avoids canvas taint issues with external images
  */
 export async function generatePDFReport(
   element: HTMLElement,
@@ -15,158 +11,202 @@ export async function generatePDFReport(
   reportType: "Daily" | "Weekly" | "Monthly",
   dateRange: { startDate: string; endDate: string }
 ): Promise<void> {
-  let tempContainer: HTMLElement | null = null;
-  
   try {
-    // Clone the element to isolate it from page CSS
-    const clonedElement = element.cloneNode(true) as HTMLElement;
-    
-    // Create a temporary container with reset styles to prevent CSS variable inheritance
-    tempContainer = document.createElement("div");
-    tempContainer.style.position = "fixed";
-    tempContainer.style.left = "-9999px";
-    tempContainer.style.top = "-9999px";
-    tempContainer.style.width = "1200px";
-    tempContainer.style.backgroundColor = "#ffffff";
-    tempContainer.style.padding = "0";
-    tempContainer.style.margin = "0";
-    tempContainer.style.border = "none";
-    tempContainer.style.color = "#000000";
-    tempContainer.style.fontFamily = "Arial, sans-serif";
-    
-    // Reset all CSS variables to prevent OKLCH parsing issues by using RGB/hex colors
-    const cssVars = [
-      "--background",
-      "--foreground",
-      "--card",
-      "--card-foreground",
-      "--popover",
-      "--popover-foreground",
-      "--primary",
-      "--primary-foreground",
-      "--secondary",
-      "--secondary-foreground",
-      "--muted",
-      "--muted-foreground",
-      "--accent",
-      "--accent-foreground",
-      "--destructive",
-      "--destructive-foreground",
-      "--border",
-      "--input",
-      "--ring",
-      "--chart-1",
-      "--chart-2",
-      "--chart-3",
-      "--chart-4",
-      "--chart-5",
-      "--sidebar",
-      "--sidebar-foreground",
-      "--sidebar-primary",
-      "--sidebar-primary-foreground",
-      "--sidebar-accent",
-      "--sidebar-accent-foreground",
-      "--sidebar-border",
-      "--sidebar-ring",
-      "--orange",
-      "--orange-light",
-      "--green",
-      "--red-light",
-    ];
-    
-    // Map OKLCH colors to RGB equivalents
-    const colorMap: Record<string, string> = {
-      "--background": "#ffffff",
-      "--foreground": "#333333",
-      "--card": "#ffffff",
-      "--card-foreground": "#333333",
-      "--popover": "#ffffff",
-      "--popover-foreground": "#333333",
-      "--primary": "#0066cc",
-      "--primary-foreground": "#ffffff",
-      "--secondary": "#f0f0f0",
-      "--secondary-foreground": "#666666",
-      "--muted": "#f5f5f5",
-      "--muted-foreground": "#999999",
-      "--accent": "#ff9900",
-      "--accent-foreground": "#ffffff",
-      "--destructive": "#cc0000",
-      "--destructive-foreground": "#ffffff",
-      "--border": "#e5e5e5",
-      "--input": "#f5f5f5",
-      "--ring": "#ff9900",
-      "--chart-1": "#ff9900",
-      "--chart-2": "#0066cc",
-      "--chart-3": "#0052a3",
-      "--chart-4": "#003d7a",
-      "--chart-5": "#002e5c",
-      "--sidebar": "#ffffff",
-      "--sidebar-foreground": "#333333",
-      "--sidebar-primary": "#0052a3",
-      "--sidebar-primary-foreground": "#ffffff",
-      "--sidebar-accent": "#f0f0f0",
-      "--sidebar-accent-foreground": "#ff9900",
-      "--sidebar-border": "#e5e5e5",
-      "--sidebar-ring": "#ff9900",
-      "--orange": "#ff9900",
-      "--orange-light": "#ffe6cc",
-      "--green": "#00aa00",
-      "--red-light": "#ffcccc",
-    };
-    
-    // Apply RGB color overrides
-    for (const [varName, rgbColor] of Object.entries(colorMap)) {
-      tempContainer.style.setProperty(varName, rgbColor, "important");
-    }
-    
-    tempContainer.appendChild(clonedElement);
-    document.body.appendChild(tempContainer);
-    
-    // Convert HTML to canvas with error handling
-    const canvas = await html2canvas(tempContainer, {
-      scale: 2,
-      useCORS: true,
-      allowTaint: true,
-      backgroundColor: "#ffffff",
-      logging: false,
-      imageTimeout: 10000,
-      onclone: (clonedDoc) => {
-        // Additional cleanup in the cloned document
-        const style = clonedDoc.createElement("style");
-        style.textContent = `
-          * {
-            color: #000000 !important;
-            background-color: transparent !important;
-            border-color: #cccccc !important;
-          }
-          body, div {
-            background-color: #ffffff !important;
-          }
-        `;
-        clonedDoc.head.appendChild(style);
-      },
-    });
-
-    // Get canvas dimensions
-    const imgWidth = 210; // A4 width in mm
-    const pageHeight = 297; // A4 height in mm
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-    // Create PDF
     const pdf = new jsPDF("p", "mm", "a4");
-    let heightLeft = imgHeight;
-    let position = 0;
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    let yPosition = 20;
 
-    // Add image to PDF, handling multiple pages if needed
-    const imgData = canvas.toDataURL("image/png");
-    while (heightLeft >= 0) {
-      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-      if (heightLeft >= 0) {
+    // Set default font
+    pdf.setFont("Arial", "normal");
+    pdf.setFontSize(12);
+
+    // Title
+    pdf.setFontSize(24);
+    pdf.setFont("Arial", "bold");
+    pdf.text("The Barrel Restaurant (Pizza & Pasta)", 20, yPosition);
+    yPosition += 10;
+
+    pdf.setFontSize(14);
+    pdf.setFont("Arial", "normal");
+    pdf.text("Delivery Management Report", 20, yPosition);
+    yPosition += 15;
+
+    // Report Info Section
+    pdf.setFontSize(11);
+    pdf.setFont("Arial", "bold");
+    pdf.text("Report Information", 20, yPosition);
+    yPosition += 7;
+
+    pdf.setFont("Arial", "normal");
+    pdf.setFontSize(10);
+    pdf.text(`Report Type: ${reportType} Report`, 20, yPosition);
+    yPosition += 6;
+    pdf.text(`Date Range: ${dateRange.startDate} to ${dateRange.endDate}`, 20, yPosition);
+    yPosition += 6;
+    pdf.text(`Generated: ${new Date().toLocaleDateString()}`, 20, yPosition);
+    yPosition += 12;
+
+    // Extract metrics from the element
+    const metricsData = extractMetricsFromElement(element);
+    const ordersData = extractOrdersFromElement(element);
+    const driversData = extractDriversFromElement(element);
+
+    // Metrics Summary Section
+    if (metricsData) {
+      pdf.setFontSize(12);
+      pdf.setFont("Arial", "bold");
+      pdf.text("Performance Summary", 20, yPosition);
+      yPosition += 8;
+
+      pdf.setFont("Arial", "normal");
+      pdf.setFontSize(10);
+
+      const metrics = [
+        [`Total Orders: ${metricsData.totalOrders}`, `Delivered: ${metricsData.deliveredOrders}`],
+        [`Delivery Rate: ${metricsData.deliveryRate.toFixed(1)}%`, `Avg. Time: ${metricsData.averageDeliveryTime} min`],
+      ];
+
+      for (const row of metrics) {
+        pdf.text(row[0], 20, yPosition);
+        pdf.text(row[1], 110, yPosition);
+        yPosition += 6;
+      }
+      yPosition += 6;
+    }
+
+    // Order Timeline Table
+    if (ordersData && ordersData.length > 0) {
+      pdf.setFontSize(12);
+      pdf.setFont("Arial", "bold");
+      pdf.text("Order Timeline Details", 20, yPosition);
+      yPosition += 8;
+
+      pdf.setFont("Arial", "normal");
+      pdf.setFontSize(9);
+
+      // Table headers
+      const headers = ["Order ID", "Customer", "Address", "Status", "Total"];
+      const colWidths = [18, 35, 40, 50, 22];
+      let xPos = 20;
+
+      pdf.setFont("Arial", "bold");
+      pdf.setFillColor(240, 240, 240);
+      for (let i = 0; i < headers.length; i++) {
+        pdf.rect(xPos, yPosition - 5, colWidths[i], 6, "F");
+        pdf.text(headers[i], xPos + 1, yPosition);
+        xPos += colWidths[i];
+      }
+      yPosition += 8;
+
+      // Table rows
+      pdf.setFont("Arial", "normal");
+      for (const order of ordersData.slice(0, 10)) {
+        // Limit to 10 orders per page
+        if (yPosition > pageHeight - 20) {
+          pdf.addPage();
+          yPosition = 20;
+        }
+
+        xPos = 20;
+        const statusText = order.statuses.map((s: any) => s.status).join(" → ");
+
+        // Order ID
+        pdf.text(`#${order.orderId}`, xPos + 1, yPosition);
+        xPos += colWidths[0];
+
+        // Customer
+        pdf.text(order.customerName.substring(0, 15), xPos + 1, yPosition);
+        xPos += colWidths[1];
+
+        // Address
+        pdf.text(order.customerAddress.substring(0, 20), xPos + 1, yPosition);
+        xPos += colWidths[2];
+
+        // Status
+        pdf.text(statusText.substring(0, 25), xPos + 1, yPosition);
+        xPos += colWidths[3];
+
+        // Total
+        pdf.text(`$${order.total.toFixed(2)}`, xPos + 1, yPosition);
+
+        yPosition += 6;
+      }
+      yPosition += 8;
+    }
+
+    // Driver Performance Table
+    if (driversData && driversData.length > 0) {
+      if (yPosition > pageHeight - 40) {
         pdf.addPage();
-        position = heightLeft - imgHeight;
+        yPosition = 20;
+      }
+
+      pdf.setFontSize(12);
+      pdf.setFont("Arial", "bold");
+      pdf.text("Driver Performance Breakdown", 20, yPosition);
+      yPosition += 8;
+
+      pdf.setFont("Arial", "normal");
+      pdf.setFontSize(9);
+
+      // Table headers
+      const headers = ["Driver Name", "Total", "Completed", "Rate %", "Avg. Time"];
+      const colWidths = [50, 20, 25, 25, 30];
+      let xPos = 20;
+
+      pdf.setFont("Arial", "bold");
+      pdf.setFillColor(240, 240, 240);
+      for (let i = 0; i < headers.length; i++) {
+        pdf.rect(xPos, yPosition - 5, colWidths[i], 6, "F");
+        pdf.text(headers[i], xPos + 1, yPosition);
+        xPos += colWidths[i];
+      }
+      yPosition += 8;
+
+      // Table rows
+      pdf.setFont("Arial", "normal");
+      for (const driver of driversData) {
+        if (yPosition > pageHeight - 20) {
+          pdf.addPage();
+          yPosition = 20;
+        }
+
+        xPos = 20;
+
+        // Driver Name
+        pdf.text(driver.driverName.substring(0, 20), xPos + 1, yPosition);
+        xPos += colWidths[0];
+
+        // Total Deliveries
+        pdf.text(driver.totalDeliveries.toString(), xPos + 1, yPosition);
+        xPos += colWidths[1];
+
+        // Completed
+        pdf.text(driver.completedDeliveries.toString(), xPos + 1, yPosition);
+        xPos += colWidths[2];
+
+        // Completion Rate
+        pdf.text(`${driver.completionRate.toFixed(1)}%`, xPos + 1, yPosition);
+        xPos += colWidths[3];
+
+        // Avg. Delivery Time
+        pdf.text(`${driver.averageDeliveryTime} min`, xPos + 1, yPosition);
+
+        yPosition += 6;
       }
     }
+
+    // Footer
+    yPosition = pageHeight - 15;
+    pdf.setFontSize(8);
+    pdf.setFont("Arial", "normal");
+    pdf.setTextColor(150, 150, 150);
+    pdf.text(
+      "This report was generated automatically by the Barrel Delivery Management System.",
+      20,
+      yPosition
+    );
 
     // Generate filename with date
     const timestamp = new Date().toISOString().split("T")[0];
@@ -177,11 +217,89 @@ export async function generatePDFReport(
   } catch (error) {
     console.error("Error generating PDF:", error);
     throw new Error("Failed to generate PDF report");
-  } finally {
-    // Clean up temporary container
-    if (tempContainer && tempContainer.parentNode) {
-      tempContainer.parentNode.removeChild(tempContainer);
+  }
+}
+
+/**
+ * Extract metrics data from the rendered element
+ */
+function extractMetricsFromElement(element: HTMLElement): any {
+  try {
+    // Look for metric values in the element
+    const text = element.innerText;
+    const totalOrdersMatch = text.match(/Total Orders[:\s]+(\d+)/i);
+    const deliveredMatch = text.match(/Delivered[:\s]+(\d+)/i);
+    const rateMatch = text.match(/Delivery Rate[:\s]+([\d.]+)%/i);
+    const timeMatch = text.match(/Avg\.\s*Delivery Time[:\s]+(\d+)\s*min/i);
+
+    return {
+      totalOrders: totalOrdersMatch ? parseInt(totalOrdersMatch[1]) : 0,
+      deliveredOrders: deliveredMatch ? parseInt(deliveredMatch[1]) : 0,
+      deliveryRate: rateMatch ? parseFloat(rateMatch[1]) : 0,
+      averageDeliveryTime: timeMatch ? parseInt(timeMatch[1]) : 0,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Extract order data from the rendered element
+ */
+function extractOrdersFromElement(element: HTMLElement): any[] {
+  try {
+    const orders: any[] = [];
+    const tables = element.querySelectorAll("table");
+
+    if (tables.length > 0) {
+      const rows = tables[0].querySelectorAll("tbody tr");
+      for (const row of Array.from(rows)) {
+        const cells = row.querySelectorAll("td");
+        if (cells.length >= 5) {
+          orders.push({
+            orderId: parseInt(cells[0].innerText.replace("#", "")) || 0,
+            customerName: cells[1].innerText || "N/A",
+            customerAddress: cells[2].innerText || "N/A",
+            statuses: [{ status: cells[3].innerText || "N/A" }],
+            total: parseFloat(cells[4].innerText.replace("$", "")) || 0,
+          });
+        }
+      }
     }
+
+    return orders;
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Extract driver data from the rendered element
+ */
+function extractDriversFromElement(element: HTMLElement): any[] {
+  try {
+    const drivers: any[] = [];
+    const tables = element.querySelectorAll("table");
+
+    if (tables.length > 1) {
+      const rows = tables[1].querySelectorAll("tbody tr");
+      for (const row of Array.from(rows)) {
+        const cells = row.querySelectorAll("td");
+        if (cells.length >= 5) {
+          drivers.push({
+            driverName: cells[0].innerText || "N/A",
+            totalDeliveries: parseInt(cells[1].innerText) || 0,
+            completedDeliveries: parseInt(cells[2].innerText) || 0,
+            completionRate: parseFloat(cells[3].innerText.replace("%", "")) || 0,
+            averageDeliveryTime: parseInt(cells[4].innerText.replace(/\D/g, "")) || 0,
+          });
+        }
+      }
+    }
+
+    return drivers;
+  } catch {
+    return [];
   }
 }
 
