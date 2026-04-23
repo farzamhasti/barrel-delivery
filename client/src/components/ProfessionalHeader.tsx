@@ -12,7 +12,7 @@ export function ProfessionalHeader({
   title = "Barrel Delivery",
   subtitle = "The Barrel Restaurant (Pizza & Pasta)",
   showLogo = true,
-  logoUrl = "/manus-storage/logo_dceb0304.png",
+  logoUrl = "/barrel-logo.png",
   logoAlt = "The Barrel Restaurant (Pizza & Pasta)",
 }: ProfessionalHeaderProps) {
   return (

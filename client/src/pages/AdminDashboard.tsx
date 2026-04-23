@@ -66,7 +66,7 @@ export default function AdminDashboard() {
           <header className="border-b border-border/40 backdrop-blur-sm bg-white/95 shadow-sm px-4 py-3 flex items-center justify-between flex-shrink-0">
             <div className="flex items-center gap-2 flex-1 min-w-0">
               <img 
-                src="/manus-storage/logo_dceb0304.png" 
+                src="/barrel-logo.png" 
                 alt="The Barrel Restaurant (Pizza & Pasta)" 
                 className="h-8 w-auto object-contain"
               />
@@ -134,7 +134,7 @@ export default function AdminDashboard() {
               {/* Desktop Header */}
               <div className="p-4 border-b border-border flex items-center gap-3">
                 <img 
-                  src="/manus-storage/logo_dceb0304.png" 
+                  src="/barrel-logo.png" 
                   alt="The Barrel Restaurant (Pizza & Pasta)" 
                   className="h-8 w-auto object-contain"
                 />
@@ -157,7 +157,7 @@ export default function AdminDashboard() {
             <header className="border-b border-border/40 backdrop-blur-sm bg-white/95 shadow-sm px-4 md:px-6 py-3 md:py-4 flex items-center justify-between flex-shrink-0">
               <div className="flex items-center gap-3">
                 <img 
-                  src="/manus-storage/logo_dceb0304.png" 
+                  src="/barrel-logo.png" 
                   alt="The Barrel Restaurant (Pizza & Pasta)" 
                   className="h-10 w-auto object-contain"
                 />

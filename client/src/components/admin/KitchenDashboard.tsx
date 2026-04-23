@@ -361,7 +361,7 @@ export default function KitchenDashboard() {
         <div className="flex items-center justify-between mb-6 bg-white/95 backdrop-blur-sm rounded-lg shadow-sm p-4 border border-border/40">
           <div className="flex items-center gap-4">
             <img 
-              src="/manus-storage/logo_dceb0304.png" 
+              src="/barrel-logo.png" 
               alt="The Barrel Restaurant (Pizza & Pasta)" 
               className="h-12 w-auto object-contain"
             />

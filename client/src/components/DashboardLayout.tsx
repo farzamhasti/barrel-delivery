@@ -178,7 +178,7 @@ function DashboardLayoutContent({
               {!isCollapsed ? (
                 <div className="flex items-center gap-2 min-w-0">
                   <img 
-                    src="/manus-storage/logo_dceb0304.png" 
+                    src="/barrel-logo.png" 
                     alt="The Barrel Restaurant (Pizza & Pasta)" 
                     className="h-6 w-auto shrink-0"
                   />

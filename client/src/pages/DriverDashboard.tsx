@@ -165,7 +165,7 @@ export default function DriverDashboard() {
           <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
               <img 
-                src="/manus-storage/logo_dceb0304.png" 
+                src="/barrel-logo.png" 
                 alt="The Barrel Restaurant (Pizza & Pasta)" 
                 className="h-16 w-auto object-contain"
               />
@@ -244,7 +244,7 @@ export default function DriverDashboard() {
         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center gap-4">
             <img 
-              src="/manus-storage/logo_dceb0304.png" 
+              src="/barrel-logo.png" 
               alt="The Barrel Restaurant (Pizza & Pasta)" 
               className="h-12 w-auto object-contain"
             />
