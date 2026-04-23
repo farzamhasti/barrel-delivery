@@ -76,7 +76,7 @@ export default function KitchenLogin() {
                 <Input
                   id="username"
                   type="text"
-                  placeholder="barrel_kitchen"
+                  placeholder="Enter your username"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   className="pl-10"

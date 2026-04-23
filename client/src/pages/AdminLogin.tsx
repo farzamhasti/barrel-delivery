@@ -76,7 +76,7 @@ export default function AdminLogin() {
                 <Input
                   id="username"
                   type="text"
-                  placeholder="barrel_admin"
+                  placeholder="Enter your username"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   className="pl-10"
