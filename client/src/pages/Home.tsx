@@ -17,7 +17,7 @@ export default function Home() {
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img 
-              src="/manus-storage/logo_cc853a0b.png" 
+              src="/manus-storage/logo_dceb0304.png" 
               alt="The Barrel Restaurant (Pizza & Pasta)" 
               className="h-10 w-auto"
             />

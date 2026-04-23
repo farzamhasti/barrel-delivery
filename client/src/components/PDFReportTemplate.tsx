@@ -67,7 +67,7 @@ export const PDFReportTemplate = React.forwardRef<
       {/* Header with Logo */}
       <div className="mb-8 pb-8 border-b-2 border-gray-300 flex items-center gap-6">
         <img
-          src="/manus-storage/logo_cc853a0b.png"
+          src="/manus-storage/logo_dceb0304.png"
           alt="The Barrel Restaurant (Pizza & Pasta)"
           style={{ height: "60px", width: "auto" }}
         />
