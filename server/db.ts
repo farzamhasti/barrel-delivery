@@ -1233,7 +1233,15 @@ export async function getOrderTimelinesForReport(startDate: Date, endDate: Date)
       const calculateDuration = (from: Date | null, to: Date | null) => {
         if (!from || !to) return null;
         const ms = new Date(to).getTime() - new Date(from).getTime();
-        return Math.round(ms / (1000 * 60)); // Convert to minutes
+        const totalSeconds = Math.round(ms / 1000);
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        return {
+          totalSeconds,
+          minutes,
+          seconds,
+          formatted: `${minutes}:${String(seconds).padStart(2, '0')}`,
+        };
       };
 
       return {
@@ -1248,9 +1256,10 @@ export async function getOrderTimelinesForReport(startDate: Date, endDate: Date)
           delivered: statusTimes.delivered,
         },
         durations: {
-          pendingToReady: calculateDuration(statusTimes.pending, statusTimes.ready),
-          readyToOnTheWay: calculateDuration(statusTimes.ready, statusTimes.onTheWay),
-          onTheWayToDelivered: calculateDuration(statusTimes.onTheWay, statusTimes.delivered),
+          pending: calculateDuration(statusTimes.pending, statusTimes.ready),
+          ready: calculateDuration(statusTimes.ready, statusTimes.onTheWay),
+          onTheWay: calculateDuration(statusTimes.onTheWay, statusTimes.delivered),
+          delivered: statusTimes.delivered ? new Date(statusTimes.delivered).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' }) : null,
         },
       };
     });

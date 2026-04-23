@@ -1,7 +1,13 @@
-import React from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+
+interface DurationInfo {
+  totalSeconds: number;
+  minutes: number;
+  seconds: number;
+  formatted: string;
+}
 
 interface OrderTimeline {
   orderId: number;
@@ -15,9 +21,10 @@ interface OrderTimeline {
     delivered: Date | null;
   };
   durations: {
-    pendingToReady: number | null;
-    readyToOnTheWay: number | null;
-    onTheWayToDelivered: number | null;
+    pending: DurationInfo | null;
+    ready: DurationInfo | null;
+    onTheWay: DurationInfo | null;
+    delivered: string | null;
   };
 }
 
@@ -33,6 +40,7 @@ const formatTime = (date: Date | null) => {
     day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+    second: "2-digit",
     hour12: true,
   });
 };
@@ -50,6 +58,11 @@ const getStatusBadgeColor = (status: string) => {
     default:
       return "bg-gray-200 text-gray-800";
   }
+};
+
+const formatDuration = (duration: DurationInfo | null) => {
+  if (!duration) return "N/A";
+  return duration.formatted;
 };
 
 export function OrderTimelineTable({ timelines, isLoading }: OrderTimelineTableProps) {
@@ -83,13 +96,10 @@ export function OrderTimelineTable({ timelines, isLoading }: OrderTimelineTableP
               <TableHead className="font-semibold">Customer</TableHead>
               <TableHead className="font-semibold">Address</TableHead>
               <TableHead className="font-semibold">Status</TableHead>
-              <TableHead className="font-semibold text-center">Pending Time</TableHead>
-              <TableHead className="font-semibold text-center">Ready Time</TableHead>
-              <TableHead className="font-semibold text-center">On the Way Time</TableHead>
+              <TableHead className="font-semibold text-center">Pending Time (MM:SS)</TableHead>
+              <TableHead className="font-semibold text-center">Ready Time (MM:SS)</TableHead>
+              <TableHead className="font-semibold text-center">On the Way Time (MM:SS)</TableHead>
               <TableHead className="font-semibold text-center">Delivered Time</TableHead>
-              <TableHead className="font-semibold text-center">Pending→Ready (min)</TableHead>
-              <TableHead className="font-semibold text-center">Ready→Way (min)</TableHead>
-              <TableHead className="font-semibold text-center">Way→Delivered (min)</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -105,71 +115,69 @@ export function OrderTimelineTable({ timelines, isLoading }: OrderTimelineTableP
                     {timeline.status}
                   </Badge>
                 </TableCell>
-                <TableCell className="text-center text-sm">
-                  {timeline.timestamps.pending ? (
-                    <div className="flex flex-col items-center">
-                      <span className="text-gray-700">{formatTime(timeline.timestamps.pending)}</span>
-                      <span className="text-xs text-gray-500">Pending</span>
-                    </div>
-                  ) : (
-                    <span className="text-gray-400">N/A</span>
-                  )}
-                </TableCell>
-                <TableCell className="text-center text-sm">
-                  {timeline.timestamps.ready ? (
-                    <div className="flex flex-col items-center">
-                      <span className="text-gray-700">{formatTime(timeline.timestamps.ready)}</span>
-                      <span className="text-xs text-gray-500">Ready</span>
-                    </div>
-                  ) : (
-                    <span className="text-gray-400">N/A</span>
-                  )}
-                </TableCell>
-                <TableCell className="text-center text-sm">
-                  {timeline.timestamps.onTheWay ? (
-                    <div className="flex flex-col items-center">
-                      <span className="text-gray-700">{formatTime(timeline.timestamps.onTheWay)}</span>
-                      <span className="text-xs text-gray-500">On Way</span>
-                    </div>
-                  ) : (
-                    <span className="text-gray-400">N/A</span>
-                  )}
-                </TableCell>
-                <TableCell className="text-center text-sm">
-                  {timeline.timestamps.delivered ? (
-                    <div className="flex flex-col items-center">
-                      <span className="text-gray-700">{formatTime(timeline.timestamps.delivered)}</span>
-                      <span className="text-xs text-gray-500">Delivered</span>
-                    </div>
-                  ) : (
-                    <span className="text-gray-400">N/A</span>
-                  )}
-                </TableCell>
+                
+                {/* Pending Time Duration */}
                 <TableCell className="text-center text-sm font-medium">
-                  {timeline.durations.pendingToReady !== null ? (
-                    <span className="text-blue-600">{timeline.durations.pendingToReady}</span>
+                  {timeline.durations.pending ? (
+                    <div className="flex flex-col items-center">
+                      <span className="text-blue-600 font-bold">{formatDuration(timeline.durations.pending)}</span>
+                      <span className="text-xs text-gray-500">Order placed to Ready</span>
+                    </div>
                   ) : (
-                    <span className="text-gray-400">-</span>
+                    <span className="text-gray-400">N/A</span>
                   )}
                 </TableCell>
+
+                {/* Ready Time Duration */}
                 <TableCell className="text-center text-sm font-medium">
-                  {timeline.durations.readyToOnTheWay !== null ? (
-                    <span className="text-blue-600">{timeline.durations.readyToOnTheWay}</span>
+                  {timeline.durations.ready ? (
+                    <div className="flex flex-col items-center">
+                      <span className="text-yellow-600 font-bold">{formatDuration(timeline.durations.ready)}</span>
+                      <span className="text-xs text-gray-500">Ready to On the Way</span>
+                    </div>
                   ) : (
-                    <span className="text-gray-400">-</span>
+                    <span className="text-gray-400">N/A</span>
                   )}
                 </TableCell>
+
+                {/* On the Way Time Duration */}
                 <TableCell className="text-center text-sm font-medium">
-                  {timeline.durations.onTheWayToDelivered !== null ? (
-                    <span className="text-green-600">{timeline.durations.onTheWayToDelivered}</span>
+                  {timeline.durations.onTheWay ? (
+                    <div className="flex flex-col items-center">
+                      <span className="text-blue-600 font-bold">{formatDuration(timeline.durations.onTheWay)}</span>
+                      <span className="text-xs text-gray-500">On the Way to Delivered</span>
+                    </div>
                   ) : (
-                    <span className="text-gray-400">-</span>
+                    <span className="text-gray-400">N/A</span>
+                  )}
+                </TableCell>
+
+                {/* Delivered Time Timestamp */}
+                <TableCell className="text-center text-sm">
+                  {timeline.durations.delivered ? (
+                    <div className="flex flex-col items-center">
+                      <span className="text-green-600 font-bold">{timeline.durations.delivered}</span>
+                      <span className="text-xs text-gray-500">Delivery completed</span>
+                    </div>
+                  ) : (
+                    <span className="text-gray-400">N/A</span>
                   )}
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
+      </div>
+
+      {/* Legend */}
+      <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+        <p className="text-sm font-semibold text-blue-900 mb-2">Column Descriptions:</p>
+        <ul className="text-sm text-blue-800 space-y-1">
+          <li><strong>Pending Time:</strong> Duration from order placed until kitchen marks it as Ready</li>
+          <li><strong>Ready Time:</strong> Duration from Ready status until sent to driver (On the Way)</li>
+          <li><strong>On the Way Time:</strong> Duration from driver pickup until delivery completion</li>
+          <li><strong>Delivered Time:</strong> Exact timestamp when driver clicked Delivered</li>
+        </ul>
       </div>
     </Card>
   );

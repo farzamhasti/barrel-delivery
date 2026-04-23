@@ -2139,3 +2139,22 @@
 - [x] Shows top performer, average delivery time, and total drivers
 - [x] Performance badges: Excellent (95%+), Good (85%+), Fair (70%+), Needs Improvement
 - [x] Sorted by completion rate descending
+
+
+## BUG FIX - Order Status Timeline Duration Calculations
+
+- [x] Modify Pending Time: Calculate from order creation to Ready status timestamp
+- [x] Modify Ready Time: Calculate from Ready status to On the Way status timestamp
+- [x] Modify On the Way Time: Calculate from On the Way status to Delivered status timestamp
+- [x] Delivered Time: Show only the timestamp when driver clicks Delivered (not a duration)
+- [x] Format all durations as MM:SS (minutes:seconds)
+- [x] Update getOrderTimelinesForReport to calculate duration differences
+- [x] Update OrderTimelineTable to display formatted durations
+- [x] Test calculations with multiple orders
+- [x] Verify accurate time calculations for all status transitions
+- [x] Handle edge cases: orders without all status transitions
+- [x] Backend calculates duration objects with minutes, seconds, and formatted MM:SS
+- [x] Frontend displays 4 columns: Pending Time, Ready Time, On the Way Time, Delivered Time
+- [x] Each column shows duration in MM:SS format with descriptive label
+- [x] Added legend explaining each column's meaning
+- [x] Color-coded columns for visual clarity (blue, yellow, blue, green)
