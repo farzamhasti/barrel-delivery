@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,8 +8,13 @@ import { OrderTimelineTable } from "@/components/OrderTimelineTable";
 import { DeliveryGanttChart } from "@/components/DeliveryGanttChart";
 import { DriverPerformanceTable } from "@/components/DriverPerformanceTable";
 import { AdvancedDateRangeSelector, type DateRange } from "@/components/AdvancedDateRangeSelector";
+import { FileText } from "lucide-react";
+import { PDFReportTemplate } from "@/components/PDFReportTemplate";
+import { generatePDFReport } from "@/lib/pdfGenerator";
 
 export function DeliveryReportTab() {
+  const pdfRef = useRef<HTMLDivElement>(null);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [dateRange, setDateRange] = useState<DateRange>({
     startDate: new Date(new Date().setDate(new Date().getDate() - 7)),
     endDate: new Date(),
@@ -62,6 +67,28 @@ export function DeliveryReportTab() {
     a.href = url;
     a.download = `delivery-report-${dateRange.preset}.csv`;
     a.click();
+  };
+
+  const handleExportPDF = async () => {
+    if (!pdfRef.current || !metrics || !timelines) return;
+    
+    try {
+      setIsGeneratingPDF(true);
+      await generatePDFReport(
+        pdfRef.current,
+        "barrel-delivery-report",
+        (dateRange.reportType as "Daily" | "Weekly" | "Monthly") || "Daily",
+        {
+          startDate: formatDate(dateRange.startDate),
+          endDate: formatDate(dateRange.endDate),
+        }
+      );
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      alert("Failed to generate PDF. Please try again.");
+    } finally {
+      setIsGeneratingPDF(false);
+    }
   };
 
   return (
@@ -118,15 +145,26 @@ export function DeliveryReportTab() {
         </div>
       )}
 
-      {/* Export Button */}
-      <Button 
-        onClick={handleExportCSV}
-        className="w-full"
-        variant="outline"
-      >
-        <Download className="w-4 h-4 mr-2" />
-        Export as CSV
-      </Button>
+      {/* Export Buttons */}
+      <div className="flex gap-2 w-full">
+        <Button 
+          onClick={handleExportCSV}
+          className="flex-1"
+          variant="outline"
+        >
+          <Download className="w-4 h-4 mr-2" />
+          Export as CSV
+        </Button>
+        <Button 
+          onClick={handleExportPDF}
+          className="flex-1"
+          variant="default"
+          disabled={isGeneratingPDF || !metrics || !timelines}
+        >
+          <FileText className="w-4 h-4 mr-2" />
+          {isGeneratingPDF ? "Generating PDF..." : "Export as PDF"}
+        </Button>
+      </div>
 
       {/* Delivery Gantt Chart */}
       <Card>
@@ -185,6 +223,40 @@ export function DeliveryReportTab() {
           )}
         </CardContent>
       </Card>
+
+      {/* Hidden PDF Template for rendering */}
+      {metrics && timelines && (
+        <div style={{ display: "none" }}>
+          <PDFReportTemplate
+            ref={pdfRef}
+            metrics={{
+              totalOrders: metrics.totalOrders,
+              deliveredOrders: metrics.deliveredOrders,
+              deliveryRate: metrics.deliveryRate,
+              averageDeliveryTime: metrics.averageDeliveryTime,
+              dateRange: {
+                startDate: formatDate(dateRange.startDate),
+                endDate: formatDate(dateRange.endDate),
+              },
+            }}
+            orderTimelines={timelines.map(t => ({
+              orderId: t.orderId,
+              customerName: t.customerName,
+              customerAddress: t.customerAddress,
+              customerPhone: "N/A",
+              total: 0,
+              statuses: [
+                { status: "Pending", timestamp: t.timestamps.pending ? new Date(t.timestamps.pending).toLocaleString() : "N/A", durationMinutes: t.durations.pending?.minutes, durationSeconds: t.durations.pending?.seconds },
+                { status: "Ready", timestamp: t.timestamps.ready ? new Date(t.timestamps.ready).toLocaleString() : "N/A", durationMinutes: t.durations.ready?.minutes, durationSeconds: t.durations.ready?.seconds },
+                { status: "On the Way", timestamp: t.timestamps.onTheWay ? new Date(t.timestamps.onTheWay).toLocaleString() : "N/A", durationMinutes: t.durations.onTheWay?.minutes, durationSeconds: t.durations.onTheWay?.seconds },
+                { status: "Delivered", timestamp: t.timestamps.delivered ? new Date(t.timestamps.delivered).toLocaleString() : "N/A" },
+              ],
+            }))}
+            driverPerformance={[]}
+            reportType={(dateRange.reportType as "Daily" | "Weekly" | "Monthly") || "Daily"}
+          />
+        </div>
+      )}
     </div>
   );
 }
