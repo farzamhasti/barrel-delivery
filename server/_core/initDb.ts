@@ -173,25 +173,25 @@ export async function initializeDatabase() {
       )`,
 
       // ALTER statements to add columns to pre-existing tables that may have been
-      // created before the schema was updated (safe to run — IF NOT EXISTS is idempotent)
-      `ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS image_url text`,
-      `ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS is_available boolean DEFAULT true`,
-      `ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS display_order int DEFAULT 0`,
-      `ALTER TABLE drivers ADD COLUMN IF NOT EXISTS user_id int`,
-      `ALTER TABLE drivers ADD COLUMN IF NOT EXISTS license_number varchar(50)`,
-      `ALTER TABLE drivers ADD COLUMN IF NOT EXISTS vehicle_type varchar(100)`,
-      `ALTER TABLE drivers ADD COLUMN IF NOT EXISTS status enum('online','offline') NOT NULL DEFAULT 'offline'`,
-      `ALTER TABLE drivers ADD COLUMN IF NOT EXISTS current_latitude decimal(10,8)`,
-      `ALTER TABLE drivers ADD COLUMN IF NOT EXISTS current_longitude decimal(11,8)`,
-      `ALTER TABLE drivers ADD COLUMN IF NOT EXISTS last_location_update timestamp NULL`,
-      `ALTER TABLE orders ADD COLUMN IF NOT EXISTS area varchar(50)`,
-      `ALTER TABLE orders ADD COLUMN IF NOT EXISTS subtotal decimal(10,2) NOT NULL DEFAULT 0`,
-      `ALTER TABLE orders ADD COLUMN IF NOT EXISTS tax_percentage decimal(5,2) NOT NULL DEFAULT 13`,
-      `ALTER TABLE orders ADD COLUMN IF NOT EXISTS tax_amount decimal(10,2) NOT NULL DEFAULT 0`,
-      `ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivery_time timestamp NULL`,
-      `ALTER TABLE orders ADD COLUMN IF NOT EXISTS has_delivery_time boolean DEFAULT false`,
-      `ALTER TABLE orders ADD COLUMN IF NOT EXISTS picked_up_at timestamp NULL`,
-      `ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivered_at timestamp NULL`,
+      // created before the schema was updated (errors for duplicate columns are caught below)
+      `ALTER TABLE menu_items ADD COLUMN image_url text`,
+      `ALTER TABLE menu_items ADD COLUMN is_available boolean DEFAULT true`,
+      `ALTER TABLE menu_items ADD COLUMN display_order int DEFAULT 0`,
+      `ALTER TABLE drivers ADD COLUMN user_id int`,
+      `ALTER TABLE drivers ADD COLUMN license_number varchar(50)`,
+      `ALTER TABLE drivers ADD COLUMN vehicle_type varchar(100)`,
+      `ALTER TABLE drivers ADD COLUMN status enum('online','offline') NOT NULL DEFAULT 'offline'`,
+      `ALTER TABLE drivers ADD COLUMN current_latitude decimal(10,8)`,
+      `ALTER TABLE drivers ADD COLUMN current_longitude decimal(11,8)`,
+      `ALTER TABLE drivers ADD COLUMN last_location_update timestamp NULL`,
+      `ALTER TABLE orders ADD COLUMN area varchar(50)`,
+      `ALTER TABLE orders ADD COLUMN subtotal decimal(10,2) NOT NULL DEFAULT 0`,
+      `ALTER TABLE orders ADD COLUMN tax_percentage decimal(5,2) NOT NULL DEFAULT 13`,
+      `ALTER TABLE orders ADD COLUMN tax_amount decimal(10,2) NOT NULL DEFAULT 0`,
+      `ALTER TABLE orders ADD COLUMN delivery_time timestamp NULL`,
+      `ALTER TABLE orders ADD COLUMN has_delivery_time boolean DEFAULT false`,
+      `ALTER TABLE orders ADD COLUMN picked_up_at timestamp NULL`,
+      `ALTER TABLE orders ADD COLUMN delivered_at timestamp NULL`,
     ];
 
     // Execute each statement
@@ -200,8 +200,8 @@ export async function initializeDatabase() {
         try {
           await connection.execute(statement);
         } catch (error: any) {
-          // Table might already exist, which is fine
-          if (!error.message.includes('already exists')) {
+          // Table/column might already exist, which is fine
+          if (!error.message.includes('already exists') && !error.message.includes('Duplicate column name')) {
             console.error('[Database] Error creating table:', error.message);
           }
         }
