@@ -8,6 +8,13 @@
       "when": 1777011185775,
       "tag": "0000_lowly_big_bertha",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1777011347261,
+      "tag": "0001_mushy_lucky_pierre",
+      "breakpoints": true
     }
   ]
 }

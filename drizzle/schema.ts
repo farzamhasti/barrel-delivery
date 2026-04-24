@@ -177,8 +177,12 @@ export type InsertOrderStatusHistory = typeof orderStatusHistory.$inferInsert;
 // System Credentials
 export const systemCredentials = pgTable("system_credentials", {
   id: serial("id").primaryKey(),
-  key: varchar("key", { length: 255 }).notNull().unique(),
-  value: text("value").notNull(),
+  key: varchar("key", { length: 255 }).unique(),
+  value: text("value"),
+  username: varchar("username", { length: 255 }).unique(),
+  passwordHash: text("password_hash"),
+  role: varchar("role", { length: 50 }),
+  isActive: boolean("is_active").default(true),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
@@ -189,6 +193,7 @@ export type InsertSystemCredential = typeof systemCredentials.$inferInsert;
 // System Sessions
 export const systemSessions = pgTable("system_sessions", {
   id: serial("id").primaryKey(),
+  credentialId: serial("credential_id").notNull(),
   sessionToken: varchar("session_token", { length: 255 }).notNull().unique(),
   expiresAt: timestamp("expires_at").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
