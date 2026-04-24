@@ -4,28 +4,6 @@
   "devCommand": "pnpm dev",
   "installCommand": "pnpm install",
   "framework": "vite",
-  "env": {
-    "DATABASE_URL": "MySQL/TiDB database connection string",
-    "JWT_SECRET": "Session cookie signing secret",
-    "VITE_APP_ID": "Manus OAuth application ID",
-    "OAUTH_SERVER_URL": "Manus OAuth backend base URL",
-    "VITE_OAUTH_PORTAL_URL": "Manus login portal URL for frontend",
-    "OWNER_NAME": "Owner's name",
-    "OWNER_OPEN_ID": "Owner's OpenID",
-    "BUILT_IN_FORGE_API_URL": "Manus built-in APIs URL",
-    "BUILT_IN_FORGE_API_KEY": "Bearer token for Manus built-in APIs (server-side)",
-    "VITE_FRONTEND_FORGE_API_URL": "Manus built-in APIs URL for frontend",
-    "VITE_FRONTEND_FORGE_API_KEY": "Bearer token for frontend access to Manus built-in APIs",
-    "VITE_ANALYTICS_ENDPOINT": "Analytics endpoint URL",
-    "VITE_ANALYTICS_WEBSITE_ID": "Analytics website ID",
-    "VITE_APP_TITLE": "Application title",
-    "VITE_APP_LOGO": "Application logo URL"
-  },
-  "functions": {
-    "server/**/*.ts": {
-      "runtime": "nodejs20.x"
-    }
-  },
   "rewrites": [
     {
       "source": "/api/:path*",
