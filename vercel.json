@@ -1,9 +1,11 @@
 {
   "buildCommand": "pnpm build",
-  "framework": null,
-  "public": false,
-  "env": {
-    "NODE_ENV": "production"
-  },
-  "installCommand": "pnpm install"
+  "outputDirectory": "dist",
+  "framework": "vite",
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "/index.js"
+    }
+  ]
 }
