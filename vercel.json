@@ -1,11 +1,5 @@
 {
   "buildCommand": "pnpm build",
   "framework": null,
-  "public": false,
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/index.js"
-    }
-  ]
+  "public": false
 }
