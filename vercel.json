@@ -1,14 +1,6 @@
 {
   "buildCommand": "pnpm build",
-  "outputDirectory": "dist",
+  "installCommand": "pnpm install",
   "framework": null,
-  "public": false,
-  "env": {
-    "NODE_ENV": "production"
-  },
-  "functions": {
-    "server.js": {
-      "runtime": "nodejs20.x"
-    }
-  }
+  "outputDirectory": "dist/public"
 }
