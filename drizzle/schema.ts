@@ -178,8 +178,6 @@ export type InsertOrderStatusHistory = typeof orderStatusHistory.$inferInsert;
 // System Credentials
 export const systemCredentials = pgTable("system_credentials", {
   id: serial("id").primaryKey(),
-  key: varchar("key", { length: 255 }).unique(),
-  value: text("value"),
   username: varchar("username", { length: 255 }).unique(),
   passwordHash: text("password_hash"),
   role: varchar("role", { length: 50 }),
