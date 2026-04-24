@@ -12,8 +12,12 @@ RUN npm install -g pnpm && pnpm install --frozen-lockfile
 # Copy source code
 COPY . .
 
-# Build frontend and backend
-RUN pnpm build
+# Force fresh build by adding build timestamp
+ARG BUILD_DATE
+ENV BUILD_DATE=${BUILD_DATE}
+
+# Build frontend and backend - this will NOT be cached
+RUN echo "Building at ${BUILD_DATE}" && pnpm build
 
 # Runtime stage
 FROM node:20-alpine
@@ -31,6 +35,9 @@ COPY --from=builder /app/dist ./dist
 
 # Expose port
 EXPOSE 3000
+
+# Set environment to production
+ENV NODE_ENV=production
 
 # Start the server
 CMD ["node", "dist/index.js"]
