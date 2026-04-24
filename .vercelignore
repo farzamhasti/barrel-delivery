@@ -1,0 +1,13 @@
+# Ignore everything by default
+*
+
+# But include necessary files for the build
+!package.json
+!pnpm-lock.yaml
+!server.js
+!server/
+!client/
+!drizzle/
+!vite.config.ts
+!tsconfig.json
+!vercel.json
