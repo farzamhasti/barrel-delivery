@@ -7,6 +7,7 @@ import {
   boolean,
   decimal,
   pgEnum,
+  integer,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
@@ -52,7 +53,7 @@ export const menuCategories = pgTable("menu_categories", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
   description: text("description"),
-  displayOrder: serial("display_order").default(0),
+  displayOrder: integer("display_order").default(0),
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
@@ -70,7 +71,7 @@ export const menuItems = pgTable("menu_items", {
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
   imageUrl: text("image_url"),
   isAvailable: boolean("is_available").default(true),
-  displayOrder: serial("display_order").default(0),
+  displayOrder: integer("display_order").default(0),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
