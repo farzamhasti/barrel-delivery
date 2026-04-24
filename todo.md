@@ -1,4 +1,4 @@
-# Barrel Delivery - Project TODO
+# Barrel Delivery - Project TODO  
 
 ## Database & Core Infrastructure
 - [x] Design and implement database schema (menus, categories, orders, drivers, customers) - ENGLISH ONLY
