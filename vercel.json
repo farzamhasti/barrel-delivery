@@ -4,5 +4,6 @@
   "public": false,
   "env": {
     "NODE_ENV": "production"
-  }
+  },
+  "installCommand": "pnpm install"
 }

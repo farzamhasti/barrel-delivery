@@ -1,75 +1,12 @@
 {
-  "version": "5",
-  "dialect": "mysql",
+  "version": "7",
+  "dialect": "postgresql",
   "entries": [
     {
       "idx": 0,
-      "version": "5",
-      "when": 1776448596434,
-      "tag": "0000_sudden_doorman",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "5",
-      "when": 1776616292547,
-      "tag": "0001_overrated_harrier",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "5",
-      "when": 1776654616763,
-      "tag": "0002_faulty_night_thrasher",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "5",
-      "when": 1776654927526,
-      "tag": "0003_new_wildside",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "5",
-      "when": 1776659133279,
-      "tag": "0004_flippant_zaladane",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "5",
-      "when": 1776659985589,
-      "tag": "0005_small_lenny_balinger",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "5",
-      "when": 1776660520434,
-      "tag": "0006_curved_firebrand",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "5",
-      "when": 1776748479431,
-      "tag": "0007_strong_silver_fox",
-      "breakpoints": true
-    },
-    {
-      "idx": 8,
-      "version": "5",
-      "when": 1776883339876,
-      "tag": "0008_cloudy_punisher",
-      "breakpoints": true
-    },
-    {
-      "idx": 9,
-      "version": "5",
-      "when": 1776885453466,
-      "tag": "0009_harsh_living_lightning",
+      "version": "7",
+      "when": 1777011185775,
+      "tag": "0000_lowly_big_bertha",
       "breakpoints": true
     }
   ]
