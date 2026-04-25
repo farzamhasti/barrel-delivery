@@ -14,6 +14,7 @@ export default function KitchenLogin() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const utils = trpc.useUtils();
 
   const loginMutation = trpc.system.login.useMutation({
     onSuccess: (data: any) => {
@@ -34,9 +35,16 @@ export default function KitchenLogin() {
         (window as any).__systemSessionToken = data.sessionToken;
         (window as any).__systemRole = data.role;
         (window as any).__systemUsername = data.username;
+        // Invalidate checkSession query to force refetch with new cookie
+        utils.system.checkSession.invalidate();
+        
         toast.success("Login successful!");
         setIsLoading(false);
-        setLocation("/kitchen");
+        
+        // Delay redirect slightly to allow query to refetch
+        setTimeout(() => {
+          setLocation("/kitchen");
+        }, 100);
       }
     },
     onError: (error: any) => {
