@@ -45,7 +45,7 @@ export const appRouter = router({
       list: publicProcedure.query(async () => {
         return db.getMenuCategories();
       }),
-      create: systemAdminProcedure
+      create: adminOrSystemAdminProcedure
         .input(z.object({
           name: z.string(),
           description: z.string().optional(),
@@ -54,7 +54,7 @@ export const appRouter = router({
         .mutation(async ({ input }) => {
           return db.createMenuCategory(input);
         }),
-      update: systemAdminProcedure
+      update: adminOrSystemAdminProcedure
         .input(z.object({
           id: z.number(),
           name: z.string().optional(),
@@ -66,7 +66,7 @@ export const appRouter = router({
           const { id, ...data } = input;
           return db.updateMenuCategory(id, data);
         }),
-      delete: systemAdminProcedure
+      delete: adminOrSystemAdminProcedure
         .input(z.object({ id: z.number() }))
         .mutation(async ({ input }) => {
           return db.deleteMenuCategory(input.id);
@@ -78,7 +78,7 @@ export const appRouter = router({
         .query(async ({ input }) => {
           return db.getMenuItems(input?.categoryId);
         }),
-      create: systemAdminProcedure
+      create: adminOrSystemAdminProcedure
         .input(z.object({
           categoryId: z.number(),
           name: z.string(),
@@ -93,7 +93,7 @@ export const appRouter = router({
             price: input.price as any,
           });
         }),
-      update: systemAdminProcedure
+      update: adminOrSystemAdminProcedure
         .input(z.object({
           id: z.number(),
           categoryId: z.number().optional(),
@@ -111,7 +111,7 @@ export const appRouter = router({
             price: data.price as any,
           });
         }),
-      delete: systemAdminProcedure
+      delete: adminOrSystemAdminProcedure
         .input(z.object({ id: z.number() }))
         .mutation(async ({ input }) => {
           return db.deleteMenuItem(input.id);
