@@ -2246,3 +2246,9 @@
 
 ## Return Time Speed Adjustment
 - [x] Update average speed from 40 km/h to 50 km/h in Return Time calculation
+
+## Timer Consistency Across Dashboards
+- [x] Apply driver return timer persistence logic from Order Tracking to Admin Dashboard
+- [x] Ensure Kitchen Dashboard uses same timer context as Order Tracking
+- [x] Unify all three locations to use DriverReturnTimeContext for synchronized timers
+- [x] Verify timer persists across tab switches and page refreshes across all dashboards
