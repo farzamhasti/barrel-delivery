@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose, DialogDescription } from "@/components/ui/dialog";
-import { LogOut, ChefHat, MapPin, Clock, AlertCircle, CheckCircle2, Flame, X, Calendar } from "lucide-react";
+import { LogOut, ChefHat, MapPin, Clock, AlertCircle, CheckCircle2, Flame, X, Calendar, Gift } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
@@ -17,6 +17,7 @@ export default function KitchenDashboard() {
   const utils = trpc.useUtils();
   const { driverReturnTimes } = useDriverReturnTime();
   const [activeTab, setActiveTab] = useState("active");
+  const { data: reservations = [] } = trpc.reservations.list.useQuery();
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
 
 
@@ -511,7 +512,7 @@ export default function KitchenDashboard() {
 
         {/* Tabs for Orders */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 bg-white border border-border">
+          <TabsList className="grid w-full grid-cols-3 bg-white border border-border">
             <TabsTrigger value="active" className="flex items-center gap-2">
               <Flame className="w-4 h-4" />
               Active Orders ({pendingOrders.length})
@@ -519,6 +520,10 @@ export default function KitchenDashboard() {
             <TabsTrigger value="prepared" className="flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4" />
               Prepared Orders ({readyOrders.length})
+            </TabsTrigger>
+            <TabsTrigger value="reservations" className="flex items-center gap-2">
+              <Gift className="w-4 h-4" />
+              Reservations ({reservations.filter((r: any) => r.status === "pending").length})
             </TabsTrigger>
           </TabsList>
 
@@ -548,6 +553,10 @@ export default function KitchenDashboard() {
               )}
             </div>
           </TabsContent>
+
+          <TabsContent value="reservations" className="mt-4">
+            <ReservationsList reservations={reservations} onRefresh={refetch} />
+          </TabsContent>
         </Tabs>
 
       {/* Order Detail Modal */}
@@ -555,6 +564,119 @@ export default function KitchenDashboard() {
       </div>
 
     <DeveloperCredit />
+    </div>
+  );
+}
+
+
+function ReservationsList({
+  reservations,
+  onRefresh,
+}: {
+  reservations: any[];
+  onRefresh: () => void;
+}) {
+  const updateStatusMutation = trpc.reservations.updateStatus.useMutation({
+    onSuccess: () => {
+      toast.success("Reservation marked as done");
+      onRefresh();
+    },
+    onError: (error) => {
+      toast.error(`Failed to update reservation: ${error.message}`);
+    },
+  });
+
+  const pendingReservations = reservations.filter((r) => r.status === "pending");
+  const completedReservations = reservations.filter((r) => r.status === "completed");
+
+  const EmptyReservationState = ({ message }: { message: string }) => (
+    <div className="flex flex-col items-center justify-center py-12 text-center">
+      <Gift className="w-12 h-12 text-gray-300 mb-4" />
+      <p className="text-lg font-semibold text-foreground">{message}</p>
+    </div>
+  );
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-semibold mb-4">Pending Reservations</h3>
+        {pendingReservations.length === 0 ? (
+          <EmptyReservationState message="No pending reservations" />
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {pendingReservations.map((reservation) => (
+              <Card key={reservation.id} className="p-4 space-y-3">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h4 className="font-semibold text-lg">{reservation.eventType}</h4>
+                    <p className="text-sm text-muted-foreground">
+                      {reservation.numberOfPeople} people
+                    </p>
+                  </div>
+                  <Badge variant="outline" className="bg-yellow-50">
+                    Pending
+                  </Badge>
+                </div>
+
+                {reservation.details && (
+                  <p className="text-sm text-muted-foreground">{reservation.details}</p>
+                )}
+
+                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                  <span>📅 {new Date(reservation.eventDate).toLocaleDateString()}</span>
+                  <span>🕐 {reservation.eventTime}</span>
+                </div>
+
+                <Button
+                  size="sm"
+                  className="w-full"
+                  onClick={() =>
+                    updateStatusMutation.mutate({
+                      id: reservation.id,
+                      status: "completed",
+                    })
+                  }
+                  disabled={updateStatusMutation.isPending}
+                >
+                  {updateStatusMutation.isPending ? "Updating..." : "Mark as Done"}
+                </Button>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {completedReservations.length > 0 && (
+        <div>
+          <h3 className="text-lg font-semibold mb-4">Completed Reservations</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {completedReservations.map((reservation) => (
+              <Card key={reservation.id} className="p-4 space-y-3 opacity-75">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h4 className="font-semibold text-lg">{reservation.eventType}</h4>
+                    <p className="text-sm text-muted-foreground">
+                      {reservation.numberOfPeople} people
+                    </p>
+                  </div>
+                  <Badge variant="outline" className="bg-green-50">
+                    Done
+                  </Badge>
+                </div>
+
+                {reservation.details && (
+                  <p className="text-sm text-muted-foreground">{reservation.details}</p>
+                )}
+
+                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                  <span>📅 {new Date(reservation.eventDate).toLocaleDateString()}</span>
+                  <span>🕐 {reservation.eventTime}</span>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

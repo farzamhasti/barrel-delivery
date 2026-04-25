@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/useMobile";
 import { DeveloperCredit } from "@/components/DeveloperCredit";
 
-import { Menu, Package2, Truck, LogOut, Settings, Plus, Map, X, Calendar } from "lucide-react";
+import { Menu, Package2, Truck, LogOut, Settings, Plus, Map, X, Calendar, Gift } from "lucide-react";
 import MenuManagement from "@/components/admin/MenuManagement";
 import { Orders } from "@/pages/Orders";
 import DriverManagement from "@/components/admin/DriverManagement";
@@ -13,6 +13,7 @@ import Dashboard from "@/components/admin/Dashboard";
 import CreateOrder from "@/components/admin/CreateOrder";
 import OrderTrackingWithMap from "@/components/admin/OrderTrackingWithMap";
 import { DeliveryReportTab } from "@/components/DeliveryReportTab";
+import ReservationManagement from "@/components/admin/ReservationManagement";
 
 
 // Helper hook to get window width
@@ -190,6 +191,7 @@ export default function AdminDashboard() {
                 {currentTab === "drivers" && <DriverManagement />}
                 {currentTab === "order-tracking" && <OrderTrackingWithMap />}
                 {currentTab === "delivery-report" && <DeliveryReportTab />}
+                {currentTab === "reservations" && <ReservationManagement />}
 
               </div>
             </div>
@@ -252,6 +254,12 @@ function SidebarContent({
           icon={<Calendar className="w-5 h-5" />}
           label="Delivery Report"
           active={currentTab === "delivery-report"}
+        />
+        <NavItem
+          href="/admin/reservations"
+          icon={<Gift className="w-5 h-5" />}
+          label="Reservations"
+          active={currentTab === "reservations"}
         />
 
       </nav>

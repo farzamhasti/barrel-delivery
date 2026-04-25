@@ -446,6 +446,38 @@ export const appRouter = router({
       }),
   }),
 
+  // Reservations
+  reservations: router({
+    create: adminOrSystemAdminProcedure
+      .input(z.object({
+        eventType: z.string(),
+        numberOfPeople: z.number().min(1),
+        details: z.string().optional(),
+        eventDate: z.string(),
+        eventTime: z.string(),
+      }))
+      .mutation(async ({ input }) => {
+        return db.createReservation({
+          eventType: input.eventType,
+          numberOfPeople: input.numberOfPeople,
+          details: input.details,
+          eventDate: input.eventDate,
+          eventTime: input.eventTime,
+          status: "pending",
+        });
+      }),
+    list: protectedProcedure.query(async () => {
+      return db.getReservations();
+    }),
+    updateStatus: adminOrSystemAdminProcedure
+      .input(z.object({
+        id: z.number(),
+        status: z.enum(["pending", "completed"]),
+      }))
+      .mutation(async ({ input }) => {
+        return db.updateReservationStatus(input.id, input.status);
+      }),
+  }),
   // Geocoding and Maps
   maps: router({
     geocode: protectedProcedure

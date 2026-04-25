@@ -1,5 +1,5 @@
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, menuCategories, InsertMenuCategory, menuItems, InsertMenuItem, drivers, InsertDriver, customers, InsertCustomer, orders, InsertOrder, orderItems, InsertOrderItem, systemCredentials, systemSessions, orderStatusHistory, InsertOrderStatusHistory, returnTimeHistory } from "../drizzle/schema";
+import { InsertUser, users, menuCategories, InsertMenuCategory, menuItems, InsertMenuItem, drivers, InsertDriver, customers, InsertCustomer, orders, InsertOrder, orderItems, InsertOrderItem, systemCredentials, systemSessions, orderStatusHistory, InsertOrderStatusHistory, returnTimeHistory, reservations, InsertReservation, Reservation } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { eq, and, desc, gte, lt, inArray, gt, isNull, lte } from "drizzle-orm";
 import { createHash, timingSafeEqual } from 'crypto';
@@ -1503,4 +1503,57 @@ export async function getReturnTimeHistory(driverId: number, limit: number = 10)
     .limit(limit);
 
   return results;
+}
+
+
+// Reservation Functions
+export async function createReservation(data: InsertReservation) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.insert(reservations).values(data);
+  return result;
+}
+
+export async function getReservations() {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const results = await db.select()
+    .from(reservations)
+    .orderBy(desc(reservations.eventDate));
+
+  return results;
+}
+
+export async function getReservationById(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.select()
+    .from(reservations)
+    .where(eq(reservations.id, id));
+
+  return result[0] || null;
+}
+
+export async function updateReservationStatus(id: number, status: "pending" | "completed") {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.update(reservations)
+    .set({ status })
+    .where(eq(reservations.id, id));
+
+  return result;
+}
+
+export async function deleteReservation(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.delete(reservations)
+    .where(eq(reservations.id, id));
+
+  return result;
 }

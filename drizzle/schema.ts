@@ -1,6 +1,7 @@
 import { decimal, int, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean } from "drizzle-orm/mysql-core";
 import { relations } from "drizzle-orm";
 
+
 /**
  * Core user table backing auth flow.
  * Extended with role-based access control for admin and driver roles.
@@ -246,3 +247,19 @@ export const systemSessions = mysqlTable("system_sessions", {
 
 export type SystemSession = typeof systemSessions.$inferSelect;
 export type InsertSystemSession = typeof systemSessions.$inferInsert;
+
+// Reservations for events
+export const reservations = mysqlTable("reservations", {
+  id: int("id").autoincrement().primaryKey(),
+  eventType: varchar("event_type", { length: 255 }).notNull(),
+  numberOfPeople: int("number_of_people").notNull(),
+  details: text("details"),
+  eventDate: varchar("event_date", { length: 10 }).notNull(),
+  eventTime: varchar("event_time", { length: 5 }).notNull(),
+  status: mysqlEnum("status", ["pending", "completed"]).default("pending").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Reservation = typeof reservations.$inferSelect;
+export type InsertReservation = typeof reservations.$inferInsert;
