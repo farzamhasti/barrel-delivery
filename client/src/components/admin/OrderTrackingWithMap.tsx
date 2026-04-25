@@ -34,6 +34,7 @@ export default function OrderTrackingWithMap() {
   const [showDriverModal, setShowDriverModal] = useState(false);
   const [orderToAssign, setOrderToAssign] = useState<number | null>(null);
   const [updateTrigger, setUpdateTrigger] = useState(0); // Trigger re-renders for countdown
+  const [driverReturnTimes, setDriverReturnTimes] = useState<Array<{driverId: number, returnTime: any}>>([]);
   const mapRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.Marker[]>([]);
 
@@ -44,14 +45,29 @@ export default function OrderTrackingWithMap() {
   const { data: drivers = [], isLoading: driversLoading } = trpc.drivers.list.useQuery();
   const activeDrivers = drivers.filter((d: any) => d.status === "online" && d.isActive);
 
-  // Fetch return time for each active driver
-  const driverReturnTimes = activeDrivers.map((driver: any) => {
-    const { data: returnTime } = trpc.drivers.getReturnTime.useQuery(
-      { driverId: driver.id },
-      { refetchInterval: 5000 } // Refetch every 5 seconds to get fresh data
-    );
-    return { driverId: driver.id, returnTime };
-  });
+  // Fetch return time for all active drivers
+  useEffect(() => {
+    const fetchReturnTimes = async () => {
+      const times = await Promise.all(
+        activeDrivers.map(async (driver: any) => {
+          try {
+            const returnTime = await utils.drivers.getReturnTime.fetch({ driverId: driver.id });
+            return { driverId: driver.id, returnTime };
+          } catch (error) {
+            console.error(`Failed to fetch return time for driver ${driver.id}:`, error);
+            return { driverId: driver.id, returnTime: null };
+          }
+        })
+      );
+      setDriverReturnTimes(times);
+    };
+    
+    if (activeDrivers.length > 0) {
+      fetchReturnTimes();
+      const interval = setInterval(fetchReturnTimes, 5000);
+      return () => clearInterval(interval);
+    }
+  }, [activeDrivers, utils]);
 
   // Fetch selected order with items
   const { data: selectedOrderData } = trpc.orders.getById.useQuery(
