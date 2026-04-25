@@ -274,7 +274,12 @@ function NavItem({
   active: boolean;
 }) {
   return (
-    <a href={href} className="block">
+    <a href={href} className="block" onClick={(e) => {
+      // Let wouter handle the navigation
+      e.preventDefault();
+      window.history.pushState({}, '', href);
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    }}>
       <Button
         variant={active ? "default" : "ghost"}
         className="w-full justify-start gap-3 text-sm h-9"

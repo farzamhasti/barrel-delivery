@@ -191,7 +191,7 @@ export default function OrderTrackingWithMap() {
         </div>
 
         {showMap && (
-          <Card className="flex-1 overflow-hidden">
+          <Card className="flex-1 overflow-hidden h-96 lg:h-[600px]">
             <MapView
               onMapReady={(map) => {
                 mapRef.current = map;
