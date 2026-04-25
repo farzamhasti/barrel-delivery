@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,21 @@ import { DriverSelectionModal } from "@/components/DriverSelectionModal";
 const FORT_ERIE_CENTER = { lat: 42.905191, lng: -78.9225479 };
 const RESTAURANT_ADDRESS = { lat: 42.905191, lng: -78.9225479 }; // 224 Garrison Rd, Fort Erie, ON L2A 1M7
 
+// Helper function to calculate remaining time from backend data
+function calculateRemainingTime(totalSeconds: number | null, startTimestamp: number | null): string {
+  if (!totalSeconds || !startTimestamp) return "00:00";
+  
+  const now = Date.now();
+  const elapsedMs = now - startTimestamp;
+  const elapsedSeconds = Math.floor(elapsedMs / 1000);
+  const remainingSeconds = Math.max(0, totalSeconds - elapsedSeconds);
+  
+  const minutes = Math.floor(remainingSeconds / 60);
+  const seconds = remainingSeconds % 60;
+  
+  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
 export default function OrderTrackingWithMap() {
   const utils = trpc.useUtils();
 
@@ -20,67 +35,10 @@ export default function OrderTrackingWithMap() {
   const [showDriverModal, setShowDriverModal] = useState(false);
   const [orderToAssign, setOrderToAssign] = useState<number | null>(null);
   const [driverReturnTimes, setDriverReturnTimes] = useState<Record<number, string>>({});
+  const [driverReturnData, setDriverReturnData] = useState<Record<number, { totalSeconds: number | null; startTimestamp: number | null }>>({});
   const mapRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.Marker[]>([]);
-
-  // Listen for return time updates from driver dashboard
-  useEffect(() => {
-    const handleReturnTimeUpdate = (event: any) => {
-      const { driverId, returnTime } = event.detail;
-      setDriverReturnTimes((prev) => ({
-        ...prev,
-        [driverId]: returnTime,
-      }));
-    };
-
-    // Load return times from localStorage on mount
-    const loadReturnTimesFromStorage = () => {
-      const times: Record<number, string> = {};
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith('driver-return-time-')) {
-          try {
-            const data = JSON.parse(localStorage.getItem(key) || '{}');
-            if (data.driverId && data.returnTime) {
-              times[data.driverId] = data.returnTime;
-            }
-          } catch (e) {
-            console.error('Failed to parse return time data:', e);
-          }
-        }
-      }
-      if (Object.keys(times).length > 0) {
-        setDriverReturnTimes(times);
-      }
-    };
-
-    loadReturnTimesFromStorage();
-    window.addEventListener('driver-return-time-updated', handleReturnTimeUpdate);
-    return () => window.removeEventListener('driver-return-time-updated', handleReturnTimeUpdate);
-  }, []);
-
-  // Poll for return time updates every second (countdown)
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setDriverReturnTimes((prev) => {
-        const updated = { ...prev };
-        Object.keys(updated).forEach((driverId) => {
-          const time = updated[parseInt(driverId)];
-          if (time && time !== "00:00") {
-            const [minutes, seconds] = time.split(":").map(Number);
-            let totalSeconds = minutes * 60 + seconds - 1;
-            if (totalSeconds < 0) totalSeconds = 0;
-            const newMinutes = Math.floor(totalSeconds / 60);
-            const newSeconds = totalSeconds % 60;
-            updated[parseInt(driverId)] = `${String(newMinutes).padStart(2, "0")}:${String(newSeconds).padStart(2, "0")}`;
-          }
-        });
-        return updated;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, []);
+  const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Fetch today's orders with items for complete data
   const { data: allOrders = [], isLoading, refetch } = trpc.orders.getTodayOrdersWithItems.useQuery();
@@ -100,17 +58,78 @@ export default function OrderTrackingWithMap() {
     ["Pending", "Ready", "On the Way"].includes(o.status)
   ) : [];
 
-  // Auto-refetch every 5 seconds for real-time updates
-  // Also listen for cache invalidation from other components
+  // Fetch return times for all active drivers
+  const fetchReturnTimes = useCallback(async () => {
+    const data: Record<number, { totalSeconds: number | null; startTimestamp: number | null }> = {};
+    const times: Record<number, string> = {};
+
+    for (const driver of activeDrivers) {
+      try {
+        const returnTimeData = await utils.drivers.getReturnTime.fetch({ driverId: driver.id });
+        if (returnTimeData) {
+          const startTs = typeof returnTimeData.startTimestamp === 'number' ? returnTimeData.startTimestamp : (returnTimeData.startTimestamp as any)?.getTime?.() || null;
+          data[driver.id] = {
+            totalSeconds: returnTimeData.totalSeconds,
+            startTimestamp: startTs,
+          };
+          times[driver.id] = calculateRemainingTime(returnTimeData.totalSeconds, startTs);
+        } else {
+          data[driver.id] = { totalSeconds: null, startTimestamp: null };
+          times[driver.id] = "00:00";
+        }
+      } catch (error) {
+        console.error(`Failed to fetch return time for driver ${driver.id}:`, error);
+        data[driver.id] = { totalSeconds: null, startTimestamp: null };
+        times[driver.id] = "00:00";
+      }
+    }
+
+    setDriverReturnData(data);
+    setDriverReturnTimes(times);
+  }, [activeDrivers, utils.drivers.getReturnTime]);
+
+  // Fetch return times on mount and when active drivers change
+  useEffect(() => {
+    if (activeDrivers.length > 0) {
+      fetchReturnTimes();
+    }
+  }, [activeDrivers.length, fetchReturnTimes]);
+
+  // Update countdown display every second by recalculating from backend data
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setDriverReturnTimes((prev) => {
+        const updated = { ...prev };
+        Object.keys(driverReturnData).forEach((driverId) => {
+          const data = driverReturnData[parseInt(driverId)];
+          updated[parseInt(driverId)] = calculateRemainingTime(data.totalSeconds, data.startTimestamp);
+        });
+        return updated;
+      });
+    }, 1000);
+
+    refreshIntervalRef.current = interval;
+    return () => clearInterval(interval);
+  }, [driverReturnData]);
+
+  // Fetch return times every 5 seconds to sync with backend
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (activeDrivers.length > 0) {
+        fetchReturnTimes();
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [activeDrivers.length, fetchReturnTimes]);
+
+  // Auto-refetch orders every 5 seconds for real-time updates
   useEffect(() => {
     const interval = setInterval(() => {
       refetch();
     }, 5000);
     return () => clearInterval(interval);
   }, [refetch]);
-
-  // Note: Cache invalidation from Orders tab mutations will trigger
-  // automatic refetch through React Query's cache mechanism
 
   // Update map markers when orders change
   useEffect(() => {
@@ -122,12 +141,12 @@ export default function OrderTrackingWithMap() {
 
     // Add markers for each order
     orders.forEach((order: any) => {
-      if (order.customer?.latitude && order.customer?.longitude) {
+      if (order.customerLatitude && order.customerLongitude) {
         const marker = new google.maps.Marker({
           map: mapRef.current,
           position: {
-            lat: parseFloat(order.customer.latitude as any),
-            lng: parseFloat(order.customer.longitude as any),
+            lat: parseFloat(order.customerLatitude as any),
+            lng: parseFloat(order.customerLongitude as any),
           },
           title: `Order #${order.id}`,
           label: {
@@ -155,91 +174,20 @@ export default function OrderTrackingWithMap() {
     });
   }, [orders]);
 
-  // Update map when selected order changes
-  useEffect(() => {
-    if (!mapRef.current || !selectedOrderId) return;
+  const handleAssignDriver = () => {
+    invalidateOrderCache(utils);
+  };
 
-    // Find the selected order
-    const selectedOrder = orders.find((o: any) => o.id === selectedOrderId);
-    if (!selectedOrder || !selectedOrder.customer?.latitude || !selectedOrder.customer?.longitude) return;
-
-    // Pan and zoom to selected order
-    const position = {
-      lat: parseFloat(selectedOrder.customer.latitude as any),
-      lng: parseFloat(selectedOrder.customer.longitude as any),
-    };
-
-    mapRef.current.panTo(position);
-    mapRef.current.setZoom(16);
-
-    // Highlight selected marker by changing its color
-    markersRef.current.forEach((marker, idx) => {
-      const order = orders[idx];
-      if (order.id === selectedOrderId) {
-        // Highlight selected marker
-        marker.setIcon({
-          path: google.maps.SymbolPath.CIRCLE,
-          scale: 20,
-          fillColor: "#dc2626",
-          fillOpacity: 1,
-          strokeColor: "white",
-          strokeWeight: 3,
-        });
-        marker.setZIndex(100);
-      } else {
-        // Reset other markers
-        marker.setIcon({
-          path: google.maps.SymbolPath.CIRCLE,
-          scale: 16,
-          fillColor: "#3b82f6",
-          fillOpacity: 1,
-          strokeColor: "white",
-          strokeWeight: 2,
-        });
-        marker.setZIndex(1);
-      }
-    });
-
-    // Force map to redraw by triggering resize events
-    setTimeout(() => {
-      if (mapRef.current) {
-        google.maps.event.trigger(mapRef.current, 'resize');
-      }
-    }, 0);
-
-    setTimeout(() => {
-      if (mapRef.current) {
-        google.maps.event.trigger(mapRef.current, 'resize');
-      }
-    }, 50);
-
-    setTimeout(() => {
-      if (mapRef.current) {
-        google.maps.event.trigger(mapRef.current, 'resize');
-      }
-    }, 150);
-  }, [selectedOrderId, orders]);
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Pending":
-        return "bg-yellow-100 text-yellow-800";
-      case "Ready":
-        return "bg-blue-100 text-blue-800";
-      case "On the Way":
-        return "bg-purple-100 text-purple-800";
-      case "Delivered":
-        return "bg-green-100 text-green-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
+  const handleSendToDriver = (orderId: number) => {
+    setOrderToAssign(orderId);
+    setShowDriverModal(true);
   };
 
   return (
-    <div className="flex flex-col h-full space-y-6">
-      {/* Map Toggle */}
-      <div className="flex items-center justify-between flex-shrink-0">
-        <h2 className="text-2xl font-bold text-foreground">Order Tracking</h2>
+    <div className="space-y-6">
+      {/* Map Section */}
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-2xl font-bold">Order Tracking</h2>
         <Button
           variant="outline"
           size="sm"
@@ -248,222 +196,132 @@ export default function OrderTrackingWithMap() {
         >
           {showMap ? (
             <>
-              <EyeOff className="w-4 h-4" />
+              <Eye className="w-4 h-4" />
               Hide Map
             </>
           ) : (
             <>
-              <Eye className="w-4 h-4" />
+              <EyeOff className="w-4 h-4" />
               Show Map
             </>
           )}
         </Button>
       </div>
 
-      <div className="flex flex-col gap-6 flex-1 overflow-hidden">
-        {/* Map and Drivers Side-by-Side */}
+      <div className="grid grid-cols-3 gap-6">
+        {/* Map - 2/3 width */}
         {showMap && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-96 overflow-hidden">
-            {/* Map Section - 2/3 width */}
-            <div className="lg:col-span-2 flex flex-col overflow-hidden">
-              <Card className="overflow-hidden flex-1">
-                <MapView
-                  initialCenter={FORT_ERIE_CENTER}
-                  initialZoom={14}
-                  onMapReady={(map) => {
-                    mapRef.current = map;
-
-                    // Add restaurant marker
-                    new google.maps.Marker({
-                      map,
-                      position: RESTAURANT_ADDRESS,
-                      title: "Restaurant",
-                      label: {
-                        text: "🍽️",
-                        fontSize: "18px",
-                      },
-                      icon: {
-                        path: google.maps.SymbolPath.CIRCLE,
-                        scale: 18,
-                        fillColor: "#ef4444",
-                        fillOpacity: 1,
-                        strokeColor: "white",
-                        strokeWeight: 3,
-                      },
-                    });
-                  }}
-                />
-              </Card>
-            </div>
-            
-            {/* Active Drivers Section - 1/3 width */}
-            <div className="flex flex-col overflow-hidden">
-              <Card className="overflow-hidden flex-1 flex flex-col">
-                <div className="p-4 border-b border-border flex-shrink-0">
-                  <h3 className="text-lg font-semibold text-foreground">Active Drivers ({activeDrivers.filter((d: any) => d.status === "online").length})</h3>
-                </div>
-                
-                {driversLoading ? (
-                  <div className="flex items-center justify-center py-8 flex-1">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
-                  </div>
-                ) : activeDrivers.length === 0 ? (
-                  <div className="p-6 text-center flex-1 flex items-center justify-center">
-                    <p className="text-muted-foreground">No active drivers</p>
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto flex-1">
-                    <table className="w-full text-xs">
-                      <thead>
-                        <tr className="border-b border-border bg-muted/50">
-                          <th className="text-left py-2 px-3 font-semibold">Name</th>
-                          <th className="text-left py-2 px-3 font-semibold">Status</th>
-                          <th className="text-left py-2 px-3 font-semibold">Est. Return</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {activeDrivers.map((driver: any) => (
-                          <tr key={driver.id} className="border-b border-border hover:bg-muted/30">
-                            <td className="py-2 px-3">{driver.name}</td>
-                            <td className="py-2 px-3">
-                              <Badge className="bg-green-100 text-green-800 text-xs">Online</Badge>
-                            </td>
-                            <td className="py-2 px-3 text-muted-foreground font-mono">{driverReturnTimes[driver.id] || "00:00"}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </Card>
-            </div>
-          </div>
-        )}        {/* Orders List - Below Map */}
-        <div className="flex flex-col overflow-hidden flex-1">
-          <h3 className="text-lg font-semibold text-foreground mb-4 flex-shrink-0">Active Orders ({orders?.length || 0})</h3>
-
-          {isLoading ? (
-            <div className="flex items-center justify-center py-8 flex-1">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
-            </div>
-          ) : !orders || orders.length === 0 ? (
-            <Card className="p-6 text-center flex-1 flex items-center justify-center">
-              <p className="text-muted-foreground">No active orders</p>
+          <div className="col-span-2">
+            <Card className="p-0 overflow-hidden h-96 lg:h-[600px]">
+              <MapView
+                onMapReady={(map) => {
+                  mapRef.current = map;
+                  map.setCenter(FORT_ERIE_CENTER);
+                  map.setZoom(13);
+                }}
+              />
             </Card>
-          ) : (
-            <div className="space-y-3 overflow-y-auto flex-1">
-              {orders.map((order: any) => (
-                <Card
-                  key={order.id}
-                  className={`p-4 cursor-pointer transition-all border-2 ${
-                    selectedOrderId === order.id
-                      ? "border-accent bg-accent/5"
-                      : "border-border hover:border-accent/50"
-                  }`}
-                  onClick={() => setSelectedOrderId(order.id)}
-                >
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <h4 className="font-semibold text-foreground">Order #{order.id}</h4>
-                      <p className="text-sm text-muted-foreground">{order.customer?.name}</p>
-                    </div>
-                    <Badge className={getStatusColor(order.status)}>
-                      {order.status}
+          </div>
+        )}
+
+        {/* Active Drivers - 1/3 width */}
+        <div className={showMap ? "col-span-1" : "col-span-3"}>
+          <Card className="p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Clock className="w-5 h-5" />
+              <h3 className="font-semibold text-lg">Active Drivers ({activeDrivers.length})</h3>
+            </div>
+
+            <div className="space-y-4">
+              {activeDrivers.map((driver: any) => (
+                <div key={driver.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div>
+                    <p className="font-medium">{driver.name}</p>
+                    <p className="text-sm text-gray-600">{driver.phoneNumber}</p>
+                  </div>
+                  <div className="text-right">
+                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                      Online
                     </Badge>
+                    <p className="text-sm font-mono mt-1 text-red-600">
+                      {driverReturnTimes[driver.id] || "00:00"}
+                    </p>
                   </div>
-
-                  <div className="flex items-start gap-2 text-sm text-muted-foreground">
-                    <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                    <div className="flex-1">
-                      <button
-                        onClick={() => {
-                          // Address click disabled - main map provides this functionality
-                        }}
-                        className="line-clamp-2 text-left hover:text-accent hover:underline transition-colors cursor-pointer"
-                      >
-                        {order.customerAddress || order.customer?.address}
-                      </button>
-                      {order.area && <p className="text-xs font-semibold text-accent mt-1">Area: {order.area}</p>}
-                    </div>
-                  </div>
-
-                  {selectedOrderId === order.id && selectedOrderData && (
-                    <div className="border-t border-border pt-3 mt-3">
-                      <div className="space-y-2 text-sm">
-                        <div>
-                          <p className="text-muted-foreground">Items:</p>
-                          {selectedOrderData.items?.length ? (
-                            <ul className="text-foreground space-y-1">
-                              {selectedOrderData.items.map((item: any, idx: number) => (
-                                <li key={idx}>
-                                  {item.quantity}x {item.menuItemName}
-                                </li>
-                              ))}
-                            </ul>
-                          ) : (
-                            <p className="text-muted-foreground">No items</p>
-                          )}
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground">Total: ${(Number(selectedOrderData.totalPrice) || 0).toFixed(2)}</p>
-                        </div>
-                        {selectedOrderData.area && (
-                          <div>
-                            <p className="text-muted-foreground">Area: <span className="font-semibold text-accent">{selectedOrderData.area}</span></p>
-                          </div>
-                        )}
-                        {selectedOrderData.hasDeliveryTime && selectedOrderData.deliveryTime && (
-                          <div>
-                            <div className="text-sm text-muted-foreground flex items-center gap-2">
-                              <Clock className="w-4 h-4" />
-                              Expected Delivery
-                            </div>
-                            <div className="font-semibold text-foreground">
-                              {new Date(selectedOrderData.deliveryTime).toLocaleString()}
-                            </div>
-                          </div>
-                        )}
-
-                        {selectedOrderData.notes && (
-                          <div>
-                            <p className="text-muted-foreground">Notes: {selectedOrderData.notes}</p>
-                          </div>
-                        )}
-                        <div className="pt-3 border-t border-border mt-3">
-                          <Button
-                            onClick={() => {
-                              setOrderToAssign(order.id);
-                              setShowDriverModal(true);
-                            }}
-                            className="w-full bg-accent hover:bg-accent/90 text-white flex items-center justify-center gap-2"
-                          >
-                            <Send className="w-4 h-4" />
-                            Send to Driver
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </Card>
+                </div>
               ))}
             </div>
-          )}
+          </Card>
         </div>
       </div>
 
+      {/* Active Orders */}
+      <Card className="p-6">
+        <h3 className="font-semibold text-lg mb-4">Active Orders ({orders.length})</h3>
 
+        <div className="space-y-4">
+          {orders.map((order: any) => (
+            <div
+              key={order.id}
+              className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                selectedOrderId === order.id ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-gray-300"
+              }`}
+              onClick={() => setSelectedOrderId(order.id)}
+            >
+              <div className="flex items-start justify-between mb-3">
+                <div>
+                  <p className="font-semibold">Order #{order.id}</p>
+                  <p className="text-sm text-gray-600">{order.customerName}</p>
+                </div>
+                <Badge variant={order.status === "Ready" ? "default" : "secondary"}>
+                  {order.status}
+                </Badge>
+              </div>
+
+              <div className="flex items-center gap-2 text-sm text-gray-600 mb-3">
+                <MapPin className="w-4 h-4" />
+                <span>{order.customerAddress}</span>
+              </div>
+
+              {selectedOrderId === order.id && selectedOrderData && (
+                <div className="mt-4 pt-4 border-t space-y-3">
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 mb-2">Items:</p>
+                    {selectedOrderData.items?.map((item: any, idx: number) => (
+                      <p key={idx} className="text-sm text-gray-600">
+                        {item.quantity}x {item.name}
+                      </p>
+                    ))}
+                  </div>
+                  <div className="flex justify-between items-center pt-2 border-t">
+                    <span className="font-semibold">Total: ${selectedOrderData.totalPrice?.toFixed(2)}</span>
+                    {order.status === "Ready" && (
+                      <Button
+                        size="sm"
+                        className="gap-2 bg-orange-500 hover:bg-orange-600"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSendToDriver(order.id);
+                        }}
+                      >
+                        <Send className="w-4 h-4" />
+                        Send to Driver
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      {/* Driver Selection Modal */}
       {orderToAssign && (
         <DriverSelectionModal
           isOpen={showDriverModal}
+          onClose={() => setShowDriverModal(false)}
+          onAssign={handleAssignDriver}
           orderId={orderToAssign}
-          onClose={() => {
-            setShowDriverModal(false);
-            setOrderToAssign(null);
-          }}
-          onAssign={() => {
-            refetch();
-            utils.orders.getTodayOrdersWithItems.invalidate();
-          }}
         />
       )}
     </div>

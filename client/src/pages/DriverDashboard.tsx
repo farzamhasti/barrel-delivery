@@ -61,9 +61,21 @@ export default function DriverDashboard() {
 
   // Return Time state
   const { returnTime, setCalculation, clearTimer } = useReturnTimeCalculator();
+  const utils = trpc.useUtils();
+  
+  // Mutation to save return time to backend database
+  const saveReturnTimeMutation = trpc.drivers.saveReturnTime.useMutation({
+    onSuccess: () => {
+      utils.drivers.getReturnTime.invalidate();
+    },
+    onError: (error) => {
+      console.error("Failed to save return time to backend:", error);
+    },
+  });
+  
   const calculateReturnTimeMutation = trpc.driver.calculateReturnTime.useMutation({
     onSuccess: (data) => {
-      if (data.success && sessionToken) {
+      if (data.success && sessionToken && currentDriver) {
         const displayTime = `${String(Math.floor(data.totalSeconds / 60)).padStart(2, '0')}:${String(data.totalSeconds % 60).padStart(2, '0')}`;
         setCalculation({
           totalSeconds: data.totalSeconds,
@@ -73,7 +85,14 @@ export default function DriverDashboard() {
           ordersCount: data.ordersCount,
           breakdown: data.breakdown,
         });
-        // Broadcast return time to all dashboards via localStorage and custom event
+        
+        // CRITICAL: Save return time to backend database for persistence
+        saveReturnTimeMutation.mutate({
+          driverId: currentDriver.id,
+          totalSeconds: data.totalSeconds,
+        });
+        
+        // Also broadcast via localStorage and custom event
         const broadcastData = {
           driverId: currentDriver?.id,
           driverName: currentDriver?.name,
