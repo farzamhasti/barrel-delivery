@@ -9,7 +9,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminLogin from "./pages/AdminLogin";
 import DriverPanel from "./pages/DriverPanel";
 import DriverDashboard from "./pages/DriverDashboard";
-import KitchenDashboard from "./components/admin/KitchenDashboard";
+import KitchenDashboardPage from "./pages/KitchenDashboardPage";
 import KitchenLogin from "./pages/KitchenLogin";
 import NotFound from "./pages/NotFound";
 import { useAuth } from "./_core/hooks/useAuth";
@@ -66,7 +66,7 @@ function Router() {
       <Route path="/driver-dashboard" component={DriverDashboard} />
       <Route path="/admin/*" component={() => <SystemProtectedRoute component={AdminDashboard} requiredRole="admin" />} />
       <Route path="/driver/*" component={DriverPanel} />
-      <Route path="/kitchen" component={() => <SystemProtectedRoute component={KitchenDashboard} requiredRole="kitchen" />} />
+      <Route path="/kitchen" component={() => <SystemProtectedRoute component={KitchenDashboardPage} requiredRole="kitchen" />} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
