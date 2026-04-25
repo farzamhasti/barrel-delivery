@@ -5,6 +5,7 @@ import * as db from "./db";
 import crypto from "crypto";
 import { TRPCError } from "@trpc/server";
 import { calculateReturnTime } from "./returnTime";
+import { calculateReturnTimeWithGoogleMaps } from "./googleMapsRouting";
 
 export const driverRouter = router({
   login: publicProcedure
@@ -320,13 +321,18 @@ export const driverRouter = router({
         const restaurantLat = input?.restaurantLatitude ?? 42.905191;
         const restaurantLng = input?.restaurantLongitude ?? -78.9225479;
         
-        // Calculate return time based on on_the_way orders
-        const calculation = calculateReturnTime(
+        // Restaurant address for Google Maps
+        const restaurantAddress = "224 Garrison Rd, Fort Erie, ON L2A 1M7";
+        
+        // Calculate return time using Google Maps Directions API
+        const calculation = await calculateReturnTimeWithGoogleMaps(
           onTheWayOrders.map((order) => ({
             id: order.id,
-            customerLatitude: order.customerLatitude ? Number(order.customerLatitude) : null,
-            customerLongitude: order.customerLongitude ? Number(order.customerLongitude) : null,
+            address: order.customerAddress || "",
+            latitude: order.customerLatitude ? Number(order.customerLatitude) : 0,
+            longitude: order.customerLongitude ? Number(order.customerLongitude) : 0,
           })),
+          restaurantAddress,
           restaurantLat,
           restaurantLng
         );
