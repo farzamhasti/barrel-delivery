@@ -106,12 +106,12 @@ export default function OrderTrackingWithMap() {
 
     // Add markers for each order
     orders.forEach((order: any) => {
-      if (order.customer?.latitude && order.customer?.longitude) {
+      if (order.customerLatitude && order.customerLongitude) {
         const marker = new google.maps.Marker({
           map: mapRef.current,
           position: {
-            lat: parseFloat(order.customer.latitude as any),
-            lng: parseFloat(order.customer.longitude as any),
+            lat: parseFloat(order.customerLatitude as any),
+            lng: parseFloat(order.customerLongitude as any),
           },
           title: `Order #${order.id}`,
           label: {
