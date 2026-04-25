@@ -33,6 +33,28 @@ export default function OrderTrackingWithMap() {
       }));
     };
 
+    // Load return times from localStorage on mount
+    const loadReturnTimesFromStorage = () => {
+      const times: Record<number, string> = {};
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('driver-return-time-')) {
+          try {
+            const data = JSON.parse(localStorage.getItem(key) || '{}');
+            if (data.driverId && data.returnTime) {
+              times[data.driverId] = data.returnTime;
+            }
+          } catch (e) {
+            console.error('Failed to parse return time data:', e);
+          }
+        }
+      }
+      if (Object.keys(times).length > 0) {
+        setDriverReturnTimes(times);
+      }
+    };
+
+    loadReturnTimesFromStorage();
     window.addEventListener('driver-return-time-updated', handleReturnTimeUpdate);
     return () => window.removeEventListener('driver-return-time-updated', handleReturnTimeUpdate);
   }, []);
