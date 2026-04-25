@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useAuth } from "@/_core/hooks/useAuth";
+import { useSystemSession } from "@/_core/hooks/useSystemSession";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,7 +13,7 @@ import { toast } from "sonner";
 
 export default function KitchenDashboardPage() {
   const utils = trpc.useUtils();
-  const { logout } = useAuth();
+  const { logout, isLoading: authLoading } = useSystemSession();
   const [activeTab, setActiveTab] = useState("active");
 
   // Fetch today's orders with items
@@ -166,6 +166,16 @@ export default function KitchenDashboardPage() {
       <p className="text-sm text-muted-foreground mt-2">Great job! Keep up the good work.</p>
     </div>
   );
+
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <p className="text-muted-foreground">Loading kitchen dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100 p-4 md:p-6">
