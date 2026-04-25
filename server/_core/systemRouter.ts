@@ -23,7 +23,7 @@ export const systemRouter = router({
         role: z.enum(["admin", "kitchen"]),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       console.log(`[Login] Attempting login for username: ${input.username}, role: ${input.role}`);
       // Get credentials from database
       const credentials = await getSystemCredentials(input.username);
@@ -55,6 +55,15 @@ export const systemRouter = router({
       const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
       
       await createSystemSession(credentials.id, sessionToken, expiresAt);
+
+      // Set HTTP-only cookie with session token
+      ctx.res.cookie('systemSessionToken', sessionToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 24 * 60 * 60 * 1000, // 24 hours
+        path: '/',
+      });
 
       return {
         sessionToken,
@@ -92,8 +101,13 @@ export const systemRouter = router({
         sessionToken: z.string(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       await deleteSystemSession(input.sessionToken);
+      // Clear the HTTP-only cookie
+      ctx.res.clearCookie('systemSessionToken', {
+        httpOnly: true,
+        path: '/',
+      });
       return { success: true };
     }),
 

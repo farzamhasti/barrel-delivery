@@ -45,7 +45,9 @@ export default function KitchenDashboard() {
       await refetch();
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to update order status");
+      const errorMsg = error?.message || "Failed to update order status";
+      console.error("Order status update error:", errorMsg);
+      toast.error(errorMsg);
     },
   });
 
@@ -210,10 +212,15 @@ export default function KitchenDashboard() {
           className="w-full mt-auto bg-green-600 hover:bg-green-700 text-white"
           onClick={(e) => {
             e.stopPropagation();
-            updateStatusMutation.mutate({
-              orderId: order.id,
-              status: "Ready",
-            });
+            try {
+              updateStatusMutation.mutate({
+                orderId: order.id,
+                status: "Ready",
+              });
+            } catch (error) {
+              console.error("Error marking order ready:", error);
+              toast.error("Failed to mark order as ready");
+            }
           }}
           disabled={updateStatusMutation.isPending}
         >
@@ -388,10 +395,16 @@ export default function KitchenDashboard() {
               size="lg"
               className="w-full bg-green-600 hover:bg-green-700 text-white"
               onClick={() => {
-                updateStatusMutation.mutate({
-                  orderId: order.id,
-                  status: "Ready",
-                });
+                console.log('[KitchenDashboard] Mark Order as Ready clicked for order:', order.id);
+                try {
+                  updateStatusMutation.mutate({
+                    orderId: order.id,
+                    status: "Ready",
+                  });
+                  console.log('[KitchenDashboard] Mutation triggered');
+                } catch (error) {
+                  console.error('[KitchenDashboard] Error triggering mutation:', error);
+                }
               }}
               disabled={updateStatusMutation.isPending}
             >

@@ -23,8 +23,8 @@ export async function createContext(
     user = null;
   }
 
-  // Check for system session token in headers
-  const systemSessionToken = opts.req.headers['x-system-session-token'] as string | undefined;
+  // Check for system session token in cookies or headers
+  const systemSessionToken = (opts.req.cookies?.systemSessionToken || opts.req.headers['x-system-session-token']) as string | undefined;
   if (systemSessionToken) {
     try {
       const session = await getSystemSessionByToken(systemSessionToken);

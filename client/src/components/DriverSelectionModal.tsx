@@ -42,6 +42,8 @@ export function DriverSelectionModal({
     },
     onError: (error: any) => {
       console.error("Failed to assign order:", error);
+      const errorMsg = error?.message || "Failed to assign order to driver";
+      alert(errorMsg);
       setIsAssigning(false);
     },
   });
@@ -50,10 +52,15 @@ export function DriverSelectionModal({
     if (!selectedDriverId) return;
 
     setIsAssigning(true);
-    await assignMutation.mutateAsync({
-      orderId,
-      driverId: selectedDriverId,
-    });
+    try {
+      await assignMutation.mutateAsync({
+        orderId,
+        driverId: selectedDriverId,
+      });
+    } catch (error) {
+      console.error("Error assigning order:", error);
+      setIsAssigning(false);
+    }
   };
 
   return (

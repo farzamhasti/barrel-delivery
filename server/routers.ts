@@ -334,7 +334,7 @@ export const appRouter = router({
         
         return order;
       }),
-    updateStatus: protectedProcedure
+    updateStatus: systemAdminProcedure
       .input(z.object({
         orderId: z.number(),
         status: z.enum(["Pending", "Ready", "On the Way", "Delivered", "Returning to Restaurant", "At Restaurant"]),
@@ -342,7 +342,7 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         return db.updateOrderStatus(input.orderId, input.status);
       }),
-    assignDriver: protectedProcedure
+    assignDriver: systemAdminProcedure
       .input(z.object({
         orderId: z.number(),
         driverId: z.number(),

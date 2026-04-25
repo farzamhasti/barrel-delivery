@@ -17,11 +17,23 @@ export default function KitchenLogin() {
 
   const loginMutation = trpc.system.login.useMutation({
     onSuccess: (data: any) => {
+      console.log('[KitchenLogin] onSuccess called with data:', data);
       if (data.sessionToken && data.role) {
-        // Store session in localStorage
-        localStorage.setItem("systemSessionToken", data.sessionToken);
-        localStorage.setItem("systemRole", data.role);
-        localStorage.setItem("systemUsername", data.username);
+        // Store session in localStorage, sessionStorage, and window object as fallback
+        try {
+          localStorage.setItem("systemSessionToken", data.sessionToken);
+          localStorage.setItem("systemRole", data.role);
+          localStorage.setItem("systemUsername", data.username);
+        } catch (e) {
+          console.warn('[Login] localStorage not available, using fallback storage');
+        }
+        // Also store in sessionStorage and window as fallback
+        sessionStorage.setItem("systemSessionToken", data.sessionToken);
+        sessionStorage.setItem("systemRole", data.role);
+        sessionStorage.setItem("systemUsername", data.username);
+        (window as any).__systemSessionToken = data.sessionToken;
+        (window as any).__systemRole = data.role;
+        (window as any).__systemUsername = data.username;
         toast.success("Login successful!");
         setLocation("/kitchen");
       }
