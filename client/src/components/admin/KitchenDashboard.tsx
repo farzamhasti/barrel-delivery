@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose, DialogDescription } from "@/components/ui/dialog";
 import { LogOut, ChefHat, MapPin, Clock, AlertCircle, CheckCircle2, Flame, X, Calendar } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -135,7 +135,7 @@ export default function KitchenDashboard() {
       }, 3000);
       return () => clearInterval(interval);
     }
-  }, [selectedOrder, utils.drivers.list]);
+  }, [selectedOrder, refetch, utils]);
 
   // Calculate urgency level based on delivery time
   const getUrgencyLevel = (deliveryTime: string | null) => {
@@ -271,7 +271,7 @@ export default function KitchenDashboard() {
     }
   }, []);
 
-  const OrderDetailModal = useCallback(({ order }: { order: any }) => {
+  const OrderDetailModal = useCallback(function OrderDetailModal({ order }: { order: any }) {
     if (!order) return null;
     
     const urgency = getUrgencyLevel(order.deliveryTime);
@@ -281,6 +281,7 @@ export default function KitchenDashboard() {
     return (
       <Dialog open={!!order} onOpenChange={handleModalOpenChange}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" showCloseButton={false}>
+          <DialogDescription className="hidden" />
           <DialogHeader>
             <div className="flex items-center justify-between w-full">
               <div className="flex items-center gap-3">
@@ -432,7 +433,7 @@ export default function KitchenDashboard() {
         </DialogContent>
       </Dialog>
     );
-  }, [handleModalOpenChange, getUrgencyLevel, updateStatusMutation]);
+  }, [handleModalOpenChange, updateStatusMutation]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50">
@@ -569,7 +570,7 @@ export default function KitchenDashboard() {
         </Tabs>
 
       {/* Order Detail Modal */}
-      <OrderDetailModal order={selectedOrder} />
+      {selectedOrder && <OrderDetailModal order={selectedOrder} />}
       </div>
 
     <DeveloperCredit />
