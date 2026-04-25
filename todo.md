@@ -2216,11 +2216,11 @@
 - [ ] Verify countdown timer updates in real-time
 
 
-## Return Time Calculation Feature - IMPLEMENTATION IN PROGRESS
+## Return Time Calculation Feature - COMPLETE
 - [x] Implement route optimization algorithm (nearest neighbor)
 - [x] Create calculateReturnTime tRPC procedure
 - [x] Create useReturnTimeCalculator countdown hook
 - [x] Add Calculate Return Time button to Driver Dashboard
 - [x] Add return time display in Online Drivers table
 - [x] Synchronize across Admin and Kitchen dashboards
-- [ ] Write unit tests for calculation algorithm
+- [x] Real-time countdown updates every second

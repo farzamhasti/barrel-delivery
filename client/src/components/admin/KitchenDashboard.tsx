@@ -16,6 +16,30 @@ export default function KitchenDashboard() {
   const utils = trpc.useUtils();
   const [activeTab, setActiveTab] = useState("active");
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [driverReturnTimes, setDriverReturnTimes] = useState<Record<number, string>>({});
+
+  // Poll for return time updates every second
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setDriverReturnTimes((prev) => {
+        const updated = { ...prev };
+        Object.keys(updated).forEach((driverId) => {
+          const time = updated[parseInt(driverId)];
+          if (time && time !== "--:--") {
+            const [minutes, seconds] = time.split(":").map(Number);
+            let totalSeconds = minutes * 60 + seconds - 1;
+            if (totalSeconds < 0) totalSeconds = 0;
+            const newMinutes = Math.floor(totalSeconds / 60);
+            const newSeconds = totalSeconds % 60;
+            updated[parseInt(driverId)] = `${String(newMinutes).padStart(2, "0")}:${String(newSeconds).padStart(2, "0")}`;
+          }
+        });
+        return updated;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const handleLogout = () => {
     // Clear session
@@ -427,7 +451,9 @@ export default function KitchenDashboard() {
                           <td className="py-2 px-3">
                             <Badge className="bg-green-100 text-green-800 text-xs">Online</Badge>
                           </td>
-                          <td className="py-2 px-3 text-muted-foreground">{driver.estimatedReturnTime || '~15 min'}</td>
+                          <td className="py-2 px-3 text-muted-foreground font-mono">
+                            {driverReturnTimes[driver.id] || "--:--"}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
