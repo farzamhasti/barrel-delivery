@@ -1,1 +1,0 @@
-ALTER TABLE `drivers` ADD `status` enum('online','offline') DEFAULT 'offline' NOT NULL;

@@ -2199,3 +2199,28 @@
 - [x] DeliveryReportTab integrated with flexible date selection
 - [x] CSV export with selected date range and report type
 - [x] Metrics cards display aggregated data by selected period
+
+
+## Return Time Calculation Feature
+- [ ] Add return_time and return_time_calculated_at columns to drivers table
+- [ ] Implement Google Maps Directions API for route optimization
+- [ ] Create calculateReturnTime tRPC procedure with algorithm:
+  - 1 min pickup at restaurant
+  - 2 min per order delivery
+  - Optimal route distance (restaurant → all orders → restaurant)
+- [ ] Add "Calculate Return Time" button to Driver Dashboard
+- [ ] Implement real-time countdown timer for return time
+- [ ] Add Estimated Return Time column to Online Drivers table (Admin & Kitchen)
+- [ ] Synchronize return time across Admin and Kitchen dashboards
+- [ ] Write tests for return time calculation algorithm
+- [ ] Verify countdown timer updates in real-time
+
+
+## Return Time Calculation Feature - IMPLEMENTATION IN PROGRESS
+- [x] Implement route optimization algorithm (nearest neighbor)
+- [x] Create calculateReturnTime tRPC procedure
+- [x] Create useReturnTimeCalculator countdown hook
+- [ ] Add Calculate Return Time button to Driver Dashboard
+- [ ] Add return time display in Online Drivers table
+- [ ] Synchronize across Admin and Kitchen dashboards
+- [ ] Write unit tests for calculation algorithm

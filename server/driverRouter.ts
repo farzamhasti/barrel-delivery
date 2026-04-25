@@ -4,6 +4,7 @@ import { z } from "zod";
 import * as db from "./db";
 import crypto from "crypto";
 import { TRPCError } from "@trpc/server";
+import { calculateReturnTime } from "./returnTime";
 
 export const driverRouter = router({
   login: publicProcedure
@@ -256,6 +257,71 @@ export const driverRouter = router({
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: error.message || "Failed to fetch performance metrics",
+        });
+      }
+    }),
+
+  calculateReturnTime: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().optional(),
+      restaurantLatitude: z.number().optional(),
+      restaurantLongitude: z.number().optional(),
+    }).optional())
+    .mutation(async ({ input, ctx }) => {
+      try {
+        let sessionToken = ctx.req.cookies?.driver_session;
+        if (!sessionToken && input?.sessionToken) {
+          sessionToken = input.sessionToken;
+        }
+        
+        if (!sessionToken) {
+          throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message: "Session token is required",
+          });
+        }
+        
+        const driver = await db.getDriverBySessionToken(sessionToken);
+        if (!driver) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Driver not found",
+          });
+        }
+        
+        // Get driver's assigned orders
+        const orders = await db.getOrdersWithCustomer(driver.id);
+        
+        // Filter for orders that are not yet delivered
+        const activeOrders = orders.filter(
+          (order) => order.status !== "Delivered"
+        );
+        
+        // Default restaurant coordinates (can be customized)
+        const restaurantLat = input?.restaurantLatitude ?? 40.7128;
+        const restaurantLng = input?.restaurantLongitude ?? -74.0060;
+        
+        // Calculate return time
+        const calculation = calculateReturnTime(
+          activeOrders.map((order) => ({
+            id: order.id,
+            customerLatitude: order.customerLatitude ? Number(order.customerLatitude) : null,
+            customerLongitude: order.customerLongitude ? Number(order.customerLongitude) : null,
+          })),
+          restaurantLat,
+          restaurantLng
+        );
+        
+        return {
+          success: true,
+          driverId: driver.id,
+          ordersCount: activeOrders.length,
+          ...calculation,
+        };
+      } catch (error: any) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error.message || "Failed to calculate return time",
         });
       }
     }),
