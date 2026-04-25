@@ -1,7 +1,7 @@
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
+import { publicProcedure, protectedProcedure, router, systemAdminProcedure } from "./_core/trpc";
 import { z } from "zod";
 import * as db from "./db";
 import { geocodeAddress, reverseGeocodeCoordinates, calculateDistance, isValidCoordinates } from "./geocoding";
@@ -45,7 +45,7 @@ export const appRouter = router({
       list: publicProcedure.query(async () => {
         return db.getMenuCategories();
       }),
-      create: protectedProcedure
+      create: systemAdminProcedure
         .input(z.object({
           name: z.string(),
           description: z.string().optional(),
@@ -54,7 +54,7 @@ export const appRouter = router({
         .mutation(async ({ input }) => {
           return db.createMenuCategory(input);
         }),
-      update: protectedProcedure
+      update: systemAdminProcedure
         .input(z.object({
           id: z.number(),
           name: z.string().optional(),
@@ -66,7 +66,7 @@ export const appRouter = router({
           const { id, ...data } = input;
           return db.updateMenuCategory(id, data);
         }),
-      delete: protectedProcedure
+      delete: systemAdminProcedure
         .input(z.object({ id: z.number() }))
         .mutation(async ({ input }) => {
           return db.deleteMenuCategory(input.id);
@@ -78,7 +78,7 @@ export const appRouter = router({
         .query(async ({ input }) => {
           return db.getMenuItems(input?.categoryId);
         }),
-      create: protectedProcedure
+      create: systemAdminProcedure
         .input(z.object({
           categoryId: z.number(),
           name: z.string(),
@@ -93,7 +93,7 @@ export const appRouter = router({
             price: input.price as any,
           });
         }),
-      update: protectedProcedure
+      update: systemAdminProcedure
         .input(z.object({
           id: z.number(),
           categoryId: z.number().optional(),
@@ -111,7 +111,7 @@ export const appRouter = router({
             price: data.price as any,
           });
         }),
-      delete: protectedProcedure
+      delete: systemAdminProcedure
         .input(z.object({ id: z.number() }))
         .mutation(async ({ input }) => {
           return db.deleteMenuItem(input.id);

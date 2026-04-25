@@ -19,6 +19,14 @@ const redirectToLoginIfUnauthorized = (error: unknown) => {
 
   if (!isUnauthorized) return;
 
+  // Check if we have a system session token - if so, don't redirect to OAuth login
+  const systemSessionToken = localStorage.getItem('systemSessionToken');
+  if (systemSessionToken) {
+    // System session auth failed, but don't redirect to OAuth login
+    console.warn('[Auth] System session auth failed, but preserving system session');
+    return;
+  }
+
   console.warn('[Auth] Redirecting to login due to unauthorized error');
   window.location.href = getLoginUrl();
 };
@@ -32,7 +40,11 @@ queryClient.getQueryCache().subscribe(event => {
     }
     // Log all errors for debugging but don't treat them as fatal
     if (error) {
-      console.error("[API Query Error]", error instanceof Error ? error.message : String(error));
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      // Don't spam console with auth errors on system dashboards
+      if (!errorMsg.includes('UNAUTHED')) {
+        console.error("[API Query Error]", errorMsg);
+      }
     }
   }
 });
@@ -46,7 +58,11 @@ queryClient.getMutationCache().subscribe(event => {
     }
     // Log all errors for debugging but don't treat them as fatal
     if (error) {
-      console.error("[API Mutation Error]", error instanceof Error ? error.message : String(error));
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      // Don't spam console with auth errors on system dashboards
+      if (!errorMsg.includes('UNAUTHED')) {
+        console.error("[API Mutation Error]", errorMsg);
+      }
     }
   }
 });
@@ -57,8 +73,17 @@ const trpcClient = trpc.createClient({
       url: "/api/trpc",
       transformer: superjson,
       fetch(input, init) {
+        const headers = new Headers(init?.headers ?? {});
+        
+        // Add system session token if available
+        const systemSessionToken = localStorage.getItem('systemSessionToken') || (window as any).__systemSessionToken;
+        if (systemSessionToken) {
+          headers.set('x-system-session-token', systemSessionToken);
+        }
+        
         return globalThis.fetch(input, {
           ...(init ?? {}),
+          headers,
           credentials: "include",
         });
       },

@@ -10,8 +10,20 @@ import { Textarea } from "@/components/ui/textarea";
 import { Plus, Edit, Trash2, X } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+import { useEffect } from "react";
 
 export default function MenuManagement() {
+  // Get system session token from localStorage
+  const systemSessionToken = localStorage.getItem('systemSessionToken');
+  
+  // Set system session token in request headers for all tRPC calls
+  useEffect(() => {
+    if (systemSessionToken) {
+      // Store token in a global variable that the tRPC client can access
+      (window as any).__systemSessionToken = systemSessionToken;
+    }
+  }, [systemSessionToken]);
+
   const { data: categories = [], refetch: refetchCategories } = trpc.menu.categories.list.useQuery();
   const { data: items = [], refetch: refetchItems } = trpc.menu.items.list.useQuery();
   
@@ -40,7 +52,10 @@ export default function MenuManagement() {
       setShowCategoryDialog(false);
       refetchCategories();
     },
-    onError: (error) => toast.error("Failed to create category"),
+    onError: (error) => {
+      console.error("Create category error:", error);
+      toast.error(error.message || "Failed to create category");
+    },
   });
 
   const updateCategory = trpc.menu.categories.update.useMutation({
@@ -51,7 +66,10 @@ export default function MenuManagement() {
       setShowCategoryDialog(false);
       refetchCategories();
     },
-    onError: () => toast.error("Failed to update category"),
+    onError: (error) => {
+      console.error("Update category error:", error);
+      toast.error(error.message || "Failed to update category");
+    },
   });
 
   const deleteCategory = trpc.menu.categories.delete.useMutation({
@@ -73,7 +91,10 @@ export default function MenuManagement() {
       setShowItemDialog(false);
       refetchItems();
     },
-    onError: () => toast.error("Failed to create menu item"),
+    onError: (error) => {
+      console.error("Create item error:", error);
+      toast.error(error.message || "Failed to create menu item");
+    },
   });
 
   const updateItem = trpc.menu.items.update.useMutation({
@@ -84,7 +105,10 @@ export default function MenuManagement() {
       setShowItemDialog(false);
       refetchItems();
     },
-    onError: () => toast.error("Failed to update menu item"),
+    onError: (error) => {
+      console.error("Update item error:", error);
+      toast.error(error.message || "Failed to update menu item");
+    },
   });
 
   const deleteItem = trpc.menu.items.delete.useMutation({

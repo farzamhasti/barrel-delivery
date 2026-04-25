@@ -43,3 +43,21 @@ export const adminProcedure = t.procedure.use(
     });
   }),
 );
+
+// System admin procedure for dashboard operations using system session tokens
+export const systemAdminProcedure = t.procedure.use(
+  t.middleware(async opts => {
+    const { ctx, next } = opts;
+
+    if (!ctx.systemSession || ctx.systemSession.role !== 'admin') {
+      throw new TRPCError({ code: "UNAUTHORIZED", message: UNAUTHED_ERR_MSG });
+    }
+
+    return next({
+      ctx: {
+        ...ctx,
+        systemSession: ctx.systemSession,
+      },
+    });
+  }),
+);
