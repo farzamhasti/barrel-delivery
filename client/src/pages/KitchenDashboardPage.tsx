@@ -10,14 +10,20 @@ import { LogOut, ChefHat, MapPin, Clock, AlertCircle, CheckCircle2, Flame } from
 import { trpc } from "@/lib/trpc";
 import { invalidateOrderCache } from "@/lib/invalidation";
 import { toast } from "sonner";
+import { useDriverReturnTime } from "@/contexts/DriverReturnTimeContext";
 
 export default function KitchenDashboardPage() {
   const utils = trpc.useUtils();
   const { logout, isLoading: authLoading } = useSystemSession();
+  const { driverReturnTimes } = useDriverReturnTime();
   const [activeTab, setActiveTab] = useState("active");
 
   // Fetch today's orders with items
   const { data: allOrders = [], isLoading, refetch } = trpc.orders.getTodayOrdersWithItems.useQuery();
+
+  // Fetch active drivers
+  const { data: drivers = [] } = trpc.drivers.list.useQuery();
+  const activeDrivers = drivers.filter((d: any) => d.status === "online" && d.isActive);
 
   // Mutation to update order status to ready
   const updateStatusMutation = trpc.orders.updateStatus.useMutation({
@@ -214,10 +220,49 @@ export default function KitchenDashboardPage() {
             </p>
           </Card>
           <Card className="p-3 bg-white/80 backdrop-blur">
-            <p className="text-xs text-muted-foreground">Total Orders</p>
-            <p className="text-2xl font-bold text-foreground">{allOrders.length}</p>
+            <p className="text-xs text-muted-foreground">Active Drivers</p>
+            <p className="text-2xl font-bold text-purple-600">{activeDrivers.length}</p>
           </Card>
         </div>
+      </div>
+
+      {/* Active Drivers Section */}
+      <div className="max-w-7xl mx-auto mb-6">
+        <Card className="bg-white/80 backdrop-blur">
+          <div className="p-4 border-b border-border">
+            <h2 className="text-lg font-semibold text-gray-900">Active Drivers ({activeDrivers.length})</h2>
+          </div>
+          <div className="p-4">
+            {activeDrivers.length === 0 ? (
+              <p className="text-sm text-gray-500 text-center py-4">No active drivers</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/50">
+                      <th className="text-left py-2 px-3 font-semibold">Name</th>
+                      <th className="text-left py-2 px-3 font-semibold">Status</th>
+                      <th className="text-left py-2 px-3 font-semibold">Est. Return</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {activeDrivers.map((driver: any) => (
+                      <tr key={driver.id} className="border-b border-border hover:bg-muted/30">
+                        <td className="py-2 px-3">{driver.name}</td>
+                        <td className="py-2 px-3">
+                          <Badge className="bg-green-100 text-green-800 text-xs">Online</Badge>
+                        </td>
+                        <td className="py-2 px-3 text-muted-foreground font-mono">
+                          {driverReturnTimes[driver.id] || "00:00"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </Card>
       </div>
 
       {/* Tabs */}
