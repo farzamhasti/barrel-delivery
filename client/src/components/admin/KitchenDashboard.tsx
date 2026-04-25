@@ -375,8 +375,8 @@ export default function KitchenDashboard() {
                         )}
                       </div>
                       <div className="text-right">
-                        <p className="font-semibold text-foreground">${(item.price_at_order * item.quantity).toFixed(2)}</p>
-                        <p className="text-xs text-muted-foreground">${item.price_at_order.toFixed(2)} each</p>
+                        <p className="font-semibold text-foreground">${((item.price_at_order || 0) * (item.quantity || 0)).toFixed(2)}</p>
+                        <p className="text-xs text-muted-foreground">${(item.price_at_order || 0).toFixed(2)} each</p>
                       </div>
                     </div>
                   ))
@@ -391,12 +391,12 @@ export default function KitchenDashboard() {
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Subtotal:</span>
-                  <span className="font-medium">${(order.total || 0).toFixed(2)}</span>
+                  <span className="font-medium">${((order.total || 0) as number).toFixed(2)}</span>
                 </div>
                 {order.tax && (
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Tax:</span>
-                    <span className="font-medium">${order.tax.toFixed(2)}</span>
+                    <span className="font-medium">${(order.tax as number).toFixed(2)}</span>
                   </div>
                 )}
                 <div className="border-t border-gray-300 pt-2 flex justify-between">
