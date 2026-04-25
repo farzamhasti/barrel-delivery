@@ -2220,7 +2220,7 @@
 - [x] Implement route optimization algorithm (nearest neighbor)
 - [x] Create calculateReturnTime tRPC procedure
 - [x] Create useReturnTimeCalculator countdown hook
-- [ ] Add Calculate Return Time button to Driver Dashboard
-- [ ] Add return time display in Online Drivers table
-- [ ] Synchronize across Admin and Kitchen dashboards
+- [x] Add Calculate Return Time button to Driver Dashboard
+- [x] Add return time display in Online Drivers table
+- [x] Synchronize across Admin and Kitchen dashboards
 - [ ] Write unit tests for calculation algorithm

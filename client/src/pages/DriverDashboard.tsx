@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DeveloperCredit } from "@/components/DeveloperCredit";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useReturnTimeCalculator } from "@/hooks/useReturnTimeCalculator";
 
 const DRIVER_SESSION_KEY = "driver_session_token";
 
@@ -57,6 +58,26 @@ export default function DriverDashboard() {
 
   // Tab state
   const [activeTab, setActiveTab] = useState("on-the-way");
+
+  // Return Time state
+  const { returnTime, setCalculation, clearTimer } = useReturnTimeCalculator();
+  const calculateReturnTimeMutation = trpc.driver.calculateReturnTime.useMutation({
+    onSuccess: (data) => {
+      if (data.success && sessionToken) {
+        setCalculation({
+          totalSeconds: data.totalSeconds,
+          totalMinutes: data.totalMinutes,
+          displayTime: `${String(Math.floor(data.totalSeconds / 60)).padStart(2, '0')}:${String(data.totalSeconds % 60).padStart(2, '0')}`,
+          isActive: true,
+          ordersCount: data.ordersCount,
+          breakdown: data.breakdown,
+        });
+      }
+    },
+    onError: (error) => {
+      console.error("Failed to calculate return time:", error);
+    },
+  });
 
   // Mutation for marking order as delivered
   const markDeliveredMutation = trpc.driver.markOrderDelivered.useMutation({
@@ -308,6 +329,42 @@ export default function DriverDashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Return Time Card */}
+        <Card className="mb-8 border-purple-200 bg-purple-50">
+          <CardHeader>
+            <CardTitle className="text-lg">Estimated Return Time</CardTitle>
+            <CardDescription>Calculate when you'll return to the restaurant</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <Button
+                  onClick={() => sessionToken && calculateReturnTimeMutation.mutate({ sessionToken })}
+                  disabled={calculateReturnTimeMutation.isPending || onTheWayOrders.length === 0}
+                  className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                >
+                  {calculateReturnTimeMutation.isPending ? "Calculating..." : "Calculate Return Time"}
+                </Button>
+                {onTheWayOrders.length === 0 && (
+                  <p className="text-xs text-gray-500 mt-2 text-center">No active orders to calculate</p>
+                )}
+              </div>
+              {returnTime && (
+                <div className="flex flex-col items-center justify-center p-4 bg-white rounded-lg border border-purple-100">
+                  <p className="text-sm text-gray-600 mb-2">Time to Return</p>
+                  <p className="text-4xl font-bold text-purple-600 font-mono">{returnTime.displayTime}</p>
+                  <p className="text-xs text-gray-500 mt-2">({returnTime.ordersCount} orders)</p>
+                  <div className="mt-3 text-xs text-gray-600 space-y-1">
+                    <p>Pickup: {returnTime.breakdown.pickupMinutes}m</p>
+                    <p>Delivery: {returnTime.breakdown.deliveryMinutes}m</p>
+                    <p>Travel: {returnTime.breakdown.travelMinutes}m</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Performance Analytics Card */}
         <Card className="mb-8 border-blue-200 bg-blue-50">
