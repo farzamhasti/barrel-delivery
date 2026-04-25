@@ -343,18 +343,16 @@ export default function KitchenDashboard() {
             </div>
 
             {/* Area Section */}
-            {order.area && (
-              <div className="bg-orange-50 border-2 border-orange-300 rounded-lg p-5">
-                <h3 className="text-sm font-semibold text-orange-900 mb-3">Delivery Area</h3>
-                <div className="flex items-center gap-3">
-                  <MapPin className="w-8 h-8 text-orange-600" />
-                  <div>
-                    <p className="text-xs text-orange-700 font-medium">Area</p>
-                    <p className="text-3xl font-bold text-orange-900">{order.area}</p>
-                  </div>
+            <div className="bg-orange-50 border-2 border-orange-300 rounded-lg p-5">
+              <h3 className="text-sm font-semibold text-orange-900 mb-3">Delivery Area</h3>
+              <div className="flex items-center gap-3">
+                <MapPin className="w-8 h-8 text-orange-600" />
+                <div>
+                  <p className="text-xs text-orange-700 font-medium">Area</p>
+                  <p className="text-3xl font-bold text-orange-900">{order.area || "N/A"}</p>
                 </div>
               </div>
-            )}
+            </div>
 
             {/* Delivery Time Section */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
