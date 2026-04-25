@@ -2,67 +2,14 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc";
+import { useDriverReturnTime } from "@/contexts/DriverReturnTimeContext";
 
 export default function Dashboard() {
   const { data: activeDrivers = [] } = trpc.driver.getActiveDrivers.useQuery();
   const { data: todayOrders = [] } = trpc.orders.getTodayOrdersWithItems.useQuery();
-  const [driverReturnTimes, setDriverReturnTimes] = useState<Record<number, string>>({});
+  const { driverReturnTimes } = useDriverReturnTime();
 
   const activeDriverCount = activeDrivers.length;
-
-  // Listen for return time updates from driver dashboard
-  useEffect(() => {
-    const handleReturnTimeUpdate = (event: any) => {
-      const { driverId, returnTime } = event.detail;
-      setDriverReturnTimes((prev) => ({
-        ...prev,
-        [driverId]: returnTime,
-      }));
-    };
-
-    // Check localStorage for any existing return times on mount
-    activeDrivers.forEach((driver: any) => {
-      const stored = localStorage.getItem(`driver-return-time-${driver.id}`);
-      if (stored) {
-        try {
-          const data = JSON.parse(stored);
-          setDriverReturnTimes((prev) => ({
-            ...prev,
-            [driver.id]: data.returnTime,
-          }));
-        } catch (e) {
-          console.error("Failed to parse stored return time", e);
-        }
-      }
-    });
-
-    window.addEventListener('driver-return-time-updated', handleReturnTimeUpdate);
-    return () => window.removeEventListener('driver-return-time-updated', handleReturnTimeUpdate);
-  }, [activeDrivers]);
-
-  // Poll for return time updates every second (countdown)
-  useEffect(() => {
-    const interval = setInterval(() => {
-      // Update countdown for each driver
-      setDriverReturnTimes((prev) => {
-        const updated = { ...prev };
-        Object.keys(updated).forEach((driverId) => {
-          const time = updated[parseInt(driverId)];
-          if (time && time !== "00:00") {
-            const [minutes, seconds] = time.split(":").map(Number);
-            let totalSeconds = minutes * 60 + seconds - 1;
-            if (totalSeconds < 0) totalSeconds = 0;
-            const newMinutes = Math.floor(totalSeconds / 60);
-            const newSeconds = totalSeconds % 60;
-            updated[parseInt(driverId)] = `${String(newMinutes).padStart(2, "0")}:${String(newSeconds).padStart(2, "0")}`;
-          }
-        });
-        return updated;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, []);
 
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
