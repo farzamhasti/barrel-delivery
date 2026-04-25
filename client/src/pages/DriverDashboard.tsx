@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { DeveloperCredit } from "@/components/DeveloperCredit";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useReturnTimeCalculator } from "@/hooks/useReturnTimeCalculator";
+import { openDeliveryMap } from "@/_core/utils/googleMapsUrl";
 
 const DRIVER_SESSION_KEY = "driver_session_token";
 
@@ -353,7 +354,7 @@ export default function DriverDashboard() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
+              <div className="space-y-3">
                 <Button
                   onClick={() => sessionToken && calculateReturnTimeMutation.mutate({ sessionToken })}
                   disabled={calculateReturnTimeMutation.isPending || onTheWayOrders.length === 0}
@@ -361,8 +362,15 @@ export default function DriverDashboard() {
                 >
                   {calculateReturnTimeMutation.isPending ? "Calculating..." : "Calculate Return Time"}
                 </Button>
+                <Button
+                  onClick={() => openDeliveryMap(onTheWayOrders)}
+                  disabled={onTheWayOrders.length === 0}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  Delivery with Map
+                </Button>
                 {onTheWayOrders.length === 0 && (
-                  <p className="text-xs text-gray-500 mt-2 text-center">No active orders to calculate</p>
+                  <p className="text-xs text-gray-500 mt-2 text-center">No active orders</p>
                 )}
               </div>
               {returnTime && (
