@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -22,7 +22,6 @@ export default function KitchenDashboard() {
   useEffect(() => {
     const handleReturnTimeUpdate = (event: any) => {
       const { driverId, returnTime } = event.detail;
-      console.log("Kitchen received return time update:", { driverId, returnTime });
       setDriverReturnTimes((prev) => ({
         ...prev,
         [driverId]: returnTime,
@@ -39,7 +38,6 @@ export default function KitchenDashboard() {
             const data = JSON.parse(localStorage.getItem(key) || "{}");
             if (data.driverId && data.returnTime) {
               times[data.driverId] = data.returnTime;
-              console.log("Loaded return time from storage:", data);
             }
           } catch (e) {
             console.error("Failed to parse return time data:", e);
@@ -121,6 +119,319 @@ export default function KitchenDashboard() {
       const timeB = b.deliveryTime ? new Date(b.deliveryTime).getTime() : Infinity;
       return timeA - timeB;
     });
+  };
+
+  const sortedPendingOrders = sortByDeliveryTime(pendingOrders);
+  const sortedReadyOrders = sortByDeliveryTime(readyOrders);
+
+  // Auto-refetch every 3 seconds for real-time updates (but pause when modal is open)
+  useEffect(() => {
+    // Only refetch if no modal is open
+    if (!selectedOrder) {
+      const interval = setInterval(() => {
+        refetch();
+        // Also refetch drivers to get real-time status updates
+        utils.drivers.list.invalidate();
+      }, 3000);
+      return () => clearInterval(interval);
+    }
+  }, [selectedOrder, utils.drivers.list]);
+
+  // Calculate urgency level based on delivery time
+  const getUrgencyLevel = (deliveryTime: string | null) => {
+    if (!deliveryTime) return "normal";
+    
+    const now = new Date();
+    const delivery = new Date(deliveryTime);
+    const minutesUntilDelivery = (delivery.getTime() - now.getTime()) / (1000 * 60);
+
+    if (minutesUntilDelivery < 0) return "late"; // Past delivery time
+    if (minutesUntilDelivery < 15) return "urgent"; // Less than 15 minutes
+    if (minutesUntilDelivery < 30) return "soon"; // Less than 30 minutes
+    return "normal"; // 30+ minutes
+  };
+
+  const getUrgencyColor = (urgency: string) => {
+    switch (urgency) {
+      case "late":
+        return "border-red-500 bg-red-50 hover:bg-red-100";
+      case "urgent":
+        return "border-orange-500 bg-orange-50 hover:bg-orange-100";
+      case "soon":
+        return "border-yellow-500 bg-yellow-50 hover:bg-yellow-100";
+      default:
+        return "border-green-500 bg-green-50 hover:bg-green-100";
+    }
+  };
+
+  const getUrgencyBadgeColor = (urgency: string) => {
+    switch (urgency) {
+      case "late":
+        return "bg-red-500 text-white";
+      case "urgent":
+        return "bg-orange-500 text-white";
+      case "soon":
+        return "bg-yellow-500 text-white";
+      default:
+        return "bg-green-500 text-white";
+    }
+  };
+
+  const CompactOrderCard = ({ order }: { order: any }) => {
+    const urgency = getUrgencyLevel(order.deliveryTime);
+    const itemsPreview = order.items?.slice(0, 2).map((item: any) => item.menuItemName).join(", ") || "No items";
+    const hasMoreItems = (order.items?.length || 0) > 2;
+    const deliveryTime = order.deliveryTime ? new Date(order.deliveryTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "N/A";
+
+    return (
+      <Card
+        className={`p-3 cursor-pointer transition-all border-2 flex flex-col ${getUrgencyColor(urgency)}`}
+        onClick={() => setSelectedOrder(order)}
+      >
+        {/* Order Header with Number and Urgency Badge */}
+        <div className="flex items-start justify-between gap-2 mb-2">
+          <h3 className="text-lg font-bold text-foreground">#{order.id}</h3>
+          {urgency !== "normal" && (
+            <Badge className={`${getUrgencyBadgeColor(urgency)} text-xs px-2 py-0.5 flex items-center gap-1`}>
+              {urgency === "late" && <AlertCircle className="w-3 h-3" />}
+              {urgency === "urgent" && <Flame className="w-3 h-3" />}
+              {urgency === "soon" && <Clock className="w-3 h-3" />}
+              {urgency === "late" ? "LATE" : urgency === "urgent" ? "URGENT" : "SOON"}
+            </Badge>
+          )}
+        </div>
+
+        {/* Items Preview */}
+        <div className="mb-2">
+          <p className="text-xs text-muted-foreground line-clamp-1">{itemsPreview}{hasMoreItems ? "..." : ""}</p>
+        </div>
+
+        {/* Area Display */}
+        {order.area && (
+          <div className="mb-3 flex items-center gap-2 px-3 py-2 bg-orange-100 border-l-4 border-orange-500 rounded">
+            <MapPin className="w-5 h-5 text-orange-600 flex-shrink-0" />
+            <div>
+              <p className="text-xs text-orange-700 font-medium">Area</p>
+              <p className="text-lg font-bold text-orange-900">{order.area}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Delivery Time and Price */}
+        <div className="flex items-center justify-between gap-2 mb-2 text-xs">
+          <div className="flex items-center gap-1 text-muted-foreground">
+            <Clock className="w-3 h-3" />
+            <span className="font-semibold">{deliveryTime}</span>
+          </div>
+          {order.total && (
+            <div className="text-lg font-bold text-green-600 bg-green-50 px-2 py-1 rounded">
+              ${order.total.toFixed(2)}
+            </div>
+          )}
+        </div>
+
+        {/* Notes (if exists) */}
+        {order.notes && (
+          <div className="mb-3 p-2 bg-white/50 rounded text-xs text-muted-foreground line-clamp-2">
+            📝 {order.notes}
+          </div>
+        )}
+
+        {/* Mark Ready Button */}
+        <Button
+          size="sm"
+          className="w-full mt-auto bg-green-600 hover:bg-green-700 text-white"
+          onClick={(e) => {
+            e.stopPropagation();
+            updateStatusMutation.mutate({
+              orderId: order.id,
+              status: "Ready",
+            });
+          }}
+          disabled={updateStatusMutation.isPending}
+        >
+          {updateStatusMutation.isPending ? "Updating..." : "Mark Ready"}
+        </Button>
+      </Card>
+    );
+  };
+
+  const EmptyState = ({ message }: { message: string }) => (
+    <div className="flex flex-col items-center justify-center py-12 text-center">
+      <CheckCircle2 className="w-12 h-12 text-green-500 mb-4" />
+      <p className="text-lg font-semibold text-foreground">{message}</p>
+      <p className="text-sm text-muted-foreground mt-2">Great job! Keep up the good work.</p>
+    </div>
+  );
+
+  // Memoize the modal handler to prevent re-creation on every render
+  const handleModalOpenChange = useCallback((open: boolean) => {
+    if (!open) {
+      setSelectedOrder(null);
+    }
+  }, []);
+
+  const OrderDetailModal = ({ order }: { order: any }) => {
+    if (!order) return null;
+    
+    const urgency = getUrgencyLevel(order.deliveryTime);
+    const deliveryTime = order.deliveryTime ? new Date(order.deliveryTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "N/A";
+    const deliveryDate = order.deliveryTime ? new Date(order.deliveryTime).toLocaleDateString() : "N/A";
+
+    return (
+      <Dialog open={!!order} onOpenChange={handleModalOpenChange}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" showCloseButton={false}>
+          <DialogHeader>
+            <div className="flex items-center justify-between w-full">
+              <div className="flex items-center gap-3">
+                <DialogTitle className="text-2xl">Order #{order.id}</DialogTitle>
+                {urgency !== "normal" && (
+                  <Badge className={`${getUrgencyBadgeColor(urgency)} text-xs px-2 py-0.5 flex items-center gap-1`}>
+                    {urgency === "late" && <AlertCircle className="w-3 h-3" />}
+                    {urgency === "urgent" && <Flame className="w-3 h-3" />}
+                    {urgency === "soon" && <Clock className="w-3 h-3" />}
+                    {urgency === "late" ? "LATE" : urgency === "urgent" ? "URGENT" : "SOON"}
+                  </Badge>
+                )}
+              </div>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
+                onClick={() => setSelectedOrder(null)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </DialogHeader>
+
+          <div className="space-y-6">
+            {/* Customer Information Section */}
+            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+              <h3 className="text-sm font-semibold text-purple-900 mb-3">Customer Information</h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-start gap-2">
+                  <span className="text-purple-700 font-medium min-w-20">Name:</span>
+                  <span className="text-purple-900">{order.customerName || "N/A"}</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-purple-700 font-medium min-w-20">Phone:</span>
+                  <span className="text-purple-900">{order.customerPhone || "N/A"}</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-purple-700 font-medium min-w-20">Address:</span>
+                  <span className="text-purple-900 break-words">{order.customerAddress || "N/A"}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Area Section */}
+            {order.area && (
+              <div className="bg-orange-50 border-2 border-orange-300 rounded-lg p-5">
+                <h3 className="text-sm font-semibold text-orange-900 mb-3">Delivery Area</h3>
+                <div className="flex items-center gap-3">
+                  <MapPin className="w-8 h-8 text-orange-600" />
+                  <div>
+                    <p className="text-xs text-orange-700 font-medium">Area</p>
+                    <p className="text-3xl font-bold text-orange-900">{order.area}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Delivery Time Section */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h3 className="text-sm font-semibold text-blue-900 mb-3">Delivery Time</h3>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <Clock className="w-5 h-5 text-blue-600" />
+                  <div>
+                    <p className="text-xs text-blue-700">Time</p>
+                    <p className="text-lg font-bold text-blue-900">{deliveryTime}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-5 h-5 text-blue-600" />
+                  <div>
+                    <p className="text-xs text-blue-700">Date</p>
+                    <p className="text-lg font-bold text-blue-900">{deliveryDate}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Order Items Section */}
+            <div>
+              <h3 className="text-sm font-semibold text-foreground mb-3">Order Items</h3>
+              <div className="space-y-2">
+                {order.items && order.items.length > 0 ? (
+                  order.items.map((item: any, idx: number) => (
+                    <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                      <div className="flex-1">
+                        <p className="font-medium text-foreground">{item.menuItemName}</p>
+                        <p className="text-xs text-muted-foreground">Qty: {item.quantity}</p>
+                        {item.specialInstructions && (
+                          <p className="text-xs text-orange-600 mt-1">Note: {item.specialInstructions}</p>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold text-foreground">${(item.price_at_order * item.quantity).toFixed(2)}</p>
+                        <p className="text-xs text-muted-foreground">${item.price_at_order.toFixed(2)} each</p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-4">No items</p>
+                )}
+              </div>
+            </div>
+
+            {/* Order Summary */}
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Subtotal:</span>
+                  <span className="font-medium">${(order.total || 0).toFixed(2)}</span>
+                </div>
+                {order.tax && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Tax:</span>
+                    <span className="font-medium">${order.tax.toFixed(2)}</span>
+                  </div>
+                )}
+                <div className="border-t border-gray-300 pt-2 flex justify-between">
+                  <span className="font-semibold">Total:</span>
+                  <span className="font-bold text-lg">${(order.total || 0).toFixed(2)}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Notes Section */}
+            {order.notes && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <h3 className="text-sm font-semibold text-yellow-900 mb-2">Special Notes</h3>
+                <p className="text-sm text-yellow-800">{order.notes}</p>
+              </div>
+            )}
+
+            {/* Mark Ready Button */}
+            <Button
+              size="lg"
+              className="w-full bg-green-600 hover:bg-green-700 text-white"
+              onClick={() => {
+                updateStatusMutation.mutate({
+                  orderId: order.id,
+                  status: "Ready",
+                });
+              }}
+              disabled={updateStatusMutation.isPending}
+            >
+              {updateStatusMutation.isPending ? "Updating..." : "Mark Order as Ready"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
   };
 
   return (
@@ -231,48 +542,14 @@ export default function KitchenDashboard() {
 
           <TabsContent value="active" className="mt-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {sortByDeliveryTime(pendingOrders).length === 0 ? (
+              {sortedPendingOrders.length === 0 ? (
                 <div className="col-span-full text-center py-8 text-gray-500">
                   <AlertCircle className="w-8 h-8 mx-auto mb-2 opacity-50" />
                   <p>No pending orders</p>
                 </div>
               ) : (
-                sortByDeliveryTime(pendingOrders).map((order: any) => (
-                  <Card
-                    key={order.id}
-                    className="bg-gradient-to-br from-orange-50 to-red-50 border-l-4 border-l-orange-500 cursor-pointer hover:shadow-md transition-shadow"
-                    onClick={() => {
-                      setSelectedOrder(order);
-                    }}
-                  >
-                    <div className="p-4">
-                      <div className="flex justify-between items-start mb-2">
-                        <h3 className="font-semibold text-gray-900">#{order.id}</h3>
-                        <Badge className="bg-orange-100 text-orange-800 text-xs">Pending</Badge>
-                      </div>
-                      <p className="text-sm text-gray-600 mb-3">{order.customerName}</p>
-                      <div className="space-y-2 mb-3">
-                        {order.items?.map((item: any, idx: number) => (
-                          <div key={idx} className="text-xs text-gray-700">
-                            <span className="font-medium">{item.quantity}x</span> {item.name}
-                            {item.specialInstructions && (
-                              <p className="text-gray-500 italic text-xs mt-1">Note: {item.specialInstructions}</p>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                      <Button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          updateStatusMutation.mutate({ orderId: order.id, status: "Ready" });
-                        }}
-                        disabled={updateStatusMutation.isPending}
-                        className="w-full bg-green-600 hover:bg-green-700 text-white text-xs"
-                      >
-                        {updateStatusMutation.isPending ? "Updating..." : "Mark as Ready"}
-                      </Button>
-                    </div>
-                  </Card>
+                sortedPendingOrders.map((order: any) => (
+                  <CompactOrderCard key={order.id} order={order} />
                 ))
               )}
             </div>
@@ -280,76 +557,20 @@ export default function KitchenDashboard() {
 
           <TabsContent value="prepared" className="mt-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {sortByDeliveryTime(readyOrders).length === 0 ? (
-                <div className="col-span-full text-center py-8 text-gray-500">
-                  <CheckCircle2 className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                  <p>No prepared orders</p>
-                </div>
+              {sortedReadyOrders.length === 0 ? (
+                <EmptyState message="No prepared orders yet" />
               ) : (
-                sortByDeliveryTime(readyOrders).map((order: any) => (
-                  <Card
-                    key={order.id}
-                    className="bg-gradient-to-br from-green-50 to-emerald-50 border-l-4 border-l-green-500 cursor-pointer hover:shadow-md transition-shadow"
-                    onClick={() => {
-                      setSelectedOrder(order);
-                    }}
-                  >
-                    <div className="p-4">
-                      <div className="flex justify-between items-start mb-2">
-                        <h3 className="font-semibold text-gray-900">#{order.id}</h3>
-                        <Badge className="bg-green-100 text-green-800 text-xs">Ready</Badge>
-                      </div>
-                      <p className="text-sm text-gray-600 mb-3">{order.customerName}</p>
-                      <div className="space-y-2 mb-3">
-                        {order.items?.map((item: any, idx: number) => (
-                          <div key={idx} className="text-xs text-gray-700">
-                            <span className="font-medium">{item.quantity}x</span> {item.name}
-                          </div>
-                        ))}
-                      </div>
-                      <p className="text-xs text-gray-500">Ready for pickup</p>
-                    </div>
-                  </Card>
+                sortedReadyOrders.map((order: any) => (
+                  <CompactOrderCard key={order.id} order={order} />
                 ))
               )}
             </div>
           </TabsContent>
         </Tabs>
-      </div>
 
-      {/* Order Details Modal */}
-      {selectedOrder && (
-        <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Order #{selectedOrder.id}</DialogTitle>
-              <DialogClose />
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <p className="text-sm font-semibold text-gray-600">Customer</p>
-                <p className="text-gray-900">{selectedOrder.customerName}</p>
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-gray-600">Items</p>
-                <div className="space-y-1">
-                  {selectedOrder.items?.map((item: any, idx: number) => (
-                    <p key={idx} className="text-sm text-gray-700">
-                      {item.quantity}x {item.name}
-                    </p>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-gray-600">Status</p>
-                <Badge className={selectedOrder.status === "Pending" ? "bg-orange-100 text-orange-800" : "bg-green-100 text-green-800"}>
-                  {selectedOrder.status}
-                </Badge>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
+        {/* Order Detail Modal */}
+        <OrderDetailModal order={selectedOrder} />
+      </div>
 
       <DeveloperCredit />
     </div>
