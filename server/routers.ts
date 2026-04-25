@@ -1,7 +1,7 @@
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, protectedProcedure, router, systemAdminProcedure } from "./_core/trpc";
+import { publicProcedure, protectedProcedure, router, systemAdminProcedure, adminOrSystemAdminProcedure } from "./_core/trpc";
 import { z } from "zod";
 import * as db from "./db";
 import { geocodeAddress, reverseGeocodeCoordinates, calculateDistance, isValidCoordinates } from "./geocoding";
@@ -334,7 +334,7 @@ export const appRouter = router({
         
         return order;
       }),
-    updateStatus: systemAdminProcedure
+    updateStatus: adminOrSystemAdminProcedure
       .input(z.object({
         orderId: z.number(),
         status: z.enum(["Pending", "Ready", "On the Way", "Delivered", "Returning to Restaurant", "At Restaurant"]),
@@ -342,7 +342,7 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         return db.updateOrderStatus(input.orderId, input.status);
       }),
-    assignDriver: systemAdminProcedure
+    assignDriver: adminOrSystemAdminProcedure
       .input(z.object({
         orderId: z.number(),
         driverId: z.number(),

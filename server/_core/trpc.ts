@@ -61,3 +61,25 @@ export const systemAdminProcedure = t.procedure.use(
     });
   }),
 );
+
+// Hybrid admin procedure that accepts either OAuth admin or system session admin
+export const adminOrSystemAdminProcedure = t.procedure.use(
+  t.middleware(async opts => {
+    const { ctx, next } = opts;
+
+    const isOAuthAdmin = ctx.user && ctx.user.role === 'admin';
+    const isSystemAdmin = ctx.systemSession && ctx.systemSession.role === 'admin';
+
+    if (!isOAuthAdmin && !isSystemAdmin) {
+      throw new TRPCError({ code: "UNAUTHORIZED", message: UNAUTHED_ERR_MSG });
+    }
+
+    return next({
+      ctx: {
+        ...ctx,
+        user: ctx.user,
+        systemSession: ctx.systemSession,
+      },
+    });
+  }),
+);
