@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -106,6 +106,16 @@ export default function KitchenDashboard() {
     },
   });
 
+  // Keep selectedOrder in sync with updated allOrders
+  useEffect(() => {
+    if (selectedOrder && allOrders.length > 0) {
+      const updatedOrder = allOrders.find((o: any) => o.id === selectedOrder.id);
+      if (updatedOrder && updatedOrder !== selectedOrder) {
+        setSelectedOrder(updatedOrder);
+      }
+    }
+  }, [allOrders, selectedOrder]);
+
   // Filter to pending orders only (for active view)
   const pendingOrders = allOrders.filter((o: any) => o.status === "Pending");
 
@@ -149,7 +159,7 @@ export default function KitchenDashboard() {
         intervalRef.current = null;
       }
     };
-  }, [selectedOrder]);
+  }, [selectedOrder, refetch, utils]);
 
   // Calculate urgency level based on delivery time
   const getUrgencyLevel = (deliveryTime: string | null) => {
@@ -285,7 +295,8 @@ export default function KitchenDashboard() {
     }
   }, []);
 
-  const memoizedOrder = selectedOrder;
+  // Use useMemo to stabilize the order object
+  const memoizedOrder = useMemo(() => selectedOrder, [selectedOrder?.id]);
   
   const OrderDetailModal = useCallback(function OrderDetailModal({ order }: { order: any }) {
     if (!order) return null;
