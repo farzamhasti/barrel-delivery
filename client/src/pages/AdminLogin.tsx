@@ -34,6 +34,7 @@ export default function AdminLogin() {
         (window as any).__systemRole = data.role;
         (window as any).__systemUsername = data.username;
         toast.success("Login successful!");
+        setIsLoading(false);
         setLocation("/admin/dashboard");
       }
     },
