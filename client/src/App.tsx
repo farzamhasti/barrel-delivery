@@ -39,28 +39,21 @@ function ProtectedRoute({ component: Component, requiredRole }: { component: any
 }
 
 function SystemProtectedRoute({ component: Component, requiredRole }: { component: any; requiredRole: "admin" | "kitchen" }) {
-  const { data: session, isLoading } = trpc.system.checkSession.useQuery(undefined, {
-    refetchOnMount: true,
-    refetchOnWindowFocus: true,
-    staleTime: 0,
-  });
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="w-8 h-8 animate-spin text-accent" />
-      </div>
-    );
-  }
-
-  if (!session) {
+  // Check if user has a valid system session token stored locally
+  const sessionToken = localStorage.getItem('systemSessionToken');
+  const storedRole = localStorage.getItem('systemRole');
+  
+  // If no session token, show login page
+  if (!sessionToken || !storedRole) {
     return requiredRole === "admin" ? <AdminLogin /> : <KitchenLogin />;
   }
-
-  if (session.role !== requiredRole) {
+  
+  // If role doesn't match, show not found
+  if (storedRole !== requiredRole) {
     return <NotFound />;
   }
-
+  
+  // User has valid session, render the component
   return <Component />;
 }
 
