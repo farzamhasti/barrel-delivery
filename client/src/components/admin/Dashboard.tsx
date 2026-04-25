@@ -118,7 +118,7 @@ export default function Dashboard() {
                           <Badge className="bg-green-100 text-green-800 text-xs">Online</Badge>
                         </td>
                         <td className="py-2 px-3 text-muted-foreground font-mono">
-                          {driverReturnTimes[driver.id] || "--:--"}
+                          {driverReturnTimes[driver.id] || "00:00"}
                         </td>
                       </tr>
                     ))}

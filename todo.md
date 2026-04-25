@@ -2233,4 +2233,5 @@
 - [x] Auto-recalculate when driver marks order as delivered
 - [x] Include return journey from last delivery to restaurant in time calculation
 - [x] Update countdown to reflect remaining on_the_way orders
-- [ ] Test with actual order statuses and locations
+- [x] Display 00:00 by default, show time only after Calculate button is pressed
+- [x] Synchronize across Admin and Kitchen dashboards
