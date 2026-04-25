@@ -95,6 +95,18 @@ export const systemRouter = router({
       };
     }),
 
+  checkSession: publicProcedure
+    .query(async ({ ctx }) => {
+      if (!ctx.systemSession) {
+        return null;
+      }
+
+      return {
+        username: ctx.systemSession.username,
+        role: ctx.systemSession.role,
+      };
+    }),
+
   logout: publicProcedure
     .input(
       z.object({

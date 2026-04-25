@@ -14,6 +14,7 @@ import KitchenLogin from "./pages/KitchenLogin";
 import NotFound from "./pages/NotFound";
 import { useAuth } from "./_core/hooks/useAuth";
 import { Loader2 } from "lucide-react";
+import { trpc } from "./lib/trpc";
 
 function ProtectedRoute({ component: Component, requiredRole }: { component: any; requiredRole?: string }) {
   const { user, loading } = useAuth();
@@ -38,15 +39,21 @@ function ProtectedRoute({ component: Component, requiredRole }: { component: any
 }
 
 function SystemProtectedRoute({ component: Component, requiredRole }: { component: any; requiredRole: "admin" | "kitchen" }) {
-  // Check system session from localStorage
-  const systemSessionToken = localStorage.getItem("systemSessionToken");
-  const systemRole = localStorage.getItem("systemRole");
+  const { data: session, isLoading } = trpc.system.checkSession.useQuery();
 
-  if (!systemSessionToken || !systemRole) {
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="w-8 h-8 animate-spin text-accent" />
+      </div>
+    );
+  }
+
+  if (!session) {
     return requiredRole === "admin" ? <AdminLogin /> : <KitchenLogin />;
   }
 
-  if (systemRole !== requiredRole) {
+  if (session.role !== requiredRole) {
     return <NotFound />;
   }
 
