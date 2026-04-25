@@ -10,7 +10,37 @@ export default function Dashboard() {
 
   const activeDriverCount = activeDrivers.length;
 
-  // Poll for return time updates every 5 seconds
+  // Listen for return time updates from driver dashboard
+  useEffect(() => {
+    const handleReturnTimeUpdate = (event: any) => {
+      const { driverId, returnTime } = event.detail;
+      setDriverReturnTimes((prev) => ({
+        ...prev,
+        [driverId]: returnTime,
+      }));
+    };
+
+    // Check localStorage for any existing return times on mount
+    activeDrivers.forEach((driver: any) => {
+      const stored = localStorage.getItem(`driver-return-time-${driver.id}`);
+      if (stored) {
+        try {
+          const data = JSON.parse(stored);
+          setDriverReturnTimes((prev) => ({
+            ...prev,
+            [driver.id]: data.returnTime,
+          }));
+        } catch (e) {
+          console.error("Failed to parse stored return time", e);
+        }
+      }
+    });
+
+    window.addEventListener('driver-return-time-updated', handleReturnTimeUpdate);
+    return () => window.removeEventListener('driver-return-time-updated', handleReturnTimeUpdate);
+  }, [activeDrivers]);
+
+  // Poll for return time updates every second (countdown)
   useEffect(() => {
     const interval = setInterval(() => {
       // Update countdown for each driver
@@ -18,7 +48,7 @@ export default function Dashboard() {
         const updated = { ...prev };
         Object.keys(updated).forEach((driverId) => {
           const time = updated[parseInt(driverId)];
-          if (time && time !== "--:--") {
+          if (time && time !== "00:00") {
             const [minutes, seconds] = time.split(":").map(Number);
             let totalSeconds = minutes * 60 + seconds - 1;
             if (totalSeconds < 0) totalSeconds = 0;

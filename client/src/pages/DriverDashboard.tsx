@@ -64,14 +64,25 @@ export default function DriverDashboard() {
   const calculateReturnTimeMutation = trpc.driver.calculateReturnTime.useMutation({
     onSuccess: (data) => {
       if (data.success && sessionToken) {
+        const displayTime = `${String(Math.floor(data.totalSeconds / 60)).padStart(2, '0')}:${String(data.totalSeconds % 60).padStart(2, '0')}`;
         setCalculation({
           totalSeconds: data.totalSeconds,
           totalMinutes: data.totalMinutes,
-          displayTime: `${String(Math.floor(data.totalSeconds / 60)).padStart(2, '0')}:${String(data.totalSeconds % 60).padStart(2, '0')}`,
+          displayTime,
           isActive: true,
           ordersCount: data.ordersCount,
           breakdown: data.breakdown,
         });
+        // Broadcast return time to all dashboards via localStorage and custom event
+        const broadcastData = {
+          driverId: currentDriver?.id,
+          driverName: currentDriver?.name,
+          returnTime: displayTime,
+          totalSeconds: data.totalSeconds,
+          timestamp: Date.now(),
+        };
+        localStorage.setItem(`driver-return-time-${currentDriver?.id}`, JSON.stringify(broadcastData));
+        window.dispatchEvent(new CustomEvent('driver-return-time-updated', { detail: broadcastData }));
       }
     },
     onError: (error) => {

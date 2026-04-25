@@ -2235,3 +2235,10 @@
 - [x] Update countdown to reflect remaining on_the_way orders
 - [x] Display 00:00 by default, show time only after Calculate button is pressed
 - [x] Synchronize across Admin, Kitchen, and Order Tracking dashboards
+
+
+## Return Time Synchronization Issue - FIXED
+- [x] Broadcast return time via localStorage and custom events
+- [x] Sync return time when driver clicks Calculate button
+- [x] Admin/Kitchen/OrderTracking dashboards listen for return time updates
+- [x] Real-time countdown updates across all dashboards

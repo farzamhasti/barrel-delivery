@@ -18,14 +18,28 @@ export default function KitchenDashboard() {
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [driverReturnTimes, setDriverReturnTimes] = useState<Record<number, string>>({});
 
-  // Poll for return time updates every second
+  // Listen for return time updates from driver dashboard
+  useEffect(() => {
+    const handleReturnTimeUpdate = (event: any) => {
+      const { driverId, returnTime } = event.detail;
+      setDriverReturnTimes((prev) => ({
+        ...prev,
+        [driverId]: returnTime,
+      }));
+    };
+
+    window.addEventListener('driver-return-time-updated', handleReturnTimeUpdate);
+    return () => window.removeEventListener('driver-return-time-updated', handleReturnTimeUpdate);
+  }, []);
+
+  // Poll for return time updates every second (countdown)
   useEffect(() => {
     const interval = setInterval(() => {
       setDriverReturnTimes((prev) => {
         const updated = { ...prev };
         Object.keys(updated).forEach((driverId) => {
           const time = updated[parseInt(driverId)];
-          if (time && time !== "--:--") {
+          if (time && time !== "00:00") {
             const [minutes, seconds] = time.split(":").map(Number);
             let totalSeconds = minutes * 60 + seconds - 1;
             if (totalSeconds < 0) totalSeconds = 0;

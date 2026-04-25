@@ -23,7 +23,21 @@ export default function OrderTrackingWithMap() {
   const mapRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.Marker[]>([]);
 
-  // Poll for return time updates every second
+  // Listen for return time updates from driver dashboard
+  useEffect(() => {
+    const handleReturnTimeUpdate = (event: any) => {
+      const { driverId, returnTime } = event.detail;
+      setDriverReturnTimes((prev) => ({
+        ...prev,
+        [driverId]: returnTime,
+      }));
+    };
+
+    window.addEventListener('driver-return-time-updated', handleReturnTimeUpdate);
+    return () => window.removeEventListener('driver-return-time-updated', handleReturnTimeUpdate);
+  }, []);
+
+  // Poll for return time updates every second (countdown)
   useEffect(() => {
     const interval = setInterval(() => {
       setDriverReturnTimes((prev) => {
