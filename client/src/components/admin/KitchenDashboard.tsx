@@ -34,7 +34,7 @@ export default function KitchenDashboard() {
 
   // Fetch active drivers
   const { data: drivers = [] } = trpc.drivers.list.useQuery();
-  const activeDrivers = drivers.filter((d: any) => d.isActive);
+  const activeDrivers = drivers.filter((d: any) => d.status === "online" && d.isActive);
 
   // Mutation to update order status to ready
   const updateStatusMutation = trpc.orders.updateStatus.useMutation({

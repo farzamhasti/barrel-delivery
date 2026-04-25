@@ -31,7 +31,7 @@ export default function OrderTrackingWithMap() {
   
   // Fetch drivers for Active Drivers section
   const { data: drivers = [], isLoading: driversLoading } = trpc.drivers.list.useQuery(undefined, { enabled: !!user });
-  const activeDrivers = drivers.filter((d: any) => d.isActive);
+  const activeDrivers = drivers.filter((d: any) => d.status === "online" && d.isActive);
 
   // Fetch selected order with items
   const { data: selectedOrderData } = trpc.orders.getById.useQuery(
