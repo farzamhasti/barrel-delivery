@@ -1,5 +1,5 @@
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, menuCategories, InsertMenuCategory, menuItems, InsertMenuItem, drivers, InsertDriver, customers, InsertCustomer, orders, InsertOrder, orderItems, InsertOrderItem, systemCredentials, systemSessions, orderStatusHistory, InsertOrderStatusHistory } from "../drizzle/schema";
+import { InsertUser, users, menuCategories, InsertMenuCategory, menuItems, InsertMenuItem, drivers, InsertDriver, customers, InsertCustomer, orders, InsertOrder, orderItems, InsertOrderItem, systemCredentials, systemSessions, orderStatusHistory, InsertOrderStatusHistory, returnTimeHistory } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { eq, and, desc, gte, lt, inArray, gt, isNull, lte } from "drizzle-orm";
 import { createHash, timingSafeEqual } from 'crypto';
@@ -1400,4 +1400,99 @@ export async function getDetailedOrderTimelinesForPeriod(
     orders: ordersList,
     count: ordersList.length,
   }));
+}
+
+
+// Return Time Management Functions
+export async function saveReturnTime(driverId: number, totalSeconds: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const startTimestamp = new Date();
+  
+  // Update driver with return time
+  await db.update(drivers).set({
+    returnTimeTotalSeconds: totalSeconds,
+    returnTimeStartTimestamp: startTimestamp,
+  }).where(eq(drivers.id, driverId));
+
+  // Record in history
+  await db.insert(returnTimeHistory).values({
+    driverId,
+    totalSeconds,
+    startTimestamp,
+    action: 'saved',
+  });
+
+  return {
+    driverId,
+    totalSeconds,
+    startTimestamp,
+    remainingSeconds: totalSeconds,
+    isExpired: false,
+  };
+}
+
+export async function getReturnTime(driverId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.select().from(drivers).where(eq(drivers.id, driverId));
+  const driver = result[0];
+
+  if (!driver || !driver.returnTimeTotalSeconds || !driver.returnTimeStartTimestamp) {
+    return null;
+  }
+
+  const now = Date.now();
+  const startTime = new Date(driver.returnTimeStartTimestamp).getTime();
+  const elapsedSeconds = Math.floor((now - startTime) / 1000);
+  const remainingSeconds = Math.max(0, driver.returnTimeTotalSeconds - elapsedSeconds);
+
+  return {
+    driverId,
+    totalSeconds: driver.returnTimeTotalSeconds,
+    startTimestamp: driver.returnTimeStartTimestamp,
+    remainingSeconds,
+    isExpired: remainingSeconds <= 0,
+  };
+}
+
+export async function clearReturnTime(driverId: number, reason?: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Get current return time before clearing
+  const current = await getReturnTime(driverId);
+
+  // Update driver to clear return time
+  await db.update(drivers).set({
+    returnTimeTotalSeconds: null,
+    returnTimeStartTimestamp: null,
+  }).where(eq(drivers.id, driverId));
+
+  // Record in history
+  if (current) {
+    await db.insert(returnTimeHistory).values({
+      driverId,
+      totalSeconds: current.totalSeconds,
+      startTimestamp: current.startTimestamp,
+      endTimestamp: new Date(),
+      action: 'cleared',
+      reason: reason || 'manual_clear',
+    });
+  }
+}
+
+export async function getReturnTimeHistory(driverId: number, limit: number = 10) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const results = await db.select()
+    .from(returnTimeHistory)
+    .where(eq(returnTimeHistory.driverId, driverId))
+    .orderBy(desc(returnTimeHistory.createdAt))
+    .limit(limit);
+
+  return results;
 }

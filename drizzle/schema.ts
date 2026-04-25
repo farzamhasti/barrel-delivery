@@ -77,12 +77,29 @@ export const drivers = mysqlTable("drivers", {
   currentLatitude: decimal("current_latitude", { precision: 10, scale: 8 }),
   currentLongitude: decimal("current_longitude", { precision: 11, scale: 8 }),
   lastLocationUpdate: timestamp("last_location_update"),
+  returnTimeTotalSeconds: int("return_time_total_seconds"),
+  returnTimeStartTimestamp: timestamp("return_time_start_timestamp"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 
 export type Driver = typeof drivers.$inferSelect;
 export type InsertDriver = typeof drivers.$inferInsert;
+
+// Return Time History for tracking return time changes
+export const returnTimeHistory = mysqlTable("return_time_history", {
+  id: int("id").autoincrement().primaryKey(),
+  driverId: int("driver_id").notNull(),
+  totalSeconds: int("total_seconds").notNull(),
+  startTimestamp: timestamp("start_timestamp").notNull(),
+  endTimestamp: timestamp("end_timestamp"),
+  action: mysqlEnum("action", ["saved", "cleared"]).default("saved").notNull(),
+  reason: varchar("reason", { length: 255 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type ReturnTimeHistory = typeof returnTimeHistory.$inferSelect;
+export type InsertReturnTimeHistory = typeof returnTimeHistory.$inferInsert;
 
 // Driver Sessions for authentication
 export const driverSessions = mysqlTable("driver_sessions", {

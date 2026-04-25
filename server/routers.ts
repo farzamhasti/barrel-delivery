@@ -166,6 +166,35 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         return db.deleteDriver(input.id);
       }),
+    saveReturnTime: protectedProcedure
+      .input(z.object({
+        driverId: z.number(),
+        totalSeconds: z.number(),
+      }))
+      .mutation(async ({ input }) => {
+        return db.saveReturnTime(input.driverId, input.totalSeconds);
+      }),
+    getReturnTime: publicProcedure
+      .input(z.object({ driverId: z.number() }))
+      .query(async ({ input }) => {
+        return db.getReturnTime(input.driverId);
+      }),
+    clearReturnTime: protectedProcedure
+      .input(z.object({
+        driverId: z.number(),
+        reason: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        return db.clearReturnTime(input.driverId, input.reason);
+      }),
+    getReturnTimeHistory: protectedProcedure
+      .input(z.object({
+        driverId: z.number(),
+        limit: z.number().optional(),
+      }))
+      .query(async ({ input }) => {
+        return db.getReturnTimeHistory(input.driverId, input.limit || 10);
+      }),
   }),
 
   // Customers
