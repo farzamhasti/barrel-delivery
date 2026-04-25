@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -125,17 +125,31 @@ export default function KitchenDashboard() {
   const sortedReadyOrders = sortByDeliveryTime(readyOrders);
 
   // Auto-refetch every 3 seconds for real-time updates (but pause when modal is open)
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  
   useEffect(() => {
+    // Clear any existing interval
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    
     // Only refetch if no modal is open
     if (!selectedOrder) {
-      const interval = setInterval(() => {
+      intervalRef.current = setInterval(() => {
         refetch();
         // Also refetch drivers to get real-time status updates
         utils.drivers.list.invalidate();
       }, 3000);
-      return () => clearInterval(interval);
     }
-  }, [selectedOrder, refetch, utils]);
+    
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [selectedOrder]);
 
   // Calculate urgency level based on delivery time
   const getUrgencyLevel = (deliveryTime: string | null) => {
@@ -271,12 +285,14 @@ export default function KitchenDashboard() {
     }
   }, []);
 
+  const memoizedOrder = selectedOrder;
+  
   const OrderDetailModal = useCallback(function OrderDetailModal({ order }: { order: any }) {
     if (!order) return null;
     
     const urgency = getUrgencyLevel(order.deliveryTime);
     const deliveryTime = order.deliveryTime ? new Date(order.deliveryTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "N/A";
-    const deliveryDate = order.deliveryTime ? new Date(order.deliveryTime).toLocaleDateString() : "N/A";
+    const deliveryDate = order.deliveryTime ? new Date(order.deliveryTime).toLocaleDateString() : "N/A"
 
     return (
       <Dialog open={!!order} onOpenChange={handleModalOpenChange}>
@@ -433,7 +449,7 @@ export default function KitchenDashboard() {
         </DialogContent>
       </Dialog>
     );
-  }, [handleModalOpenChange, updateStatusMutation]);
+  }, [handleModalOpenChange, updateStatusMutation, getUrgencyLevel]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50">
@@ -570,7 +586,7 @@ export default function KitchenDashboard() {
         </Tabs>
 
       {/* Order Detail Modal */}
-      {selectedOrder && <OrderDetailModal order={selectedOrder} />}
+      {memoizedOrder && <OrderDetailModal order={memoizedOrder} />}
       </div>
 
     <DeveloperCredit />
