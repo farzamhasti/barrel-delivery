@@ -39,7 +39,11 @@ function ProtectedRoute({ component: Component, requiredRole }: { component: any
 }
 
 function SystemProtectedRoute({ component: Component, requiredRole }: { component: any; requiredRole: "admin" | "kitchen" }) {
-  const { data: session, isLoading } = trpc.system.checkSession.useQuery();
+  const { data: session, isLoading } = trpc.system.checkSession.useQuery(undefined, {
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    staleTime: 0,
+  });
 
   if (isLoading) {
     return (
