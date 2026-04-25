@@ -230,6 +230,10 @@ export const appRouter = router({
         const { customerId, ...updateData } = input;
         return db.updateCustomer(customerId, updateData as any);
       }),
+    geocodeAll: adminOrSystemAdminProcedure
+      .mutation(async () => {
+        return db.geocodeAllCustomers();
+      }),
   }),
 
   // Orders

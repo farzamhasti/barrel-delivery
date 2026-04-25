@@ -316,9 +316,9 @@ export const driverRouter = router({
           };
         }
         
-        // Default restaurant coordinates (can be customized)
-        const restaurantLat = input?.restaurantLatitude ?? 40.7128;
-        const restaurantLng = input?.restaurantLongitude ?? -74.0060;
+        // Restaurant coordinates: 224 Garrison Rd, Fort Erie, ON L2A 1M7
+        const restaurantLat = input?.restaurantLatitude ?? 42.905191;
+        const restaurantLng = input?.restaurantLongitude ?? -78.9225479;
         
         // Calculate return time based on on_the_way orders
         const calculation = calculateReturnTime(
