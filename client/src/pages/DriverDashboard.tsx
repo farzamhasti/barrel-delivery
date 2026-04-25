@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +17,7 @@ const DRIVER_SESSION_KEY = "driver_session_token";
 
 export default function DriverDashboard() {
   const [, setLocation] = useLocation();
+  const { user: oauthUser, loading: authLoading } = useAuth();
   
   // Driver authentication state
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -180,6 +182,44 @@ export default function DriverDashboard() {
       setLocation("/");
     }
   };
+
+  // Prevent OAuth users from accessing driver dashboard
+  if (!authLoading && oauthUser) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col">
+        <DeveloperCredit />
+        <div className="flex-1 flex items-center justify-center p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader className="text-center">
+              <div className="flex justify-center mb-4">
+                <img 
+                  src="/barrel-logo.png" 
+                  alt="The Barrel Restaurant (Pizza & Pasta)" 
+                  className="h-16 w-auto object-contain"
+                />
+              </div>
+              <CardTitle className="text-2xl">Driver Access Only</CardTitle>
+              <CardDescription>The Barrel Restaurant (Pizza & Pasta)</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-gray-600">
+                This page is for drivers only. If you are a driver, please log in with your driver credentials.
+              </p>
+              <p className="text-sm text-gray-600">
+                If you are an admin, please use the Admin Dashboard instead.
+              </p>
+              <Button 
+                onClick={() => setLocation("/")} 
+                className="w-full"
+              >
+                Back to Home
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   if (checkingAuth && sessionToken) {
     return (

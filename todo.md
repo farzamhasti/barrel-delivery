@@ -2252,3 +2252,12 @@
 - [x] Ensure Kitchen Dashboard uses same timer context as Order Tracking
 - [x] Unify all three locations to use DriverReturnTimeContext for synchronized timers
 - [x] Verify timer persists across tab switches and page refreshes across all dashboards
+
+## Bug Fix - Driver Dashboard SQL Query Error
+- [x] Fix SQL query error on /driver-dashboard when admin user accesses the page
+- [x] Prevent OAuth users from accessing driver-only dashboard
+- [x] Add useAuth hook to detect OAuth users
+- [x] Display friendly "Driver Access Only" message for OAuth users
+- [x] Redirect OAuth users to home page with "Back to Home" button
+- [x] Verify no SQL errors in browser console
+- [x] Test with admin user accessing /driver-dashboard
