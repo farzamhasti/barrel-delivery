@@ -2224,3 +2224,13 @@
 - [x] Add return time display in Online Drivers table
 - [x] Synchronize across Admin and Kitchen dashboards
 - [x] Real-time countdown updates every second
+
+
+## Return Time Feature - REFINEMENT COMPLETE
+- [x] Filter orders by "on_the_way" status only (exclude delivered orders)
+- [x] Use actual order delivery addresses/locations for route calculation
+- [x] Recalculate on each "Calculate Return Time" button press
+- [x] Auto-recalculate when driver marks order as delivered
+- [x] Include return journey from last delivery to restaurant in time calculation
+- [x] Update countdown to reflect remaining on_the_way orders
+- [ ] Test with actual order statuses and locations

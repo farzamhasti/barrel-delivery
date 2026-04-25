@@ -292,18 +292,37 @@ export const driverRouter = router({
         // Get driver's assigned orders
         const orders = await db.getOrdersWithCustomer(driver.id);
         
-        // Filter for orders that are not yet delivered
-        const activeOrders = orders.filter(
-          (order) => order.status !== "Delivered"
+        // Filter for orders that are currently on the way (not delivered)
+        const onTheWayOrders = orders.filter(
+          (order) => order.status === "On the Way"
         );
+        
+        // If no on_the_way orders, return zero time
+        if (onTheWayOrders.length === 0) {
+          return {
+            success: true,
+            driverId: driver.id,
+            ordersCount: 0,
+            pickupTime: 0,
+            deliveryTime: 0,
+            travelTime: 0,
+            totalSeconds: 0,
+            totalMinutes: 0,
+            breakdown: {
+              pickupMinutes: 0,
+              deliveryMinutes: 0,
+              travelMinutes: 0,
+            },
+          };
+        }
         
         // Default restaurant coordinates (can be customized)
         const restaurantLat = input?.restaurantLatitude ?? 40.7128;
         const restaurantLng = input?.restaurantLongitude ?? -74.0060;
         
-        // Calculate return time
+        // Calculate return time based on on_the_way orders
         const calculation = calculateReturnTime(
-          activeOrders.map((order) => ({
+          onTheWayOrders.map((order) => ({
             id: order.id,
             customerLatitude: order.customerLatitude ? Number(order.customerLatitude) : null,
             customerLongitude: order.customerLongitude ? Number(order.customerLongitude) : null,
@@ -315,7 +334,7 @@ export const driverRouter = router({
         return {
           success: true,
           driverId: driver.id,
-          ordersCount: activeOrders.length,
+          ordersCount: onTheWayOrders.length,
           ...calculation,
         };
       } catch (error: any) {

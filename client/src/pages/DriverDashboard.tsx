@@ -85,6 +85,10 @@ export default function DriverDashboard() {
       setIsDetailsModalOpen(false);
       setSelectedOrder(null);
       refetchOrders();
+      // Auto-recalculate return time after marking order as delivered
+      if (sessionToken) {
+        calculateReturnTimeMutation.mutate({ sessionToken });
+      }
     },
     onError: (error: any) => {
       console.error("Failed to mark order as delivered:", error);
