@@ -308,6 +308,8 @@ export async function getOrdersWithCustomer(driverId?: number) {
     taxPercentage: Number(order.taxPercentage),
     taxAmount: Number(order.taxAmount),
     totalPrice: Number(order.totalPrice),
+    customerLatitude: order.customerLatitude ? Number(order.customerLatitude) : null,
+    customerLongitude: order.customerLongitude ? Number(order.customerLongitude) : null,
   }));
 }
 
@@ -380,6 +382,8 @@ export async function getOrderWithItems(orderId: number) {
     taxPercentage: Number(orderData.taxPercentage),
     taxAmount: Number(orderData.taxAmount),
     totalPrice: Number(orderData.totalPrice),
+    customerLatitude: orderData.customerLatitude ? Number(orderData.customerLatitude) : null,
+    customerLongitude: orderData.customerLongitude ? Number(orderData.customerLongitude) : null,
     items: items.map(item => ({
       ...item,
       priceAtOrder: Number(item.priceAtOrder),
@@ -498,8 +502,8 @@ export async function getTodayOrdersWithItems() {
           name: order.customerName,
           phone: order.customerPhone,
           address: order.customerAddress,
-          latitude: order.customerLatitude,
-          longitude: order.customerLongitude,
+          latitude: order.customerLatitude ? Number(order.customerLatitude) : null,
+          longitude: order.customerLongitude ? Number(order.customerLongitude) : null,
         },
         items: items.map(item => ({
           ...item,
@@ -571,6 +575,8 @@ export async function getOrdersByDateRange(startDate: Date | string, endDate: Da
       customerName: customers.name,
       customerPhone: customers.phone,
       customerAddress: customers.address,
+      customerLatitude: customers.latitude,
+      customerLongitude: customers.longitude,
     })
     .from(orders)
     .innerJoin(customers, eq(orders.customerId, customers.id))
@@ -584,6 +590,8 @@ export async function getOrdersByDateRange(startDate: Date | string, endDate: Da
     taxPercentage: Number(order.taxPercentage),
     taxAmount: Number(order.taxAmount),
     totalPrice: Number(order.totalPrice),
+    customerLatitude: order.customerLatitude ? Number(order.customerLatitude) : null,
+    customerLongitude: order.customerLongitude ? Number(order.customerLongitude) : null,
   }))
 }
 
