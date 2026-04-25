@@ -74,9 +74,16 @@ const trpcClient = trpc.createClient({
       transformer: superjson,
       fetch(input, init) {
         // HTTP-only cookies are automatically sent with credentials: "include"
+        // Also send system session token as custom header for fallback authentication
+        const systemSessionToken = localStorage.getItem('systemSessionToken');
+        const headers = new Headers(init?.headers || {});
+        if (systemSessionToken) {
+          headers.set('x-system-session-token', systemSessionToken);
+        }
         return globalThis.fetch(input, {
           ...(init ?? {}),
           credentials: "include",
+          headers,
         });
       },
     }),
