@@ -2266,3 +2266,17 @@
 - [x] Verified no SQL query errors on driver dashboard
 - [x] Verified admin dashboard still accessible and working
 - [x] Verified kitchen dashboard route protection still working
+
+
+## Bug Fix - Delivery Map Button (تحویل با نقشه) - FIXED
+- [x] Fix Google Maps URL generation to use real delivery addresses instead of 0,0 coordinates
+- [x] Update googleMapsUrl.ts to use text addresses from customerAddress field
+- [x] Update googleMapsRouting.ts to use text addresses for Directions API calls
+- [x] Verify driver can click "Delivery with Map" button and see correct route
+- [x] Verify Google Maps opens with real delivery addresses (not 0,0)
+- [x] Verify route is fully calculated with all waypoints
+- [x] Test with multiple orders (2+ deliveries)
+- [x] Verify return time calculation uses text addresses instead of coordinates
+- [x] Tested with driver "Farzam Hasti" - Google Maps opens with correct route
+- [x] All delivery addresses display correctly on map
+- [x] Route optimization works with multiple waypoints

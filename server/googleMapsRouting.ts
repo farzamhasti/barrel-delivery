@@ -3,6 +3,7 @@
  * 
  * Uses Google Maps Directions API for accurate route calculation
  * Supports both single and multiple orders with waypoint optimization
+ * Uses text addresses instead of coordinates for better reliability
  */
 
 import { makeRequest, DirectionsResult } from "./_core/map";
@@ -10,8 +11,8 @@ import { makeRequest, DirectionsResult } from "./_core/map";
 export interface RoutingOrder {
   id: number;
   address: string;
-  latitude: number;
-  longitude: number;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface RoutingCalculation {
@@ -54,9 +55,9 @@ export async function calculateReturnTimeWithGoogleMaps(
   restaurantLat: number,
   restaurantLng: number
 ): Promise<RoutingCalculation> {
-  // Filter orders with valid coordinates
+  // Filter orders with valid addresses
   const validOrders = orders.filter(
-    (order) => order.latitude && order.longitude && order.address
+    (order) => order.address && order.address.trim().length > 0
   );
 
   if (validOrders.length === 0) {
@@ -132,6 +133,8 @@ export async function calculateReturnTimeWithGoogleMaps(
  * Single order: Direct round trip
  * Multiple orders: Optimized route with waypoints
  * 
+ * Uses text addresses instead of coordinates for better reliability
+ * 
  * @returns Travel time in seconds
  */
 async function calculateGoogleMapsTravelTime(
@@ -140,21 +143,18 @@ async function calculateGoogleMapsTravelTime(
   restaurantLat: number,
   restaurantLng: number
 ): Promise<number> {
-  const restaurantLocation = `${restaurantLat},${restaurantLng}`;
-
   if (orders.length === 1) {
     // Single order: direct round trip
     const order = orders[0];
-    const destination = `${order.latitude},${order.longitude}`;
 
     try {
-      // Get directions from restaurant to order location
+      // Get directions from restaurant to order location using text addresses
       const directionsResult = await makeRequest<DirectionsResult>(
         "/maps/api/directions/json",
         {
-          origin: restaurantLocation,
-          destination: restaurantLocation, // Return to restaurant
-          waypoints: destination, // Single waypoint
+          origin: restaurantAddress,
+          destination: restaurantAddress, // Return to restaurant
+          waypoints: order.address, // Single waypoint using text address
           mode: "driving",
           optimize: "true", // Optimize the route
         }
@@ -186,15 +186,15 @@ async function calculateGoogleMapsTravelTime(
   } else {
     // Multiple orders: optimized route with all addresses as waypoints
     const waypoints = orders
-      .map((order) => `${order.latitude},${order.longitude}`)
+      .map((order) => order.address)
       .join("|");
 
     try {
       const directionsResult = await makeRequest<DirectionsResult>(
         "/maps/api/directions/json",
         {
-          origin: restaurantLocation,
-          destination: restaurantLocation, // Return to restaurant
+          origin: restaurantAddress,
+          destination: restaurantAddress, // Return to restaurant
           waypoints: waypoints,
           mode: "driving",
           optimize: "true", // Enable waypoint optimization
