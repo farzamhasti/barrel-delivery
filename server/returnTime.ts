@@ -93,7 +93,7 @@ export function calculateReturnTime(
 
 /**
  * Calculate travel time using nearest neighbor algorithm
- * Assumes average speed of 40 km/h (11.11 m/s)
+ * Assumes average speed of 50 km/h (13.89 m/s)
  * 
  * Route: Restaurant → Nearest Order → Next Nearest → ... → Restaurant
  */
@@ -107,7 +107,7 @@ function calculateOptimalRouteTravelTime(
 ): number {
   if (orders.length === 0) return 0;
 
-  const AVERAGE_SPEED_KMH = 40; // km/h
+  const AVERAGE_SPEED_KMH = 50; // km/h
   const AVERAGE_SPEED_MS = AVERAGE_SPEED_KMH / 3.6; // convert to m/s
 
   let totalDistance = 0;

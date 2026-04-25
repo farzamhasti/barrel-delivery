@@ -2242,3 +2242,7 @@
 - [x] Sync return time when driver clicks Calculate button
 - [x] Admin/Kitchen/OrderTracking dashboards listen for return time updates
 - [x] Real-time countdown updates across all dashboards
+
+
+## Return Time Speed Adjustment
+- [x] Update average speed from 40 km/h to 50 km/h in Return Time calculation
