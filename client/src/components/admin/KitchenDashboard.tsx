@@ -271,7 +271,7 @@ export default function KitchenDashboard() {
     }
   }, []);
 
-  const OrderDetailModal = ({ order }: { order: any }) => {
+  const OrderDetailModal = useCallback(({ order }: { order: any }) => {
     if (!order) return null;
     
     const urgency = getUrgencyLevel(order.deliveryTime);
@@ -432,7 +432,7 @@ export default function KitchenDashboard() {
         </DialogContent>
       </Dialog>
     );
-  };
+  }, [handleModalOpenChange, getUrgencyLevel, updateStatusMutation]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50">
@@ -568,11 +568,11 @@ export default function KitchenDashboard() {
           </TabsContent>
         </Tabs>
 
-        {/* Order Detail Modal */}
-        <OrderDetailModal order={selectedOrder} />
+      {/* Order Detail Modal */}
+      <OrderDetailModal order={selectedOrder} />
       </div>
 
-      <DeveloperCredit />
+    <DeveloperCredit />
     </div>
   );
 }
