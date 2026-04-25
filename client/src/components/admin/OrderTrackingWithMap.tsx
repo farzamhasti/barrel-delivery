@@ -7,6 +7,7 @@ import { trpc } from "@/lib/trpc";
 import { invalidateOrderCache } from "@/lib/invalidation";
 import { MapView } from "@/components/Map";
 import { DriverSelectionModal } from "@/components/DriverSelectionModal";
+import { useDriverReturnTime } from "@/contexts/DriverReturnTimeContext";
 
 
 const FORT_ERIE_CENTER = { lat: 42.905191, lng: -78.9225479 };
@@ -14,73 +15,14 @@ const RESTAURANT_ADDRESS = { lat: 42.905191, lng: -78.9225479 }; // 224 Garrison
 
 export default function OrderTrackingWithMap() {
   const utils = trpc.useUtils();
+  const { driverReturnTimes } = useDriverReturnTime();
 
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
   const [showMap, setShowMap] = useState(true);
   const [showDriverModal, setShowDriverModal] = useState(false);
   const [orderToAssign, setOrderToAssign] = useState<number | null>(null);
-  const [driverReturnTimes, setDriverReturnTimes] = useState<Record<number, string>>({});
   const mapRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.Marker[]>([]);
-
-  // Listen for return time updates from driver dashboard
-  useEffect(() => {
-    const handleReturnTimeUpdate = (event: any) => {
-      const { driverId, returnTime } = event.detail;
-      setDriverReturnTimes((prev) => ({
-        ...prev,
-        [driverId]: returnTime,
-      }));
-    };
-
-    // Load return times from localStorage on mount
-    const loadReturnTimesFromStorage = () => {
-      const times: Record<number, string> = {};
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith('driver-return-time-')) {
-          try {
-            const data = JSON.parse(localStorage.getItem(key) || '{}');
-            if (data.driverId && data.returnTime) {
-              times[data.driverId] = data.returnTime;
-            }
-          } catch (e) {
-            console.error('Failed to parse return time data:', e);
-          }
-        }
-      }
-      if (Object.keys(times).length > 0) {
-        setDriverReturnTimes(times);
-      }
-    };
-
-    loadReturnTimesFromStorage();
-    window.addEventListener('driver-return-time-updated', handleReturnTimeUpdate);
-    return () => window.removeEventListener('driver-return-time-updated', handleReturnTimeUpdate);
-  }, []);
-
-  // Poll for return time updates every second (countdown)
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setDriverReturnTimes((prev) => {
-        const updated = { ...prev };
-        Object.keys(updated).forEach((driverId) => {
-          const time = updated[parseInt(driverId)];
-          if (time && time !== "00:00") {
-            const [minutes, seconds] = time.split(":").map(Number);
-            let totalSeconds = minutes * 60 + seconds - 1;
-            if (totalSeconds < 0) totalSeconds = 0;
-            const newMinutes = Math.floor(totalSeconds / 60);
-            const newSeconds = totalSeconds % 60;
-            updated[parseInt(driverId)] = `${String(newMinutes).padStart(2, "0")}:${String(newSeconds).padStart(2, "0")}`;
-          }
-        });
-        return updated;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, []);
 
   // Fetch today's orders with items for complete data
   const { data: allOrders = [], isLoading, refetch } = trpc.orders.getTodayOrdersWithItems.useQuery();
