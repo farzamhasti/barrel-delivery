@@ -8,6 +8,7 @@ import { invalidateOrderCache } from "@/lib/invalidation";
 import { MapView } from "@/components/Map";
 import { DriverSelectionModal } from "@/components/DriverSelectionModal";
 import { useDriverReturnTime } from "@/contexts/DriverReturnTimeContext";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 
 const FORT_ERIE_CENTER = { lat: 42.905191, lng: -78.9225479 };
@@ -16,6 +17,7 @@ const RESTAURANT_ADDRESS = { lat: 42.905191, lng: -78.9225479 }; // 224 Garrison
 export default function OrderTrackingWithMap() {
   const utils = trpc.useUtils();
   const { driverReturnTimes } = useDriverReturnTime();
+  const { user } = useAuth();
 
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
   const [showMap, setShowMap] = useState(true);
@@ -25,16 +27,16 @@ export default function OrderTrackingWithMap() {
   const markersRef = useRef<google.maps.Marker[]>([]);
 
   // Fetch today's orders with items for complete data
-  const { data: allOrders = [], isLoading, refetch } = trpc.orders.getTodayOrdersWithItems.useQuery();
+  const { data: allOrders = [], isLoading, refetch } = trpc.orders.getTodayOrdersWithItems.useQuery(undefined, { enabled: !!user });
   
   // Fetch drivers for Active Drivers section
-  const { data: drivers = [], isLoading: driversLoading } = trpc.drivers.list.useQuery();
+  const { data: drivers = [], isLoading: driversLoading } = trpc.drivers.list.useQuery(undefined, { enabled: !!user });
   const activeDrivers = drivers.filter((d: any) => d.status === "online" && d.isActive);
 
   // Fetch selected order with items
   const { data: selectedOrderData } = trpc.orders.getById.useQuery(
     { orderId: selectedOrderId! },
-    { enabled: !!selectedOrderId }
+    { enabled: !!selectedOrderId && !!user }
   );
 
   // Filter to active orders
