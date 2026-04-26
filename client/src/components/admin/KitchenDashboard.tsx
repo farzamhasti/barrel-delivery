@@ -160,7 +160,10 @@ export default function KitchenDashboard() {
       >
         {/* Order Header with Number and Urgency Badge */}
         <div className="flex items-start justify-between gap-2 mb-2">
-          <h3 className="text-lg font-bold text-foreground">#{order.id}</h3>
+          <div>
+            <h3 className="text-lg font-bold text-foreground">#{order.id}</h3>
+            {order.orderNumber && <p className="text-xs text-muted-foreground">Order: {order.orderNumber}</p>}
+          </div>
           {urgency !== "normal" && (
             <Badge className={`${getUrgencyBadgeColor(urgency)} text-xs px-2 py-0.5 flex items-center gap-1`}>
               {urgency === "late" && <AlertCircle className="w-3 h-3" />}
@@ -170,6 +173,13 @@ export default function KitchenDashboard() {
             </Badge>
           )}
         </div>
+
+        {/* Customer Address */}
+        {order.customerAddress && (
+          <div className="mb-2 p-2 bg-blue-50 rounded text-xs">
+            <p className="text-blue-700 line-clamp-2">📍 {order.customerAddress}</p>
+          </div>
+        )}
 
         {/* Items Preview */}
         <div className="mb-2">

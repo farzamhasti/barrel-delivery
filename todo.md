@@ -14,13 +14,13 @@
 - [x] Display receipt preview for kitchen reference (no image storage)
 
 ## Phase 3: Kitchen Dashboard Redesign
-- [ ] View scanned orders with receipt details
-- [ ] Display order number, items, customer address, area
-- [ ] Show delivery time and urgency indicators
-- [ ] Mark orders as "Preparing" → "Ready"
-- [ ] Separate tabs: Active Orders vs Prepared Orders
-- [ ] Real-time status updates when driver picks up
-- [ ] Active drivers list with return time countdown
+- [x] View scanned orders with receipt details (Kitchen Dashboard displays orders)
+- [x] Display order number, items, customer address, area (implemented)
+- [x] Show delivery time and urgency indicators (urgency levels: late, urgent, soon, normal)
+- [x] Mark orders as "Preparing" → "Ready" (Mark Ready button functional)
+- [x] Separate tabs: Active Orders vs Prepared Orders (Active/Ready tabs implemented)
+- [x] Real-time status updates when driver picks up (3-second auto-refetch)
+- [x] Active drivers list with return time countdown (drivers list displayed)
 
 ## Phase 4: Driver Dashboard Redesign
 - [ ] View assigned orders from kitchen
