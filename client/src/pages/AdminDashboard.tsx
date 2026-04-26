@@ -10,7 +10,7 @@ import MenuManagement from "@/components/admin/MenuManagement";
 import { Orders } from "@/pages/Orders";
 import DriverManagement from "@/components/admin/DriverManagement";
 import Dashboard from "@/components/admin/Dashboard";
-import { AlohaReceiptScanner } from "@/components/admin/AlohaReceiptScanner";
+import { ReceiptScannerTesseract } from "@/components/admin/ReceiptScannerTesseract";
 import OrderTrackingWithMap from "@/components/admin/OrderTrackingWithMap";
 import { DeliveryReportTab } from "@/components/DeliveryReportTab";
 import ReservationManagement from "@/components/admin/ReservationManagement";
@@ -185,7 +185,7 @@ export default function AdminDashboard() {
             <div className="w-full h-full p-4 md:p-6">
               <div className="w-full max-w-7xl mx-auto">
                 {currentTab === "dashboard" && <Dashboard />}
-                {currentTab === "create-order" && <AlohaReceiptScanner />}
+                {currentTab === "create-order" && <ReceiptScannerTesseract />}
                 {currentTab === "menu" && <MenuManagement />}
                 {currentTab === "orders" && <Orders />}
                 {currentTab === "drivers" && <DriverManagement />}

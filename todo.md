@@ -2393,3 +2393,17 @@
 - [x] Fix item input value props to use fallbacks (empty string for text, 1 for quantity)
 - [x] Ensure all inputs are always controlled with proper default values
 - [x] Verify React warnings are resolved
+
+
+## New Feature: Lightweight Aloha Receipt Scanner (Tesseract.js)
+- [x] Install Tesseract.js package
+- [x] Create ReceiptScannerTesseract component with upload/camera input
+- [x] Implement OCR text extraction using Tesseract.js
+- [x] Build text parsing logic to extract items, address, check number, date, time
+- [x] Create printable delivery receipt display format
+- [x] Add print button functionality
+- [x] Add "Scan Again" button to reset
+- [x] Add error handling for failed scans
+- [x] Integrate scanner into New Order tab
+- [x] Test with sample Aloha receipt images
+- [x] Verify no existing features are affected
