@@ -211,15 +211,15 @@ export async function getOrderWithItems(orderId: number) {
   const order = await db
     .select({
       id: orders.id,
-      customerId: orders.customerId,
       driverId: orders.driverId,
       status: orders.status,
       subtotal: orders.subtotal,
       taxPercentage: orders.taxPercentage,
       taxAmount: orders.taxAmount,
       totalPrice: orders.totalPrice,
-      notes: orders.notes,
       area: orders.area,
+      orderNumber: orders.orderNumber,
+      customerAddress: orders.customerAddress,
       hasDeliveryTime: orders.hasDeliveryTime,
       deliveryTime: orders.deliveryTime,
       createdAt: orders.createdAt,
@@ -414,15 +414,15 @@ export async function getOrdersByDateRange(startDate: Date | string, endDate: Da
   const result = await db
     .select({
       id: orders.id,
-      customerId: orders.customerId,
       driverId: orders.driverId,
       status: orders.status,
       subtotal: orders.subtotal,
       taxPercentage: orders.taxPercentage,
       taxAmount: orders.taxAmount,
       totalPrice: orders.totalPrice,
-      notes: orders.notes,
       area: orders.area,
+      orderNumber: orders.orderNumber,
+      customerAddress: orders.customerAddress,
       deliveryTime: orders.deliveryTime,
       hasDeliveryTime: orders.hasDeliveryTime,
       createdAt: orders.createdAt,
@@ -567,17 +567,19 @@ export async function createOrder(data: InsertOrder) {
   
   // Ensure numeric values are properly formatted for Decimal columns
   const orderData: any = {
-    customerId: data.customerId,
     subtotal: data.subtotal ? String(data.subtotal) : "0",
     taxPercentage: data.taxPercentage ? String(data.taxPercentage) : "13",
     taxAmount: data.taxAmount ? String(data.taxAmount) : "0",
     totalPrice: data.totalPrice ? String(data.totalPrice) : "0",
     deliveryTime: data.deliveryTime || null,
     hasDeliveryTime: data.hasDeliveryTime,
-    notes: data.notes,
     driverId: data.driverId,
     status: data.status,
   };
+  
+  if (data.orderNumber) orderData.orderNumber = data.orderNumber;
+  if (data.customerAddress) orderData.customerAddress = data.customerAddress;
+  if (data.customerPhone) orderData.customerPhone = data.customerPhone;
   
   // Only include area if it's not undefined and not empty
   if (data.area && typeof data.area === 'string' && data.area.trim()) {
