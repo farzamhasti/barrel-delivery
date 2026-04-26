@@ -2282,20 +2282,20 @@
 - [x] Route optimization works with multiple waypoints
 
 
-## New Feature - Reservation System
-- [ ] Create reservations table in database schema
-- [ ] Add tRPC procedures for reservation CRUD operations
-- [ ] Implement createReservation procedure
-- [ ] Implement getReservations procedure for admin
-- [ ] Implement getReservations procedure for kitchen
-- [ ] Implement updateReservationStatus procedure
-- [ ] Add Reservation tab to Admin Dashboard
-- [ ] Create reservation form component with event type, people count, details, date, time
-- [ ] Add Reservation tab to Kitchen Dashboard
-- [ ] Display reservations in Kitchen Dashboard
-- [ ] Implement "DONE" button to mark reservations as completed
-- [ ] Test real-time sync between Admin and Kitchen dashboards
-- [ ] Verify existing functionality remains unchanged
+## New## New Feature - Reservation (COMPLETED)
+- [x] Create reservations table in database schema
+- [x] Add tRPC procedures for reservation CRUD operations
+- [x] Implement createReservation procedure
+- [x] Implement getReservations procedure for admin
+- [x] Implement getReservations procedure for kitchen
+- [x] Implement updateReservationStatus procedure
+- [x] Add Reservation tab to Admin Dashboard
+- [x] Create reservation form component with event type, people count, details, date, time
+- [x] Add Reservation tab to Kitchen Dashboard
+- [x] Display reservations in Kitchen Dashboard
+- [x] Implement "DONE" button to mark reservations as completed
+- [x] Test real-time sync between Admin and Kitchen dashboards
+- [x] Verify existing functionality remains unchangedd
 
 
 ## New Feature - Reservation System (COMPLETED)
@@ -2313,14 +2313,14 @@
 - [x] Test reservation creation and viewing workflow
 
 
-## New Feature - Aloha Receipt Scanner (IN PROGRESS)
-- [ ] Create AlohaReceiptScanner component with image upload/camera capture
-- [ ] Implement Claude AI integration to extract receipt data
-- [ ] Create receipt preview and edit form for staff confirmation
-- [ ] Integrate with existing order creation workflow
-- [ ] Replace New Order tab with Receipt Scanner in Admin Dashboard
-- [ ] Test receipt scanning and order submission
-- [ ] Verify orders appear in Kitchen and Driver dashboards
+## New Fe## New Feature - Aloha Receipt Scanner (COMPLETED)
+- [x] Create AlohaReceiptScanner component with image upload/camera capture
+- [x] Implement Claude AI integration to extract receipt data
+- [x] Create receipt preview and edit form for staff confirmation
+- [x] Integrate with existing order creation workflow
+- [x] Replace New Order tab with Receipt Scanner in Admin Dashboard
+- [x] Test receipt scanning and order submission
+- [x] Verify orders appear in Kitchen and Driver dashboardsoards
 
 
 ## New Feature - Aloha Receipt Scanner (COMPLETED)

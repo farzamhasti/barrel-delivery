@@ -279,7 +279,7 @@ export function AlohaReceiptScanner() {
               <div>
                 <label className="text-sm font-medium">Check Number</label>
                 <Input
-                  value={editedData.checkNumber || ""}
+                  value={editedData.checkNumber ?? ""}
                   onChange={(e) =>
                     setEditedData({ ...editedData, checkNumber: e.target.value })
                   }
@@ -289,7 +289,7 @@ export function AlohaReceiptScanner() {
               <div>
                 <label className="text-sm font-medium">Table</label>
                 <Input
-                  value={editedData.table || ""}
+                  value={editedData.table ?? ""}
                   onChange={(e) => setEditedData({ ...editedData, table: e.target.value })}
                   placeholder="Table number"
                 />
@@ -298,9 +298,9 @@ export function AlohaReceiptScanner() {
                 <label className="text-sm font-medium">Number of Guests</label>
                 <Input
                   type="number"
-                  value={editedData.guests || ""}
+                  value={editedData.guests ?? ""}
                   onChange={(e) =>
-                    setEditedData({ ...editedData, guests: Number(e.target.value) || null })
+                    setEditedData({ ...editedData, guests: e.target.value ? Number(e.target.value) : null })
                   }
                   placeholder="Number of guests"
                 />
@@ -308,7 +308,7 @@ export function AlohaReceiptScanner() {
               <div>
                 <label className="text-sm font-medium">Server Name</label>
                 <Input
-                  value={editedData.server || ""}
+                  value={editedData.server ?? ""}
                   onChange={(e) => setEditedData({ ...editedData, server: e.target.value })}
                   placeholder="Server name"
                 />
@@ -328,7 +328,7 @@ export function AlohaReceiptScanner() {
                   <div key={index} className="flex gap-3 items-end">
                     <div className="flex-1">
                       <Input
-                        value={item.name}
+                        value={item.name ?? ""}
                         onChange={(e) => handleUpdateItem(index, "name", e.target.value)}
                         placeholder="Item name"
                       />
@@ -337,14 +337,14 @@ export function AlohaReceiptScanner() {
                       <Input
                         type="number"
                         min="1"
-                        value={item.quantity}
+                        value={item.quantity ?? ""}
                         onChange={(e) => handleUpdateItem(index, "quantity", e.target.value)}
                         placeholder="Qty"
                       />
                     </div>
                     <div className="flex-1">
                       <Input
-                        value={item.notes}
+                        value={item.notes ?? ""}
                         onChange={(e) => handleUpdateItem(index, "notes", e.target.value)}
                         placeholder="Notes (optional)"
                       />
