@@ -175,7 +175,6 @@ export async function getOrdersWithCustomer(driverId?: number) {
       createdAt: orders.createdAt,
       updatedAt: orders.updatedAt,
       customerPhone: orders.customerPhone,
-      customerAddress: orders.customerAddress,
     })
     .from(orders)
     .where(conditions.length > 0 ? and(...conditions) : undefined)
@@ -225,7 +224,6 @@ export async function getOrderWithItems(orderId: number) {
       createdAt: orders.createdAt,
       updatedAt: orders.updatedAt,
       customerPhone: orders.customerPhone,
-      customerAddress: orders.customerAddress,
     })
     .from(orders)
     .where(eq(orders.id, orderId));
@@ -331,7 +329,6 @@ export async function getTodayOrdersWithItems() {
       createdAt: orders.createdAt,
       updatedAt: orders.updatedAt,
       customerPhone: orders.customerPhone,
-      customerAddress: orders.customerAddress,
     })
     .from(orders)
     .where(and(gte(orders.createdAt, startOfDay), lt(orders.createdAt, endOfDay)))
@@ -428,7 +425,6 @@ export async function getOrdersByDateRange(startDate: Date | string, endDate: Da
       createdAt: orders.createdAt,
       updatedAt: orders.updatedAt,
       customerPhone: orders.customerPhone,
-      customerAddress: orders.customerAddress,
     })
     .from(orders)
     .where(and(...conditions))
