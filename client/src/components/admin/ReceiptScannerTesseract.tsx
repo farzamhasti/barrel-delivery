@@ -1,8 +1,12 @@
+"use client";
+
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Loader2, Upload, Camera, AlertCircle, CheckCircle2, Printer } from "lucide-react";
 import Tesseract from "tesseract.js";
+import { trpc } from "@/lib/trpc";
 
 interface ExtractedReceipt {
   checkNumber: string;
@@ -13,7 +17,9 @@ interface ExtractedReceipt {
     quantity: number;
   }>;
   deliveryAddress: string;
+  phoneNumber: string;
   deliveryTime: string;
+  region: string;
 }
 
 export function ReceiptScannerTesseract() {
@@ -21,8 +27,21 @@ export function ReceiptScannerTesseract() {
   const [extractedReceipt, setExtractedReceipt] = useState<ExtractedReceipt | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+
+  // Editable form state
+  const [formData, setFormData] = useState({
+    deliveryAddress: "",
+    phoneNumber: "",
+    deliveryTime: "",
+    region: "",
+    enableDeliveryTime: false,
+  });
+
+  const createOrderMutation = trpc.orders.createFromReceipt.useMutation();
 
   const parseReceiptText = (text: string): ExtractedReceipt => {
     const lines = text.split("\n").map((line) => line.trim()).filter((line) => line.length > 0);
@@ -31,7 +50,9 @@ export function ReceiptScannerTesseract() {
     let date = "";
     let time = "";
     let deliveryAddress = "";
+    let phoneNumber = "";
     let deliveryTime = "";
+    let region = "";
     const items: Array<{ name: string; quantity: number }> = [];
 
     // Common food/drink keywords
@@ -63,6 +84,11 @@ export function ReceiptScannerTesseract() {
           const nextLine = lines[i + 1];
           if (/^\d+/.test(nextLine)) {
             deliveryAddress = nextLine;
+            // Try to extract region from address (last word or city name)
+            const addressParts = nextLine.split(/[,\s]+/);
+            if (addressParts.length > 0) {
+              region = addressParts[addressParts.length - 1];
+            }
           }
         }
         continue;
@@ -72,6 +98,12 @@ export function ReceiptScannerTesseract() {
       if (lowerLine.includes("check") && lowerLine.includes(":")) {
         const match = line.match(/(\d{4,5})/);
         if (match) checkNumber = match[1];
+      }
+
+      // Extract phone number (formats: 905-xxx-xxxx or (905) xxx-xxxx or 905 xxx xxxx)
+      const phoneMatch = line.match(/(\(?(\d{3})\)?[\s.-]?(\d{3})[\s.-]?(\d{4}))/);
+      if (phoneMatch && !phoneNumber) {
+        phoneNumber = phoneMatch[1];
       }
 
       // Extract date and time from same line
@@ -133,7 +165,9 @@ export function ReceiptScannerTesseract() {
       time,
       items,
       deliveryAddress,
+      phoneNumber,
       deliveryTime,
+      region,
     };
   };
 
@@ -154,12 +188,20 @@ export function ReceiptScannerTesseract() {
         // Parse the extracted text
         const receipt = parseReceiptText(extractedText);
 
-        // Check if we found any items
-        if (receipt.items.length === 0) {
-          setError("Could not find any items on the receipt — please try again with a clearer photo");
+        // Check if we found a check number
+        if (!receipt.checkNumber) {
+          setError("Could not find check number on the receipt — please try again with a clearer photo");
           setExtractedReceipt(null);
         } else {
           setExtractedReceipt(receipt);
+          // Pre-fill form with extracted data
+          setFormData({
+            deliveryAddress: receipt.deliveryAddress,
+            phoneNumber: receipt.phoneNumber,
+            deliveryTime: receipt.deliveryTime,
+            region: receipt.region,
+            enableDeliveryTime: !!receipt.deliveryTime,
+          });
         }
       };
       reader.readAsDataURL(file);
@@ -193,15 +235,61 @@ export function ReceiptScannerTesseract() {
     setReceiptImage(null);
     setExtractedReceipt(null);
     setError(null);
+    setSubmitSuccess(false);
+    setFormData({
+      deliveryAddress: "",
+      phoneNumber: "",
+      deliveryTime: "",
+      region: "",
+      enableDeliveryTime: false,
+    });
     if (fileInputRef.current) fileInputRef.current.value = "";
     if (cameraInputRef.current) cameraInputRef.current.value = "";
+  };
+
+  const handleSubmitOrder = async () => {
+    // Validate required field
+    if (!formData.deliveryAddress.trim()) {
+      alert("Delivery address is required");
+      return;
+    }
+
+    if (!extractedReceipt) return;
+
+    try {
+      setSubmitting(true);
+
+      // Create order with check number as reference in notes
+      const notes = `Check #: ${extractedReceipt.checkNumber}${formData.phoneNumber ? ` | Phone: ${formData.phoneNumber}` : ""}`;
+
+      // Create order - no items, just the order with check number reference
+      await createOrderMutation.mutateAsync({
+        checkNumber: extractedReceipt.checkNumber,
+        area: formData.deliveryAddress,
+        deliveryTime: formData.enableDeliveryTime && formData.deliveryTime ? formData.deliveryTime : undefined,
+        hasDeliveryTime: formData.enableDeliveryTime && !!formData.deliveryTime,
+        notes,
+        phoneNumber: formData.phoneNumber,
+        region: formData.region,
+      });
+
+      setSubmitSuccess(true);
+      setTimeout(() => {
+        handleScanAgain();
+      }, 2000);
+    } catch (err) {
+      alert("Failed to submit order: " + (err instanceof Error ? err.message : "Unknown error"));
+      console.error(err);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Aloha Receipt Scanner</h1>
-        <p className="text-gray-600">Scan receipts and generate delivery slips</p>
+        <p className="text-gray-600">Scan receipts and create delivery orders</p>
       </div>
 
       {!extractedReceipt ? (
@@ -259,6 +347,14 @@ export function ReceiptScannerTesseract() {
             </div>
           )}
         </Card>
+      ) : submitSuccess ? (
+        <Card className="p-8">
+          <div className="flex flex-col items-center justify-center gap-4 py-12">
+            <CheckCircle2 className="w-12 h-12 text-green-500" />
+            <p className="text-green-600 font-semibold text-lg">Order submitted successfully!</p>
+            <p className="text-gray-600">The order has been sent to the kitchen and order tracking.</p>
+          </div>
+        </Card>
       ) : (
         <Card className="p-8">
           <div className="space-y-6">
@@ -290,29 +386,17 @@ export function ReceiptScannerTesseract() {
                 </div>
               )}
 
-              <div className="border-t-2 border-b-2 border-gray-300 py-4">
-                <p className="font-semibold text-sm mb-2">ORDER ITEMS:</p>
-                <div className="space-y-1">
-                  {extractedReceipt.items.map((item, idx) => (
-                    <div key={idx} className="text-sm flex justify-between">
-                      <span>- {item.name}</span>
-                      <span>x{item.quantity}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {extractedReceipt.deliveryAddress && (
-                <div className="space-y-2">
-                  <p className="font-semibold text-sm">DELIVERY ADDRESS:</p>
-                  <p className="text-sm">{extractedReceipt.deliveryAddress}</p>
-                </div>
-              )}
-
-              {extractedReceipt.deliveryTime && (
-                <div className="flex justify-between text-sm">
-                  <span className="font-semibold">Delivery Time:</span>
-                  <span>{extractedReceipt.deliveryTime}</span>
+              {extractedReceipt.items.length > 0 && (
+                <div className="border-t-2 border-b-2 border-gray-300 py-4">
+                  <p className="font-semibold text-sm mb-2">ORDER ITEMS:</p>
+                  <div className="space-y-1">
+                    {extractedReceipt.items.map((item, idx) => (
+                      <div key={idx} className="text-sm flex justify-between">
+                        <span>- {item.name}</span>
+                        <span>x{item.quantity}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 
@@ -321,11 +405,83 @@ export function ReceiptScannerTesseract() {
               </div>
             </div>
 
+            {/* Editable Form */}
+            <div className="space-y-4 border-t-2 pt-6 print:hidden">
+              <h2 className="text-lg font-semibold">Order Details</h2>
+              
+              <div className="space-y-2">
+                <label className="block text-sm font-medium">Delivery Address *</label>
+                <Input
+                  value={formData.deliveryAddress}
+                  onChange={(e) => setFormData({ ...formData, deliveryAddress: e.target.value })}
+                  placeholder="Enter delivery address"
+                  className="w-full"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium">Phone Number</label>
+                <Input
+                  value={formData.phoneNumber}
+                  onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+                  placeholder="e.g. 905-555-1234"
+                  className="w-full"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium">Area / Zone</label>
+                <Input
+                  value={formData.region}
+                  onChange={(e) => setFormData({ ...formData, region: e.target.value })}
+                  placeholder="e.g. Fort Erie, Ridgeway"
+                  className="w-full"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="enableDeliveryTime"
+                    checked={formData.enableDeliveryTime}
+                    onChange={(e) => setFormData({ ...formData, enableDeliveryTime: e.target.checked })}
+                    className="w-4 h-4"
+                  />
+                  <label htmlFor="enableDeliveryTime" className="text-sm font-medium">
+                    Specify Delivery Time
+                  </label>
+                </div>
+                {formData.enableDeliveryTime && (
+                  <Input
+                    value={formData.deliveryTime}
+                    onChange={(e) => setFormData({ ...formData, deliveryTime: e.target.value })}
+                    placeholder="e.g. 7:30 PM"
+                    className="w-full"
+                  />
+                )}
+              </div>
+            </div>
+
             {/* Action Buttons */}
-            <div className="flex gap-4 print:hidden">
-              <Button onClick={handlePrint} className="flex-1 gap-2">
+            <div className="flex gap-4 print:hidden pt-4">
+              <Button onClick={handlePrint} variant="outline" className="flex-1 gap-2">
                 <Printer className="w-4 h-4" />
                 Print Receipt
+              </Button>
+              <Button 
+                onClick={handleSubmitOrder} 
+                disabled={submitting || !formData.deliveryAddress.trim()}
+                className="flex-1"
+              >
+                {submitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    Submitting...
+                  </>
+                ) : (
+                  "Submit Order"
+                )}
               </Button>
               <Button onClick={handleScanAgain} variant="outline" className="flex-1">
                 Scan Again

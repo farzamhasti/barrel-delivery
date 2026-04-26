@@ -2418,3 +2418,18 @@
 - [x] Rewrite parser to handle Aloha receipt format correctly
 - [x] Add support for quantity formats (*10*, x10, (10))
 - [x] Implement duplicate item combining
+
+
+## Enhancement: Aloha Receipt Scanner - Extract More Fields and Submit Orders
+- [ ] Extract phone number from receipt (format: 905-xxx-xxxx or (905) xxx-xxxx)
+- [ ] Extract delivery time from receipt (separate from order timestamp)
+- [ ] Extract area/zone from delivery address
+- [ ] Add editable form fields below receipt (Address, Phone, Time, Area)
+- [ ] Pre-fill form fields with extracted values
+- [ ] Add "Submit Order" button
+- [ ] Implement order submission to database
+- [ ] Ensure order appears in Kitchen dashboard in real-time
+- [ ] Ensure order appears in Order Tracking tab
+- [ ] Ensure delivery address works with driver's "Deliver with Map" button
+- [ ] Show success message after submission
+- [ ] Update receipt display to show all fields
