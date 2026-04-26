@@ -5,7 +5,7 @@ import { trpc } from "@/lib/trpc";
 import { useDriverReturnTime } from "@/contexts/DriverReturnTimeContext";
 
 export default function Dashboard() {
-  const { data: activeDrivers = [] } = trpc.driver.getActiveDrivers.useQuery();
+  const { data: activeDrivers = [] } = trpc.drivers.list.useQuery();
   const { data: todayOrders = [] } = trpc.orders.getTodayOrdersWithItems.useQuery();
   const { driverReturnTimes } = useDriverReturnTime();
 

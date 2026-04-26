@@ -105,17 +105,16 @@ export default function OrderTrackingWithMap() {
 
     // Find the selected order
     const selectedOrder = orders.find((o: any) => o.id === selectedOrderId);
-    if (!selectedOrder || !selectedOrder.customer?.latitude || !selectedOrder.customer?.longitude) return;
+    // Customer location not available in new schema - skip map navigation
+    if (!selectedOrder) return;
 
-    // Pan and zoom to selected order
-    const position = {
-      lat: parseFloat(selectedOrder.customer.latitude as any),
-      lng: parseFloat(selectedOrder.customer.longitude as any),
-    };
+    // Pan and zoom to selected order (location data not available)
+    // TODO: Implement location-based navigation when available
+    highlightSelectedMarker();
+  }, [selectedOrderId, orders]);
 
-    mapRef.current.panTo(position);
-    mapRef.current.setZoom(16);
-
+  const highlightSelectedMarker = () => {
+    if (!selectedOrderId) return;
     // Highlight selected marker by changing its color
     markersRef.current.forEach((marker, idx) => {
       const order = orders[idx];
@@ -162,7 +161,9 @@ export default function OrderTrackingWithMap() {
         google.maps.event.trigger(mapRef.current, 'resize');
       }
     }, 150);
-  }, [selectedOrderId, orders]);
+  };
+
+
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -368,11 +369,7 @@ export default function OrderTrackingWithMap() {
                           </div>
                         )}
 
-                        {selectedOrderData.notes && (
-                          <div>
-                            <p className="text-muted-foreground">Notes: {selectedOrderData.notes}</p>
-                          </div>
-                        )}
+                        {/* Notes field removed from new schema */}
                         <div className="pt-3 border-t border-border mt-3">
                           <Button
                             onClick={() => {

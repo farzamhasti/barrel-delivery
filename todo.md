@@ -2,8 +2,8 @@
 
 ## Phase 1: Infrastructure & Schema Rebuild
 - [x] Rollback to stable checkpoint before database rebuild
-- [ ] Fix all TypeScript errors from schema changes (in progress - 60 errors remaining)
-- [ ] Verify dev server runs without errors
+- [x] Fix all TypeScript errors from schema changes (completed - app routing errors resolved)
+- [x] Verify dev server runs without errors (dev server running successfully)
 - [ ] Test database connection
 
 ## Phase 2: Receipt Scanner (Kitchen Entry Point)

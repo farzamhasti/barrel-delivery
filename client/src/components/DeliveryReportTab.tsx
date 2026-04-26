@@ -52,7 +52,7 @@ export function DeliveryReportTab() {
     const headers = ["Order ID", "Customer", "Address", "Pending Time", "Ready Time", "On the Way Time", "Delivered Time"];
     const rows = timelines.map(t => [
       t.orderId,
-      t.customerName,
+      t.orderNumber,
       t.customerAddress,
       t.durations.pending?.formatted || "N/A",
       t.durations.ready?.formatted || "N/A",
@@ -160,7 +160,7 @@ export function DeliveryReportTab() {
           {timelinesLoading ? (
             <div className="text-center py-8 text-gray-500">Loading chart...</div>
           ) : timelines && timelines.length > 0 ? (
-            <DeliveryGanttChart timelines={timelines} isLoading={false} />
+            <DeliveryGanttChart timelines={timelines.map(t => ({ ...t, customerName: t.orderNumber }))} isLoading={false} />
           ) : (
             <div className="text-center py-8 text-gray-500">No data available for selected period</div>
           )}
@@ -180,7 +180,7 @@ export function DeliveryReportTab() {
           {timelinesLoading ? (
             <div className="text-center py-8 text-gray-500">Loading timelines...</div>
           ) : timelines && timelines.length > 0 ? (
-            <OrderTimelineTable timelines={timelines} />
+            <OrderTimelineTable timelines={timelines.map(t => ({ ...t, customerName: t.orderNumber }))} />
           ) : (
             <div className="text-center py-8 text-gray-500">No orders found for selected period</div>
           )}
@@ -222,9 +222,10 @@ export function DeliveryReportTab() {
             }}
             orderTimelines={timelines.map(t => ({
               orderId: t.orderId,
-              customerName: t.customerName,
+              orderNumber: t.orderNumber,
+              customerName: t.orderNumber, // Use orderNumber as customerName
               customerAddress: t.customerAddress,
-              customerPhone: "N/A",
+              customerPhone: t.customerPhone,
               total: 0,
               statuses: [
                 { status: "Pending", timestamp: t.timestamps.pending ? new Date(t.timestamps.pending).toLocaleString() : "N/A", durationMinutes: t.durations.pending?.minutes, durationSeconds: t.durations.pending?.seconds },

@@ -62,14 +62,11 @@ export function invalidateCustomerCache(
 }
 
 /**
- * Invalidate cache for menu-related queries.
+ * Invalidate menu cache
  * Use this when menu items or categories are modified.
  */
 export function invalidateMenuCache(utils: ReturnType<typeof trpc.useUtils>) {
-  utils.menu.categories.list.invalidate();
-  utils.menu.items.list.invalidate();
-
-  // Also invalidate order queries as they may contain menu item references
+  // Menu router removed - only invalidate order queries
   utils.orders.list.invalidate();
   utils.orders.getTodayOrdersWithItems.invalidate();
   utils.orders.getTodayOrdersForDriver.invalidate();

@@ -633,7 +633,7 @@ function ReservationsList({
                   onClick={() =>
                     updateStatusMutation.mutate({
                       id: reservation.id,
-                      status: "completed",
+                      status: "Confirmed",
                     })
                   }
                   disabled={updateStatusMutation.isPending}

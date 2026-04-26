@@ -29,7 +29,7 @@ export function ReceiptScannerTesseract() {
     phoneNumber: "",
     deliveryTime: "",
     enableDeliveryTime: false,
-    area: "DN", // Default to DN
+    area: "DN" as "DN" | "CP" | "B", // Default to DN
   });
 
   const createOrderMutation = trpc.orders.createFromReceipt.useMutation();
@@ -127,9 +127,9 @@ export function ReceiptScannerTesseract() {
     try {
       await createOrderMutation.mutateAsync({
         orderNumber: formData.orderNumber,
-        address: formData.address,
-        phoneNumber: formData.phoneNumber,
-        area: formData.area,
+        customerAddress: formData.address,
+        customerPhone: formData.phoneNumber,
+        area: formData.area as "DN" | "CP" | "B",
         deliveryTime: formData.enableDeliveryTime ? formData.deliveryTime : undefined,
         receiptText: extractedItems?.rawText || "",
         receiptImage: receiptImage || "",
@@ -245,7 +245,7 @@ export function ReceiptScannerTesseract() {
                     name="area"
                     value={areaOption}
                     checked={formData.area === areaOption}
-                    onChange={(e) => setFormData({ ...formData, area: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, area: e.target.value as "DN" | "CP" | "B" })}
                     className="w-4 h-4"
                   />
                   <span className="text-sm">{areaOption}</span>

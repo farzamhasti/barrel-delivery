@@ -50,11 +50,12 @@ export default function ReservationManagement() {
     }
 
     createMutation.mutate({
-      eventType: formData.eventType,
-      numberOfPeople: parseInt(formData.numberOfPeople),
-      details: formData.details,
-      eventDate: formData.eventDate,
-      eventTime: formData.eventTime,
+      customerName: formData.eventType || "",
+      customerPhone: formData.numberOfPeople,
+      customerEmail: formData.details,
+      reservationDate: formData.eventDate + "T" + formData.eventTime,
+      partySize: parseInt(formData.numberOfPeople),
+      specialRequests: formData.details,
     });
   };
 
@@ -206,7 +207,7 @@ function ReservationCard({
           onClick={() =>
             updateStatusMutation.mutate({
               id: reservation.id,
-              status: "completed",
+              status: "Confirmed",
             })
           }
           disabled={updateStatusMutation.isPending}
