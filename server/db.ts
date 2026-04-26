@@ -317,7 +317,7 @@ export async function getTodayOrdersWithItems() {
   const todayOrders = await db
     .select({
       id: orders.id,
-      customerId: orders.customerId,
+      orderNumber: orders.orderNumber,
       driverId: orders.driverId,
       status: orders.status,
       subtotal: orders.subtotal,
@@ -360,13 +360,6 @@ export async function getTodayOrdersWithItems() {
         taxPercentage: Number(order.taxPercentage),
         taxAmount: Number(order.taxAmount),
         totalPrice: Number(order.totalPrice),
-        customer: {
-          name: order.customerName,
-          phone: order.customerPhone,
-          address: order.customerAddress,
-          latitude: order.customerLatitude ? Number(order.customerLatitude) : null,
-          longitude: order.customerLongitude ? Number(order.customerLongitude) : null,
-        },
         items: items.map(item => ({
           ...item,
           priceAtOrder: Number(item.priceAtOrder),
@@ -1273,25 +1266,8 @@ export async function getReturnTime(driverId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  const result = await db.select().from(drivers).where(eq(drivers.id, driverId));
-  const driver = result[0];
-
-  if (!driver || !driver.returnTimeTotalSeconds || !driver.returnTimeStartTimestamp) {
-    return null;
-  }
-
-  const now = Date.now();
-  const startTime = new Date(driver.returnTimeStartTimestamp).getTime();
-  const elapsedSeconds = Math.floor((now - startTime) / 1000);
-  const remainingSeconds = Math.max(0, driver.returnTimeTotalSeconds - elapsedSeconds);
-
-  return {
-    driverId,
-    totalSeconds: driver.returnTimeTotalSeconds,
-    startTimestamp: driver.returnTimeStartTimestamp,
-    remainingSeconds,
-    isExpired: remainingSeconds <= 0,
-  };
+  // Return time tracking moved to returnTimeHistory table
+  return null;
 }
 
 export async function clearReturnTime(driverId: number, reason?: string) {
@@ -1301,21 +1277,13 @@ export async function clearReturnTime(driverId: number, reason?: string) {
   // Get current return time before clearing
   const current = await getReturnTime(driverId);
 
-  // Update driver to clear return time
-  await db.update(drivers).set({
-    returnTimeTotalSeconds: null,
-    returnTimeStartTimestamp: null,
-  }).where(eq(drivers.id, driverId));
+  // Return time tracking moved to returnTimeHistory table
 
   // Record in history
   if (current) {
     await db.insert(returnTimeHistory).values({
       driverId,
-      totalSeconds: current.totalSeconds,
-      startTimestamp: current.startTimestamp,
-      endTimestamp: new Date(),
-      action: 'cleared',
-      reason: reason || 'manual_clear',
+      estimatedReturnTime: new Date(),
     });
   }
 }

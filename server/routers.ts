@@ -117,49 +117,46 @@ export const appRouter = router({
   orders: router({
     createFromReceipt: publicProcedure
       .input(z.object({
-        checkNumber: z.string(),
-        area: z.string(),
+        orderNumber: z.string(),
+        customerAddress: z.string(),
+        customerPhone: z.string(),
+        area: z.enum(['DN', 'CP', 'B']),
         deliveryTime: z.string().optional(),
         hasDeliveryTime: z.boolean().default(false),
-        notes: z.string().optional(),
-        phoneNumber: z.string().optional(),
-        region: z.string().optional(),
+        receiptText: z.string().optional(),
+        receiptImage: z.string().optional(),
       }))
       .mutation(async ({ input }) => {
-        // Create order with check number reference - no items stored
-        // Use 0.01 as minimum price to ensure database accepts the value
-        
         // Convert time string (HH:MM format) to proper timestamp
         let deliveryTimeValue: Date | null = null;
         if (input.hasDeliveryTime && input.deliveryTime) {
-          // deliveryTime comes as "HH:MM" from time input
-          // Convert to today's date with that time
           const today = new Date();
           const [hours, minutes] = input.deliveryTime.split(':');
           today.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
           deliveryTimeValue = today;
         }
         
-        // Build order data, only including area if it has a value
+        // Build order data with new schema fields
         const orderData: any = {
-          customerId: 1,
-          subtotal: 0.01 as any,
-          taxPercentage: 13 as any,
-          taxAmount: 0 as any,
-          totalPrice: 0.01 as any,
-          notes: input.notes,
+          orderNumber: input.orderNumber,
+          customerAddress: input.customerAddress,
+          customerPhone: input.customerPhone,
+          area: input.area,
           deliveryTime: deliveryTimeValue,
           hasDeliveryTime: input.hasDeliveryTime,
+          receiptText: input.receiptText,
+          receiptImage: input.receiptImage,
+          status: 'Pending',
+          driverId: null,
+          subtotal: 0,
+          taxPercentage: 0,
+          taxAmount: 0,
+          totalPrice: 0,
         };
         
-        // Only include area if it's not empty
-        if (input.area && typeof input.area === 'string' && input.area.trim()) {
-          orderData.area = input.area.trim();
-        }
-        
-        console.log('[orders.create] Order data:', JSON.stringify(orderData, null, 2));
+        console.log('[orders.createFromReceipt] Order data:', JSON.stringify(orderData, null, 2));
         const order = await db.createOrder(orderData);
-        console.log('[orders.create] Order created successfully:', order)
+        console.log('[orders.createFromReceipt] Order created successfully:', order)
         
         return order;
       }),
