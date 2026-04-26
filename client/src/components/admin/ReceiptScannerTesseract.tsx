@@ -30,9 +30,47 @@ export function ReceiptScannerTesseract() {
     deliveryTime: "",
     enableDeliveryTime: false,
     area: "DN" as "DN" | "CP" | "B", // Default to DN
+    subtotal: "0",
+    tax: "0",
+    total: "0",
   });
 
   const createOrderMutation = trpc.orders.createFromReceipt.useMutation();
+
+  // Extract monetary amounts from receipt text
+  const extractAmounts = (text: string) => {
+    let subtotal = 0;
+    let tax = 0;
+    let total = 0;
+    
+    const lines = text.split("\n");
+    for (const line of lines) {
+      const trimmed = line.trim();
+      // Match total line (usually last)
+      if (trimmed.match(/^total[:\s]+\$?([\d.]+)/i)) {
+        const match = trimmed.match(/\$?([\d.]+)/);
+        if (match) total = parseFloat(match[1]);
+      }
+      // Match subtotal
+      if (trimmed.match(/^subtotal[:\s]+\$?([\d.]+)/i)) {
+        const match = trimmed.match(/\$?([\d.]+)/);
+        if (match) subtotal = parseFloat(match[1]);
+      }
+      // Match tax
+      if (trimmed.match(/^tax[:\s]+\$?([\d.]+)/i)) {
+        const match = trimmed.match(/\$?([\d.]+)/);
+        if (match) tax = parseFloat(match[1]);
+      }
+    }
+    
+    // If we only have total, estimate subtotal and tax
+    if (total > 0 && subtotal === 0) {
+      subtotal = total * 0.88; // Assume 12% tax
+      tax = total - subtotal;
+    }
+    
+    return { subtotal, tax, total };
+  };
 
   // Extract food/drink items from receipt text
   const extractItems = (text: string): string[] => {
@@ -79,11 +117,20 @@ export function ReceiptScannerTesseract() {
 
         const text = result.data.text;
         const items = extractItems(text);
+        const amounts = extractAmounts(text);
         
         setExtractedItems({
           items,
           rawText: text,
         });
+        
+        // Auto-populate amounts in form
+        setFormData(prev => ({
+          ...prev,
+          subtotal: amounts.subtotal.toFixed(2),
+          tax: amounts.tax.toFixed(2),
+          total: amounts.total.toFixed(2),
+        }));
         
         setLoading(false);
       };
@@ -146,7 +193,10 @@ export function ReceiptScannerTesseract() {
           phoneNumber: "",
           deliveryTime: "",
           enableDeliveryTime: false,
-          area: "DN",
+          area: "DN" as "DN" | "CP" | "B",
+          subtotal: "0",
+          tax: "0",
+          total: "0",
         });
         setReceiptImage(null);
         setExtractedItems(null);

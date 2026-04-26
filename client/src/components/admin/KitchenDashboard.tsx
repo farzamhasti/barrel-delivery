@@ -193,19 +193,14 @@ export default function KitchenDashboard() {
             <Clock className="w-3 h-3" />
             <span className="font-semibold">{deliveryTime}</span>
           </div>
-          {order.total && (
+          {order.totalPrice && (
             <div className="text-lg font-bold text-green-600 bg-green-50 px-2 py-1 rounded">
-              ${order.total.toFixed(2)}
+              ${parseFloat(order.totalPrice).toFixed(2)}
             </div>
           )}
         </div>
 
-        {/* Notes (if exists) */}
-        {order.notes && (
-          <div className="mb-3 p-2 bg-white/50 rounded text-xs text-muted-foreground line-clamp-2">
-            📝 {order.notes}
-          </div>
-        )}
+        {/* Notes field removed from new schema */}
 
         {/* Mark Ready Button */}
         <Button
