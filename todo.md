@@ -2439,3 +2439,11 @@
 - [x] Fix zero values for subtotal, tax_percentage, tax_amount, total_price in createFromReceipt mutation
 - [x] Use proper default values that satisfy database constraints
 - [x] Test order submission with receipt scanner
+
+
+## Database Schema Simplification - Receipt Scanner
+- [x] Keep pricing fields in database (unused for receipt scanner orders)
+- [x] Update createFromReceipt mutation to accept: check_number, address, phone_number, area, delivery_time, has_delivery_time
+- [x] Update receipt scanner UI to show: check number (extracted), 4 manual input fields (address, phone, area, delivery time)
+- [x] Simplify receipt display to show only essential information
+- [x] Test order creation and display with new schema
