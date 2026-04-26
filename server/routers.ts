@@ -251,6 +251,21 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         // Create order with check number reference - no items stored
         // Use 0.01 as minimum price to ensure database accepts the value
+        
+        // Convert time string (HH:MM format) to proper timestamp
+        let deliveryTimeValue: Date | null = null;
+        if (input.hasDeliveryTime && input.deliveryTime) {
+          // deliveryTime comes as "HH:MM" from time input
+          // Convert to today's date with that time
+          const today = new Date();
+          const [hours, minutes] = input.deliveryTime.split(':');
+          today.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
+          deliveryTimeValue = today;
+        }
+        
+        // Ensure area is null if empty or whitespace
+        const areaValue = input.area && typeof input.area === 'string' && input.area.trim() ? input.area.trim() : null;
+        
         const order = await db.createOrder({
           customerId: 1,
           subtotal: 0.01 as any,
@@ -258,8 +273,8 @@ export const appRouter = router({
           taxAmount: 0 as any,
           totalPrice: 0.01 as any,
           notes: input.notes,
-          area: input.area && typeof input.area === 'string' && input.area.trim() ? input.area.trim() : null,
-          deliveryTime: input.hasDeliveryTime && input.deliveryTime ? new Date(input.deliveryTime) : null,
+          area: areaValue,
+          deliveryTime: deliveryTimeValue,
           hasDeliveryTime: input.hasDeliveryTime,
         })
         
