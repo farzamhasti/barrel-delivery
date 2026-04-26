@@ -248,8 +248,7 @@ export async function getOrderWithItems(orderId: number) {
     taxPercentage: Number(orderData.taxPercentage),
     taxAmount: Number(orderData.taxAmount),
     totalPrice: Number(orderData.totalPrice),
-    customerLatitude: orderData.customerLatitude ? Number(orderData.customerLatitude) : null,
-    customerLongitude: orderData.customerLongitude ? Number(orderData.customerLongitude) : null,
+    // Coordinates not stored in new simplified schema
     items: items.map(item => ({
       ...item,
       priceAtOrder: Number(item.priceAtOrder),
@@ -322,7 +321,6 @@ export async function getTodayOrdersWithItems() {
       taxPercentage: orders.taxPercentage,
       taxAmount: orders.taxAmount,
       totalPrice: orders.totalPrice,
-      notes: orders.notes,
       area: orders.area,
       deliveryTime: orders.deliveryTime,
       hasDeliveryTime: orders.hasDeliveryTime,
