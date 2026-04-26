@@ -2451,5 +2451,5 @@
 
 ## Bug Fix: Receipt Scanner Order Submission Errors
 - [x] Fix invalid time value error - convert time input to proper timestamp format
-- [x] Fix area field database insertion error - ensure proper null handling
+- [x] Fix area field database insertion error - conditionally include area only if non-empty
 - [x] Test order submission with all field combinations
