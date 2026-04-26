@@ -1,87 +1,39 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Loader2, Upload, Camera, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
-import { useState, useRef } from "react";
+import { useState } from "react";
 
 export function ReceiptScannerTesseract() {
-  const [receiptImage, setReceiptImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
 
-  // Form state - manual data entry only
+  // Form state - minimal required fields
   const [formData, setFormData] = useState({
     checkNumber: "",
     address: "",
     phoneNumber: "",
     deliveryTime: "",
     enableDeliveryTime: false,
-    area: "DN" as "DN" | "CP" | "B", // Default to DN
+    area: "DN" as "DN" | "CP" | "B",
   });
 
   const createOrderMutation = trpc.orders.createFromReceipt.useMutation();
 
-  const handleFileSelect = async (file: File) => {
-    if (!file.type.startsWith("image/")) {
-      setError("Please select an image file");
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const imageData = e.target?.result as string;
-        setReceiptImage(imageData);
-        setLoading(false);
-        toast.success("Receipt image selected. Please enter order details.");
-      };
-      reader.readAsDataURL(file);
-    } catch (err) {
-      setError("Failed to load receipt image. Please try again.");
-      setLoading(false);
-    }
-  };
-
-  const handleUpload = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleCamera = () => {
-    cameraInputRef.current?.click();
-  };
-
-  const handleRescan = () => {
-    setReceiptImage(null);
-    setError(null);
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validation
+    // Validation - only check number and address are required
     if (!formData.checkNumber.trim()) {
       setError("Check Number is required");
       return;
     }
     if (!formData.address.trim()) {
       setError("Address is required");
-      return;
-    }
-    if (!formData.phoneNumber.trim()) {
-      setError("Phone Number is required");
-      return;
-    }
-    if (!receiptImage) {
-      setError("Receipt image is required");
       return;
     }
 
@@ -92,15 +44,15 @@ export function ReceiptScannerTesseract() {
       await createOrderMutation.mutateAsync({
         orderNumber: formData.checkNumber,
         customerAddress: formData.address,
-        customerPhone: formData.phoneNumber,
+        customerPhone: formData.phoneNumber || "", // Optional - can be empty
         area: formData.area as "DN" | "CP" | "B",
         deliveryTime: formData.enableDeliveryTime ? formData.deliveryTime : undefined,
         receiptText: "",
-        receiptImage: receiptImage || "",
+        receiptImage: "", // No image upload required
       });
 
       setSubmitSuccess(true);
-      toast.success("Order submitted successfully!");
+      toast.success("Order created successfully!");
       
       // Reset form after 2 seconds
       setTimeout(() => {
@@ -112,11 +64,10 @@ export function ReceiptScannerTesseract() {
           enableDeliveryTime: false,
           area: "DN" as "DN" | "CP" | "B",
         });
-        setReceiptImage(null);
         setSubmitSuccess(false);
       }, 2000);
     } catch (err: any) {
-      setError(err.message || "Failed to submit order");
+      setError(err.message || "Failed to create order");
     } finally {
       setSubmitting(false);
     }
@@ -130,7 +81,7 @@ export function ReceiptScannerTesseract() {
         {submitSuccess && (
           <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2 text-green-700">
             <CheckCircle2 className="w-5 h-5" />
-            <span>Order submitted successfully!</span>
+            <span>Order created successfully!</span>
           </div>
         )}
 
@@ -142,71 +93,11 @@ export function ReceiptScannerTesseract() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Receipt Image Upload */}
+          {/* Check Number - REQUIRED */}
           <div>
-            <label className="block text-sm font-medium mb-2">Receipt Image</label>
-            
-            {!receiptImage ? (
-              <div className="space-y-3">
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleUpload}
-                    disabled={loading}
-                    className="flex-1"
-                  >
-                    {loading ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Loading...
-                      </>
-                    ) : (
-                      <>
-                        <Upload className="w-4 h-4 mr-2" />
-                        Upload Photo
-                      </>
-                    )}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleCamera}
-                    disabled={loading}
-                    className="flex-1"
-                  >
-                    <Camera className="w-4 h-4 mr-2" />
-                    Take Photo
-                  </Button>
-                </div>
-                <p className="text-xs text-gray-500">
-                  Upload or photograph the receipt for reference
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <div className="relative bg-gray-100 rounded-lg overflow-hidden">
-                  <img
-                    src={receiptImage}
-                    alt="Receipt preview"
-                    className="w-full h-auto max-h-64 object-contain"
-                  />
-                </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleRescan}
-                  className="w-full"
-                >
-                  Change Receipt Image
-                </Button>
-              </div>
-            )}
-          </div>
-
-          {/* Check Number */}
-          <div>
-            <label className="block text-sm font-medium mb-2">Check Number *</label>
+            <label className="block text-sm font-medium mb-2">
+              Check Number <span className="text-red-500">*</span>
+            </label>
             <Input
               type="text"
               placeholder="Enter check number from receipt"
@@ -216,9 +107,11 @@ export function ReceiptScannerTesseract() {
             />
           </div>
 
-          {/* Address */}
+          {/* Address - REQUIRED */}
           <div>
-            <label className="block text-sm font-medium mb-2">Delivery Address *</label>
+            <label className="block text-sm font-medium mb-2">
+              Delivery Address <span className="text-red-500">*</span>
+            </label>
             <Input
               type="text"
               placeholder="Enter delivery address"
@@ -228,21 +121,22 @@ export function ReceiptScannerTesseract() {
             />
           </div>
 
-          {/* Phone Number */}
+          {/* Phone Number - OPTIONAL */}
           <div>
-            <label className="block text-sm font-medium mb-2">Phone Number *</label>
+            <label className="block text-sm font-medium mb-2">Phone Number (Optional)</label>
             <Input
               type="tel"
-              placeholder="Enter phone number"
+              placeholder="Enter phone number (optional)"
               value={formData.phoneNumber}
               onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
-              required
             />
           </div>
 
-          {/* Area - Radio Buttons */}
+          {/* Area - OPTIONAL */}
           <div>
-            <label className="block text-sm font-medium mb-2">Area *</label>
+            <label className="block text-sm font-medium mb-2">
+              Area (Optional)
+            </label>
             <div className="flex gap-6">
               {["DN", "CP", "B"].map((areaOption) => (
                 <label key={areaOption} className="flex items-center gap-2">
@@ -260,7 +154,7 @@ export function ReceiptScannerTesseract() {
             </div>
           </div>
 
-          {/* Delivery Time */}
+          {/* Delivery Time - OPTIONAL */}
           <div>
             <label className="flex items-center gap-2 text-sm font-medium mb-2">
               <input
@@ -283,7 +177,7 @@ export function ReceiptScannerTesseract() {
           {/* Submit Button */}
           <Button
             type="submit"
-            disabled={submitting || !receiptImage}
+            disabled={submitting}
             className="w-full"
           >
             {submitting ? (
@@ -296,6 +190,10 @@ export function ReceiptScannerTesseract() {
             )}
           </Button>
         </form>
+
+        <p className="text-xs text-muted-foreground mt-4 text-center">
+          Required fields: Check Number, Address
+        </p>
       </Card>
     </div>
   );

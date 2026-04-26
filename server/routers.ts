@@ -120,8 +120,8 @@ export const appRouter = router({
       .input(z.object({
         orderNumber: z.string(),
         customerAddress: z.string(),
-        customerPhone: z.string(),
-        area: z.enum(['DN', 'CP', 'B']),
+        customerPhone: z.string().optional(),
+        area: z.enum(['DN', 'CP', 'B']).optional(),
         deliveryTime: z.string().optional(),
         hasDeliveryTime: z.boolean().default(false),
         receiptText: z.string().optional(),
