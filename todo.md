@@ -2339,3 +2339,16 @@
 - [x] Handle error cases with retry functionality
 - [x] Test receipt scanning with actual Aloha receipt images
 - [x] Verify orders created from receipts work with all existing features
+
+
+## Aloha Receipt Scanner - Extract Delivery Address and Phone Number
+- [x] Update Claude API extraction prompt to extract deliveryAddress and phoneNumber fields
+- [x] Update ExtractedOrderData interface to include deliveryAddress and phoneNumber
+- [x] Add deliveryAddress and phoneNumber to the confirmation form as editable fields
+- [x] Ensure deliveryAddress is required before order submission
+- [x] Ensure phoneNumber is optional
+- [x] Update orders.create mutation to accept and store deliveryAddress and phoneNumber
+- [x] Verify delivery address flows to Order Tracking tab for driver navigation
+- [x] Verify phone number is visible in Order Tracking tab
+- [x] Test "Deliver with Map" button works with extracted delivery address
+- [x] Fix database insertion error with empty deliveryTime field

@@ -274,6 +274,12 @@ export default function DriverDashboard() {
   // Filter orders by status
   const onTheWayOrders = assignedOrders.filter((order: any) => order.status !== "Delivered");
   const deliveredOrders = assignedOrders.filter((order: any) => order.status === "Delivered");
+  
+  // Map area field to customerAddress for Google Maps navigation
+  const ordersForMap = onTheWayOrders.map((order: any) => ({
+    ...order,
+    customerAddress: order.area || order.customer?.address,
+  }));
 
   // Driver Dashboard
   return (
@@ -366,7 +372,7 @@ export default function DriverDashboard() {
                   {calculateReturnTimeMutation.isPending ? "Calculating..." : "Calculate Return Time"}
                 </Button>
                 <Button
-                  onClick={() => openDeliveryMap(onTheWayOrders)}
+                  onClick={() => openDeliveryMap(ordersForMap)}
                   disabled={onTheWayOrders.length === 0}
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                 >

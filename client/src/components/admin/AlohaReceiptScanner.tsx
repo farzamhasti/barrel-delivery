@@ -13,6 +13,8 @@ interface ExtractedOrderData {
   server: string | null;
   date: string | null;
   time: string | null;
+  deliveryAddress: string | null;
+  phoneNumber: string | null;
   items: Array<{
     name: string;
     quantity: number;
@@ -134,6 +136,11 @@ export function AlohaReceiptScanner() {
   const handleSubmitOrder = async () => {
     if (!editedData) return;
 
+    if (!editedData.deliveryAddress || editedData.deliveryAddress.trim() === "") {
+      toast.error("Delivery address is required");
+      return;
+    }
+
     try {
       setSubmitting(true);
 
@@ -148,7 +155,8 @@ export function AlohaReceiptScanner() {
         taxAmount,
         totalPrice,
         taxPercentage,
-        notes: `Aloha Check: ${editedData.checkNumber || "Unknown"}\nServer: ${editedData.server || "Unknown"}\nTable: ${editedData.table || "Unknown"}\nGuests: ${editedData.guests || 1}\n\nItems from receipt:\n${editedData.items.map((i) => `- ${i.name} (x${i.quantity})${i.notes ? ` - ${i.notes}` : ""}`).join("\n")}`,
+        area: editedData.deliveryAddress,
+        notes: `Aloha Check: ${editedData.checkNumber || "Unknown"}\nServer: ${editedData.server || "Unknown"}\nTable: ${editedData.table || "Unknown"}\nGuests: ${editedData.guests || 1}\nPhone: ${editedData.phoneNumber || "Unknown"}\n\nItems from receipt:\n${editedData.items.map((i) => `- ${i.name} (x${i.quantity})${i.notes ? ` - ${i.notes}` : ""}`).join("\n")}`,
         items: editedData.items.map((item) => ({
           menuItemId: 1,
           quantity: item.quantity,
@@ -315,6 +323,25 @@ export function AlohaReceiptScanner() {
               </div>
             </div>
 
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium">Delivery Address <span className="text-red-500">*</span></label>
+                <Input
+                  value={editedData.deliveryAddress ?? ""}
+                  onChange={(e) => setEditedData({ ...editedData, deliveryAddress: e.target.value })}
+                  placeholder="Enter delivery address"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Phone Number</label>
+                <Input
+                  value={editedData.phoneNumber ?? ""}
+                  onChange={(e) => setEditedData({ ...editedData, phoneNumber: e.target.value })}
+                  placeholder="Enter phone number (optional)"
+                />
+              </div>
+            </div>
+
             <div>
               <div className="flex items-center justify-between mb-4">
                 <label className="text-sm font-medium">Order Items</label>
@@ -373,7 +400,7 @@ export function AlohaReceiptScanner() {
               <Button
                 onClick={handleSubmitOrder}
                 className="flex-1 bg-green-600 hover:bg-green-700"
-                disabled={submitting || editedData.items.length === 0}
+                disabled={submitting || editedData.items.length === 0 || !editedData.deliveryAddress || editedData.deliveryAddress.trim() === ""}
               >
                 {submitting ? (
                   <>
