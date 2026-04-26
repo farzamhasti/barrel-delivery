@@ -5,6 +5,7 @@ import { publicProcedure, protectedProcedure, router, systemAdminProcedure, admi
 import { z } from "zod";
 import * as db from "./db";
 import { geocodeAddress, reverseGeocodeCoordinates, calculateDistance, isValidCoordinates } from "./geocoding";
+import { processReceiptImage } from "./_core/imageEnhancement";
 // Driver router removed - using simplified tracking model
 
 export const appRouter = router({
@@ -136,6 +137,26 @@ export const appRouter = router({
           deliveryTimeValue = today;
         }
         
+        // Process receipt image if provided
+        let processedReceiptImage = input.receiptImage;
+        if (input.receiptImage) {
+          try {
+            // Convert base64 to buffer
+            const base64Data = input.receiptImage.replace(/^data:image\/[a-z]+;base64,/, '');
+            const imageBuffer = Buffer.from(base64Data, 'base64');
+            
+            // Process the image (enhance quality)
+            const enhancedBuffer = await processReceiptImage(imageBuffer);
+            
+            // Convert back to base64
+            processedReceiptImage = 'data:image/jpeg;base64,' + enhancedBuffer.toString('base64');
+            console.log('[orders.createFromReceipt] Receipt image processed successfully');
+          } catch (error) {
+            console.error('[orders.createFromReceipt] Error processing receipt image:', error);
+            // Continue with original image if processing fails
+          }
+        }
+        
         // Build order data with new schema fields
         const orderData: any = {
           orderNumber: input.orderNumber,
@@ -145,7 +166,7 @@ export const appRouter = router({
           deliveryTime: deliveryTimeValue,
           hasDeliveryTime: input.hasDeliveryTime,
           receiptText: input.receiptText,
-          receiptImage: input.receiptImage,
+          receiptImage: processedReceiptImage,
           status: 'Pending',
           driverId: null,
           subtotal: 0,

@@ -582,6 +582,10 @@ export async function createOrder(data: InsertOrder) {
     orderData.area = data.area.trim();
   }
   
+  // Store receipt image and text as-is
+  if (data.receiptImage) orderData.receiptImage = data.receiptImage;
+  if (data.receiptText) orderData.receiptText = data.receiptText;
+  
   let result;
   try {
     result = await db.insert(orders).values(orderData as any);

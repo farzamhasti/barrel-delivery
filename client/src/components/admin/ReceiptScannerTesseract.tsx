@@ -2,19 +2,12 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Loader2, Upload, Camera, AlertCircle, CheckCircle2 } from "lucide-react";
-import Tesseract from "tesseract.js";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { useState, useRef } from "react";
 
-interface ExtractedItems {
-  items: string[];
-  rawText: string;
-}
-
 export function ReceiptScannerTesseract() {
   const [receiptImage, setReceiptImage] = useState<string | null>(null);
-  const [extractedItems, setExtractedItems] = useState<ExtractedItems | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -22,78 +15,17 @@ export function ReceiptScannerTesseract() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
-  // Form state - exactly as specified
+  // Form state - manual data entry only
   const [formData, setFormData] = useState({
-    orderNumber: "",
+    checkNumber: "",
     address: "",
     phoneNumber: "",
     deliveryTime: "",
     enableDeliveryTime: false,
     area: "DN" as "DN" | "CP" | "B", // Default to DN
-    subtotal: "0",
-    tax: "0",
-    total: "0",
   });
 
   const createOrderMutation = trpc.orders.createFromReceipt.useMutation();
-
-  // Extract monetary amounts from receipt text
-  const extractAmounts = (text: string) => {
-    let subtotal = 0;
-    let tax = 0;
-    let total = 0;
-    
-    const lines = text.split("\n");
-    for (const line of lines) {
-      const trimmed = line.trim();
-      // Match total line (usually last)
-      if (trimmed.match(/^total[:\s]+\$?([\d.]+)/i)) {
-        const match = trimmed.match(/\$?([\d.]+)/);
-        if (match) total = parseFloat(match[1]);
-      }
-      // Match subtotal
-      if (trimmed.match(/^subtotal[:\s]+\$?([\d.]+)/i)) {
-        const match = trimmed.match(/\$?([\d.]+)/);
-        if (match) subtotal = parseFloat(match[1]);
-      }
-      // Match tax
-      if (trimmed.match(/^tax[:\s]+\$?([\d.]+)/i)) {
-        const match = trimmed.match(/\$?([\d.]+)/);
-        if (match) tax = parseFloat(match[1]);
-      }
-    }
-    
-    // If we only have total, estimate subtotal and tax
-    if (total > 0 && subtotal === 0) {
-      subtotal = total * 0.88; // Assume 12% tax
-      tax = total - subtotal;
-    }
-    
-    return { subtotal, tax, total };
-  };
-
-  // Extract food/drink items from receipt text
-  const extractItems = (text: string): string[] => {
-    const lines = text.split("\n");
-    const items: string[] = [];
-    
-    for (const line of lines) {
-      const trimmed = line.trim();
-      // Look for lines with quantities and item names
-      // Pattern: number + item name (with optional modifiers in parentheses)
-      const match = trimmed.match(/^(\d+)\s*x?\s*(.+?)(?:\s*\(.*?\))?$/i);
-      if (match) {
-        const quantity = match[1];
-        const itemName = match[2].trim();
-        // Filter out common non-item lines
-        if (itemName.length > 2 && !itemName.match(/^(subtotal|tax|total|amount|check|date|time)/i)) {
-          items.push(`${itemName} x${quantity}`);
-        }
-      }
-    }
-    
-    return items.length > 0 ? items : [];
-  };
 
   const handleFileSelect = async (file: File) => {
     if (!file.type.startsWith("image/")) {
@@ -109,34 +41,12 @@ export function ReceiptScannerTesseract() {
       reader.onload = async (e) => {
         const imageData = e.target?.result as string;
         setReceiptImage(imageData);
-
-        // Run OCR
-        const result = await Tesseract.recognize(imageData, "eng", {
-          logger: (m) => console.log("OCR Progress:", m),
-        });
-
-        const text = result.data.text;
-        const items = extractItems(text);
-        const amounts = extractAmounts(text);
-        
-        setExtractedItems({
-          items,
-          rawText: text,
-        });
-        
-        // Auto-populate amounts in form
-        setFormData(prev => ({
-          ...prev,
-          subtotal: amounts.subtotal.toFixed(2),
-          tax: amounts.tax.toFixed(2),
-          total: amounts.total.toFixed(2),
-        }));
-        
         setLoading(false);
+        toast.success("Receipt image selected. Please enter order details.");
       };
       reader.readAsDataURL(file);
     } catch (err) {
-      setError("Failed to scan receipt. Please try again.");
+      setError("Failed to load receipt image. Please try again.");
       setLoading(false);
     }
   };
@@ -151,7 +61,6 @@ export function ReceiptScannerTesseract() {
 
   const handleRescan = () => {
     setReceiptImage(null);
-    setExtractedItems(null);
     setError(null);
   };
 
@@ -159,12 +68,20 @@ export function ReceiptScannerTesseract() {
     e.preventDefault();
 
     // Validation
-    if (!formData.orderNumber.trim()) {
-      setError("Order Number is required");
+    if (!formData.checkNumber.trim()) {
+      setError("Check Number is required");
       return;
     }
     if (!formData.address.trim()) {
       setError("Address is required");
+      return;
+    }
+    if (!formData.phoneNumber.trim()) {
+      setError("Phone Number is required");
+      return;
+    }
+    if (!receiptImage) {
+      setError("Receipt image is required");
       return;
     }
 
@@ -173,12 +90,12 @@ export function ReceiptScannerTesseract() {
 
     try {
       await createOrderMutation.mutateAsync({
-        orderNumber: formData.orderNumber,
+        orderNumber: formData.checkNumber,
         customerAddress: formData.address,
         customerPhone: formData.phoneNumber,
         area: formData.area as "DN" | "CP" | "B",
         deliveryTime: formData.enableDeliveryTime ? formData.deliveryTime : undefined,
-        receiptText: extractedItems?.rawText || "",
+        receiptText: "",
         receiptImage: receiptImage || "",
       });
 
@@ -188,18 +105,14 @@ export function ReceiptScannerTesseract() {
       // Reset form after 2 seconds
       setTimeout(() => {
         setFormData({
-          orderNumber: "",
+          checkNumber: "",
           address: "",
           phoneNumber: "",
           deliveryTime: "",
           enableDeliveryTime: false,
           area: "DN" as "DN" | "CP" | "B",
-          subtotal: "0",
-          tax: "0",
-          total: "0",
         });
         setReceiptImage(null);
-        setExtractedItems(null);
         setSubmitSuccess(false);
       }, 2000);
     } catch (err: any) {
@@ -212,7 +125,7 @@ export function ReceiptScannerTesseract() {
   return (
     <div className="w-full max-w-2xl mx-auto">
       <Card className="p-6">
-        <h2 className="text-2xl font-bold mb-6">New Order</h2>
+        <h2 className="text-2xl font-bold mb-6">New Order from Receipt</h2>
 
         {submitSuccess && (
           <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2 text-green-700">
@@ -229,21 +142,83 @@ export function ReceiptScannerTesseract() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Order Number */}
+          {/* Receipt Image Upload */}
           <div>
-            <label className="block text-sm font-medium mb-2">Order Number</label>
+            <label className="block text-sm font-medium mb-2">Receipt Image</label>
+            
+            {!receiptImage ? (
+              <div className="space-y-3">
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleUpload}
+                    disabled={loading}
+                    className="flex-1"
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Loading...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="w-4 h-4 mr-2" />
+                        Upload Photo
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleCamera}
+                    disabled={loading}
+                    className="flex-1"
+                  >
+                    <Camera className="w-4 h-4 mr-2" />
+                    Take Photo
+                  </Button>
+                </div>
+                <p className="text-xs text-gray-500">
+                  Upload or photograph the receipt for reference
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="relative bg-gray-100 rounded-lg overflow-hidden">
+                  <img
+                    src={receiptImage}
+                    alt="Receipt preview"
+                    className="w-full h-auto max-h-64 object-contain"
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleRescan}
+                  className="w-full"
+                >
+                  Change Receipt Image
+                </Button>
+              </div>
+            )}
+          </div>
+
+          {/* Check Number */}
+          <div>
+            <label className="block text-sm font-medium mb-2">Check Number *</label>
             <Input
               type="text"
-              placeholder="Enter order number"
-              value={formData.orderNumber}
-              onChange={(e) => setFormData({ ...formData, orderNumber: e.target.value })}
+              placeholder="Enter check number from receipt"
+              value={formData.checkNumber}
+              onChange={(e) => setFormData({ ...formData, checkNumber: e.target.value })}
               required
             />
           </div>
 
           {/* Address */}
           <div>
-            <label className="block text-sm font-medium mb-2">Address</label>
+            <label className="block text-sm font-medium mb-2">Delivery Address *</label>
             <Input
               type="text"
               placeholder="Enter delivery address"
@@ -255,38 +230,19 @@ export function ReceiptScannerTesseract() {
 
           {/* Phone Number */}
           <div>
-            <label className="block text-sm font-medium mb-2">Phone Number</label>
+            <label className="block text-sm font-medium mb-2">Phone Number *</label>
             <Input
               type="tel"
               placeholder="Enter phone number"
               value={formData.phoneNumber}
               onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+              required
             />
-          </div>
-
-          {/* Delivery Time */}
-          <div>
-            <label className="flex items-center gap-2 text-sm font-medium mb-2">
-              <input
-                type="checkbox"
-                checked={formData.enableDeliveryTime}
-                onChange={(e) => setFormData({ ...formData, enableDeliveryTime: e.target.checked })}
-                className="w-4 h-4"
-              />
-              Delivery Time
-            </label>
-            {formData.enableDeliveryTime && (
-              <Input
-                type="time"
-                value={formData.deliveryTime}
-                onChange={(e) => setFormData({ ...formData, deliveryTime: e.target.value })}
-              />
-            )}
           </div>
 
           {/* Area - Radio Buttons */}
           <div>
-            <label className="block text-sm font-medium mb-2">Area</label>
+            <label className="block text-sm font-medium mb-2">Area *</label>
             <div className="flex gap-6">
               {["DN", "CP", "B"].map((areaOption) => (
                 <label key={areaOption} className="flex items-center gap-2">
@@ -304,109 +260,39 @@ export function ReceiptScannerTesseract() {
             </div>
           </div>
 
-          {/* Receipt Scan */}
+          {/* Delivery Time */}
           <div>
-            <label className="block text-sm font-medium mb-2">Receipt Scan</label>
-            
-            {!extractedItems ? (
-              <div className="space-y-3">
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleUpload}
-                    disabled={loading}
-                    className="flex-1"
-                  >
-                    {loading ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Scanning...
-                      </>
-                    ) : (
-                      <>
-                        <Upload className="w-4 h-4 mr-2" />
-                        Upload Photo
-                      </>
-                    )}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleCamera}
-                    disabled={loading}
-                    className="flex-1"
-                  >
-                    {loading ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Scanning...
-                      </>
-                    ) : (
-                      <>
-                        <Camera className="w-4 h-4 mr-2" />
-                        Take Photo
-                      </>
-                    )}
-                  </Button>
-                </div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0])}
-                  className="hidden"
-                />
-                <input
-                  ref={cameraInputRef}
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0])}
-                  className="hidden"
-                />
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h4 className="font-medium text-sm mb-2">Extracted Items:</h4>
-                  <ul className="space-y-1">
-                    {extractedItems.items.length > 0 ? (
-                      extractedItems.items.map((item, idx) => (
-                        <li key={idx} className="text-sm text-gray-700">
-                          - {item}
-                        </li>
-                      ))
-                    ) : (
-                      <li className="text-sm text-gray-500">No items extracted</li>
-                    )}
-                  </ul>
-                </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleRescan}
-                  className="w-full"
-                >
-                  Rescan
-                </Button>
-              </div>
+            <label className="flex items-center gap-2 text-sm font-medium mb-2">
+              <input
+                type="checkbox"
+                checked={formData.enableDeliveryTime}
+                onChange={(e) => setFormData({ ...formData, enableDeliveryTime: e.target.checked })}
+                className="w-4 h-4"
+              />
+              Set Delivery Time (Optional)
+            </label>
+            {formData.enableDeliveryTime && (
+              <Input
+                type="datetime-local"
+                value={formData.deliveryTime}
+                onChange={(e) => setFormData({ ...formData, deliveryTime: e.target.value })}
+              />
             )}
           </div>
 
           {/* Submit Button */}
           <Button
             type="submit"
-            disabled={submitting}
+            disabled={submitting || !receiptImage}
             className="w-full"
           >
             {submitting ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Submitting...
+                Creating Order...
               </>
             ) : (
-              "Submit Order"
+              "Create Order"
             )}
           </Button>
         </form>

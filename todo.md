@@ -58,3 +58,16 @@
 - [ ] Rebuild Driver Dashboard (future enhancement - currently disabled)
 - [ ] Implement PDF export with logo branding (CSV export functional)
 - [ ] Additional performance optimizations (optional)
+
+
+## Phase 7: Receipt Processing Workflow Update (NEW REQUIREMENT)
+- [x] Remove Tesseract OCR from ReceiptScannerTesseract component (replaced with manual data entry)
+- [x] Add image enhancement pipeline (imageEnhancement.ts created with sharp)
+- [x] Update order form to manual data entry only (address, phone, delivery time, check number, zone)
+- [x] Implement receipt image upload (ReceiptScannerTesseract updated)
+- [x] Store original and enhanced receipt images (image enhancement integrated in createFromReceipt)
+- [x] Update order creation response with image URLs (enhanced image stored in receiptImage field)
+- [ ] Update Kitchen Dashboard to display receipt as visual card (needs UI update)
+- [ ] Update Order Tracking to display receipt image (needs UI update)
+- [ ] Test receipt image enhancement quality (manual testing)
+- [ ] Test end-to-end order creation with receipt image (manual testing)
