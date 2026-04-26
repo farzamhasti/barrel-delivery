@@ -305,10 +305,10 @@ export const appRouter = router({
           taxAmount: input.taxAmount as any,
           totalPrice: input.totalPrice as any,
           notes: input.notes,
-          area: input.area,
+          area: input.area && typeof input.area === 'string' && input.area.trim() ? input.area.trim() : null,
           deliveryTime: input.hasDeliveryTime ? input.deliveryTime : null,
           hasDeliveryTime: input.hasDeliveryTime,
-        });
+        })
         
         // Create order items
         // Extract orderId from the order object

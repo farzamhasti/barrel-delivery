@@ -2360,3 +2360,5 @@
 - [x] Verify manual order creation works without delivery address
 - [x] Test order submission with and without delivery address
 - [x] Add explicit null conversion for Drizzle ORM workaround
+- [x] Add router-level null conversion for area field
+- [x] Simplify area field handling logic

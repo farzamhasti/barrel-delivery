@@ -720,6 +720,8 @@ export async function createOrder(data: InsertOrder) {
   
   // Ensure numeric values are properly formatted for Decimal columns
   // Ensure deliveryTime and area are explicitly null if not provided or empty
+  const cleanArea = typeof data.area === 'string' && data.area.trim() ? data.area.trim() : null;
+  
   const orderData = {
     ...data,
     subtotal: data.subtotal ? String(data.subtotal) : "0",
@@ -727,12 +729,7 @@ export async function createOrder(data: InsertOrder) {
     taxAmount: data.taxAmount ? String(data.taxAmount) : "0",
     totalPrice: data.totalPrice ? String(data.totalPrice) : "0",
     deliveryTime: data.deliveryTime || null,
-    area: typeof data.area === 'string' && data.area.trim() ? data.area.trim() : null,
-  };
-  
-  // Ensure area is explicitly null if it's an empty string (Drizzle workaround)
-  if (!orderData.area || (typeof orderData.area === 'string' && !orderData.area.trim())) {
-    orderData.area = null as any;
+    area: cleanArea,
   }
   
   const result = await db.insert(orders).values(orderData as any);
