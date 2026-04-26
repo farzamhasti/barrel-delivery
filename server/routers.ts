@@ -250,12 +250,13 @@ export const appRouter = router({
       }))
       .mutation(async ({ input }) => {
         // Create order with check number reference - no items stored
+        // Use 0.01 as minimum price to ensure database accepts the value
         const order = await db.createOrder({
           customerId: 1,
-          subtotal: 0 as any,
+          subtotal: 0.01 as any,
           taxPercentage: 13 as any,
           taxAmount: 0 as any,
-          totalPrice: 0 as any,
+          totalPrice: 0.01 as any,
           notes: input.notes,
           area: input.area && typeof input.area === 'string' && input.area.trim() ? input.area.trim() : null,
           deliveryTime: input.hasDeliveryTime && input.deliveryTime ? new Date(input.deliveryTime) : null,

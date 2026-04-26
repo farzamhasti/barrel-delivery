@@ -2433,3 +2433,9 @@
 - [ ] Ensure delivery address works with driver's "Deliver with Map" button
 - [ ] Show success message after submission
 - [ ] Update receipt display to show all fields
+
+
+## Bug Fix: Receipt Scanner Order Submission Database Error
+- [x] Fix zero values for subtotal, tax_percentage, tax_amount, total_price in createFromReceipt mutation
+- [x] Use proper default values that satisfy database constraints
+- [x] Test order submission with receipt scanner
