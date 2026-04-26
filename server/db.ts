@@ -719,9 +719,6 @@ export async function createOrder(data: InsertOrder) {
   if (!db) throw new Error("Database not available");
   
   // Ensure numeric values are properly formatted for Decimal columns
-  // Ensure deliveryTime and area are explicitly null if not provided or empty
-  const cleanArea = typeof data.area === 'string' && data.area.trim() ? data.area.trim() : null;
-  
   const orderData = {
     ...data,
     subtotal: data.subtotal ? String(data.subtotal) : "0",
@@ -729,7 +726,6 @@ export async function createOrder(data: InsertOrder) {
     taxAmount: data.taxAmount ? String(data.taxAmount) : "0",
     totalPrice: data.totalPrice ? String(data.totalPrice) : "0",
     deliveryTime: data.deliveryTime || null,
-    area: cleanArea,
   }
   
   const result = await db.insert(orders).values(orderData as any);
