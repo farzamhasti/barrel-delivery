@@ -2455,3 +2455,22 @@
 - [x] Test order submission with all field combinations
 - [x] Apply same fix to regular order creation (orders.create mutation)
 - [x] Verify both order creation paths work correctly
+
+
+## Database Rebuild - Scanned Receipt Order System [IN PROGRESS]
+- [x] Remove menu_categories and menu_items tables from schema
+- [x] Simplify orders table for scanned receipts (add orderNumber, receipt_text, receipt_image)
+- [x] Remove customer_id foreign key (use customerAddress and customerPhone directly)
+- [x] Add area enum field (DN, CP, B)
+- [x] Remove menu router from routers.ts
+- [x] Remove menu database functions from db.ts
+- [x] Create migration SQL file (0009_rebuild_database.sql)
+- [ ] Apply migration SQL to database
+- [ ] Update orders.create mutation for new schema
+- [ ] Update orders.list and orders.getById queries
+- [ ] Remove menu tab from admin dashboard
+- [ ] Create new receipt scanner form component
+- [ ] Update CreateOrder component for new schema
+- [ ] Test order creation from scanned receipt
+- [ ] Test order display with receipt text
+- [ ] Save checkpoint

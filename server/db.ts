@@ -80,74 +80,6 @@ export async function upsertUser(user: InsertUser): Promise<void> {
   }
 }
 
-// Menu Categories
-export async function getMenuCategories() {
-  const db = await getDb();
-  if (!db) return [];
-  return db.select().from(menuCategories).where(eq(menuCategories.isActive, true)).orderBy(menuCategories.displayOrder);
-}
-
-export async function createMenuCategory(data: InsertMenuCategory) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  return db.insert(menuCategories).values(data);
-}
-
-export async function updateMenuCategory(id: number, data: Partial<InsertMenuCategory>) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  return db.update(menuCategories).set(data).where(eq(menuCategories.id, id));
-}
-
-export async function deleteMenuCategory(id: number) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  // Soft delete
-  return db.update(menuCategories).set({ isActive: false }).where(eq(menuCategories.id, id));
-}
-
-// Menu Items
-export async function getMenuItems(categoryId?: number) {
-  const db = await getDb();
-  if (!db) return [];
-  
-  let result;
-  if (categoryId !== undefined) {
-    result = await db.select().from(menuItems)
-      .where(and(eq(menuItems.isAvailable, true), eq(menuItems.categoryId, categoryId)))
-      .orderBy(menuItems.displayOrder);
-  } else {
-    result = await db.select().from(menuItems)
-      .where(eq(menuItems.isAvailable, true))
-      .orderBy(menuItems.displayOrder);
-  }
-  
-  // Convert Decimal prices to numbers
-  return result.map(item => ({
-    ...item,
-    price: Number(item.price),
-  }));
-}
-
-export async function createMenuItem(data: InsertMenuItem) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  return db.insert(menuItems).values(data);
-}
-
-export async function updateMenuItem(id: number, data: Partial<InsertMenuItem>) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  return db.update(menuItems).set(data).where(eq(menuItems.id, id));
-}
-
-export async function deleteMenuItem(id: number) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  // Soft delete
-  return db.update(menuItems).set({ isAvailable: false }).where(eq(menuItems.id, id));
-}
-
 // Drivers
 export async function getDrivers() {
   const db = await getDb();
@@ -216,12 +148,42 @@ export async function createCustomer(data: InsertCustomer) {
   }
   
   const result = await db.insert(customers).values(finalData);
-  // Extract insertId from the result
-  const insertId = (result as any)[0]?.insertId;
-  if (insertId) {
-    return db.select().from(customers).where(eq(customers.id, insertId)).then(rows => rows[0] || null);
+  console.log('[createCustomer] Insert result:', result);
+  
+  // Try different ways to extract the insertId
+  let insertId: number | undefined;
+  
+  // Method 1: result[0].insertId (MySQL driver format)
+  if (Array.isArray(result) && result[0] && (result[0] as any).insertId) {
+    insertId = (result[0] as any).insertId;
   }
-  return result;
+  // Method 2: result.insertId (some drivers)
+  else if ((result as any).insertId) {
+    insertId = (result as any).insertId;
+  }
+  // Method 3: Check if result is an array with id property
+  else if (Array.isArray(result) && result[0] && (result[0] as any).id) {
+    insertId = (result[0] as any).id;
+  }
+  
+  console.log('[createCustomer] Extracted insertId:', insertId);
+  
+  if (insertId) {
+    const customer = await db.select().from(customers).where(eq(customers.id, insertId));
+    console.log('[createCustomer] Found customer:', customer[0]);
+    return customer[0] || null;
+  }
+  
+  // If we still can't get insertId, try to get the last inserted customer
+  console.log('[createCustomer] Failed to extract insertId, trying to get last customer');
+  const allCustomers = await db.select().from(customers).orderBy(desc(customers.id)).limit(1);
+  if (allCustomers[0]) {
+    console.log('[createCustomer] Returning last customer:', allCustomers[0]);
+    return allCustomers[0];
+  }
+  
+  console.log('[createCustomer] Failed to create customer');
+  return null;
 }
 
 export async function getCustomer(id: number) {
@@ -719,16 +681,32 @@ export async function createOrder(data: InsertOrder) {
   if (!db) throw new Error("Database not available");
   
   // Ensure numeric values are properly formatted for Decimal columns
-  const orderData = {
-    ...data,
+  const orderData: any = {
+    customerId: data.customerId,
     subtotal: data.subtotal ? String(data.subtotal) : "0",
     taxPercentage: data.taxPercentage ? String(data.taxPercentage) : "13",
     taxAmount: data.taxAmount ? String(data.taxAmount) : "0",
     totalPrice: data.totalPrice ? String(data.totalPrice) : "0",
     deliveryTime: data.deliveryTime || null,
+    hasDeliveryTime: data.hasDeliveryTime,
+    notes: data.notes,
+    driverId: data.driverId,
+    status: data.status,
+  };
+  
+  // Only include area if it's not undefined and not empty
+  if (data.area && typeof data.area === 'string' && data.area.trim()) {
+    orderData.area = data.area.trim();
   }
   
-  const result = await db.insert(orders).values(orderData as any);
+  let result;
+  try {
+    result = await db.insert(orders).values(orderData as any);
+  } catch (error: any) {
+    console.error('[createOrder] Database error:', error.message);
+    console.error('[createOrder] Error details:', error);
+    throw error;
+  }
   
   // Extract the inserted ID from the result
   const insertId = (result as any)?.[0]?.insertId || (result as any)?.insertId;

@@ -39,85 +39,6 @@ export const appRouter = router({
     }),
   }),
 
-  // Menu Categories
-  menu: router({
-    categories: router({
-      list: publicProcedure.query(async () => {
-        return db.getMenuCategories();
-      }),
-      create: adminOrSystemAdminProcedure
-        .input(z.object({
-          name: z.string(),
-          description: z.string().optional(),
-          displayOrder: z.number().optional(),
-        }))
-        .mutation(async ({ input }) => {
-          return db.createMenuCategory(input);
-        }),
-      update: adminOrSystemAdminProcedure
-        .input(z.object({
-          id: z.number(),
-          name: z.string().optional(),
-          description: z.string().optional(),
-          displayOrder: z.number().optional(),
-          isActive: z.boolean().optional(),
-        }))
-        .mutation(async ({ input }) => {
-          const { id, ...data } = input;
-          return db.updateMenuCategory(id, data);
-        }),
-      delete: adminOrSystemAdminProcedure
-        .input(z.object({ id: z.number() }))
-        .mutation(async ({ input }) => {
-          return db.deleteMenuCategory(input.id);
-        }),
-    }),
-    items: router({
-      list: publicProcedure
-        .input(z.object({ categoryId: z.number().optional() }).optional())
-        .query(async ({ input }) => {
-          return db.getMenuItems(input?.categoryId);
-        }),
-      create: adminOrSystemAdminProcedure
-        .input(z.object({
-          categoryId: z.number(),
-          name: z.string(),
-          description: z.string().optional(),
-          price: z.number(),
-          imageUrl: z.string().optional(),
-          displayOrder: z.number().optional(),
-        }))
-        .mutation(async ({ input }) => {
-          return db.createMenuItem({
-            ...input,
-            price: input.price as any,
-          });
-        }),
-      update: adminOrSystemAdminProcedure
-        .input(z.object({
-          id: z.number(),
-          categoryId: z.number().optional(),
-          name: z.string().optional(),
-          description: z.string().optional(),
-          price: z.number().optional(),
-          imageUrl: z.string().optional(),
-          isAvailable: z.boolean().optional(),
-          displayOrder: z.number().optional(),
-        }))
-        .mutation(async ({ input }) => {
-          const { id, ...data } = input;
-          return db.updateMenuItem(id, {
-            ...data,
-            price: data.price as any,
-          });
-        }),
-      delete: adminOrSystemAdminProcedure
-        .input(z.object({ id: z.number() }))
-        .mutation(async ({ input }) => {
-          return db.deleteMenuItem(input.id);
-        }),
-    }),
-  }),
 
   // Drivers
   drivers: router({
@@ -280,7 +201,9 @@ export const appRouter = router({
           orderData.area = input.area.trim();
         }
         
-        const order = await db.createOrder(orderData)
+        console.log('[orders.create] Order data:', JSON.stringify(orderData, null, 2));
+        const order = await db.createOrder(orderData);
+        console.log('[orders.create] Order created successfully:', order)
         
         return order;
       }),
@@ -362,7 +285,9 @@ export const appRouter = router({
           orderData.area = input.area.trim();
         }
         
-        const order = await db.createOrder(orderData)
+        console.log('[orders.create] Order data:', JSON.stringify(orderData, null, 2));
+        const order = await db.createOrder(orderData);
+        console.log('[orders.create] Order created successfully:', order)
         
         // Create order items
         // Extract orderId from the order object
