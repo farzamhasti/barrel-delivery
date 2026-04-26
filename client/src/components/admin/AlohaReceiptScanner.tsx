@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -149,14 +149,19 @@ export function AlohaReceiptScanner() {
       const taxAmount = Math.round(subtotal * (taxPercentage / 100) * 100) / 100;
       const totalPrice = Math.round((subtotal + taxAmount) * 100) / 100;
 
+      // Sanitize fields: convert empty strings to undefined and ensure proper data types
+      const sanitizedArea = editedData.deliveryAddress && editedData.deliveryAddress.trim() !== "" ? editedData.deliveryAddress.trim() : undefined;
+      const notesContent = `Aloha Check: ${editedData.checkNumber || "Unknown"}\nServer: ${editedData.server || "Unknown"}\nTable: ${editedData.table || "Unknown"}\nGuests: ${editedData.guests || 1}\nPhone: ${editedData.phoneNumber || "Unknown"}\n\nItems from receipt:\n${editedData.items.map((i) => `- ${i.name} (x${i.quantity})${i.notes ? ` - ${i.notes}` : ""}`).join("\n")}`;
+      const sanitizedNotes = notesContent && notesContent.trim() !== "" ? notesContent.trim() : undefined;
+
       await createOrderMutation.mutateAsync({
         customerId: 1,
-        subtotal,
-        taxAmount,
-        totalPrice,
-        taxPercentage,
-        area: editedData.deliveryAddress,
-        notes: `Aloha Check: ${editedData.checkNumber || "Unknown"}\nServer: ${editedData.server || "Unknown"}\nTable: ${editedData.table || "Unknown"}\nGuests: ${editedData.guests || 1}\nPhone: ${editedData.phoneNumber || "Unknown"}\n\nItems from receipt:\n${editedData.items.map((i) => `- ${i.name} (x${i.quantity})${i.notes ? ` - ${i.notes}` : ""}`).join("\n")}`,
+        subtotal: parseFloat(String(subtotal)) || 0,
+        taxAmount: parseFloat(String(taxAmount)) || 0,
+        totalPrice: parseFloat(String(totalPrice)) || 0,
+        taxPercentage: parseFloat(String(taxPercentage)) || 0,
+        area: sanitizedArea,
+        notes: sanitizedNotes,
         items: editedData.items.map((item) => ({
           menuItemId: 1,
           quantity: item.quantity,
@@ -207,214 +212,198 @@ export function AlohaReceiptScanner() {
     );
   }
 
-  if (!receiptImage) {
+  if (!extractedData || !editedData) {
     return (
       <Card className="p-8">
-        <div className="space-y-6">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold mb-2">Aloha Receipt Scanner</h2>
-            <p className="text-gray-600">
-              Upload or take a photo of the Aloha POS receipt to automatically extract order details
-            </p>
+        <div className="flex flex-col gap-4">
+          <h2 className="text-xl font-semibold">Scan Aloha Receipt</h2>
+          <p className="text-sm text-gray-600">Take a photo or upload an image of the Aloha POS receipt</p>
+
+          <div className="flex gap-4">
+            <Button
+              onClick={() => cameraInputRef.current?.click()}
+              className="flex-1"
+              variant="outline"
+            >
+              <Camera className="w-4 h-4 mr-2" />
+              Take Photo
+            </Button>
+            <Button
+              onClick={() => fileInputRef.current?.click()}
+              className="flex-1"
+              variant="outline"
+            >
+              <Upload className="w-4 h-4 mr-2" />
+              Upload Image
+            </Button>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="border-2 border-dashed border-blue-300 rounded-lg p-8 text-center hover:border-blue-500 transition cursor-pointer bg-blue-50">
-              <input
-                ref={cameraInputRef}
-                type="file"
-                accept="image/*"
-                capture="environment"
-                onChange={handleCameraCapture}
-                className="hidden"
-              />
-              <button
-                onClick={() => cameraInputRef.current?.click()}
-                className="w-full flex flex-col items-center gap-3"
-              >
-                <Camera className="w-8 h-8 text-blue-600" />
-                <span className="font-semibold text-blue-900">Take Photo</span>
-                <span className="text-xs text-blue-700">Use device camera</span>
-              </button>
-            </div>
-
-            <div className="border-2 border-dashed border-green-300 rounded-lg p-8 text-center hover:border-green-500 transition cursor-pointer bg-green-50">
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleFileUpload}
-                className="hidden"
-              />
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="w-full flex flex-col items-center gap-3"
-              >
-                <Upload className="w-8 h-8 text-green-600" />
-                <span className="font-semibold text-green-900">Upload Photo</span>
-                <span className="text-xs text-green-700">From gallery</span>
-              </button>
-            </div>
-          </div>
-
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <p className="text-sm text-blue-900">
-              <strong>Tip:</strong> For best results, take a clear photo of the printed receipt with
-              good lighting and focus on the text.
-            </p>
-          </div>
+          <input
+            ref={cameraInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={handleCameraCapture}
+            className="hidden"
+          />
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleFileUpload}
+            className="hidden"
+          />
         </div>
       </Card>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <Card className="p-4">
-        <h3 className="font-semibold mb-4">Receipt Preview</h3>
-        <img src={receiptImage} alt="Receipt" className="w-full max-h-96 object-contain rounded" />
-      </Card>
+    <Card className="p-8">
+      <div className="flex items-center gap-3 mb-6">
+        <CheckCircle2 className="w-6 h-6 text-green-500" />
+        <h2 className="text-xl font-semibold">Receipt Data Extracted</h2>
+      </div>
 
-      {editedData && (
-        <Card className="p-6">
-          <h3 className="font-semibold mb-4 flex items-center gap-2">
-            <CheckCircle2 className="w-5 h-5 text-green-600" />
-            Extracted Order Details
-          </h3>
+      {receiptImage && (
+        <div className="mb-6">
+          <img src={receiptImage} alt="Receipt" className="max-w-xs rounded-lg border" />
+        </div>
+      )}
 
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium">Check Number</label>
+      <div className="space-y-4 mb-6">
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="text-sm font-medium">Check Number</label>
+            <Input
+              value={editedData.checkNumber || ""}
+              onChange={(e) =>
+                setEditedData({ ...editedData, checkNumber: e.target.value || null })
+              }
+              placeholder="Check number"
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium">Table</label>
+            <Input
+              value={editedData.table || ""}
+              onChange={(e) =>
+                setEditedData({ ...editedData, table: e.target.value || null })
+              }
+              placeholder="Table"
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium">Server Name</label>
+            <Input
+              value={editedData.server || ""}
+              onChange={(e) =>
+                setEditedData({ ...editedData, server: e.target.value || null })
+              }
+              placeholder="Server name"
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium">Guests</label>
+            <Input
+              type="number"
+              value={editedData.guests || ""}
+              onChange={(e) =>
+                setEditedData({
+                  ...editedData,
+                  guests: e.target.value ? parseInt(e.target.value) : null,
+                })
+              }
+              placeholder="Number of guests"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="text-sm font-medium">Delivery Address *</label>
+            <Input
+              value={editedData.deliveryAddress || ""}
+              onChange={(e) =>
+                setEditedData({ ...editedData, deliveryAddress: e.target.value || null })
+              }
+              placeholder="Delivery address"
+              className="border-red-300"
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium">Phone Number</label>
+            <Input
+              value={editedData.phoneNumber || ""}
+              onChange={(e) =>
+                setEditedData({ ...editedData, phoneNumber: e.target.value || null })
+              }
+              placeholder="Phone number"
+            />
+          </div>
+        </div>
+
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-sm font-medium">Items</label>
+            <Button onClick={handleAddItem} size="sm" variant="outline">
+              Add Item
+            </Button>
+          </div>
+          <div className="space-y-2 max-h-64 overflow-y-auto">
+            {editedData.items.map((item, index) => (
+              <div key={index} className="flex gap-2 items-start">
                 <Input
-                  value={editedData.checkNumber ?? ""}
-                  onChange={(e) =>
-                    setEditedData({ ...editedData, checkNumber: e.target.value })
-                  }
-                  placeholder="Check number"
+                  value={item.name}
+                  onChange={(e) => handleUpdateItem(index, "name", e.target.value)}
+                  placeholder="Item name"
+                  className="flex-1"
                 />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Table</label>
-                <Input
-                  value={editedData.table ?? ""}
-                  onChange={(e) => setEditedData({ ...editedData, table: e.target.value })}
-                  placeholder="Table number"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Number of Guests</label>
                 <Input
                   type="number"
-                  value={editedData.guests ?? ""}
-                  onChange={(e) =>
-                    setEditedData({ ...editedData, guests: e.target.value ? Number(e.target.value) : null })
-                  }
-                  placeholder="Number of guests"
+                  value={item.quantity}
+                  onChange={(e) => handleUpdateItem(index, "quantity", e.target.value)}
+                  placeholder="Qty"
+                  className="w-16"
                 />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Server Name</label>
                 <Input
-                  value={editedData.server ?? ""}
-                  onChange={(e) => setEditedData({ ...editedData, server: e.target.value })}
-                  placeholder="Server name"
+                  value={item.notes}
+                  onChange={(e) => handleUpdateItem(index, "notes", e.target.value)}
+                  placeholder="Notes"
+                  className="flex-1"
                 />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium">Delivery Address <span className="text-red-500">*</span></label>
-                <Input
-                  value={editedData.deliveryAddress ?? ""}
-                  onChange={(e) => setEditedData({ ...editedData, deliveryAddress: e.target.value })}
-                  placeholder="Enter delivery address"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Phone Number</label>
-                <Input
-                  value={editedData.phoneNumber ?? ""}
-                  onChange={(e) => setEditedData({ ...editedData, phoneNumber: e.target.value })}
-                  placeholder="Enter phone number (optional)"
-                />
-              </div>
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <label className="text-sm font-medium">Order Items</label>
-                <Button onClick={handleAddItem} variant="outline" size="sm">
-                  + Add Item
+                <Button
+                  onClick={() => handleRemoveItem(index)}
+                  size="sm"
+                  variant="destructive"
+                >
+                  Remove
                 </Button>
               </div>
-
-              <div className="space-y-3">
-                {editedData.items.map((item, index) => (
-                  <div key={index} className="flex gap-3 items-end">
-                    <div className="flex-1">
-                      <Input
-                        value={item.name ?? ""}
-                        onChange={(e) => handleUpdateItem(index, "name", e.target.value)}
-                        placeholder="Item name"
-                      />
-                    </div>
-                    <div className="w-20">
-                      <Input
-                        type="number"
-                        min="1"
-                        value={item.quantity ?? ""}
-                        onChange={(e) => handleUpdateItem(index, "quantity", e.target.value)}
-                        placeholder="Qty"
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <Input
-                        value={item.notes ?? ""}
-                        onChange={(e) => handleUpdateItem(index, "notes", e.target.value)}
-                        placeholder="Notes (optional)"
-                      />
-                    </div>
-                    <Button
-                      onClick={() => handleRemoveItem(index)}
-                      variant="destructive"
-                      size="sm"
-                    >
-                      Remove
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex gap-3 pt-4 border-t">
-              <Button
-                onClick={resetScanner}
-                variant="outline"
-                className="flex-1"
-                disabled={submitting}
-              >
-                Scan Again
-              </Button>
-              <Button
-                onClick={handleSubmitOrder}
-                className="flex-1 bg-green-600 hover:bg-green-700"
-                disabled={submitting || editedData.items.length === 0 || !editedData.deliveryAddress || editedData.deliveryAddress.trim() === ""}
-              >
-                {submitting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Submitting...
-                  </>
-                ) : (
-                  "Submit Order"
-                )}
-              </Button>
-            </div>
+            ))}
           </div>
-        </Card>
-      )}
-    </div>
+        </div>
+      </div>
+
+      <div className="flex gap-2">
+        <Button onClick={resetScanner} variant="outline" className="flex-1">
+          Cancel
+        </Button>
+        <Button
+          onClick={handleSubmitOrder}
+          disabled={submitting || !editedData.deliveryAddress}
+          className="flex-1"
+        >
+          {submitting ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Submitting...
+            </>
+          ) : (
+            "Submit Order"
+          )}
+        </Button>
+      </div>
+    </Card>
   );
 }
