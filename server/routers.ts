@@ -199,33 +199,6 @@ export const appRouter = router({
 
   // Customers
   customers: router({
-    createFromReceipt: publicProcedure
-      .input(z.object({
-        checkNumber: z.string(),
-        area: z.string(),
-        deliveryTime: z.string().optional(),
-        hasDeliveryTime: z.boolean().default(false),
-        notes: z.string().optional(),
-        phoneNumber: z.string().optional(),
-        region: z.string().optional(),
-      }))
-      .mutation(async ({ input }) => {
-        // Create order with check number reference - no items stored
-        const order = await db.createOrder({
-          customerId: 1,
-          subtotal: 0 as any,
-          taxPercentage: 13 as any,
-          taxAmount: 0 as any,
-          totalPrice: 0 as any,
-          notes: input.notes,
-          area: input.area && typeof input.area === 'string' && input.area.trim() ? input.area.trim() : null,
-          deliveryTime: input.hasDeliveryTime && input.deliveryTime ? new Date(input.deliveryTime) : null,
-          hasDeliveryTime: input.hasDeliveryTime,
-        })
-        
-        return order;
-      }),
-
     create: publicProcedure
       .input(z.object({
         name: z.string(),
@@ -265,6 +238,33 @@ export const appRouter = router({
 
   // Orders
   orders: router({
+    createFromReceipt: publicProcedure
+      .input(z.object({
+        checkNumber: z.string(),
+        area: z.string(),
+        deliveryTime: z.string().optional(),
+        hasDeliveryTime: z.boolean().default(false),
+        notes: z.string().optional(),
+        phoneNumber: z.string().optional(),
+        region: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        // Create order with check number reference - no items stored
+        const order = await db.createOrder({
+          customerId: 1,
+          subtotal: 0 as any,
+          taxPercentage: 13 as any,
+          taxAmount: 0 as any,
+          totalPrice: 0 as any,
+          notes: input.notes,
+          area: input.area && typeof input.area === 'string' && input.area.trim() ? input.area.trim() : null,
+          deliveryTime: input.hasDeliveryTime && input.deliveryTime ? new Date(input.deliveryTime) : null,
+          hasDeliveryTime: input.hasDeliveryTime,
+        })
+        
+        return order;
+      }),
+
     list: publicProcedure
       .input(z.object({ driverId: z.number().optional() }).optional())
       .query(async ({ input }) => {
