@@ -172,6 +172,19 @@ export async function initializeDatabase() {
         FOREIGN KEY(credential_id) REFERENCES system_credentials(id)
       )`,
 
+      `CREATE TABLE IF NOT EXISTS reservations (
+        id int AUTO_INCREMENT NOT NULL,
+        event_type varchar(255) NOT NULL,
+        number_of_people int NOT NULL,
+        details text,
+        event_date varchar(10) NOT NULL,
+        event_time varchar(5) NOT NULL,
+        status enum('pending','completed') NOT NULL DEFAULT 'pending',
+        createdAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updatedAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY(id)
+      )`,
+
       // ALTER statements to add columns to pre-existing tables that may have been
       // created before the schema was updated (errors for duplicate columns are caught below)
       `ALTER TABLE menu_items ADD COLUMN image_url text`,

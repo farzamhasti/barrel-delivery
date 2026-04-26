@@ -11,6 +11,7 @@ import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { initializeDatabase } from "./initDb";
 import { seedSampleData } from "./seedData";
+import extractReceiptRouter from "../api/extract-receipt";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -48,6 +49,8 @@ async function startServer() {
   registerStorageProxy(app);
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
+  // Receipt extraction API
+  app.use("/api", extractReceiptRouter);
   // tRPC API
   app.use(
     "/api/trpc",

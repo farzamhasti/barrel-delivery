@@ -2311,3 +2311,31 @@
 - [x] Implement real-time updates across Admin and Kitchen dashboards
 - [x] Verify no existing functionality was broken
 - [x] Test reservation creation and viewing workflow
+
+
+## New Feature - Aloha Receipt Scanner (IN PROGRESS)
+- [ ] Create AlohaReceiptScanner component with image upload/camera capture
+- [ ] Implement Claude AI integration to extract receipt data
+- [ ] Create receipt preview and edit form for staff confirmation
+- [ ] Integrate with existing order creation workflow
+- [ ] Replace New Order tab with Receipt Scanner in Admin Dashboard
+- [ ] Test receipt scanning and order submission
+- [ ] Verify orders appear in Kitchen and Driver dashboards
+
+
+## New Feature - Aloha Receipt Scanner (COMPLETED)
+- [x] Replace "New Order" tab with Aloha Receipt Scanner component
+- [x] Create receipt image upload/camera capture interface
+- [x] Implement Claude AI integration for receipt OCR and data extraction
+- [x] Create backend API endpoint for receipt processing (/api/extract-receipt)
+- [x] Extract order details from receipt: check number, table, guests, server, date, time, items
+- [x] Parse receipt items with quantity and notes (e.g., "Wings *10*" with "Mild" note)
+- [x] Create editable preview form for extracted data
+- [x] Allow staff to add/remove/modify items before submission
+- [x] Integrate with existing order creation workflow
+- [x] Submit receipt-based orders exactly like manual orders
+- [x] Orders appear in Kitchen dashboard, Order Tracking, and Driver workflow
+- [x] Save Aloha Check Number with order for reference
+- [x] Handle error cases with retry functionality
+- [x] Test receipt scanning with actual Aloha receipt images
+- [x] Verify orders created from receipts work with all existing features
