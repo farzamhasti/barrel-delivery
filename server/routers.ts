@@ -263,20 +263,24 @@ export const appRouter = router({
           deliveryTimeValue = today;
         }
         
-        // Ensure area is null if empty or whitespace
-        const areaValue = input.area && typeof input.area === 'string' && input.area.trim() ? input.area.trim() : null;
-        
-        const order = await db.createOrder({
+        // Build order data, only including area if it has a value
+        const orderData: any = {
           customerId: 1,
           subtotal: 0.01 as any,
           taxPercentage: 13 as any,
           taxAmount: 0 as any,
           totalPrice: 0.01 as any,
           notes: input.notes,
-          area: areaValue,
           deliveryTime: deliveryTimeValue,
           hasDeliveryTime: input.hasDeliveryTime,
-        })
+        };
+        
+        // Only include area if it's not empty
+        if (input.area && typeof input.area === 'string' && input.area.trim()) {
+          orderData.area = input.area.trim();
+        }
+        
+        const order = await db.createOrder(orderData)
         
         return order;
       }),
