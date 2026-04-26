@@ -1,5 +1,5 @@
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, menuCategories, InsertMenuCategory, menuItems, InsertMenuItem, drivers, InsertDriver, orders, InsertOrder, orderItems, InsertOrderItem, systemCredentials, systemSessions, orderStatusHistory, InsertOrderStatusHistory, returnTimeHistory, reservations, InsertReservation, Reservation } from "../drizzle/schema";
+import { InsertUser, users, drivers, InsertDriver, orders, InsertOrder, orderItems, InsertOrderItem, systemCredentials, systemSessions, orderStatusHistory, InsertOrderStatusHistory, returnTimeHistory, reservations, InsertReservation, Reservation } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { eq, and, desc, gte, lt, inArray, gt, isNull, lte } from "drizzle-orm";
 import { createHash, timingSafeEqual } from 'crypto';
@@ -242,10 +242,8 @@ export async function getOrderWithItems(orderId: number) {
       menuItemId: orderItems.menuItemId,
       quantity: orderItems.quantity,
       priceAtOrder: orderItems.priceAtOrder,
-      menuItemName: menuItems.name,
     })
     .from(orderItems)
-    .innerJoin(menuItems, eq(orderItems.menuItemId, menuItems.id))
     .where(eq(orderItems.orderId, orderId));
 
   // Convert Decimal values to numbers
@@ -360,10 +358,8 @@ export async function getTodayOrdersWithItems() {
           menuItemId: orderItems.menuItemId,
           quantity: orderItems.quantity,
           priceAtOrder: orderItems.priceAtOrder,
-          menuItemName: menuItems.name,
         })
         .from(orderItems)
-        .innerJoin(menuItems, eq(orderItems.menuItemId, menuItems.id))
         .where(eq(orderItems.orderId, order.id));
       
       return {
@@ -518,10 +514,8 @@ export async function getOrderItemsWithMenuNames(orderId: number) {
       menuItemId: orderItems.menuItemId,
       quantity: orderItems.quantity,
       priceAtOrder: orderItems.priceAtOrder,
-      menuItemName: menuItems.name,
     })
     .from(orderItems)
-    .innerJoin(menuItems, eq(orderItems.menuItemId, menuItems.id))
     .where(eq(orderItems.orderId, orderId));
 }
 
