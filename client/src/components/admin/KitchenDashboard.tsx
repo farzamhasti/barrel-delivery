@@ -211,6 +211,20 @@ export default function KitchenDashboard() {
         </div>
 
         {/* Notes field removed from new schema */}
+        {/* Receipt Image Preview */}
+        {order.receiptImage && (
+          <div className="mb-2 bg-gray-50 rounded overflow-hidden border border-gray-200">
+            <img
+              src={order.receiptImage}
+              alt="Receipt"
+              className="w-full h-32 object-cover cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedOrder(order);
+              }}
+            />
+          </div>
+        )}
 
         {/* Mark Ready Button */}
         <Button
