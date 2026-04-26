@@ -689,20 +689,15 @@ export async function getDriverSession(sessionToken: string) {
 }
 
 export async function deleteDriverSession(sessionToken: string) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  const { driverSessions } = await import("../drizzle/schema");
-  
-  return db.delete(driverSessions).where(eq(driverSessions.sessionToken, sessionToken));
+  // Driver sessions not implemented in new schema
+  return null;
 }
 
 export async function getDriverBySessionToken(sessionToken: string) {
-  const db = await getDb();
-  if (!db) return null;
+  // Driver sessions not implemented in new schema
+  return null;
   
-  const { driverSessions } = await import("../drizzle/schema");
-  
+  /*
   const session = await db
     .select({
       driverId: driverSessions.driverId,
@@ -716,6 +711,7 @@ export async function getDriverBySessionToken(sessionToken: string) {
     ));
   
   return session[0]?.driver || null;
+  */
 }
 
 
@@ -813,7 +809,6 @@ export async function createSystemCredentials(username: string, password: string
     username,
     passwordHash,
     role,
-    isActive: true,
   });
   
   return result;
@@ -901,9 +896,7 @@ export async function logOrderStatusChange(orderId: number, previousStatus: stri
   try {
     const result = await db.insert(orderStatusHistory).values({
       orderId,
-      previousStatus: previousStatus as any,
-      newStatus: newStatus as any,
-      transitionTime: new Date(),
+      status: newStatus as any,
     });
     return result;
   } catch (error) {
