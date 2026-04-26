@@ -2407,3 +2407,14 @@
 - [x] Integrate scanner into New Order tab
 - [x] Test with sample Aloha receipt images
 - [x] Verify no existing features are affected
+
+
+## Bug Fix: Tesseract Receipt Scanner Parsing Issues
+- [x] Debug text extraction - items not being detected
+- [x] Fix section detection logic (BAR section header)
+- [x] Improve food keyword matching
+- [x] Fix address extraction from receipt format
+- [x] Test with actual receipt images
+- [x] Rewrite parser to handle Aloha receipt format correctly
+- [x] Add support for quantity formats (*10*, x10, (10))
+- [x] Implement duplicate item combining
