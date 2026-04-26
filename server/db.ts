@@ -921,7 +921,7 @@ export async function getOrderStatusTimeline(orderId: number) {
       .select()
       .from(orderStatusHistory)
       .where(eq(orderStatusHistory.orderId, orderId))
-      .orderBy(desc(orderStatusHistory.transitionTime));
+      .orderBy(desc(orderStatusHistory.createdAt));
     
     return timeline;
   } catch (error) {
@@ -1004,12 +1004,14 @@ export async function getOrderTimelinesForReport(startDate: Date, endDate: Date)
     const orderList = await db
       .select({
         id: orders.id,
-        customerId: orders.customerId,
+        orderNumber: orders.orderNumber,
         status: orders.status,
         createdAt: orders.createdAt,
         updatedAt: orders.updatedAt,
         pickedUpAt: orders.pickedUpAt,
         deliveredAt: orders.deliveredAt,
+        customerAddress: orders.customerAddress,
+        customerPhone: orders.customerPhone,
       })
       .from(orders)
       .where(
@@ -1040,11 +1042,10 @@ export async function getOrderTimelinesForReport(startDate: Date, endDate: Date)
 
     // Build timeline data for each order
     const timelines = orderList.map(order => {
-      const customer = customerMap.get(order.customerId);
       const history = historyMap.get(order.id) || [];
 
       // Sort history by timestamp
-      history.sort((a, b) => new Date(a.transitionTime).getTime() - new Date(b.transitionTime).getTime());
+      history.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
 
       // Extract timestamps for each status
       const statusTimes: Record<string, Date | null> = {
@@ -1055,10 +1056,10 @@ export async function getOrderTimelinesForReport(startDate: Date, endDate: Date)
       };
 
       for (const entry of history) {
-        if (entry.newStatus === "Pending") statusTimes.pending = entry.transitionTime;
-        if (entry.newStatus === "Ready") statusTimes.ready = entry.transitionTime;
-        if (entry.newStatus === "On the Way") statusTimes.onTheWay = entry.transitionTime;
-        if (entry.newStatus === "Delivered") statusTimes.delivered = entry.transitionTime;
+        if (entry.status === "Pending") statusTimes.pending = entry.createdAt;
+        if (entry.status === "Ready") statusTimes.ready = entry.createdAt;
+        if (entry.status === "On the Way") statusTimes.onTheWay = entry.createdAt;
+        if (entry.status === "Delivered") statusTimes.delivered = entry.createdAt;
       }
 
       // Calculate durations between statuses
@@ -1078,8 +1079,9 @@ export async function getOrderTimelinesForReport(startDate: Date, endDate: Date)
 
       return {
         orderId: order.id,
-        customerName: customer?.name || "Unknown",
-        customerAddress: customer?.address || "",
+        orderNumber: order.orderNumber,
+        customerAddress: order.customerAddress,
+        customerPhone: order.customerPhone,
         status: order.status,
         timestamps: {
           pending: statusTimes.pending,
