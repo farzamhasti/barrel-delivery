@@ -9,11 +9,6 @@ interface ReceiptExtractionRequest {
 
 interface ExtractedOrderData {
   checkNumber: string | null;
-  table: string | null;
-  guests: number | null;
-  server: string | null;
-  date: string | null;
-  time: string | null;
   deliveryAddress: string | null;
   phoneNumber: string | null;
   items: Array<{
@@ -47,11 +42,6 @@ router.post("/extract-receipt", async (req, res) => {
               text: `Extract order information from this Aloha POS receipt and return ONLY a JSON object with no explanation or markdown:
 {
   "checkNumber": "string",
-  "table": "string",
-  "guests": number,
-  "server": "string",
-  "date": "string",
-  "time": "string",
   "deliveryAddress": "string",
   "phoneNumber": "string",
   "items": [
@@ -66,9 +56,10 @@ Rules:
 - DELIVERY ADDRESS: Look for the customer's address that appears BELOW the word "bar" on the receipt (e.g., "70 Lillian")
 - Extract the full delivery address and put it in deliveryAddress
 - Extract the customer phone number if present on the receipt and put it in phoneNumber
+- Extract the check number from the receipt and put it in checkNumber
 - If deliveryAddress is not found, use null
-- If phoneNumber is not found, use null — phone number is optional
-- If any other field is not found, use null
+- If phoneNumber is not found, use null
+- If checkNumber is not found, use null
 - Return valid JSON only — no explanation, no markdown backticks`,
             },
           ],

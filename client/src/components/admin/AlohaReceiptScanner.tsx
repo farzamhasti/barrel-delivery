@@ -8,11 +8,6 @@ import { trpc } from "@/lib/trpc";
 
 interface ExtractedOrderData {
   checkNumber: string | null;
-  table: string | null;
-  guests: number | null;
-  server: string | null;
-  date: string | null;
-  time: string | null;
   deliveryAddress: string | null;
   phoneNumber: string | null;
   items: Array<{
@@ -151,7 +146,7 @@ export function AlohaReceiptScanner() {
 
       // Sanitize fields: convert empty strings to undefined and ensure proper data types
       const sanitizedArea = editedData.deliveryAddress && editedData.deliveryAddress.trim() !== "" ? editedData.deliveryAddress.trim() : undefined;
-      const notesContent = `Aloha Check: ${editedData.checkNumber || "Unknown"}\nServer: ${editedData.server || "Unknown"}\nTable: ${editedData.table || "Unknown"}\nGuests: ${editedData.guests || 1}\nPhone: ${editedData.phoneNumber || "Unknown"}\n\nItems from receipt:\n${editedData.items.map((i) => `- ${i.name} (x${i.quantity})${i.notes ? ` - ${i.notes}` : ""}`).join("\n")}`;
+      const notesContent = `Check: ${editedData.checkNumber || "Unknown"}\nPhone: ${editedData.phoneNumber || "Unknown"}`;
       const sanitizedNotes = notesContent && notesContent.trim() !== "" ? notesContent.trim() : undefined;
 
       await createOrderMutation.mutateAsync({
@@ -284,54 +279,6 @@ export function AlohaReceiptScanner() {
             />
           </div>
           <div>
-            <label className="text-sm font-medium">Table</label>
-            <Input
-              value={editedData.table || ""}
-              onChange={(e) =>
-                setEditedData({ ...editedData, table: e.target.value || null })
-              }
-              placeholder="Table"
-            />
-          </div>
-          <div>
-            <label className="text-sm font-medium">Server Name</label>
-            <Input
-              value={editedData.server || ""}
-              onChange={(e) =>
-                setEditedData({ ...editedData, server: e.target.value || null })
-              }
-              placeholder="Server name"
-            />
-          </div>
-          <div>
-            <label className="text-sm font-medium">Guests</label>
-            <Input
-              type="number"
-              value={editedData.guests || ""}
-              onChange={(e) =>
-                setEditedData({
-                  ...editedData,
-                  guests: e.target.value ? parseInt(e.target.value) : null,
-                })
-              }
-              placeholder="Number of guests"
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="text-sm font-medium">Delivery Address *</label>
-            <Input
-              value={editedData.deliveryAddress || ""}
-              onChange={(e) =>
-                setEditedData({ ...editedData, deliveryAddress: e.target.value || null })
-              }
-              placeholder="Delivery address"
-              className="border-red-300"
-            />
-          </div>
-          <div>
             <label className="text-sm font-medium">Phone Number</label>
             <Input
               value={editedData.phoneNumber || ""}
@@ -341,6 +288,18 @@ export function AlohaReceiptScanner() {
               placeholder="Phone number"
             />
           </div>
+        </div>
+
+        <div>
+          <label className="text-sm font-medium">Delivery Address *</label>
+          <Input
+            value={editedData.deliveryAddress || ""}
+            onChange={(e) =>
+              setEditedData({ ...editedData, deliveryAddress: e.target.value || null })
+            }
+            placeholder="Delivery address"
+            className="border-red-300"
+          />
         </div>
 
         <div>

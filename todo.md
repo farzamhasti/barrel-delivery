@@ -2373,3 +2373,11 @@
 - [ ] Test order submission through receipt scanner
 - [ ] Verify order appears in Kitchen Dashboard
 - [ ] Verify order appears in Order Tracking tab
+
+
+## Simplify Aloha Receipt Scanner Data Extraction
+- [x] Update Claude extraction prompt to only extract: items, phone, address, check number, delivery time
+- [x] Remove server name, table number, guests count from extraction
+- [x] Simplify notes field to only include check number and phone number
+- [x] Remove unnecessary form fields from receipt scanner UI
+- [x] Test simplified extraction and order submission
