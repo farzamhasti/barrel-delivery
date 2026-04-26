@@ -273,7 +273,7 @@ export function AlohaReceiptScanner() {
             <Input
               value={editedData.checkNumber || ""}
               onChange={(e) =>
-                setEditedData({ ...editedData, checkNumber: e.target.value || null })
+                setEditedData({ ...editedData, checkNumber: e.target.value })
               }
               placeholder="Check number"
             />
@@ -283,7 +283,7 @@ export function AlohaReceiptScanner() {
             <Input
               value={editedData.phoneNumber || ""}
               onChange={(e) =>
-                setEditedData({ ...editedData, phoneNumber: e.target.value || null })
+                setEditedData({ ...editedData, phoneNumber: e.target.value })
               }
               placeholder="Phone number"
             />
@@ -295,7 +295,7 @@ export function AlohaReceiptScanner() {
           <Input
             value={editedData.deliveryAddress || ""}
             onChange={(e) =>
-              setEditedData({ ...editedData, deliveryAddress: e.target.value || null })
+              setEditedData({ ...editedData, deliveryAddress: e.target.value })
             }
             placeholder="Delivery address"
             className="border-red-300"
