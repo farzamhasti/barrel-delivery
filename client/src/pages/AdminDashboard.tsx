@@ -6,7 +6,7 @@ import { useIsMobile } from "@/hooks/useMobile";
 import { DeveloperCredit } from "@/components/DeveloperCredit";
 
 import { Menu, Package2, Truck, LogOut, Settings, Plus, Map, X, Calendar, Gift } from "lucide-react";
-import MenuManagement from "@/components/admin/MenuManagement";
+
 import { Orders } from "@/pages/Orders";
 import DriverManagement from "@/components/admin/DriverManagement";
 import Dashboard from "@/components/admin/Dashboard";
@@ -186,7 +186,7 @@ export default function AdminDashboard() {
               <div className="w-full max-w-7xl mx-auto">
                 {currentTab === "dashboard" && <Dashboard />}
                 {currentTab === "create-order" && <ReceiptScannerTesseract />}
-                {currentTab === "menu" && <MenuManagement />}
+
                 {currentTab === "orders" && <Orders />}
                 {currentTab === "drivers" && <DriverManagement />}
                 {currentTab === "order-tracking" && <OrderTrackingWithMap />}
@@ -225,12 +225,7 @@ function SidebarContent({
           label="New Order"
           active={currentTab === "create-order"}
         />
-        <NavItem
-          href="/admin/menu"
-          icon={<Settings className="w-5 h-5" />}
-          label="Menu"
-          active={currentTab === "menu"}
-        />
+
         <NavItem
           href="/admin/orders"
           icon={<Package2 className="w-5 h-5" />}

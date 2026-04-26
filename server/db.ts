@@ -1299,10 +1299,10 @@ export async function saveReturnTime(driverId: number, totalSeconds: number) {
   // Record in history
   await db.insert(returnTimeHistory).values({
     driverId,
-    totalSeconds,
-    startTimestamp,
+    returnTimeTotalSeconds: totalSeconds,
+    returnTimeStartTimestamp: startTimestamp,
     action: 'saved',
-  });
+  } as any);
 
   return {
     driverId,
@@ -1393,7 +1393,7 @@ export async function getReservations() {
 
   const results = await db.select()
     .from(reservations)
-    .orderBy(desc(reservations.eventDate));
+    .orderBy(desc(reservations.reservationDate));
 
   return results;
 }
@@ -1409,7 +1409,7 @@ export async function getReservationById(id: number) {
   return result[0] || null;
 }
 
-export async function updateReservationStatus(id: number, status: "pending" | "completed") {
+export async function updateReservationStatus(id: number, status: "Pending" | "Confirmed" | "Cancelled") {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 

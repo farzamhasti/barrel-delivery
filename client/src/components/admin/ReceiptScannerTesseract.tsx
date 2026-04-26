@@ -2,18 +2,20 @@ import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Loader2, Upload, Camera, AlertCircle, CheckCircle2, Printer } from "lucide-react";
+import { Loader2, Upload, Camera, AlertCircle, CheckCircle2 } from "lucide-react";
 import Tesseract from "tesseract.js";
 import { trpc } from "@/lib/trpc";
+import { useToast } from "@/hooks/useToast";
 
-interface ExtractedReceipt {
-  checkNumber: string;
-  receiptImage: string;
+interface ExtractedItems {
+  items: string[];
+  rawText: string;
 }
 
 export function ReceiptScannerTesseract() {
+  const { toast } = useToast();
   const [receiptImage, setReceiptImage] = useState<string | null>(null);
-  const [extractedReceipt, setExtractedReceipt] = useState<ExtractedReceipt | null>(null);
+  const [extractedItems, setExtractedItems] = useState<ExtractedItems | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -21,21 +23,39 @@ export function ReceiptScannerTesseract() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
-  // Editable form state - 4 manual fields
+  // Form state - exactly as specified
   const [formData, setFormData] = useState({
-    deliveryAddress: "",
+    orderNumber: "",
+    address: "",
     phoneNumber: "",
-    area: "",
     deliveryTime: "",
     enableDeliveryTime: false,
+    area: "DN", // Default to DN
   });
 
   const createOrderMutation = trpc.orders.createFromReceipt.useMutation();
 
-  const extractCheckNumber = (text: string): string => {
-    // Look for check number pattern like "Check: 40134" or "Check #: 40134"
-    const match = text.match(/check\s*[#:]?\s*(\d{4,5})/i);
-    return match ? match[1] : "";
+  // Extract food/drink items from receipt text
+  const extractItems = (text: string): string[] => {
+    const lines = text.split("\n");
+    const items: string[] = [];
+    
+    for (const line of lines) {
+      const trimmed = line.trim();
+      // Look for lines with quantities and item names
+      // Pattern: number + item name (with optional modifiers in parentheses)
+      const match = trimmed.match(/^(\d+)\s*x?\s*(.+?)(?:\s*\(.*?\))?$/i);
+      if (match) {
+        const quantity = match[1];
+        const itemName = match[2].trim();
+        // Filter out common non-item lines
+        if (itemName.length > 2 && !itemName.match(/^(subtotal|tax|total|amount|check|date|time)/i)) {
+          items.push(`${itemName} x${quantity}`);
+        }
+      }
+    }
+    
+    return items.length > 0 ? items : [];
   };
 
   const handleFileSelect = async (file: File) => {
@@ -48,78 +68,57 @@ export function ReceiptScannerTesseract() {
     setError(null);
 
     try {
-      // Read image for display
       const reader = new FileReader();
       reader.onload = async (e) => {
         const imageData = e.target?.result as string;
         setReceiptImage(imageData);
 
-        // Extract text using Tesseract
-        const { data: { text } } = await Tesseract.recognize(file, "eng");
+        // Run OCR
+        const result = await Tesseract.recognize(imageData, "eng", {
+          logger: (m) => console.log("OCR Progress:", m),
+        });
+
+        const text = result.data.text;
+        const items = extractItems(text);
         
-        // Extract check number only
-        const checkNumber = extractCheckNumber(text);
-
-        if (!checkNumber) {
-          setError("Could not find check number on receipt — please try again with a clearer photo");
-          setLoading(false);
-          return;
-        }
-
-        setExtractedReceipt({
-          checkNumber,
-          receiptImage: imageData,
+        setExtractedItems({
+          items,
+          rawText: text,
         });
-
-        // Reset form data for manual entry
-        setFormData({
-          deliveryAddress: "",
-          phoneNumber: "",
-          area: "",
-          deliveryTime: "",
-          enableDeliveryTime: false,
-        });
-
+        
         setLoading(false);
       };
       reader.readAsDataURL(file);
     } catch (err) {
-      setError("Failed to process receipt — please try again");
+      setError("Failed to scan receipt. Please try again.");
       setLoading(false);
     }
   };
 
-  const handleUploadClick = () => {
+  const handleUpload = () => {
     fileInputRef.current?.click();
   };
 
-  const handleCameraClick = () => {
+  const handleCamera = () => {
     cameraInputRef.current?.click();
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      handleFileSelect(file);
-    }
+  const handleRescan = () => {
+    setReceiptImage(null);
+    setExtractedItems(null);
+    setError(null);
   };
 
-  const handleFormChange = (field: string, value: string | boolean) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-  const handleSubmitOrder = async () => {
-    // Validate required fields
-    if (!formData.deliveryAddress.trim()) {
-      setError("Delivery address is required");
+    // Validation
+    if (!formData.orderNumber.trim()) {
+      setError("Order Number is required");
       return;
     }
-
-    if (!extractedReceipt?.checkNumber) {
-      setError("Check number is missing");
+    if (!formData.address.trim()) {
+      setError("Address is required");
       return;
     }
 
@@ -128,246 +127,241 @@ export function ReceiptScannerTesseract() {
 
     try {
       await createOrderMutation.mutateAsync({
-        checkNumber: extractedReceipt.checkNumber,
-        area: formData.area,
-        deliveryTime: formData.enableDeliveryTime && formData.deliveryTime ? formData.deliveryTime : "",
-        hasDeliveryTime: formData.enableDeliveryTime,
-        notes: `Phone: ${formData.phoneNumber || "Unknown"}`,
+        orderNumber: formData.orderNumber,
+        address: formData.address,
         phoneNumber: formData.phoneNumber,
-        region: formData.area,
+        area: formData.area,
+        deliveryTime: formData.enableDeliveryTime ? formData.deliveryTime : undefined,
+        receiptText: extractedItems?.rawText || "",
+        receiptImage: receiptImage || "",
       });
 
       setSubmitSuccess(true);
+      toast.success("Order submitted successfully!");
+      
+      // Reset form after 2 seconds
       setTimeout(() => {
-        setReceiptImage(null);
-        setExtractedReceipt(null);
-        setSubmitSuccess(false);
         setFormData({
-          deliveryAddress: "",
+          orderNumber: "",
+          address: "",
           phoneNumber: "",
-          area: "",
           deliveryTime: "",
           enableDeliveryTime: false,
+          area: "DN",
         });
+        setReceiptImage(null);
+        setExtractedItems(null);
+        setSubmitSuccess(false);
       }, 2000);
-    } catch (err) {
-      setError("Failed to submit order — please try again");
+    } catch (err: any) {
+      setError(err.message || "Failed to submit order");
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handlePrint = () => {
-    window.print();
-  };
-
-  const handleScanAgain = () => {
-    setReceiptImage(null);
-    setExtractedReceipt(null);
-    setError(null);
-    setFormData({
-      deliveryAddress: "",
-      phoneNumber: "",
-      area: "",
-      deliveryTime: "",
-      enableDeliveryTime: false,
-    });
-  };
-
-  // Initial upload screen
-  if (!receiptImage) {
-    return (
-      <div className="w-full max-w-2xl mx-auto p-6">
-        <Card className="p-8">
-          <h2 className="text-2xl font-bold mb-2">Aloha Receipt Scanner</h2>
-          <p className="text-gray-600 mb-6">Scan receipts and generate delivery orders</p>
-
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center mb-6 hover:border-blue-500 transition">
-            <Upload className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-            <p className="text-gray-700 mb-4">Upload or take a photo of the Aloha receipt</p>
-            <div className="flex gap-4 justify-center">
-              <Button onClick={handleUploadClick} variant="default">
-                Upload Photo
-              </Button>
-              <Button onClick={handleCameraClick} variant="outline">
-                <Camera className="w-4 h-4 mr-2" />
-                Take Photo
-              </Button>
-            </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleFileChange}
-              className="hidden"
-            />
-            <input
-              ref={cameraInputRef}
-              type="file"
-              accept="image/*"
-              capture="environment"
-              onChange={handleFileChange}
-              className="hidden"
-            />
-          </div>
-
-          {error && (
-            <div className="flex items-center gap-2 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
-              <AlertCircle className="w-5 h-5" />
-              {error}
-            </div>
-          )}
-        </Card>
-      </div>
-    );
-  }
-
-  // Loading screen
-  if (loading) {
-    return (
-      <div className="w-full max-w-2xl mx-auto p-6">
-        <Card className="p-8 text-center">
-          <Loader2 className="w-12 h-12 mx-auto animate-spin text-blue-500 mb-4" />
-          <p className="text-lg font-semibold">Reading receipt...</p>
-        </Card>
-      </div>
-    );
-  }
-
-  // Success screen
-  if (submitSuccess) {
-    return (
-      <div className="w-full max-w-2xl mx-auto p-6">
-        <Card className="p-8 text-center">
-          <CheckCircle2 className="w-16 h-16 mx-auto text-green-500 mb-4" />
-          <p className="text-lg font-semibold text-green-700">Order submitted successfully!</p>
-        </Card>
-      </div>
-    );
-  }
-
-  // Receipt display and form screen
   return (
-    <div className="w-full max-w-4xl mx-auto p-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Receipt Image */}
-        <Card className="p-6">
-          <h3 className="text-lg font-semibold mb-4">Scanned Receipt</h3>
-          {receiptImage && (
-            <img src={receiptImage} alt="Receipt" className="w-full rounded-lg border border-gray-200" />
-          )}
-        </Card>
+    <div className="w-full max-w-2xl mx-auto">
+      <Card className="p-6">
+        <h2 className="text-2xl font-bold mb-6">New Order</h2>
 
-        {/* Order Form */}
-        <Card className="p-6">
-          <h3 className="text-lg font-semibold mb-4">Order Details</h3>
+        {submitSuccess && (
+          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2 text-green-700">
+            <CheckCircle2 className="w-5 h-5" />
+            <span>Order submitted successfully!</span>
+          </div>
+        )}
 
-          {/* Check Number (Display Only) */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Check #</label>
-            <div className="p-3 bg-gray-100 rounded border border-gray-300 text-gray-900 font-semibold">
-              {extractedReceipt?.checkNumber || "N/A"}
-            </div>
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-700">
+            <AlertCircle className="w-5 h-5" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Order Number */}
+          <div>
+            <label className="block text-sm font-medium mb-2">Order Number</label>
+            <Input
+              type="text"
+              placeholder="Enter order number"
+              value={formData.orderNumber}
+              onChange={(e) => setFormData({ ...formData, orderNumber: e.target.value })}
+              required
+            />
           </div>
 
-          {/* Delivery Address */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Delivery Address <span className="text-red-500">*</span>
-            </label>
+          {/* Address */}
+          <div>
+            <label className="block text-sm font-medium mb-2">Address</label>
             <Input
               type="text"
               placeholder="Enter delivery address"
-              value={formData.deliveryAddress}
-              onChange={(e) => handleFormChange("deliveryAddress", e.target.value)}
-              className="w-full"
+              value={formData.address}
+              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+              required
             />
           </div>
 
           {/* Phone Number */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Contact Number</label>
+          <div>
+            <label className="block text-sm font-medium mb-2">Phone Number</label>
             <Input
               type="tel"
               placeholder="Enter phone number"
               value={formData.phoneNumber}
-              onChange={(e) => handleFormChange("phoneNumber", e.target.value)}
-              className="w-full"
+              onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
             />
           </div>
 
-          {/* Area/Region */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Region</label>
-            <select
-              value={formData.area}
-              onChange={(e) => handleFormChange("area", e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="">Select a region</option>
-              <option value="DN">DN</option>
-              <option value="CP">CP</option>
-              <option value="B">B</option>
-            </select>
-          </div>
-
           {/* Delivery Time */}
-          <div className="mb-6">
-            <div className="flex items-center gap-2 mb-2">
+          <div>
+            <label className="flex items-center gap-2 text-sm font-medium mb-2">
               <input
                 type="checkbox"
-                id="enableDeliveryTime"
                 checked={formData.enableDeliveryTime}
-                onChange={(e) => handleFormChange("enableDeliveryTime", e.target.checked)}
+                onChange={(e) => setFormData({ ...formData, enableDeliveryTime: e.target.checked })}
                 className="w-4 h-4"
               />
-              <label htmlFor="enableDeliveryTime" className="text-sm font-medium text-gray-700">
-                Specific Delivery Time
-              </label>
-            </div>
+              Delivery Time
+            </label>
             {formData.enableDeliveryTime && (
               <Input
                 type="time"
                 value={formData.deliveryTime}
-                onChange={(e) => handleFormChange("deliveryTime", e.target.value)}
-                className="w-full"
+                onChange={(e) => setFormData({ ...formData, deliveryTime: e.target.value })}
               />
             )}
           </div>
 
-          {error && (
-            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded mb-4 text-red-700 text-sm">
-              <AlertCircle className="w-4 h-4" />
-              {error}
+          {/* Area - Radio Buttons */}
+          <div>
+            <label className="block text-sm font-medium mb-2">Area</label>
+            <div className="flex gap-6">
+              {["DN", "CP", "B"].map((areaOption) => (
+                <label key={areaOption} className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="area"
+                    value={areaOption}
+                    checked={formData.area === areaOption}
+                    onChange={(e) => setFormData({ ...formData, area: e.target.value })}
+                    className="w-4 h-4"
+                  />
+                  <span className="text-sm">{areaOption}</span>
+                </label>
+              ))}
             </div>
-          )}
-
-          {/* Buttons */}
-          <div className="flex gap-3">
-            <Button
-              onClick={handleSubmitOrder}
-              disabled={submitting}
-              className="flex-1 bg-blue-600 hover:bg-blue-700"
-            >
-              {submitting ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Submitting...
-                </>
-              ) : (
-                "Submit Order"
-              )}
-            </Button>
-            <Button onClick={handlePrint} variant="outline" className="flex-1">
-              <Printer className="w-4 h-4 mr-2" />
-              Print
-            </Button>
-            <Button onClick={handleScanAgain} variant="outline" className="flex-1">
-              Scan Again
-            </Button>
           </div>
-        </Card>
-      </div>
+
+          {/* Receipt Scan */}
+          <div>
+            <label className="block text-sm font-medium mb-2">Receipt Scan</label>
+            
+            {!extractedItems ? (
+              <div className="space-y-3">
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleUpload}
+                    disabled={loading}
+                    className="flex-1"
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Scanning...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="w-4 h-4 mr-2" />
+                        Upload Photo
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleCamera}
+                    disabled={loading}
+                    className="flex-1"
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Scanning...
+                      </>
+                    ) : (
+                      <>
+                        <Camera className="w-4 h-4 mr-2" />
+                        Take Photo
+                      </>
+                    )}
+                  </Button>
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0])}
+                  className="hidden"
+                />
+                <input
+                  ref={cameraInputRef}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0])}
+                  className="hidden"
+                />
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h4 className="font-medium text-sm mb-2">Extracted Items:</h4>
+                  <ul className="space-y-1">
+                    {extractedItems.items.length > 0 ? (
+                      extractedItems.items.map((item, idx) => (
+                        <li key={idx} className="text-sm text-gray-700">
+                          - {item}
+                        </li>
+                      ))
+                    ) : (
+                      <li className="text-sm text-gray-500">No items extracted</li>
+                    )}
+                  </ul>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleRescan}
+                  className="w-full"
+                >
+                  Rescan
+                </Button>
+              </div>
+            )}
+          </div>
+
+          {/* Submit Button */}
+          <Button
+            type="submit"
+            disabled={submitting}
+            className="w-full"
+          >
+            {submitting ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Submitting...
+              </>
+            ) : (
+              "Submit Order"
+            )}
+          </Button>
+        </form>
+      </Card>
     </div>
   );
 }

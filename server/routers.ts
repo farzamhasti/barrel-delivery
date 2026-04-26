@@ -378,21 +378,23 @@ export const appRouter = router({
   reservations: router({
     create: adminOrSystemAdminProcedure
       .input(z.object({
-        eventType: z.string(),
-        numberOfPeople: z.number().min(1),
-        details: z.string().optional(),
-        eventDate: z.string(),
-        eventTime: z.string(),
+        customerName: z.string(),
+        customerPhone: z.string(),
+        customerEmail: z.string().optional(),
+        reservationDate: z.string(),
+        partySize: z.number().min(1),
+        specialRequests: z.string().optional(),
       }))
       .mutation(async ({ input }) => {
         return db.createReservation({
-          eventType: input.eventType,
-          numberOfPeople: input.numberOfPeople,
-          details: input.details,
-          eventDate: input.eventDate,
-          eventTime: input.eventTime,
-          status: "pending",
-        });
+          customerName: input.customerName,
+          customerPhone: input.customerPhone,
+          customerEmail: input.customerEmail,
+          reservationDate: new Date(input.reservationDate),
+          partySize: input.partySize,
+          specialRequests: input.specialRequests,
+          status: "Pending",
+        } as any);
       }),
     list: protectedProcedure.query(async () => {
       return db.getReservations();
@@ -400,7 +402,7 @@ export const appRouter = router({
     updateStatus: adminOrSystemAdminProcedure
       .input(z.object({
         id: z.number(),
-        status: z.enum(["pending", "completed"]),
+        status: z.enum(["Pending", "Confirmed", "Cancelled"]),
       }))
       .mutation(async ({ input }) => {
         return db.updateReservationStatus(input.id, input.status);
