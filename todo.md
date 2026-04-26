@@ -2453,3 +2453,5 @@
 - [x] Fix invalid time value error - convert time input to proper timestamp format
 - [x] Fix area field database insertion error - conditionally include area only if non-empty
 - [x] Test order submission with all field combinations
+- [x] Apply same fix to regular order creation (orders.create mutation)
+- [x] Verify both order creation paths work correctly
