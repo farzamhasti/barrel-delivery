@@ -658,25 +658,15 @@ export async function getDriverByNameAndLicense(name: string, licenseNumber: str
 }
 
 export async function createDriverSession(driverId: number, sessionToken: string, expiresAt: Date) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  // Import the driverSessions table
-  const { driverSessions } = await import("../drizzle/schema");
-  
-  return db.insert(driverSessions).values({
-    driverId,
-    sessionToken,
-    expiresAt,
-  });
+  // Driver sessions not implemented in new schema
+  return null;
 }
 
 export async function getDriverSession(sessionToken: string) {
-  const db = await getDb();
-  if (!db) return null;
+  // Driver sessions not implemented in new schema
+  return null;
   
-  const { driverSessions } = await import("../drizzle/schema");
-  
+  /*
   const result = await db
     .select()
     .from(driverSessions)
@@ -686,6 +676,7 @@ export async function getDriverSession(sessionToken: string) {
     ));
   
   return result[0] || null;
+  */
 }
 
 export async function deleteDriverSession(sessionToken: string) {

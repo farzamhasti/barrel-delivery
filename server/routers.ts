@@ -5,11 +5,11 @@ import { publicProcedure, protectedProcedure, router, systemAdminProcedure, admi
 import { z } from "zod";
 import * as db from "./db";
 import { geocodeAddress, reverseGeocodeCoordinates, calculateDistance, isValidCoordinates } from "./geocoding";
-import { driverRouter } from "./driverRouter";
+// Driver router removed - using simplified tracking model
 
 export const appRouter = router({
   system: systemRouter,
-  driver: driverRouter,
+  // driver: driverRouter, // Removed - using simplified tracking model
   kitchen: router({
     getDeliveryReportMetrics: protectedProcedure
       .input(z.object({
