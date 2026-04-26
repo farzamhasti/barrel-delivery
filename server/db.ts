@@ -1,5 +1,5 @@
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, menuCategories, InsertMenuCategory, menuItems, InsertMenuItem, drivers, InsertDriver, customers, InsertCustomer, orders, InsertOrder, orderItems, InsertOrderItem, systemCredentials, systemSessions, orderStatusHistory, InsertOrderStatusHistory, returnTimeHistory, reservations, InsertReservation, Reservation } from "../drizzle/schema";
+import { InsertUser, users, menuCategories, InsertMenuCategory, menuItems, InsertMenuItem, drivers, InsertDriver, orders, InsertOrder, orderItems, InsertOrderItem, systemCredentials, systemSessions, orderStatusHistory, InsertOrderStatusHistory, returnTimeHistory, reservations, InsertReservation, Reservation } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { eq, and, desc, gte, lt, inArray, gt, isNull, lte } from "drizzle-orm";
 import { createHash, timingSafeEqual } from 'crypto';
@@ -166,39 +166,24 @@ export async function getOrdersWithCustomer(driverId?: number) {
   const result = await db
     .select({
       id: orders.id,
-      customerId: orders.customerId,
+      orderNumber: orders.orderNumber,
       driverId: orders.driverId,
       status: orders.status,
-      subtotal: orders.subtotal,
-      taxPercentage: orders.taxPercentage,
-      taxAmount: orders.taxAmount,
-      totalPrice: orders.totalPrice,
-      notes: orders.notes,
       area: orders.area,
       hasDeliveryTime: orders.hasDeliveryTime,
       deliveryTime: orders.deliveryTime,
       createdAt: orders.createdAt,
       updatedAt: orders.updatedAt,
-      customerName: customers.name,
-      customerPhone: customers.phone,
-      customerAddress: customers.address,
-      customerLatitude: customers.latitude,
-      customerLongitude: customers.longitude,
+      customerPhone: orders.customerPhone,
+      customerAddress: orders.customerAddress,
     })
     .from(orders)
-    .innerJoin(customers, eq(orders.customerId, customers.id))
     .where(conditions.length > 0 ? and(...conditions) : undefined)
     .orderBy(desc(orders.createdAt));
   
   // Convert Decimal values to numbers
   return result.map(order => ({
     ...order,
-    subtotal: Number(order.subtotal),
-    taxPercentage: Number(order.taxPercentage),
-    taxAmount: Number(order.taxAmount),
-    totalPrice: Number(order.totalPrice),
-    customerLatitude: order.customerLatitude ? Number(order.customerLatitude) : null,
-    customerLongitude: order.customerLongitude ? Number(order.customerLongitude) : null,
   }));
 }
 

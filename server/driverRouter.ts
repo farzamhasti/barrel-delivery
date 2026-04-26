@@ -328,8 +328,8 @@ export const driverRouter = router({
           onTheWayOrders.map((order) => ({
             id: order.id,
             address: order.customerAddress || "",
-            latitude: order.customerLatitude ? Number(order.customerLatitude) : 0,
-            longitude: order.customerLongitude ? Number(order.customerLongitude) : 0,
+            latitude: 0,
+            longitude: 0,
           })),
           restaurantAddress,
           restaurantLat,
