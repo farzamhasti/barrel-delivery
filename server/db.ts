@@ -1100,7 +1100,7 @@ export async function getAggregatedDeliveryReport(
   const ordersList = await db
     .select({
       id: orders.id,
-      customerId: orders.customerId,
+      orderNumber: orders.orderNumber,
       status: orders.status,
       createdAt: orders.createdAt,
       pickedUpAt: orders.pickedUpAt,
@@ -1225,11 +1225,12 @@ export async function saveReturnTime(driverId: number, totalSeconds: number) {
 
   const startTimestamp = new Date();
   
-  // Update driver with return time
-  await db.update(drivers).set({
-    returnTimeTotalSeconds: totalSeconds,
-    returnTimeStartTimestamp: startTimestamp,
-  }).where(eq(drivers.id, driverId));
+  // Return time tracking not implemented in new schema
+  // const startTimestamp = new Date();
+  // await db.update(drivers).set({
+  //   returnTimeTotalSeconds: totalSeconds,
+  //   returnTimeStartTimestamp: startTimestamp,
+  // }).where(eq(drivers.id, driverId));
 
   // Record in history
   await db.insert(returnTimeHistory).values({

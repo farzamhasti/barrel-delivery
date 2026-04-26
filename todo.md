@@ -1,8 +1,8 @@
 # Barrel Delivery - Order Tracking & Management System (Rebuilt)
 
 ## Phase 1: Infrastructure & Schema Rebuild
-- [ ] Rollback to stable checkpoint before database rebuild
-- [ ] Fix all TypeScript errors from schema changes
+- [x] Rollback to stable checkpoint before database rebuild
+- [ ] Fix all TypeScript errors from schema changes (in progress - 60 errors remaining)
 - [ ] Verify dev server runs without errors
 - [ ] Test database connection
 

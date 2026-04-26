@@ -473,8 +473,8 @@ export default function DriverDashboard() {
                       <div key={order.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                         <div className="flex justify-between items-start mb-3">
                           <div>
-                            <h3 className="font-semibold text-lg">Order #{order.id}</h3>
-                            <p className="text-gray-600 text-sm">{order.customerName}</p>
+                            <h3 className="font-semibold text-lg">Order #{order.orderNumber}</h3>
+                            <p className="text-gray-600 text-sm">Area: {order.area}</p>
                           </div>
                           <Badge variant="secondary">{order.status}</Badge>
                         </div>
@@ -543,8 +543,8 @@ export default function DriverDashboard() {
                       <div key={order.id} className="border border-gray-200 rounded-lg p-4 bg-green-50 hover:shadow-md transition-shadow">
                         <div className="flex justify-between items-start mb-3">
                           <div>
-                            <h3 className="font-semibold text-lg">Order #{order.id}</h3>
-                            <p className="text-gray-600 text-sm">{order.customerName}</p>
+                            <h3 className="font-semibold text-lg">Order #{order.orderNumber}</h3>
+                            <p className="text-gray-600 text-sm">Area: {order.area}</p>
                           </div>
                           <Badge className="bg-green-600">Delivered</Badge>
                         </div>
@@ -597,8 +597,8 @@ export default function DriverDashboard() {
                 {/* Customer Information */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-gray-600">Customer Name</p>
-                    <p className="font-semibold">{selectedOrder.customerName}</p>
+                    <p className="text-sm text-gray-600">Order Number</p>
+                    <p className="font-semibold">{selectedOrder.orderNumber}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Phone</p>

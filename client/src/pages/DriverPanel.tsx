@@ -283,14 +283,7 @@ export default function DriverPanel() {
                   </div>
                 </div>
 
-                {selectedOrderData.notes && (
-                  <div className="bg-blue-50 dark:bg-blue-950/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
-                    <p className="text-xs text-blue-600 dark:text-blue-400 font-semibold mb-2">Special Instructions</p>
-                    <p className="text-sm text-blue-700 dark:text-blue-300">
-                      {selectedOrderData.notes}
-                    </p>
-                  </div>
-                )}
+                {/* Special instructions not available in new schema */}
 
                 <div className="bg-green-50 dark:bg-green-950/20 rounded-lg p-4 border border-green-200 dark:border-green-800">
                   <p className="text-xs text-green-600 dark:text-green-400 font-semibold mb-2">📍 Location Sharing</p>

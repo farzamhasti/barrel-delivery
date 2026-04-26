@@ -1,11 +1,11 @@
-import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Loader2, Upload, Camera, AlertCircle, CheckCircle2 } from "lucide-react";
 import Tesseract from "tesseract.js";
 import { trpc } from "@/lib/trpc";
-import { useToast } from "@/hooks/useToast";
+import { toast } from "sonner";
+import { useState, useRef } from "react";
 
 interface ExtractedItems {
   items: string[];
@@ -13,7 +13,6 @@ interface ExtractedItems {
 }
 
 export function ReceiptScannerTesseract() {
-  const { toast } = useToast();
   const [receiptImage, setReceiptImage] = useState<string | null>(null);
   const [extractedItems, setExtractedItems] = useState<ExtractedItems | null>(null);
   const [loading, setLoading] = useState(false);

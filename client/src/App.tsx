@@ -8,7 +8,7 @@ import Home from "./pages/Home";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminLogin from "./pages/AdminLogin";
 import DriverPanel from "./pages/DriverPanel";
-import DriverDashboard from "./pages/DriverDashboard";
+// import DriverDashboard from "./pages/DriverDashboard";
 import KitchenDashboardPage from "./pages/KitchenDashboardPage";
 import KitchenLogin from "./pages/KitchenLogin";
 import NotFound from "./pages/NotFound";
@@ -63,7 +63,7 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/admin-login" component={AdminLogin} />
       <Route path="/kitchen-login" component={KitchenLogin} />
-      <Route path="/driver-dashboard" component={DriverDashboard} />
+      {/* <Route path="/driver-dashboard" component={DriverDashboard} /> */}
       <Route path="/admin/*" component={() => <SystemProtectedRoute component={AdminDashboard} requiredRole="admin" />} />
       <Route path="/driver/*" component={DriverPanel} />
       <Route path="/kitchen" component={() => <SystemProtectedRoute component={KitchenDashboardPage} requiredRole="kitchen" />} />
