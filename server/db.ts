@@ -127,81 +127,8 @@ export async function getActiveDrivers() {
 }
 
 // Customers
-export async function createCustomer(data: InsertCustomer) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  // If no coordinates provided but address exists, attempt to geocode
-  let finalData = { ...data };
-  if ((!data.latitude || !data.longitude) && data.address) {
-    try {
-      const { geocodeAddress } = await import('./_core/map');
-      const coords = await geocodeAddress(data.address);
-      if (coords) {
-        finalData.latitude = coords.lat as any;
-        finalData.longitude = coords.lng as any;
-      }
-    } catch (error) {
-      console.warn('[Database] Geocoding failed for address:', data.address, error);
-      // Continue without coordinates if geocoding fails
-    }
-  }
-  
-  const result = await db.insert(customers).values(finalData);
-  console.log('[createCustomer] Insert result:', result);
-  
-  // Try different ways to extract the insertId
-  let insertId: number | undefined;
-  
-  // Method 1: result[0].insertId (MySQL driver format)
-  if (Array.isArray(result) && result[0] && (result[0] as any).insertId) {
-    insertId = (result[0] as any).insertId;
-  }
-  // Method 2: result.insertId (some drivers)
-  else if ((result as any).insertId) {
-    insertId = (result as any).insertId;
-  }
-  // Method 3: Check if result is an array with id property
-  else if (Array.isArray(result) && result[0] && (result[0] as any).id) {
-    insertId = (result[0] as any).id;
-  }
-  
-  console.log('[createCustomer] Extracted insertId:', insertId);
-  
-  if (insertId) {
-    const customer = await db.select().from(customers).where(eq(customers.id, insertId));
-    console.log('[createCustomer] Found customer:', customer[0]);
-    return customer[0] || null;
-  }
-  
-  // If we still can't get insertId, try to get the last inserted customer
-  console.log('[createCustomer] Failed to extract insertId, trying to get last customer');
-  const allCustomers = await db.select().from(customers).orderBy(desc(customers.id)).limit(1);
-  if (allCustomers[0]) {
-    console.log('[createCustomer] Returning last customer:', allCustomers[0]);
-    return allCustomers[0];
-  }
-  
-  console.log('[createCustomer] Failed to create customer');
-  return null;
-}
-
-export async function getCustomer(id: number) {
-  const db = await getDb();
-  if (!db) return null;
-  const result = await db.select().from(customers).where(eq(customers.id, id));
-  return result[0] || null;
-}
-
-// Alias for backwards compatibility
-export const getCustomerById = getCustomer;
+// Customers removed - using direct address/phone in orders instead
 export const getOrderById = getOrder;
-
-export async function updateCustomer(id: number, data: Partial<InsertCustomer>) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  return db.update(customers).set(data).where(eq(customers.id, id));
-}
 
 // Orders
 export async function getOrders(driverId?: number) {
@@ -907,40 +834,6 @@ export async function deleteSystemSession(sessionToken: string) {
   return await db.delete(systemSessions).where(eq(systemSessions.sessionToken, sessionToken));
 }
 
-
-// Geocode all customers without coordinates
-export async function geocodeAllCustomers() {
-  const db = await getDb();
-  if (!db) return { geocodedCount: 0, totalCustomers: 0 };
-
-  try {
-    const { geocodeAddress } = await import('./_core/map');
-    const allCustomers = await db.select().from(customers);
-    let geocodedCount = 0;
-
-    for (const customer of allCustomers) {
-      if (!customer.latitude && !customer.longitude && customer.address) {
-        try {
-          const coords = await geocodeAddress(customer.address);
-          if (coords) {
-            await db.update(customers).set({
-              latitude: coords.lat as any,
-              longitude: coords.lng as any,
-            }).where(eq(customers.id, customer.id));
-            geocodedCount++;
-          }
-        } catch (error) {
-          console.warn(`[Database] Failed to geocode customer ${customer.id}:`, error);
-        }
-      }
-    }
-
-    return { geocodedCount, totalCustomers: allCustomers.length };
-  } catch (error) {
-    console.error('[Database] Error geocoding customers:', error);
-    return { geocodedCount: 0, totalCustomers: 0 };
-  }
-}
 
 
 export async function createSystemCredentials(username: string, password: string, role: "admin" | "kitchen") {

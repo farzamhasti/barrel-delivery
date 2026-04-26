@@ -43,7 +43,6 @@ export const driverRouter = router({
           sessionToken,
           driverId: driver.id,
           driverName: driver.name,
-          vehicleType: driver.vehicleType,
           phone: driver.phone,
         };
       } catch (error: any) {

@@ -56,11 +56,8 @@ export const appRouter = router({
         longitude: z.number().optional(),
       }))
       .mutation(async ({ input }) => {
-        return db.createDriver({
-          ...input,
-          currentLatitude: input.latitude as any,
-          currentLongitude: input.longitude as any,
-        });
+        const { latitude, longitude, ...driverData } = input;
+        return db.createDriver(driverData);
       }),
     update: protectedProcedure
       .input(z.object({
@@ -75,12 +72,8 @@ export const appRouter = router({
         longitude: z.number().optional(),
       }))
       .mutation(async ({ input }) => {
-        const { id, ...data } = input;
-        return db.updateDriver(id, {
-          ...data,
-          currentLatitude: data.latitude as any,
-          currentLongitude: data.longitude as any,
-        });
+        const { id, latitude, longitude, ...data } = input;
+        return db.updateDriver(id, data);
       }),
     delete: protectedProcedure
       .input(z.object({ id: z.number() }))
@@ -118,44 +111,7 @@ export const appRouter = router({
       }),
   }),
 
-  // Customers
-  customers: router({
-    create: publicProcedure
-      .input(z.object({
-        name: z.string(),
-        phone: z.string(),
-        address: z.string(),
-        latitude: z.number().optional(),
-        longitude: z.number().optional(),
-      }))
-      .mutation(async ({ input }) => {
-        return db.createCustomer({
-          ...input,
-          latitude: input.latitude as any,
-          longitude: input.longitude as any,
-        });
-      }),
-    getById: publicProcedure
-      .input(z.object({ customerId: z.number() }))
-      .query(async ({ input }) => {
-        return db.getCustomerById(input.customerId);
-      }),
-    update: protectedProcedure
-      .input(z.object({
-        customerId: z.number(),
-        name: z.string().optional(),
-        phone: z.string().optional(),
-        address: z.string().optional(),
-      }))
-      .mutation(async ({ input }) => {
-        const { customerId, ...updateData } = input;
-        return db.updateCustomer(customerId, updateData as any);
-      }),
-    geocodeAll: adminOrSystemAdminProcedure
-      .mutation(async () => {
-        return db.geocodeAllCustomers();
-      }),
-  }),
+
 
   // Orders
   orders: router({
@@ -355,14 +311,7 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         const { orderId, customerId, customerName, customerPhone, customerAddress, deliveryTime, hasDeliveryTime, ...updateData } = input;
         
-        // Update customer information if provided
-        if (customerId && (customerName || customerPhone || customerAddress)) {
-          await db.updateCustomer(customerId, {
-            name: customerName,
-            phone: customerPhone,
-            address: customerAddress,
-          } as any);
-        }
+        // Customer info is now stored directly in orders table
         
         // Convert deliveryTime string to Date if provided
         const processedData = { ...updateData } as any;
