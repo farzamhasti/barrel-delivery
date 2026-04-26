@@ -345,17 +345,24 @@ export const appRouter = router({
         })),
       }))
       .mutation(async ({ input }) => {
-        const order = await db.createOrder({
+        // Build order data, only including area if it has a value
+        const orderData: any = {
           customerId: input.customerId,
           subtotal: input.subtotal as any,
           taxPercentage: input.taxPercentage as any,
           taxAmount: input.taxAmount as any,
           totalPrice: input.totalPrice as any,
           notes: input.notes,
-          area: input.area && typeof input.area === 'string' && input.area.trim() ? input.area.trim() : null,
           deliveryTime: input.hasDeliveryTime ? input.deliveryTime : null,
           hasDeliveryTime: input.hasDeliveryTime,
-        })
+        };
+        
+        // Only include area if it's not empty
+        if (input.area && typeof input.area === 'string' && input.area.trim()) {
+          orderData.area = input.area.trim();
+        }
+        
+        const order = await db.createOrder(orderData)
         
         // Create order items
         // Extract orderId from the order object
