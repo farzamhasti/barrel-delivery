@@ -2352,3 +2352,4 @@
 - [x] Verify phone number is visible in Order Tracking tab
 - [x] Test "Deliver with Map" button works with extracted delivery address
 - [x] Fix database insertion error with empty deliveryTime field
+- [x] Refine Claude prompt to specifically extract address below "bar" on receipt

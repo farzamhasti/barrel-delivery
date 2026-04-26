@@ -63,7 +63,8 @@ Rules:
 - Ignore lines like TRAINING, DO NOT PREPARE, and any non-food text
 - If an item appears multiple times on the receipt, combine them into one item with the correct quantity
 - If a line is indented under a food item (like "Mild" under "Wings"), treat it as a note for that item
-- Extract the full delivery address if present on the receipt and put it in deliveryAddress
+- DELIVERY ADDRESS: Look for the customer's address that appears BELOW the word "bar" on the receipt (e.g., "70 Lillian")
+- Extract the full delivery address and put it in deliveryAddress
 - Extract the customer phone number if present on the receipt and put it in phoneNumber
 - If deliveryAddress is not found, use null
 - If phoneNumber is not found, use null — phone number is optional
