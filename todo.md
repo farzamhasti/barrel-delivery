@@ -2353,3 +2353,9 @@
 - [x] Test "Deliver with Map" button works with extracted delivery address
 - [x] Fix database insertion error with empty deliveryTime field
 - [x] Refine Claude prompt to specifically extract address below "bar" on receipt
+
+
+## Bug Fix: Empty Area Field in Manual Order Creation
+- [x] Fix area field handling to convert empty strings to null in createOrder function
+- [x] Verify manual order creation works without delivery address
+- [x] Test order submission with and without delivery address
