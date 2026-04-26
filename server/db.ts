@@ -224,14 +224,10 @@ export async function getOrderWithItems(orderId: number) {
       deliveryTime: orders.deliveryTime,
       createdAt: orders.createdAt,
       updatedAt: orders.updatedAt,
-      customerName: customers.name,
-      customerPhone: customers.phone,
-      customerAddress: customers.address,
-      customerLatitude: customers.latitude,
-      customerLongitude: customers.longitude,
+      customerPhone: orders.customerPhone,
+      customerAddress: orders.customerAddress,
     })
     .from(orders)
-    .innerJoin(customers, eq(orders.customerId, customers.id))
     .where(eq(orders.id, orderId));
   if (!order.length) return null;
 
@@ -334,14 +330,10 @@ export async function getTodayOrdersWithItems() {
       hasDeliveryTime: orders.hasDeliveryTime,
       createdAt: orders.createdAt,
       updatedAt: orders.updatedAt,
-      customerName: customers.name,
-      customerPhone: customers.phone,
-      customerAddress: customers.address,
-      customerLatitude: customers.latitude,
-      customerLongitude: customers.longitude,
+      customerPhone: orders.customerPhone,
+      customerAddress: orders.customerAddress,
     })
     .from(orders)
-    .innerJoin(customers, eq(orders.customerId, customers.id))
     .where(and(gte(orders.createdAt, startOfDay), lt(orders.createdAt, endOfDay)))
     .orderBy(desc(orders.createdAt));
   
@@ -442,14 +434,10 @@ export async function getOrdersByDateRange(startDate: Date | string, endDate: Da
       hasDeliveryTime: orders.hasDeliveryTime,
       createdAt: orders.createdAt,
       updatedAt: orders.updatedAt,
-      customerName: customers.name,
-      customerPhone: customers.phone,
-      customerAddress: customers.address,
-      customerLatitude: customers.latitude,
-      customerLongitude: customers.longitude,
+      customerPhone: orders.customerPhone,
+      customerAddress: orders.customerAddress,
     })
     .from(orders)
-    .innerJoin(customers, eq(orders.customerId, customers.id))
     .where(and(...conditions))
     .orderBy(desc(orders.createdAt));
   
@@ -460,8 +448,6 @@ export async function getOrdersByDateRange(startDate: Date | string, endDate: Da
     taxPercentage: Number(order.taxPercentage),
     taxAmount: Number(order.taxAmount),
     totalPrice: Number(order.totalPrice),
-    customerLatitude: order.customerLatitude ? Number(order.customerLatitude) : null,
-    customerLongitude: order.customerLongitude ? Number(order.customerLongitude) : null,
   }))
 }
 
@@ -1040,15 +1026,8 @@ export async function getOrderTimelinesForReport(startDate: Date, endDate: Date)
         )
       );
 
-    // Get customer info for each order
-    const customerIdSet = new Set(orderList.map(o => o.customerId));
-    const customerIds = Array.from(customerIdSet);
-    const customerList = await db
-      .select()
-      .from(customers)
-      .where(inArray(customers.id, customerIds));
-
-    const customerMap = new Map(customerList.map(c => [c.id, c]));
+    // Customer info is now stored directly in orders table
+    const customerMap = new Map();
 
     // Get status history for each order
     const orderIds = orderList.map(o => o.id);
@@ -1278,9 +1257,7 @@ export async function saveReturnTime(driverId: number, totalSeconds: number) {
   // Record in history
   await db.insert(returnTimeHistory).values({
     driverId,
-    returnTimeTotalSeconds: totalSeconds,
-    returnTimeStartTimestamp: startTimestamp,
-    action: 'saved',
+    estimatedReturnTime: new Date(startTimestamp.getTime() + totalSeconds * 1000),
   } as any);
 
   return {
