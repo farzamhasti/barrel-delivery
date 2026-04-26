@@ -298,14 +298,17 @@ export function ReceiptScannerTesseract() {
 
           {/* Area/Region */}
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Area / Region</label>
-            <Input
-              type="text"
-              placeholder="Enter area or region"
+            <label className="block text-sm font-medium text-gray-700 mb-2">Region</label>
+            <select
               value={formData.area}
               onChange={(e) => handleFormChange("area", e.target.value)}
-              className="w-full"
-            />
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="">Select a region</option>
+              <option value="DN">DN</option>
+              <option value="CP">CP</option>
+              <option value="B">B</option>
+            </select>
           </div>
 
           {/* Delivery Time */}

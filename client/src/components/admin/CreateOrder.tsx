@@ -221,13 +221,19 @@ export default function CreateOrder() {
               />
             </div>
             <div>
-              <Label htmlFor="area">Area</Label>
-              <Input
+              <Label htmlFor="area">Region *</Label>
+              <select
                 id="area"
                 value={formData.area}
                 onChange={(e) => setFormData({ ...formData, area: e.target.value })}
-                placeholder="Enter delivery area"
-              />
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                required
+              >
+                <option value="">Select a region</option>
+                <option value="DN">DN</option>
+                <option value="CP">CP</option>
+                <option value="B">B</option>
+              </select>
             </div>
             <div>
               <Label htmlFor="notes">Notes</Label>
