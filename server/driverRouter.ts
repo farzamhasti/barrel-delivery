@@ -243,15 +243,17 @@ export const driverRouter = router({
           });
         }
         
-        const driver = await db.getDriverBySessionToken(sessionToken);
-        if (!driver) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: "Driver not found",
-          });
-        }
+        // Driver sessions not implemented in new schema
+        // const driver = await db.getDriverBySessionToken(sessionToken);
+        // if (!driver) {
+        //   throw new TRPCError({
+        //     code: "NOT_FOUND",
+        //     message: "Driver not found",
+        //   });
+        // }
         
-        const metrics = await db.getDriverPerformanceMetrics(driver.id);
+        // const metrics = await db.getDriverPerformanceMetrics(driver.id);
+        const metrics = null;
         return metrics;
       } catch (error: any) {
         throw new TRPCError({
