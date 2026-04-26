@@ -727,8 +727,13 @@ export async function createOrder(data: InsertOrder) {
     taxAmount: data.taxAmount ? String(data.taxAmount) : "0",
     totalPrice: data.totalPrice ? String(data.totalPrice) : "0",
     deliveryTime: data.deliveryTime || null,
-    area: data.area && data.area.trim() ? data.area.trim() : null,
+    area: typeof data.area === 'string' && data.area.trim() ? data.area.trim() : null,
   };
+  
+  // Ensure area is explicitly null if it's an empty string (Drizzle workaround)
+  if (!orderData.area || (typeof orderData.area === 'string' && !orderData.area.trim())) {
+    orderData.area = null as any;
+  }
   
   const result = await db.insert(orders).values(orderData as any);
   

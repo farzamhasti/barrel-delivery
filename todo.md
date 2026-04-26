@@ -2359,3 +2359,4 @@
 - [x] Fix area field handling to convert empty strings to null in createOrder function
 - [x] Verify manual order creation works without delivery address
 - [x] Test order submission with and without delivery address
+- [x] Add explicit null conversion for Drizzle ORM workaround
