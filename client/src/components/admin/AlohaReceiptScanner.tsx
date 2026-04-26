@@ -313,20 +313,20 @@ export function AlohaReceiptScanner() {
             {editedData.items.map((item, index) => (
               <div key={index} className="flex gap-2 items-start">
                 <Input
-                  value={item.name}
+                  value={item.name || ""}
                   onChange={(e) => handleUpdateItem(index, "name", e.target.value)}
                   placeholder="Item name"
                   className="flex-1"
                 />
                 <Input
                   type="number"
-                  value={item.quantity}
+                  value={item.quantity || 1}
                   onChange={(e) => handleUpdateItem(index, "quantity", e.target.value)}
                   placeholder="Qty"
                   className="w-16"
                 />
                 <Input
-                  value={item.notes}
+                  value={item.notes || ""}
                   onChange={(e) => handleUpdateItem(index, "notes", e.target.value)}
                   placeholder="Notes"
                   className="flex-1"
