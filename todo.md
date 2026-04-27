@@ -55,9 +55,9 @@
 - [x] Kitchen dashboard with real-time order tracking (3-second polling active)
 - [x] Database schema migration applied (0009_rebuild_database.sql executed)
 - [x] All core features operational and tested
-- [ ] Rebuild Driver Dashboard (future enhancement - currently disabled)
+- [ ] Rebuild Driver Dashboard (FUTURE ENHANCEMENT - currently disabled)
 - [x] Implement PDF export with logo branding (PDF generation capability available)
-- [ ] Additional performance optimizations (optional - future enhancement)
+- [ ] Additional performance optimizations (OPTIONAL - future enhancement)
 
 
 ## Phase 7: Receipt Processing Workflow Update (NEW REQUIREMENT)
