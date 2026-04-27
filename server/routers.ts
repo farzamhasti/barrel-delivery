@@ -138,7 +138,7 @@ export const appRouter = router({
         }
         
         // Process receipt image if provided
-        let processedReceiptImage = input.receiptImage;
+        let processedReceiptImage = null;
         if (input.receiptImage) {
           try {
             // Convert base64 to buffer
@@ -148,12 +148,20 @@ export const appRouter = router({
             // Process the image (enhance quality)
             const enhancedBuffer = await processReceiptImage(imageBuffer);
             
-            // Convert back to base64
-            processedReceiptImage = 'data:image/jpeg;base64,' + enhancedBuffer.toString('base64');
-            console.log('[orders.createFromReceipt] Receipt image processed successfully');
+            // Upload to S3 instead of storing in database
+            // Upload to S3 instead of storing in database
+            const { storagePut } = await import('./storage');
+            if (!storagePut) {
+              throw new Error('storagePut function not available');
+            }
+            const timestamp = Date.now();
+            const fileKey = `receipts/${input.orderNumber || 'order'}-${timestamp}.jpg`;
+            const { url } = await storagePut(fileKey, enhancedBuffer, 'image/jpeg');
+            processedReceiptImage = url;
+            console.log('[orders.createFromReceipt] Receipt image uploaded to S3:', url);
           } catch (error) {
-            console.error('[orders.createFromReceipt] Error processing receipt image:', error);
-            // Continue with original image if processing fails
+            console.error('[orders.createFromReceipt] Error processing/uploading receipt image:', error);
+            // Continue without image if processing fails
           }
         }
         

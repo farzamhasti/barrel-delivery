@@ -16,9 +16,9 @@ export async function enhanceReceiptImage(
   } = {}
 ): Promise<Buffer> {
   const {
-    maxWidth = 1200,
-    maxHeight = 1600,
-    quality = 85,
+    maxWidth = 800,
+    maxHeight = 1200,
+    quality = 70,
   } = options;
 
   try {
