@@ -33,6 +33,7 @@ interface OrderFormData {
   status: "Pending" | "Ready" | "On the Way" | "Delivered";
   area: "DT" | "CP" | "B";
   deliveryTime: string;
+  hasDeliveryTime?: boolean;
   receiptImage?: string;
 }
 
@@ -126,7 +127,7 @@ export function Orders() {
         customerPhone: formData.customerPhone,
         status: formData.status,
         area: formData.area,
-        deliveryTime: formData.deliveryTime,
+        deliveryTime: formData.hasDeliveryTime ? formData.deliveryTime : null,
       };
       
       // Include receipt image if a new one was uploaded
@@ -162,6 +163,7 @@ export function Orders() {
       status: order.status,
       area: areaValue,
       deliveryTime: order.deliveryTime ? new Date(order.deliveryTime).toISOString().slice(0, 16) : "",
+      hasDeliveryTime: !!order.deliveryTime,
       receiptImage: undefined,
     });
     setEditReceiptPreview(null);
@@ -402,12 +404,30 @@ export function Orders() {
             </div>
 
             <div>
-              <Label>Delivery Time (Optional)</Label>
-              <Input
-                type="datetime-local"
-                value={formData.deliveryTime}
-                onChange={(e) => setFormData({ ...formData, deliveryTime: e.target.value })}
-              />
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="hasDeliveryTime"
+                  checked={formData.hasDeliveryTime || false}
+                  onChange={(e) => {
+                    setFormData({
+                      ...formData,
+                      hasDeliveryTime: e.target.checked,
+                      deliveryTime: e.target.checked ? formData.deliveryTime : "",
+                    });
+                  }}
+                  className="w-4 h-4 cursor-pointer"
+                />
+                <Label htmlFor="hasDeliveryTime" className="cursor-pointer">Delivery Time (Optional)</Label>
+              </div>
+              {formData.hasDeliveryTime && (
+                <Input
+                  type="datetime-local"
+                  value={formData.deliveryTime}
+                  onChange={(e) => setFormData({ ...formData, deliveryTime: e.target.value })}
+                  className="mt-2"
+                />
+              )}
             </div>
 
             <div>

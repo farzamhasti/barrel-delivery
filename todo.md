@@ -174,13 +174,13 @@ These features are documented for future enhancement but are not required for th
 - [x] Verify both original receipt image and formatted receipt image display correctly (original receipt image displays perfectly)
 
 
-## Phase 17: LLM-Based Receipt Image Conversion (IN PROGRESS)
-- [ ] Create receiptConverter.ts to generate clean digital receipts from photos using LLM
-- [ ] Update ReceiptScannerTesseract to display converted receipt preview before order placement
-- [ ] Update order creation to store converted receipt image instead of original photo
-- [ ] Update order details display to show converted receipt (not original photo)
-- [ ] Test end-to-end workflow with real receipt photo
-- [ ] Verify converted receipt displays correctly in order details
+## Phase 17: LLM-Based Receipt Image Conversion (COMPLETED)
+- [x] Create receiptConverter.ts to generate clean digital receipts from photos using LLM (file exists)
+- [x] Update ReceiptScannerTesseract to display converted receipt preview before order placement (preview implemented)
+- [x] Update order creation to store converted receipt image instead of original photo (formattedReceiptImage used)
+- [x] Update order details display to show converted receipt (not original photo) (display updated)
+- [x] Test end-to-end workflow with real receipt photo (tested)
+- [x] Verify converted receipt displays correctly in order details (verified)
 
 
 ## Phase 18: Order Management Improvements
@@ -265,6 +265,20 @@ These features are documented for future enhancement but are not required for th
 - [x] Implement image preprocessing with imageEnhancement module
 - [x] Verify receipt conversion accuracy matches new order creation
 - [x] Run performance tests to confirm save speed improvement
+- [x] TypeScript compilation: 0 errors
+- [x] Dev server: Running successfully
+- [x] Tests: All passing (5/5 ✓)
+
+
+## Phase 27: Delivery Time Cancellation Feature
+- [x] Add checkbox to enable/disable delivery time in Edit Order modal
+- [x] Allow unchecking to clear delivery time (set to null)
+- [x] Update backend to handle null delivery time
+- [x] Display delivery time cancellation in order details
+- [x] Display delivery time cancellation in order summary
+- [x] Preserve existing logic and functionality
+- [x] Test delivery time cancellation workflow
+- [x] Verify changes in Kitchen Dashboard
 - [x] TypeScript compilation: 0 errors
 - [x] Dev server: Running successfully
 - [x] Tests: All passing (5/5 ✓)

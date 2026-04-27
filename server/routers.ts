@@ -236,14 +236,16 @@ export const appRouter = router({
         customerPhone: z.string().optional(),
         status: z.enum(['Pending', 'Ready', 'On the Way', 'Delivered']).optional(),
         area: z.enum(['DT', 'CP', 'B']).optional(),
-        deliveryTime: z.string().optional(),
+        deliveryTime: z.string().nullable().optional(),
         receiptImage: z.string().optional(),
       }))
       .mutation(async ({ input }) => {
         const { orderId, deliveryTime, receiptImage, ...data } = input;
         
         let deliveryTimeValue: Date | null | undefined = undefined;
-        if (deliveryTime) {
+        if (deliveryTime === null) {
+          deliveryTimeValue = null;
+        } else if (deliveryTime) {
           deliveryTimeValue = new Date(deliveryTime);
         }
         
