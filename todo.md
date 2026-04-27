@@ -212,7 +212,7 @@ These features are documented for future enhancement but are not required for th
 - [x] Test receipt display with existing orders
 
 ## Phase 22: Order Management Improvements (User Requested)
-- [ ] Fix delivery time display in order details
-- [ ] Remove Replace Photo button from receipt section
-- [ ] Fix edit order functionality (add update mutation)
-- [ ] Open order details in separate modal window
+- [x] Fix delivery time display in order details
+- [x] Remove Replace Photo button from receipt section
+- [x] Fix edit order functionality (add update mutation)
+- [x] Open order details in separate modal window
