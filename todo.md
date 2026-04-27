@@ -147,7 +147,14 @@ These features are documented for future enhancement but are not required for th
 - [x] End-to-end workflow: upload receipt → analyze → generate → save (implemented)
 
 
-## Phase 14: Display Formatted Receipts in UI (IN PROGRESS)
+## Phase 14: System Router & Login Procedure (COMPLETED)
+- [x] Create system router with login procedure (added to routers.ts)
+- [x] Implement login validation with hardcoded credentials (barrel_admin/admin123, barrel_kitchen/kitchen123)
+- [x] Return sessionToken, role, username on successful login (implemented)
+- [x] Add checkSession procedure for session verification (implemented)
+- [x] Fix "No procedure found on path system.login" error (FIXED)
+
+## Phase 15: Display Formatted Receipts in UI (PENDING)
 - [ ] Update Kitchen Dashboard to display formattedReceiptImage (add image display in order cards)
 - [ ] Update Order Tracking to display formattedReceiptImage (add image display in order details)
 - [ ] Test end-to-end OCR workflow with real receipt upload
