@@ -71,6 +71,8 @@ export function Orders() {
   }, [allOrders, selectedDate]);
 
   const deleteOrderMutation = trpc.orders.delete.useMutation();
+  const convertReceiptMutation = trpc.orders.convertReceiptImage.useMutation();
+  const updateReceiptMutation = trpc.orders.updateReceipt.useMutation();
 
   const { data: selectedOrderDetails } = trpc.orders.getWithItems.useQuery(
     { orderId: selectedOrderId || 0 },
@@ -231,6 +233,44 @@ export function Orders() {
               {!selectedOrderDetails.receiptImage && !selectedOrderDetails.formattedReceiptImage && (
                 <p className="text-gray-500 italic">No receipt information available for this order</p>
               )}
+              
+              {(selectedOrderDetails.receiptImage || selectedOrderDetails.formattedReceiptImage) && (
+                <Button
+                  onClick={() => {
+                    const fileInput = document.createElement('input');
+                    fileInput.type = 'file';
+                    fileInput.accept = 'image/*';
+                    fileInput.onchange = async (e) => {
+                      const file = (e.target as HTMLInputElement).files?.[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onload = async (event) => {
+                          const base64Image = event.target?.result as string;
+                          try {
+                            const result = await convertReceiptMutation.mutateAsync({ imageData: base64Image });
+                            await updateReceiptMutation.mutateAsync({
+                              orderId: selectedOrderId || 0,
+                              receiptImage: base64Image,
+                              formattedReceiptImage: result.html
+                            });
+                            toast.success('Receipt replaced successfully!');
+                            utils.orders.getWithItems.invalidate();
+                            setSelectedOrderId(null);
+                          } catch (error: any) {
+                            toast.error('Failed to replace receipt: ' + error.message);
+                          }
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    };
+                    fileInput.click();
+                  }}
+                  variant="secondary"
+                  className="w-full"
+                >
+                  Replace Photo
+                </Button>
+              )}
             </div>
 
             <Button 
@@ -281,7 +321,7 @@ export function Orders() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="DN">DN</SelectItem>
+                  <SelectItem value="DT">DT</SelectItem>
                   <SelectItem value="CP">CP</SelectItem>
                   <SelectItem value="B">B</SelectItem>
                 </SelectContent>

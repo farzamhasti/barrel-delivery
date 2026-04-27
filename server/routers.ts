@@ -11,7 +11,7 @@ export const appRouter = router({
         orderNumber: z.string().optional(),
         customerAddress: z.string(),
         customerPhone: z.string(),
-        area: z.enum(['DN', 'DT', 'WE', 'EA']),
+        area: z.enum(['DT', 'CP', 'B']),
         deliveryTime: z.string().optional(),
         hasDeliveryTime: z.boolean().default(false),
         receiptText: z.string().optional(),
@@ -167,6 +167,19 @@ export const appRouter = router({
       }))
       .mutation(async ({ input }) => {
         return db.updateOrder(input.orderId, { driverId: input.driverId });
+      }),
+
+    updateReceipt: publicProcedure
+      .input(z.object({
+        orderId: z.number(),
+        receiptImage: z.string().optional(),
+        formattedReceiptImage: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        return db.updateOrder(input.orderId, {
+          receiptImage: input.receiptImage,
+          formattedReceiptImage: input.formattedReceiptImage,
+        });
       }),
   }),
 

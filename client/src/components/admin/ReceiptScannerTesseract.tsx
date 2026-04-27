@@ -17,15 +17,16 @@ export function ReceiptScannerTesseract() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Form state
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{ checkNumber: string; address: string; phoneNumber: string; deliveryTime: string; enableDeliveryTime: boolean; area: "DT" | "CP" | "B"; receiptImage: string }>({
     checkNumber: "",
     address: "",
     phoneNumber: "",
     deliveryTime: "",
     enableDeliveryTime: false,
-    area: "DN" as "DN" | "DT" | "WE" | "EA",
-    receiptImage: "" as string, // Base64 image
-  });
+    area: "DT",
+    receiptImage: "",
+  })
+
 
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [convertedReceiptHTML, setConvertedReceiptHTML] = useState<string | null>(null);
@@ -142,7 +143,7 @@ export function ReceiptScannerTesseract() {
         orderNumber: formData.checkNumber,
         customerAddress: formData.address,
         customerPhone: formData.phoneNumber || "",
-        area: formData.area as "DN" | "DT" | "WE" | "EA",
+        area: formData.area as "DT" | "CP" | "B",
         deliveryTime: formData.enableDeliveryTime ? formData.deliveryTime : undefined,
         receiptText: "",
         receiptImage: convertedReceiptHTML || formData.receiptImage, // Use converted HTML if available, otherwise use original
@@ -159,7 +160,7 @@ export function ReceiptScannerTesseract() {
           phoneNumber: "",
           deliveryTime: "",
           enableDeliveryTime: false,
-          area: "DN" as "DN" | "DT" | "WE" | "EA",
+          area: "DT" as "DT" | "CP" | "B",
           receiptImage: "",
         });
         setImagePreview(null);
@@ -339,7 +340,7 @@ export function ReceiptScannerTesseract() {
           <div>
             <label className="block text-sm font-medium mb-2">Area (Optional)</label>
             <div className="flex gap-6">
-              {["DN", "DT", "WE", "EA"].map((areaOption) => (
+              {["DT", "CP", "B"].map((areaOption) => (
                 <label key={areaOption} className="flex items-center gap-2">
                   <input
                     type="radio"
@@ -347,7 +348,7 @@ export function ReceiptScannerTesseract() {
                     value={areaOption}
                     checked={formData.area === areaOption}
                     onChange={(e) =>
-                      setFormData({ ...formData, area: e.target.value as "DN" | "DT" | "WE" | "EA" })
+                      setFormData({ ...formData, area: e.target.value as "DT" | "CP" | "B" })
                     }
                     className="w-4 h-4"
                   />

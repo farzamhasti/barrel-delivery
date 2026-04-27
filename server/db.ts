@@ -526,7 +526,7 @@ export async function deleteAllOrderItems(orderId: number) {
   return db.delete(orderItems).where(eq(orderItems.orderId, orderId));
 }
 
-export async function updateOrder(id: number, data: { status?: string; totalPrice?: number; subtotal?: number; taxAmount?: number; deliveryTime?: Date | null; driverId?: number | null }) {
+export async function updateOrder(id: number, data: { status?: string; totalPrice?: number; subtotal?: number; taxAmount?: number; deliveryTime?: Date | null; driverId?: number | null; receiptImage?: string; formattedReceiptImage?: string }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const updateData: any = {};
@@ -536,6 +536,8 @@ export async function updateOrder(id: number, data: { status?: string; totalPric
   if (data.taxAmount !== undefined) updateData.taxAmount = data.taxAmount;
   if (data.deliveryTime !== undefined) updateData.deliveryTime = data.deliveryTime;
   if (data.driverId !== undefined) updateData.driverId = data.driverId;
+  if (data.receiptImage !== undefined) updateData.receiptImage = data.receiptImage;
+  if (data.formattedReceiptImage !== undefined) updateData.formattedReceiptImage = data.formattedReceiptImage;
   return db.update(orders).set(updateData).where(eq(orders.id, id));
 }
 

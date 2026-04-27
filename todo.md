@@ -187,3 +187,12 @@ These features are documented for future enhancement but are not required for th
 - [x] Hide original receipt image display from order details page
 - [x] Add delete order functionality to orders tab
 - [x] Remove uniqueness constraint on check numbers in database schema
+
+
+## Phase 19: Area Options and Photo Replace Functionality
+- [x] Update Area enum in database schema from DN/DT/WE/EA to DT/CP/B
+- [x] Update Area options in Create Order form UI
+- [x] Update Area options in Orders tab edit functionality
+- [x] Add Replace Photo button to order details modal
+- [x] Implement photo replacement with OCR conversion
+- [x] Test area options and photo replacement functionality
