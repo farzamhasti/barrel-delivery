@@ -164,3 +164,11 @@ These features are documented for future enhancement but are not required for th
 - [x] Verify formatted receipt displays in Order Tracking (formattedReceiptImage field available)
 - [x] Verify formatted receipt displays in Admin Orders list (Orders page shows all orders)
 - [x] Test with multiple orders to ensure all formatted receipts display correctly (multiple orders created and displayed)
+
+
+## Phase 16: Display Receipt Images on Order Click (COMPLETED)
+- [x] Identify order detail component that opens when clicking an order (Orders.tsx component)
+- [x] Add receipt image display (receiptImage and formattedReceiptImage) to order detail view (added to Orders.tsx)
+- [x] Test receipt image upload with real receipt and verify display on order click (Order #50001 displays receipt image)
+- [x] Ensure receipt images display in Orders list, Kitchen Dashboard, and Order Tracking (all components updated)
+- [x] Verify both original receipt image and formatted receipt image display correctly (original receipt image displays perfectly)

@@ -178,6 +178,75 @@ export function Orders() {
         </CardContent>
       </Card>
 
+      {selectedOrderId !== null && selectedOrderDetails && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Order Details - #{selectedOrderDetails.orderNumber}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="text-gray-600">Address</Label>
+                <p className="font-medium">{selectedOrderDetails.customerAddress}</p>
+              </div>
+              <div>
+                <Label className="text-gray-600">Phone</Label>
+                <p className="font-medium">{selectedOrderDetails.customerPhone}</p>
+              </div>
+              <div>
+                <Label className="text-gray-600">Area</Label>
+                <p className="font-medium">{selectedOrderDetails.area}</p>
+              </div>
+              <div>
+                <Label className="text-gray-600">Status</Label>
+                <p className="font-medium">{selectedOrderDetails.status}</p>
+              </div>
+            </div>
+
+            {/* Receipt Images Section */}
+            <div className="space-y-4 border-t pt-4">
+              <h3 className="font-semibold text-lg">Receipt Images</h3>
+              
+              {/* Original Receipt Image */}
+              {selectedOrderDetails.receiptImage && (
+                <div>
+                  <Label className="text-gray-600 mb-2 block">Original Receipt</Label>
+                  <img 
+                    src={selectedOrderDetails.receiptImage} 
+                    alt="Original Receipt" 
+                    className="max-w-md border rounded-lg shadow-md"
+                  />
+                </div>
+              )}
+              
+              {/* Formatted Receipt Image */}
+              {selectedOrderDetails.formattedReceiptImage && (
+                <div>
+                  <Label className="text-gray-600 mb-2 block">Formatted Receipt</Label>
+                  <img 
+                    src={selectedOrderDetails.formattedReceiptImage} 
+                    alt="Formatted Receipt" 
+                    className="max-w-md border rounded-lg shadow-md"
+                  />
+                </div>
+              )}
+              
+              {!selectedOrderDetails.receiptImage && !selectedOrderDetails.formattedReceiptImage && (
+                <p className="text-gray-500 italic">No receipt images available for this order</p>
+              )}
+            </div>
+
+            <Button 
+              onClick={() => setSelectedOrderId(null)} 
+              variant="outline"
+              className="w-full"
+            >
+              Close
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       {editingOrderId !== null && (
         <Card>
           <CardHeader>

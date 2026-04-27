@@ -1,32 +1,37 @@
-import { getDb } from './server/db.ts';
+import mysql from 'mysql2/promise';
+import dotenv from 'dotenv';
 
-async function applyMigration() {
-  const db = await getDb();
-  if (!db) {
-    console.error('✗ Failed to connect to database');
-    process.exit(1);
-  }
+dotenv.config();
 
-  const statements = [
-    "ALTER TABLE `orders` MODIFY COLUMN `customer_address` text",
-    "ALTER TABLE `orders` MODIFY COLUMN `customer_phone` varchar(20)",
-    "ALTER TABLE `orders` MODIFY COLUMN `area` enum('DN', 'CP', 'B')",
-  ];
-
-  for (const statement of statements) {
-    try {
-      await db.execute(statement);
-      console.log(`✓ Executed: ${statement.substring(0, 60)}...`);
-    } catch (err) {
-      console.error(`✗ Error: ${err.message}`);
-    }
-  }
-
-  console.log('\n✓ Migration complete');
-  process.exit(0);
-}
-
-applyMigration().catch(err => {
-  console.error('Fatal error:', err);
-  process.exit(1);
+const connection = await mysql.createConnection({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
 });
+
+try {
+  // Check if the column already exists
+  const [columns] = await connection.query(`
+    SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
+    WHERE TABLE_NAME = 'orders' AND COLUMN_NAME = 'formatted_receipt_image'
+  `);
+  
+  if (columns.length === 0) {
+    console.log('Adding formatted_receipt_image column...');
+    await connection.query(`
+      ALTER TABLE \`orders\` 
+      ADD COLUMN \`formatted_receipt_image\` text AFTER \`receipt_image\`
+    `);
+    console.log('✓ formatted_receipt_image column added');
+  } else {
+    console.log('✓ formatted_receipt_image column already exists');
+  }
+  
+  console.log('\n✓ Migration completed successfully!');
+} catch (error) {
+  console.error('Migration error:', error.message);
+  process.exit(1);
+} finally {
+  await connection.end();
+}

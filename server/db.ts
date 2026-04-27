@@ -221,6 +221,8 @@ export async function getOrderWithItems(orderId: number) {
       createdAt: orders.createdAt,
       updatedAt: orders.updatedAt,
       customerPhone: orders.customerPhone,
+      receiptImage: orders.receiptImage,
+      formattedReceiptImage: orders.formattedReceiptImage,
     })
     .from(orders)
     .where(eq(orders.id, orderId));
@@ -244,6 +246,8 @@ export async function getOrderWithItems(orderId: number) {
     subtotal: Number(orderData.subtotal),
     taxAmount: Number(orderData.taxAmount),
     totalPrice: Number(orderData.totalPrice),
+    receiptImage: orderData.receiptImage || null,
+    formattedReceiptImage: orderData.formattedReceiptImage || null,
     // Coordinates not stored in new simplified schema
     items: items.map(item => ({
       ...item,
