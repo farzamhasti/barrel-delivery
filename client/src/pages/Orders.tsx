@@ -194,12 +194,15 @@ export function Orders() {
                   className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer"
                   onClick={() => setSelectedOrderId(order.id)}
                 >
-                  <div className="flex justify-between items-start">
-                    <div>
+                  <div className="flex justify-between">
+                    <div className="flex-1">
                       <p className="font-semibold">Order #{order.orderNumber}</p>
                       <p className="text-sm text-gray-600">{order.customerAddress}</p>
                       <p className="text-sm text-gray-600">{order.customerPhone}</p>
                       <p className="text-sm text-gray-600">Area: {order.area}</p>
+                      {order.deliveryTime && (
+                        <p className="text-sm text-gray-600">Delivery: {new Date(order.deliveryTime).toLocaleString()}</p>
+                      )}
                       <p className="text-sm font-medium">Status: {order.status}</p>
                     </div>
                     <div className="flex gap-2">

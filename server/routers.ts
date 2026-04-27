@@ -18,13 +18,24 @@ export const appRouter = router({
         receiptImage: z.string().optional(),
       }))
       .mutation(async ({ input }) => {
-        // Convert time string (HH:MM format) to proper timestamp
+        // Convert datetime-local string (YYYY-MM-DDTHH:MM format) to proper timestamp
         let deliveryTimeValue: Date | null = null;
-        if (input.hasDeliveryTime && input.deliveryTime) {
-          const today = new Date();
-          const [hours, minutes] = input.deliveryTime.split(':');
-          today.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
-          deliveryTimeValue = today;
+        if (input.deliveryTime) {
+          try {
+            // Handle both formats: datetime-local (YYYY-MM-DDTHH:MM) and ISO string
+            if (input.deliveryTime.includes('T')) {
+              // datetime-local format: YYYY-MM-DDTHH:MM
+              deliveryTimeValue = new Date(input.deliveryTime);
+            } else if (input.deliveryTime.includes(':')) {
+              // HH:MM format (legacy)
+              const today = new Date();
+              const [hours, minutes] = input.deliveryTime.split(':');
+              today.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
+              deliveryTimeValue = today;
+            }
+          } catch (error) {
+            console.error('[orders.createFromReceipt] Error parsing delivery time:', error);
+          }
         }
         
         // Process receipt image if provided
