@@ -5,9 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trash2, Edit2, Save, X, Loader2 } from "lucide-react";
+import { Trash2, Edit2, Save, X, Loader2, Upload } from "lucide-react";
 import { toast } from "sonner";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,6 +33,7 @@ interface OrderFormData {
   status: "Pending" | "Ready" | "On the Way" | "Delivered";
   area: "DT" | "CP" | "B";
   deliveryTime: string;
+  receiptImage?: string;
 }
 
 export function Orders() {
@@ -42,6 +43,8 @@ export function Orders() {
   const [editingOrderId, setEditingOrderId] = useState<number | null>(null);
   const [deleteConfirmOrderId, setDeleteConfirmOrderId] = useState<number | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [editReceiptPreview, setEditReceiptPreview] = useState<string | null>(null);
+  const editFileInputRef = useRef<HTMLInputElement>(null);
 
   const getTodayDateString = () => {
     const now = new Date();
@@ -99,17 +102,37 @@ export function Orders() {
   const isDeleting = deleteOrderMutation.isPending;
   const isSaving = updateOrderMutation.isPending;
 
+  const handleReceiptCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const base64 = event.target?.result as string;
+        setEditReceiptPreview(base64);
+        setFormData({ ...formData, receiptImage: base64 });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSaveOrder = async () => {
     if (!editingOrderId) return;
     try {
-      await updateOrderMutation.mutateAsync({
+      const updateData: any = {
         orderId: editingOrderId,
         customerAddress: formData.customerAddress,
         customerPhone: formData.customerPhone,
         status: formData.status,
         area: formData.area,
         deliveryTime: formData.deliveryTime,
-      });
+      };
+      
+      // Include receipt image if a new one was uploaded
+      if (formData.receiptImage) {
+        updateData.receiptImage = formData.receiptImage;
+      }
+      
+      await updateOrderMutation.mutateAsync(updateData);
       toast.success("Order updated successfully");
       await invalidateOrderCache(utils);
       // Refetch the selected order details to show updated data in the modal
@@ -117,6 +140,7 @@ export function Orders() {
         await utils.orders.getWithItems.refetch({ orderId: editingOrderId });
       }
       setEditingOrderId(null);
+      setEditReceiptPreview(null);
     } catch (error: any) {
       toast.error("Failed to update order: " + error.message);
     }
@@ -132,7 +156,9 @@ export function Orders() {
       status: order.status,
       area: areaValue,
       deliveryTime: order.deliveryTime ? new Date(order.deliveryTime).toISOString().slice(0, 16) : "",
+      receiptImage: undefined,
     });
+    setEditReceiptPreview(null);
   };
 
   const handleDeleteOrder = (orderId: number) => {
@@ -158,6 +184,7 @@ export function Orders() {
 
   const handleCancelEdit = () => {
     setEditingOrderId(null);
+    setEditReceiptPreview(null);
   };
 
   return (
@@ -374,6 +401,46 @@ export function Orders() {
                 type="datetime-local"
                 value={formData.deliveryTime}
                 onChange={(e) => setFormData({ ...formData, deliveryTime: e.target.value })}
+              />
+            </div>
+
+            <div>
+              <Label>Replace Receipt Photo (Optional)</Label>
+              <div className="flex gap-2 mt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => editFileInputRef.current?.click()}
+                  className="flex-1"
+                >
+                  <Upload size={16} className="mr-2" />
+                  Upload New Photo
+                </Button>
+                {editReceiptPreview && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setEditReceiptPreview(null);
+                      setFormData({ ...formData, receiptImage: undefined });
+                    }}
+                  >
+                    <X size={16} />
+                  </Button>
+                )}
+              </div>
+              {editReceiptPreview && (
+                <div className="mt-2 text-xs text-gray-600">New receipt photo selected</div>
+              )}
+              <input
+                ref={editFileInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={handleReceiptCapture}
+                className="hidden"
               />
             </div>
           </div>

@@ -42,6 +42,7 @@ export const orders = mysqlTable("orders", {
   deliveryTime: varchar("delivery_time", { length: 100 }),
   receiptImage: text("receipt_image"),
   formattedReceiptImage: text("formatted_receipt_image"),
+  receiptText: text("receipt_text"),
   subtotal: decimal("subtotal", { precision: 10, scale: 2 }).default("0"),
   taxAmount: decimal("tax_amount", { precision: 10, scale: 2 }).default("0"),
   totalPrice: decimal("total_price", { precision: 10, scale: 2 }).default("0"),

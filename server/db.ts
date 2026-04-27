@@ -526,11 +526,11 @@ export async function deleteAllOrderItems(orderId: number) {
   return db.delete(orderItems).where(eq(orderItems.orderId, orderId));
 }
 
-export async function updateOrder(id: number, data: { status?: string; totalPrice?: number; subtotal?: number; taxAmount?: number; deliveryTime?: Date | null; driverId?: number | null; receiptImage?: string; formattedReceiptImage?: string }) {
+export async function updateOrder(id: number, data: { status?: string; totalPrice?: number; subtotal?: number; taxAmount?: number; deliveryTime?: Date | null; driverId?: number | null; receiptImage?: string; formattedReceiptImage?: string; receiptText?: string; customerAddress?: string; customerPhone?: string; area?: string }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const updateData: any = {};
-  if (data.status) updateData.status = data.status;
+  if (data.status !== undefined) updateData.status = data.status;
   if (data.totalPrice !== undefined) updateData.totalPrice = data.totalPrice;
   if (data.subtotal !== undefined) updateData.subtotal = data.subtotal;
   if (data.taxAmount !== undefined) updateData.taxAmount = data.taxAmount;
@@ -538,6 +538,16 @@ export async function updateOrder(id: number, data: { status?: string; totalPric
   if (data.driverId !== undefined) updateData.driverId = data.driverId;
   if (data.receiptImage !== undefined) updateData.receiptImage = data.receiptImage;
   if (data.formattedReceiptImage !== undefined) updateData.formattedReceiptImage = data.formattedReceiptImage;
+  if (data.receiptText !== undefined) updateData.receiptText = data.receiptText;
+  if (data.customerAddress !== undefined) updateData.customerAddress = data.customerAddress;
+  if (data.customerPhone !== undefined) updateData.customerPhone = data.customerPhone;
+  if (data.area !== undefined) updateData.area = data.area;
+  
+  // Only execute update if there are fields to update
+  if (Object.keys(updateData).length === 0) {
+    return { changes: 0 }; // Return empty result if no fields to update
+  }
+  
   return db.update(orders).set(updateData).where(eq(orders.id, id));
 }
 

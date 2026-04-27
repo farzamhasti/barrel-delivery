@@ -237,9 +237,10 @@ export const appRouter = router({
         status: z.enum(['Pending', 'Ready', 'On the Way', 'Delivered']).optional(),
         area: z.enum(['DT', 'CP', 'B']).optional(),
         deliveryTime: z.string().optional(),
+        receiptImage: z.string().optional(),
       }))
       .mutation(async ({ input }) => {
-        const { orderId, deliveryTime, ...data } = input;
+        const { orderId, deliveryTime, receiptImage, ...data } = input;
         
         let deliveryTimeValue: Date | null | undefined = undefined;
         if (deliveryTime) {
@@ -249,6 +250,54 @@ export const appRouter = router({
         const updateData: any = { ...data };
         if (deliveryTimeValue !== undefined) {
           updateData.deliveryTime = deliveryTimeValue;
+        }
+        
+        // Process receipt image if provided
+        if (receiptImage) {
+          try {
+            // Convert base64 to buffer
+            const base64Data = receiptImage.replace(/^data:image\/[a-z]+;base64,/, '');
+            const imageBuffer = Buffer.from(base64Data, 'base64');
+            
+            // Upload to S3
+            const { storagePut } = await import('./storage');
+            const fileKey = `receipts/${orderId}-${Date.now()}.png`;
+            const { url: receiptUrl } = await storagePut(fileKey, imageBuffer, 'image/png');
+            
+            // Extract text from image using LLM
+            const { invokeLLM } = await import('./_core/llm');
+            const llmResponse = await invokeLLM({
+              messages: [
+                {
+                  role: 'user',
+                  content: [
+                    {
+                      type: 'text',
+                      text: 'Extract all text from this receipt image. Return the extracted text exactly as shown on the receipt.',
+                    },
+                    {
+                      type: 'image_url',
+                      image_url: {
+                        url: receiptUrl,
+                      },
+                    },
+                  ],
+                },
+              ],
+            });
+            
+            const extractedText = llmResponse.choices?.[0]?.message?.content || '';
+            
+            // Update with new receipt URL and extracted text
+            updateData.receiptImage = receiptUrl;
+            updateData.formattedReceiptImage = receiptUrl;
+            if (extractedText) {
+              updateData.receiptText = extractedText;
+            }
+          } catch (error) {
+            console.error('[orders.update] Error processing receipt image:', error);
+            throw new Error('Failed to process receipt image');
+          }
         }
         
         return db.updateOrder(orderId, updateData);
