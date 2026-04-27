@@ -13,8 +13,8 @@ export default function DriverPanel() {
   const { logout } = useAuth();
   const [selectedOrder, setSelectedOrder] = useState<number | null>(null);
 
-  // Fetch today's orders for driver only
-  const { data: orders = [], isLoading, refetch } = trpc.orders.getTodayWithItems.useQuery({ driverId: 1 });
+  // Fetch today's orders
+  const { data: orders = [], isLoading, refetch } = trpc.orders.getTodayWithItems.useQuery();
   
   // Fetch selected order with items
   const { data: selectedOrderData } = trpc.orders.getWithItems.useQuery(

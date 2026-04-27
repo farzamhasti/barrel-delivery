@@ -33,11 +33,10 @@ export default function OrderTrackingWithMap() {
   const { data: drivers = [], isLoading: driversLoading } = trpc.drivers.list.useQuery(undefined, { enabled: !!user });
   const activeDrivers = drivers.filter((d: any) => d.status === "online" && d.isActive);
 
-  // Fetch selected order with items
-  const { data: selectedOrderData } = trpc.orders.getTodayWithItems.useQuery(
-    { orderId: selectedOrderId! },
-    { enabled: !!selectedOrderId && !!user }
-  );
+  // Fetch selected order from allOrders
+  const selectedOrderData = selectedOrderId && Array.isArray(allOrders)
+    ? allOrders.find((o: any) => o.id === selectedOrderId)
+    : null;
 
   // Filter to active orders
   const orders = Array.isArray(allOrders) ? allOrders.filter((o: any) =>
@@ -352,11 +351,12 @@ export default function OrderTrackingWithMap() {
                         <div>
                           <p className="text-muted-foreground">Total: ${(Number(selectedOrderData.totalPrice) || 0).toFixed(2)}</p>
                         </div>
-                        {selectedOrderData.area && (
+                        {selectedOrderData && selectedOrderData.area && (
                           <div>
                             <p className="text-muted-foreground">Area: <span className="font-semibold text-accent">{selectedOrderData.area}</span></p>
                           </div>
                         )}
+                        {selectedOrderData && (
                           <div>
                             <div className="text-sm text-muted-foreground flex items-center gap-2">
                               <Clock className="w-4 h-4" />
@@ -366,6 +366,7 @@ export default function OrderTrackingWithMap() {
                               {selectedOrderData.deliveryTime ? new Date(selectedOrderData.deliveryTime).toLocaleString() : 'N/A'}
                             </div>
                           </div>
+                        )}
 
 
                         {/* Notes field removed from new schema */}
