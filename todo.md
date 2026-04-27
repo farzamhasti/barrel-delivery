@@ -55,6 +55,7 @@
 - [x] Kitchen dashboard with real-time order tracking (3-second polling active)
 - [x] Database schema migration applied (0009_rebuild_database.sql executed)
 - [x] All core features operational and tested
+- [x] Fix database schema issue (orders table recreated with correct nullable fields)
 - [ ] Rebuild Driver Dashboard (FUTURE ENHANCEMENT - currently disabled)
 - [x] Implement PDF export with logo branding (PDF generation capability available)
 - [ ] Additional performance optimizations (OPTIONAL - future enhancement)
