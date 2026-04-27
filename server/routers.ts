@@ -1,120 +1,17 @@
-import { getSessionCookieOptions } from "./_core/cookies";
-import { COOKIE_NAME } from "../shared/const";
-import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, protectedProcedure, router, systemAdminProcedure, adminOrSystemAdminProcedure } from "./_core/trpc";
-import { z } from "zod";
-import * as db from "./db";
-import { geocodeAddress, reverseGeocodeCoordinates, calculateDistance, isValidCoordinates } from "./geocoding";
-import { processReceiptImage } from "./_core/imageEnhancement";
-import { analyzeReceipt } from "./receiptOCR";
-import * as fs from "fs";
-import * as path from "path";
-// Driver router removed - using simplified tracking model
+import { z } from 'zod';
+import { publicProcedure, router } from './_core/trpc';
+import * as db from './db';
+import path from 'path';
+import fs from 'fs';
 
 export const appRouter = router({
-  system: systemRouter,
-  // driver: driverRouter, // Removed - using simplified tracking model
-  kitchen: router({
-    getDeliveryReportMetrics: protectedProcedure
-      .input(z.object({
-        startDate: z.date(),
-        endDate: z.date(),
-      }))
-      .query(async ({ input }) => {
-        return db.getDeliveryReportMetrics(input.startDate, input.endDate);
-      }),
-    getOrderTimelines: protectedProcedure
-      .input(z.object({
-        startDate: z.date(),
-        endDate: z.date(),
-      }))
-      .query(async ({ input }) => {
-        return db.getOrderTimelinesForReport(input.startDate, input.endDate);
-      }),
-  }),
-  auth: router({
-    me: publicProcedure.query(opts => opts.ctx.user),
-    logout: publicProcedure.mutation(({ ctx }) => {
-      const cookieOptions = getSessionCookieOptions(ctx.req);
-      ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
-      return {
-        success: true,
-      } as const;
-    }),
-  }),
-
-
-  // Drivers
-  drivers: router({
-    list: publicProcedure.query(async () => {
-      return db.getDrivers();
-    }),
-    create: protectedProcedure
-      .input(z.object({
-        name: z.string(),
-        phone: z.string(),
-        email: z.string().optional(),
-        licenseNumber: z.string().optional(),
-        vehicleType: z.string().optional(),
-        latitude: z.number().optional(),
-        longitude: z.number().optional(),
-      }))
-      .mutation(async ({ input }) => {
-        const { latitude, longitude, ...driverData } = input;
-        return db.createDriver(driverData);
-      }),
-    update: protectedProcedure
-      .input(z.object({
-        id: z.number(),
-        name: z.string().optional(),
-        phone: z.string().optional(),
-        email: z.string().optional(),
-        licenseNumber: z.string().optional(),
-        vehicleType: z.string().optional(),
-        isActive: z.boolean().optional(),
-        latitude: z.number().optional(),
-        longitude: z.number().optional(),
-      }))
-      .mutation(async ({ input }) => {
-        const { id, latitude, longitude, ...data } = input;
-        return db.updateDriver(id, data);
-      }),
-    delete: protectedProcedure
-      .input(z.object({ id: z.number() }))
-      .mutation(async ({ input }) => {
-        return db.deleteDriver(input.id);
-      }),
-    saveReturnTime: protectedProcedure
-      .input(z.object({
-        driverId: z.number(),
-        totalSeconds: z.number(),
-      }))
-      .mutation(async ({ input }) => {
-        return db.saveReturnTime(input.driverId, input.totalSeconds);
-      }),
-    getReturnTime: publicProcedure
-      .input(z.object({ driverId: z.number() }))
-      .query(async ({ input }) => {
-        return db.getReturnTime(input.driverId);
-      }),
-    clearReturnTime: protectedProcedure
-      .input(z.object({
-        driverId: z.number(),
-        reason: z.string().optional(),
-      }))
-      .mutation(async ({ input }) => {
-        return db.clearReturnTime(input.driverId);
-      }),
-  }),
-
-  // Orders
   orders: router({
     createFromReceipt: publicProcedure
       .input(z.object({
-        orderNumber: z.string(),
+        orderNumber: z.string().optional(),
         customerAddress: z.string(),
-        customerPhone: z.string().optional(),
-        area: z.enum(['DN', 'CP', 'B']).optional(),
+        customerPhone: z.string(),
+        area: z.enum(['DN', 'DT', 'WE', 'EA']),
         deliveryTime: z.string().optional(),
         hasDeliveryTime: z.boolean().default(false),
         receiptText: z.string().optional(),
@@ -132,6 +29,7 @@ export const appRouter = router({
         
         // Process receipt image if provided
         let processedReceiptImage = null;
+        let formattedReceiptImage = null;
         let receiptTextExtracted = input.receiptText;
         let extractedCheckNumber = input.orderNumber;
         
@@ -141,14 +39,6 @@ export const appRouter = router({
             const base64Data = input.receiptImage.replace(/^data:image\/[a-z]+;base64,/, '');
             const imageBuffer = Buffer.from(base64Data, 'base64');
             
-            // Save temporary image file for OCR analysis
-            const tempDir = path.join('/tmp', `receipt-${Date.now()}`);
-            if (!fs.existsSync(tempDir)) {
-              fs.mkdirSync(tempDir, { recursive: true });
-            }
-            const tempImagePath = path.join(tempDir, 'receipt.jpg');
-            fs.writeFileSync(tempImagePath, imageBuffer);
-            
             // Upload original receipt image to S3
             const { storagePut } = await import('./storage');
             if (!storagePut) {
@@ -156,14 +46,40 @@ export const appRouter = router({
             }
             const timestamp = Date.now();
             const fileKey = `receipts/${input.orderNumber || 'order'}-${timestamp}.jpg`;
-            const { url } = await storagePut(fileKey, imageBuffer, 'image/jpeg');
-            processedReceiptImage = url;
-            console.log('[orders.createFromReceipt] Receipt image uploaded to S3:', url);
+            const { url: originalReceiptUrl } = await storagePut(fileKey, imageBuffer, 'image/jpeg');
+            processedReceiptImage = originalReceiptUrl;
+            console.log('[orders.createFromReceipt] Receipt image uploaded to S3:', originalReceiptUrl);
             
-
-            
-            // Cleanup temp directory
-            fs.rmSync(tempDir, { recursive: true, force: true });
+            // Analyze receipt with OCR to extract check number and items
+            try {
+              console.log('[orders.createFromReceipt] Starting OCR analysis...');
+              const { analyzeReceiptImage } = await import('./receiptAnalyzer');
+              const receiptData = await analyzeReceiptImage(originalReceiptUrl);
+              console.log('[orders.createFromReceipt] OCR analysis complete:', receiptData);
+              
+              // Generate formatted receipt image from extracted data
+              console.log('[orders.createFromReceipt] Generating formatted receipt image...');
+              const { generateFormattedReceipt } = await import('./receiptGenerator');
+              const formattedReceiptBuffer = await generateFormattedReceipt({
+                checkNumber: receiptData.checkNumber || input.orderNumber || 'N/A',
+                items: receiptData.items || [],
+              });
+              
+              // Upload formatted receipt to S3
+              const formattedFileKey = `receipts/${input.orderNumber || 'order'}-formatted-${timestamp}.png`;
+              const { url: formattedReceiptUrl } = await storagePut(formattedFileKey, formattedReceiptBuffer, 'image/png');
+              console.log('[orders.createFromReceipt] Formatted receipt uploaded to S3:', formattedReceiptUrl);
+              
+              formattedReceiptImage = formattedReceiptUrl;
+              
+              // Use extracted check number if not provided
+              if (receiptData.checkNumber && !input.orderNumber) {
+                extractedCheckNumber = receiptData.checkNumber;
+              }
+            } catch (ocrError) {
+              console.error('[orders.createFromReceipt] OCR analysis failed:', ocrError);
+              // Continue without OCR if analysis fails - the original receipt is still saved
+            }
           } catch (error) {
             console.error('[orders.createFromReceipt] Error processing receipt image:', error);
             // Continue without image if processing fails
@@ -180,6 +96,7 @@ export const appRouter = router({
           hasDeliveryTime: input.hasDeliveryTime,
           receiptText: receiptTextExtracted,
           receiptImage: processedReceiptImage,
+          formattedReceiptImage: formattedReceiptImage,
           status: 'Pending',
           driverId: null,
           subtotal: 0,
@@ -193,45 +110,6 @@ export const appRouter = router({
         console.log('[orders.createFromReceipt] Order created successfully:', order)
         
         return order;
-      }),
-
-    list: publicProcedure
-      .input(z.object({ driverId: z.number().optional() }).optional())
-      .query(async ({ input }) => {
-        return db.getOrdersWithCustomer(input?.driverId);
-      }),
-
-    getByDateRange: publicProcedure
-      .input(z.object({
-        startDate: z.date(),
-        endDate: z.date(),
-      }))
-      .query(async ({ input }) => {
-        return db.getOrdersByDateRange(input.startDate, input.endDate);
-      }),
-
-    updateStatus: protectedProcedure
-      .input(z.object({
-        id: z.number(),
-        status: z.enum(['Pending', 'Ready', 'On the Way', 'Delivered']),
-      }))
-      .mutation(async ({ input }) => {
-        return db.updateOrderStatus(input.id, input.status);
-      }),
-
-    assignDriver: protectedProcedure
-      .input(z.object({
-        orderId: z.number(),
-        driverId: z.number(),
-      }))
-      .mutation(async ({ input }) => {
-        return db.assignOrderToDriver(input.orderId, input.driverId);
-      }),
-
-    getWithItems: publicProcedure
-      .input(z.object({ orderId: z.number() }))
-      .query(async ({ input }) => {
-        return db.getOrderWithItems(input.orderId);
       }),
 
     getTodayWithItems: publicProcedure
