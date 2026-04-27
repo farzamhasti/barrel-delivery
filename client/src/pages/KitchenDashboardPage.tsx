@@ -139,12 +139,33 @@ export default function KitchenDashboardPage() {
           <span className="font-semibold">{deliveryTime}</span>
         </div>
 
+        {/* Formatted Receipt Image */}
+        {order.formattedReceiptImage && (
+          <div className="mb-3 rounded-lg overflow-hidden border border-gray-200 bg-gray-50 p-2">
+            <img 
+              src={order.formattedReceiptImage} 
+              alt="Receipt" 
+              className="w-full h-auto max-h-32 object-contain rounded"
+            />
+          </div>
+        )}
+
         {/* Notes (if exists) */}
         {order.notes && (
           <div className="mb-3 p-2 bg-white/50 rounded text-xs text-muted-foreground line-clamp-2">
             📝 {order.notes}
           </div>
         )}
+
+        {/* Area Badge */}
+        <div className="mb-3 flex items-center gap-2">
+          <Badge className="bg-blue-100 text-blue-800 text-xs px-2 py-1">
+            Area: {order.area || 'N/A'}
+          </Badge>
+          {order.customerPhone && (
+            <span className="text-xs text-muted-foreground">{order.customerPhone}</span>
+          )}
+        </div>
 
         {/* Mark Ready Button */}
         <Button

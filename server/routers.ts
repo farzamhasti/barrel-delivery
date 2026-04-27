@@ -86,21 +86,18 @@ export const appRouter = router({
           }
         }
         
-        // Build order data with new schema fields
+        // Build order data with only fields that exist in the schema
         const orderData: any = {
-          orderNumber: extractedCheckNumber,
+          orderNumber: extractedCheckNumber || `order-${Date.now()}`,
           customerAddress: input.customerAddress,
           customerPhone: input.customerPhone,
           area: input.area,
-          deliveryTime: deliveryTimeValue,
-          hasDeliveryTime: input.hasDeliveryTime,
-          receiptText: receiptTextExtracted,
+          deliveryTime: deliveryTimeValue ? deliveryTimeValue.toISOString() : null,
           receiptImage: processedReceiptImage,
           formattedReceiptImage: formattedReceiptImage,
           status: 'Pending',
           driverId: null,
           subtotal: 0,
-          taxPercentage: 0,
           taxAmount: 0,
           totalPrice: 0,
         };

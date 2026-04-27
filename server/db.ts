@@ -321,6 +321,9 @@ export async function getTodayOrdersWithItems() {
       createdAt: orders.createdAt,
       updatedAt: orders.updatedAt,
       customerPhone: orders.customerPhone,
+      receiptImage: orders.receiptImage,
+      formattedReceiptImage: orders.formattedReceiptImage,
+      customerAddress: orders.customerAddress,
     })
     .from(orders)
     .where(and(gte(orders.createdAt, startOfDay), lt(orders.createdAt, endOfDay)))

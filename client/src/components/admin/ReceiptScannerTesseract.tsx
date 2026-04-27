@@ -23,7 +23,7 @@ export function ReceiptScannerTesseract() {
     phoneNumber: "",
     deliveryTime: "",
     enableDeliveryTime: false,
-    area: "DN" as "DN" | "CP" | "B",
+    area: "DN" as "DN" | "DT" | "WE" | "EA",
     receiptImage: "" as string, // Base64 image
   });
 
@@ -127,7 +127,7 @@ export function ReceiptScannerTesseract() {
           phoneNumber: "",
           deliveryTime: "",
           enableDeliveryTime: false,
-          area: "DN" as "DN" | "CP" | "B",
+          area: "DN" as "DN" | "DT" | "WE" | "EA",
           receiptImage: "",
         });
         setImagePreview(null);
@@ -285,7 +285,7 @@ export function ReceiptScannerTesseract() {
           <div>
             <label className="block text-sm font-medium mb-2">Area (Optional)</label>
             <div className="flex gap-6">
-              {["DN", "CP", "B"].map((areaOption) => (
+              {["DN", "DT", "WE", "EA"].map((areaOption) => (
                 <label key={areaOption} className="flex items-center gap-2">
                   <input
                     type="radio"
@@ -293,7 +293,7 @@ export function ReceiptScannerTesseract() {
                     value={areaOption}
                     checked={formData.area === areaOption}
                     onChange={(e) =>
-                      setFormData({ ...formData, area: e.target.value as "DN" | "CP" | "B" })
+                      setFormData({ ...formData, area: e.target.value as "DN" | "DT" | "WE" | "EA" })
                     }
                     className="w-4 h-4"
                   />
