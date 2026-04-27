@@ -9,6 +9,16 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Trash2, Edit2, Save, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useState, useMemo } from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface OrderFormData {
   orderNumber: string;
@@ -24,6 +34,8 @@ export function Orders() {
 
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
   const [editingOrderId, setEditingOrderId] = useState<number | null>(null);
+  const [deleteConfirmOrderId, setDeleteConfirmOrderId] = useState<number | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const getTodayDateString = () => {
     const now = new Date();
@@ -101,15 +113,23 @@ export function Orders() {
     });
   };
 
-  const handleDeleteOrder = async (orderId: number) => {
-    if (confirm("Are you sure you want to delete this order?")) {
+  const handleDeleteOrder = (orderId: number) => {
+    setDeleteConfirmOrderId(orderId);
+    setShowDeleteConfirm(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (deleteConfirmOrderId) {
       try {
-        await deleteOrderMutation.mutateAsync({ orderId });
+        await deleteOrderMutation.mutateAsync({ orderId: deleteConfirmOrderId });
         toast.success("Order deleted successfully");
         await invalidateOrderCache(utils);
       } catch (error) {
         console.error("Error deleting order:", error);
         toast.error("Failed to delete order");
+      } finally {
+        setShowDeleteConfirm(false);
+        setDeleteConfirmOrderId(null);
       }
     }
   };
@@ -370,6 +390,34 @@ export function Orders() {
           </CardContent>
         </Card>
       )}
+
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Order</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this order? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 size={16} className="mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

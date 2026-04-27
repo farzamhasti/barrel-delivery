@@ -176,10 +176,44 @@ export const appRouter = router({
         formattedReceiptImage: z.string().optional(),
       }))
       .mutation(async ({ input }) => {
-        return db.updateOrder(input.orderId, {
-          receiptImage: input.receiptImage,
-          formattedReceiptImage: input.formattedReceiptImage,
-        });
+        const { storagePut } = await import('server/storage');
+        let receiptImageUrl = null;
+        let formattedReceiptImageUrl = null;
+
+        if (input.receiptImage) {
+          try {
+            const base64Data = input.receiptImage.replace(/^data:image\/[a-z]+;base64,/, '');
+            const imageBuffer = Buffer.from(base64Data, 'base64');
+            const { url } = await storagePut(
+              `orders/${input.orderId}/receipt-${Date.now()}.jpg`,
+              imageBuffer,
+              'image/jpeg'
+            );
+            receiptImageUrl = url;
+          } catch (error) {
+            console.error('Error uploading receipt image:', error);
+          }
+        }
+
+        if (input.formattedReceiptImage) {
+          try {
+            const base64Data = input.formattedReceiptImage.replace(/^data:image\/[a-z]+;base64,/, '');
+            const imageBuffer = Buffer.from(base64Data, 'base64');
+            const { url } = await storagePut(
+              `orders/${input.orderId}/formatted-receipt-${Date.now()}.png`,
+              imageBuffer,
+              'image/png'
+            );
+            formattedReceiptImageUrl = url;
+          } catch (error) {
+            console.error('Error uploading formatted receipt image:', error);
+          }
+        }
+
+        const updateData: any = {};
+        if (receiptImageUrl !== null) updateData.receiptImage = receiptImageUrl;
+        if (formattedReceiptImageUrl !== null) updateData.formattedReceiptImage = formattedReceiptImageUrl;
+        return db.updateOrder(input.orderId, updateData);
       }),
   }),
 

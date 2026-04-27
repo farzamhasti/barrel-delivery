@@ -196,3 +196,10 @@ These features are documented for future enhancement but are not required for th
 - [x] Add Replace Photo button to order details modal
 - [x] Implement photo replacement with OCR conversion
 - [x] Test area options and photo replacement functionality
+
+
+## Phase 20: Delete Confirmation Dialog
+- [x] Create confirmation dialog component for order deletion
+- [x] Integrate confirmation dialog into Orders component delete flow
+- [x] Test confirmation dialog and verify delete functionality
+- [x] Fix updateReceipt procedure to upload images to S3 before storing URLs
