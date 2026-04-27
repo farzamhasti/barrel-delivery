@@ -122,6 +122,45 @@ export const appRouter = router({
         return db.getOrdersByDateRange(new Date(), new Date());
       }),
   }),
+
+  system: router({
+    login: publicProcedure
+      .input(z.object({
+        username: z.string(),
+        password: z.string(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        // Simple credential check - in production, use proper authentication
+        const validCredentials = [
+          { username: 'barrel_admin', password: 'admin123', role: 'admin' },
+          { username: 'barrel_kitchen', password: 'kitchen123', role: 'kitchen' },
+        ];
+        
+        const user = validCredentials.find(
+          u => u.username === input.username && u.password === input.password
+        );
+        
+        if (!user) {
+          throw new Error('Invalid credentials');
+        }
+        
+        return {
+          sessionToken: `token_${Date.now()}`,
+          role: user.role,
+          username: user.username,
+        };
+      }),
+
+    checkSession: publicProcedure
+      .query(async ({ ctx }) => {
+        // Check if user has valid session
+        return {
+          isAuthenticated: false,
+          role: null,
+          username: null,
+        };
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

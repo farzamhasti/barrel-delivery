@@ -145,3 +145,13 @@ These features are documented for future enhancement but are not required for th
 - [x] Create SQL migration for database (migration created)
 - [x] Verify OCR modules are production-ready (all modules tested and working)
 - [x] End-to-end workflow: upload receipt → analyze → generate → save (implemented)
+
+
+## Phase 14: Display Formatted Receipts in UI (IN PROGRESS)
+- [ ] Update Kitchen Dashboard to display formattedReceiptImage (add image display in order cards)
+- [ ] Update Order Tracking to display formattedReceiptImage (add image display in order details)
+- [ ] Test end-to-end OCR workflow with real receipt upload
+- [ ] Verify formatted receipt displays in Kitchen Dashboard
+- [ ] Verify formatted receipt displays in Order Tracking
+- [ ] Verify formatted receipt displays in Admin Orders list
+- [ ] Test with multiple orders to ensure all formatted receipts display correctly
