@@ -19,7 +19,7 @@ export default function KitchenDashboardPage() {
   const [activeTab, setActiveTab] = useState("active");
 
   // Fetch today's orders with items
-  const { data: allOrders = [], isLoading, refetch } = trpc.orders.getTodayOrdersWithItems.useQuery();
+  const { data: allOrders = [], isLoading, refetch } = trpc.orders.getTodayWithItems.useQuery();
 
   // Fetch active drivers
   const { data: drivers = [] } = trpc.drivers.list.useQuery();
@@ -30,7 +30,7 @@ export default function KitchenDashboardPage() {
     onSuccess: async () => {
       toast.success("Order marked as ready!");
       // Immediately invalidate the cache and refetch
-      await utils.orders.getTodayOrdersWithItems.invalidate();
+      await utils.orders.getTodayWithItems.invalidate();
       await refetch();
     },
     onError: (error) => {
@@ -153,7 +153,7 @@ export default function KitchenDashboardPage() {
           onClick={(e) => {
             e.stopPropagation();
             updateStatusMutation.mutate({
-              orderId: order.id,
+              id: order.id,
               status: "Ready",
             });
           }}

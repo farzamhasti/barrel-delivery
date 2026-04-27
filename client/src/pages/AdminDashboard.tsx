@@ -13,7 +13,7 @@ import Dashboard from "@/components/admin/Dashboard";
 import { ReceiptScannerTesseract } from "@/components/admin/ReceiptScannerTesseract";
 import OrderTrackingWithMap from "@/components/admin/OrderTrackingWithMap";
 import { DeliveryReportTab } from "@/components/DeliveryReportTab";
-import ReservationManagement from "@/components/admin/ReservationManagement";
+// import ReservationManagement from "@/components/admin/ReservationManagement";
 
 
 // Helper hook to get window width
@@ -191,7 +191,7 @@ export default function AdminDashboard() {
                 {currentTab === "drivers" && <DriverManagement />}
                 {currentTab === "order-tracking" && <OrderTrackingWithMap />}
                 {currentTab === "delivery-report" && <DeliveryReportTab />}
-                {currentTab === "reservations" && <ReservationManagement />}
+                {/* Reservations tab disabled for now */}
 
               </div>
             </div>

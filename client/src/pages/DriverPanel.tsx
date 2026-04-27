@@ -14,10 +14,10 @@ export default function DriverPanel() {
   const [selectedOrder, setSelectedOrder] = useState<number | null>(null);
 
   // Fetch today's orders for driver only
-  const { data: orders = [], isLoading, refetch } = trpc.orders.getTodayOrdersForDriver.useQuery({ driverId: 1 });
+  const { data: orders = [], isLoading, refetch } = trpc.orders.getTodayWithItems.useQuery({ driverId: 1 });
   
   // Fetch selected order with items
-  const { data: selectedOrderData } = trpc.orders.getById.useQuery(
+  const { data: selectedOrderData } = trpc.orders.getWithItems.useQuery(
     { orderId: selectedOrder! },
     { enabled: !!selectedOrder }
   );
@@ -42,9 +42,9 @@ export default function DriverPanel() {
     return () => clearInterval(interval);
   }, [refetch]);
 
-  const handleStatusUpdate = (orderId: number, newStatus: "Pending" | "Ready" | "On the Way" | "Delivered" | "Returning to Restaurant" | "At Restaurant") => {
+  const handleStatusUpdate = (orderId: number, newStatus: "Pending" | "Ready" | "On the Way" | "Delivered") => {
     updateStatusMutation.mutate({
-      orderId,
+      id: orderId,
       status: newStatus,
     });
   };
@@ -54,21 +54,7 @@ export default function DriverPanel() {
     window.open(mapsUrl, "_blank");
   };
 
-  const handleReturningToRestaurant = (orderId: number) => {
-    updateStatusMutation.mutate({
-      orderId,
-      status: "Returning to Restaurant",
-    });
-    // Cache invalidation will automatically trigger refresh
-  };
-
-  const handleAtRestaurant = (orderId: number) => {
-    updateStatusMutation.mutate({
-      orderId,
-      status: "At Restaurant",
-    });
-    // Cache invalidation will automatically trigger refresh
-  };
+  // Removed incomplete status update functions
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -80,10 +66,7 @@ export default function DriverPanel() {
         return "bg-purple-100 text-purple-800";
       case "Delivered":
         return "bg-green-100 text-green-800";
-      case "Returning to Restaurant":
-        return "bg-orange-100 text-orange-800";
-      case "At Restaurant":
-        return "bg-indigo-100 text-indigo-800";
+
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -217,34 +200,7 @@ export default function DriverPanel() {
                             <Navigation className="w-4 h-4" />
                             Navigate
                           </Button>
-                          {order.status === "On the Way" && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="flex-1 gap-2"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleReturningToRestaurant(order.id);
-                              }}
-                            >
-                              <RotateCcw className="w-4 h-4" />
-                              Returning
-                            </Button>
-                          )}
-                          {order.status === "Delivered" && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="flex-1 gap-2"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleAtRestaurant(order.id);
-                              }}
-                            >
-                              <CheckCircle className="w-4 h-4" />
-                              At Restaurant
-                            </Button>
-                          )}
+
                         </div>
                       </div>
                     )}

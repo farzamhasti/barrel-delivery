@@ -14,14 +14,14 @@ export function invalidateOrderCache(utils: ReturnType<typeof trpc.useUtils>) {
   utils.orders.getByDateRange.invalidate();
 
   // Invalidate today's orders queries
-  utils.orders.getTodayOrdersWithItems.invalidate();
+  utils.orders.getTodayWithItems.invalidate();
 
   // Invalidate driver-specific order queries
-  utils.orders.getTodayOrdersForDriver.invalidate();
+  utils.orders.getTodayWithItems.invalidate();
 
   // Invalidate individual order details (all possible IDs)
   // This is a catch-all that invalidates any getById query
-  utils.orders.getById.invalidate();
+  utils.orders.getWithItems.invalidate();
 
   // Note: customers doesn't have a list query, but individual customer updates
   // will be caught by order query invalidation
@@ -36,12 +36,12 @@ export function invalidateOrderById(
   orderId: number
 ) {
   // Invalidate the specific order
-  utils.orders.getById.invalidate({ orderId });
+  utils.orders.getWithItems.invalidate({ orderId });
 
   // Also invalidate list queries as the order may appear in lists
   utils.orders.list.invalidate();
-  utils.orders.getTodayOrdersWithItems.invalidate();
-  utils.orders.getTodayOrdersForDriver.invalidate();
+  utils.orders.getTodayWithItems.invalidate();
+  utils.orders.getTodayWithItems.invalidate();
   utils.orders.getByDateRange.invalidate();
 }
 
@@ -55,10 +55,10 @@ export function invalidateCustomerCache(
 ) {
   // Invalidate all order queries as they may contain customer data
   utils.orders.list.invalidate();
-  utils.orders.getTodayOrdersWithItems.invalidate();
-  utils.orders.getTodayOrdersForDriver.invalidate();
+  utils.orders.getTodayWithItems.invalidate();
+  utils.orders.getTodayWithItems.invalidate();
   utils.orders.getByDateRange.invalidate();
-  utils.orders.getById.invalidate();
+  utils.orders.getWithItems.invalidate();
 }
 
 /**
@@ -68,10 +68,10 @@ export function invalidateCustomerCache(
 export function invalidateMenuCache(utils: ReturnType<typeof trpc.useUtils>) {
   // Menu router removed - only invalidate order queries
   utils.orders.list.invalidate();
-  utils.orders.getTodayOrdersWithItems.invalidate();
-  utils.orders.getTodayOrdersForDriver.invalidate();
+  utils.orders.getTodayWithItems.invalidate();
+  utils.orders.getTodayWithItems.invalidate();
   utils.orders.getByDateRange.invalidate();
-  utils.orders.getById.invalidate();
+  utils.orders.getWithItems.invalidate();
 }
 
 /**
@@ -83,8 +83,8 @@ export function invalidateDriverCache(utils: ReturnType<typeof trpc.useUtils>) {
 
   // Also invalidate order queries as they may contain driver assignments
   utils.orders.list.invalidate();
-  utils.orders.getTodayOrdersWithItems.invalidate();
-  utils.orders.getTodayOrdersForDriver.invalidate();
+  utils.orders.getTodayWithItems.invalidate();
+  utils.orders.getTodayWithItems.invalidate();
   utils.orders.getByDateRange.invalidate();
-  utils.orders.getById.invalidate();
+  utils.orders.getWithItems.invalidate();
 }

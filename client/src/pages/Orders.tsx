@@ -70,46 +70,17 @@ export function Orders() {
     });
   }, [allOrders, selectedDate]);
 
-  const { data: selectedOrderDetails } = trpc.orders.getById.useQuery(
+  const { data: selectedOrderDetails } = trpc.orders.getWithItems.useQuery(
     { orderId: selectedOrderId || 0 },
     { enabled: selectedOrderId !== null }
   );
 
-  const updateOrderMutation = trpc.orders.update.useMutation({
-    onSuccess: () => {
-      setEditingOrderId(null);
-      invalidateOrderCache(utils);
-      toast.success("Order updated successfully");
-    },
-    onError: (error) => {
-      toast.error(`Failed to update order: ${error.message}`);
-    },
-  });
-
-  const deleteOrderMutation = trpc.orders.delete.useMutation({
-    onSuccess: () => {
-      invalidateOrderCache(utils);
-      toast.success("Order deleted successfully");
-    },
-    onError: (error) => {
-      toast.error(`Failed to delete order: ${error.message}`);
-    },
-  });
+  // Update and delete mutations removed - use updateStatus and assignDriver instead
 
   const handleSaveOrder = async () => {
     if (!editingOrderId) return;
-
-    try {
-      await updateOrderMutation.mutateAsync({
-        orderId: editingOrderId,
-        status: formData.status,
-        customerPhone: formData.customerPhone,
-        customerAddress: formData.customerAddress,
-        area: formData.area,
-      })
-    } catch (error) {
-      console.error("Error saving order:", error);
-    }
+    // Order editing disabled - use updateStatus mutation instead
+    setEditingOrderId(null);
   };
 
   const handleEditOrder = async (order: any) => {
@@ -125,12 +96,9 @@ export function Orders() {
   };
 
   const handleDeleteOrder = async (orderId: number) => {
+    // Order deletion disabled - use status updates instead
     if (confirm("Are you sure you want to delete this order?")) {
-      try {
-        await deleteOrderMutation.mutateAsync({ orderId });
-      } catch (error) {
-        console.error("Error deleting order:", error);
-      }
+      console.log("Delete order:", orderId);
     }
   };
 

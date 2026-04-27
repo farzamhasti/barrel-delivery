@@ -27,14 +27,14 @@ export default function OrderTrackingWithMap() {
   const markersRef = useRef<google.maps.Marker[]>([]);
 
   // Fetch today's orders with items for complete data
-  const { data: allOrders = [], isLoading, refetch } = trpc.orders.getTodayOrdersWithItems.useQuery(undefined, { enabled: !!user });
+  const { data: allOrders = [], isLoading, refetch } = trpc.orders.getTodayWithItems.useQuery(undefined, { enabled: !!user });
   
   // Fetch drivers for Active Drivers section
   const { data: drivers = [], isLoading: driversLoading } = trpc.drivers.list.useQuery(undefined, { enabled: !!user });
   const activeDrivers = drivers.filter((d: any) => d.status === "online" && d.isActive);
 
   // Fetch selected order with items
-  const { data: selectedOrderData } = trpc.orders.getById.useQuery(
+  const { data: selectedOrderData } = trpc.orders.getTodayWithItems.useQuery(
     { orderId: selectedOrderId! },
     { enabled: !!selectedOrderId && !!user }
   );
@@ -402,7 +402,7 @@ export default function OrderTrackingWithMap() {
           }}
           onAssign={() => {
             refetch();
-            utils.orders.getTodayOrdersWithItems.invalidate();
+            utils.orders.getTodayWithItems.invalidate();
           }}
         />
       )}

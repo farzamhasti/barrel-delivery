@@ -118,4 +118,27 @@ These features are documented for future enhancement but are not required for th
 **System Status: PRODUCTION READY ✅**
 - All MVP features fully implemented and tested
 - Ready for deployment and production use
-- Checkpoint version: fd6874f2
+- Latest Checkpoint version: da73acca (PDF export removed as not required)
+- Previous Checkpoint version: fd6874f2
+
+
+## Phase 12: OCR Receipt Analysis & Formatted Receipt Generation (NEW REQUIREMENT)
+- [ ] Implement OCR text extraction from uploaded receipt images (extract check number, items, quantities)
+- [ ] Create receipt image generator to produce formatted delivery receipt photos
+- [ ] Generate receipt with: header (BARREL DELIVERY), check number, items list, footer
+- [ ] Save formatted receipt image to S3 and store URL in orders table
+- [ ] Integrate OCR analysis into order creation workflow
+- [ ] Test end-to-end: upload receipt → analyze → generate formatted receipt → save
+- [ ] Verify formatted receipt displays correctly in Kitchen Dashboard and Order Tracking
+
+
+## Phase 12: LLM-Based OCR Receipt Analysis (CURRENT)
+- [ ] Create receiptAnalyzer.ts module with LLM integration
+- [ ] Implement receipt image analysis to extract check number and items
+- [ ] Create receiptGenerator.ts module for formatted receipt image generation
+- [ ] Generate formatted delivery receipt photos with check number and items
+- [ ] Integrate OCR analysis into createFromReceipt procedure
+- [ ] Store formatted receipt image in orders table
+- [ ] Test end-to-end: upload receipt → analyze → generate formatted receipt → store
+- [ ] Verify Kitchen Dashboard displays formatted receipt
+- [ ] Verify Order Tracking displays formatted receipt

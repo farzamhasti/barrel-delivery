@@ -17,7 +17,6 @@ export default function KitchenDashboard() {
   const utils = trpc.useUtils();
   const { driverReturnTimes } = useDriverReturnTime();
   const [activeTab, setActiveTab] = useState("active");
-  const { data: reservations = [] } = trpc.reservations.list.useQuery();
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
 
 
@@ -31,7 +30,7 @@ export default function KitchenDashboard() {
   };
 
   // Fetch today's orders with items
-  const { data: allOrders = [], isLoading, refetch } = trpc.orders.getTodayOrdersWithItems.useQuery();
+  const { data: allOrders = [], isLoading, refetch } = trpc.orders.getTodayWithItems.useQuery();
 
   // Fetch active drivers
   const { data: drivers = [] } = trpc.drivers.list.useQuery();
@@ -42,7 +41,7 @@ export default function KitchenDashboard() {
     onSuccess: async () => {
       toast.success("Order marked as ready!");
       // Immediately invalidate the cache and refetch
-      await utils.orders.getTodayOrdersWithItems.invalidate();
+      await utils.orders.getTodayWithItems.invalidate();
       await refetch();
     },
     onError: (error) => {
@@ -234,7 +233,7 @@ export default function KitchenDashboard() {
             e.stopPropagation();
             try {
               updateStatusMutation.mutate({
-                orderId: order.id,
+                id: order.id,
                 status: "Ready",
               });
             } catch (error) {
@@ -416,15 +415,11 @@ export default function KitchenDashboard() {
               className="w-full bg-green-600 hover:bg-green-700 text-white"
               onClick={() => {
                 console.log('[KitchenDashboard] Mark Order as Ready clicked for order:', order.id);
-                try {
-                  updateStatusMutation.mutate({
-                    orderId: order.id,
-                    status: "Ready",
-                  });
-                  console.log('[KitchenDashboard] Mutation triggered');
-                } catch (error) {
-                  console.error('[KitchenDashboard] Error triggering mutation:', error);
-                }
+                updateStatusMutation.mutate({
+                  id: order.id,
+                  status: "Ready",
+                });
+                console.log('[KitchenDashboard] Mutation triggered');
               }}
               disabled={updateStatusMutation.isPending}
             >
@@ -540,10 +535,6 @@ export default function KitchenDashboard() {
               <CheckCircle2 className="w-4 h-4" />
               Prepared Orders ({readyOrders.length})
             </TabsTrigger>
-            <TabsTrigger value="reservations" className="flex items-center gap-2">
-              <Gift className="w-4 h-4" />
-              Reservations ({reservations.filter((r: any) => r.status === "pending").length})
-            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="active" className="mt-4">
@@ -572,10 +563,6 @@ export default function KitchenDashboard() {
               )}
             </div>
           </TabsContent>
-
-          <TabsContent value="reservations" className="mt-4">
-            <ReservationsList reservations={reservations} onRefresh={refetch} />
-          </TabsContent>
         </Tabs>
 
       {/* Order Detail Modal */}
@@ -588,114 +575,4 @@ export default function KitchenDashboard() {
 }
 
 
-function ReservationsList({
-  reservations,
-  onRefresh,
-}: {
-  reservations: any[];
-  onRefresh: () => void;
-}) {
-  const updateStatusMutation = trpc.reservations.updateStatus.useMutation({
-    onSuccess: () => {
-      toast.success("Reservation marked as done");
-      onRefresh();
-    },
-    onError: (error) => {
-      toast.error(`Failed to update reservation: ${error.message}`);
-    },
-  });
-
-  const pendingReservations = reservations.filter((r) => r.status === "pending");
-  const completedReservations = reservations.filter((r) => r.status === "completed");
-
-  const EmptyReservationState = ({ message }: { message: string }) => (
-    <div className="flex flex-col items-center justify-center py-12 text-center">
-      <Gift className="w-12 h-12 text-gray-300 mb-4" />
-      <p className="text-lg font-semibold text-foreground">{message}</p>
-    </div>
-  );
-
-  return (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-semibold mb-4">Pending Reservations</h3>
-        {pendingReservations.length === 0 ? (
-          <EmptyReservationState message="No pending reservations" />
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {pendingReservations.map((reservation) => (
-              <Card key={reservation.id} className="p-4 space-y-3">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h4 className="font-semibold text-lg">{reservation.eventType}</h4>
-                    <p className="text-sm text-muted-foreground">
-                      {reservation.numberOfPeople} people
-                    </p>
-                  </div>
-                  <Badge variant="outline" className="bg-yellow-50">
-                    Pending
-                  </Badge>
-                </div>
-
-                {reservation.details && (
-                  <p className="text-sm text-muted-foreground">{reservation.details}</p>
-                )}
-
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <span>📅 {new Date(reservation.eventDate).toLocaleDateString()}</span>
-                  <span>🕐 {reservation.eventTime}</span>
-                </div>
-
-                <Button
-                  size="sm"
-                  className="w-full"
-                  onClick={() =>
-                    updateStatusMutation.mutate({
-                      id: reservation.id,
-                      status: "Confirmed",
-                    })
-                  }
-                  disabled={updateStatusMutation.isPending}
-                >
-                  {updateStatusMutation.isPending ? "Updating..." : "Mark as Done"}
-                </Button>
-              </Card>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {completedReservations.length > 0 && (
-        <div>
-          <h3 className="text-lg font-semibold mb-4">Completed Reservations</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {completedReservations.map((reservation) => (
-              <Card key={reservation.id} className="p-4 space-y-3 opacity-75">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h4 className="font-semibold text-lg">{reservation.eventType}</h4>
-                    <p className="text-sm text-muted-foreground">
-                      {reservation.numberOfPeople} people
-                    </p>
-                  </div>
-                  <Badge variant="outline" className="bg-green-50">
-                    Done
-                  </Badge>
-                </div>
-
-                {reservation.details && (
-                  <p className="text-sm text-muted-foreground">{reservation.details}</p>
-                )}
-
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <span>📅 {new Date(reservation.eventDate).toLocaleDateString()}</span>
-                  <span>🕐 {reservation.eventTime}</span>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
+// ReservationsList component removed - not used
