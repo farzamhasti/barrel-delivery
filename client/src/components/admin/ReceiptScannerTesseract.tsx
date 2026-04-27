@@ -38,15 +38,47 @@ export function ReceiptScannerTesseract() {
   // Start camera
   const startCamera = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment" },
-      });
+      // Check if browser supports getUserMedia
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        setError("Your browser does not support camera access.");
+        return;
+      }
+
+      // Try to get camera stream
+      const constraints = {
+        video: {
+          facingMode: "environment",
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+        },
+        audio: false,
+      };
+
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        // Ensure video plays
+        videoRef.current.onloadedmetadata = () => {
+          videoRef.current?.play().catch(err => {
+            console.error("Error playing video:", err);
+            setError("Failed to start camera playback.");
+          });
+        };
         setShowCamera(true);
+        setError(null);
       }
-    } catch (err) {
-      setError("Unable to access camera. Please check permissions.");
+    } catch (err: any) {
+      console.error("Camera error:", err);
+      if (err.name === "NotAllowedError") {
+        setError("Camera permission denied. Please allow camera access in your browser settings.");
+      } else if (err.name === "NotFoundError") {
+        setError("No camera found on your device.");
+      } else if (err.name === "NotReadableError") {
+        setError("Camera is already in use by another application.");
+      } else {
+        setError(`Camera error: ${err.message || "Unable to access camera. Please check permissions."}`);
+      }
     }
   };
 
