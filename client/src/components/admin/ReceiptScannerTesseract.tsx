@@ -4,19 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Loader2, AlertCircle, CheckCircle2, Camera, Upload, X } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 
 export function ReceiptScannerTesseract() {
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
-  const [showCamera, setShowCamera] = useState(false);
-  const [cameraActive, setCameraActive] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
 
   // Form state
   const [formData, setFormData] = useState<{ 
@@ -44,187 +39,25 @@ export function ReceiptScannerTesseract() {
   const createOrderMutation = trpc.orders.createFromReceipt.useMutation();
   const convertReceiptMutation = trpc.orders.convertReceiptImage.useMutation();
 
-  // Cleanup camera on unmount
-  useEffect(() => {
-    return () => {
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
-      }
-    };
-  }, []);
-
-  // Start camera with multiple fallback strategies
-  const startCamera = async () => {
-    try {
-      // Check if browser supports getUserMedia
-      if (!navigator.mediaDevices?.getUserMedia) {
-        setError("Your browser does not support camera access. Please use a modern browser (Chrome, Safari, Firefox, Edge).");
-        return;
-      }
-
-      setError(null);
-      setLoading(true);
-
-      // Stop any existing stream
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
-      }
-
-      let stream: MediaStream | null = null;
-      const errors: string[] = [];
-
-      // Strategy 1: Try with ideal constraints (best quality)
-      try {
-        console.log("Attempting camera access with ideal constraints...");
-        const constraints: MediaStreamConstraints = {
-          video: {
-            facingMode: { ideal: "environment" },
-            width: { ideal: 1920, min: 640 },
-            height: { ideal: 1080, min: 480 },
-          },
-          audio: false,
-        };
-        stream = await navigator.mediaDevices.getUserMedia(constraints);
-        console.log("✓ Camera accessed with ideal constraints");
-      } catch (err: any) {
-        errors.push(`Ideal constraints failed: ${err.name}`);
-        console.log("Ideal constraints failed, trying basic constraints...", err);
-
-        // Strategy 2: Try with basic constraints
-        try {
-          console.log("Attempting camera access with basic constraints...");
-          const basicConstraints: MediaStreamConstraints = {
-            video: {
-              facingMode: "environment",
-            },
-            audio: false,
-          };
-          stream = await navigator.mediaDevices.getUserMedia(basicConstraints);
-          console.log("✓ Camera accessed with basic constraints");
-        } catch (err2: any) {
-          errors.push(`Basic constraints failed: ${err2.name}`);
-          console.log("Basic constraints failed, trying minimal constraints...", err2);
-
-          // Strategy 3: Try with minimal constraints (just video: true)
-          try {
-            console.log("Attempting camera access with minimal constraints...");
-            stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-            console.log("✓ Camera accessed with minimal constraints");
-          } catch (err3: any) {
-            errors.push(`Minimal constraints failed: ${err3.name}`);
-            console.error("All camera strategies failed:", err3);
-            throw err3;
-          }
-        }
-      }
-
-      if (!stream) {
-        throw new Error("Failed to get camera stream");
-      }
-
-      // Store stream reference for cleanup
-      streamRef.current = stream;
-
-      // Set up video element
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        
-        // Wait for video to be ready
-        videoRef.current.onloadedmetadata = () => {
-          console.log("Video metadata loaded, attempting to play...");
-          videoRef.current?.play()
-            .then(() => {
-              console.log("✓ Video playing successfully");
-              setCameraActive(true);
-              setShowCamera(true);
-              setError(null);
-            })
-            .catch(err => {
-              console.error("Error playing video:", err);
-              setError("Failed to start camera playback. Please try again.");
-              setCameraActive(false);
-            });
-        };
-
-        videoRef.current.onerror = (err) => {
-          console.error("Video element error:", err);
-          setError("Camera video error. Please try again.");
-          setCameraActive(false);
-        };
-      }
-    } catch (err: any) {
-      console.error("Camera error:", err);
-      setCameraActive(false);
-
-      // Provide specific error messages
-      if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
-        setError("📱 Camera permission denied. Please:\n1. Go to Settings\n2. Find this app/browser\n3. Enable Camera permission\n4. Refresh the page and try again");
-      } else if (err.name === "NotFoundError" || err.name === "DevicesNotFoundError") {
-        setError("❌ No camera found on your device. Please use a device with a camera.");
-      } else if (err.name === "NotReadableError" || err.name === "TrackStartError") {
-        setError("⚠️ Camera is in use by another app. Please close other apps using the camera and try again.");
-      } else if (err.name === "OverconstrainedError" || err.name === "ConstraintNotSatisfiedError") {
-        setError("⚠️ Camera constraints not supported. Please try again.");
-      } else if (err.name === "TypeError") {
-        setError("❌ Camera access error. Make sure you're using HTTPS and a modern browser.");
-      } else {
-        setError(`Camera error: ${err.message || err.name || "Unknown error"}. Please try again or use Upload Photo instead.`);
-      }
-    } finally {
-      setLoading(false);
+  // Handle camera capture using native file input with capture attribute
+  const handleCameraCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const imageData = event.target?.result as string;
+        setFormData({ ...formData, receiptImage: imageData });
+        setImagePreview(imageData);
+        convertReceiptImage(imageData);
+        toast.success("Photo captured successfully!");
+      };
+      reader.onerror = () => {
+        setError("Failed to read file. Please try again.");
+      };
+      reader.readAsDataURL(file);
     }
-  };
-
-  // Capture photo from camera
-  const capturePhoto = () => {
-    if (!videoRef.current || !canvasRef.current) {
-      setError("Camera not ready. Please try again.");
-      return;
-    }
-
-    try {
-      const context = canvasRef.current.getContext("2d");
-      if (!context) {
-        setError("Failed to capture photo. Please try again.");
-        return;
-      }
-
-      // Set canvas size to match video
-      canvasRef.current.width = videoRef.current.videoWidth;
-      canvasRef.current.height = videoRef.current.videoHeight;
-
-      // Draw video frame to canvas
-      context.drawImage(videoRef.current, 0, 0);
-
-      // Get image data
-      const imageData = canvasRef.current.toDataURL("image/jpeg", 0.9);
-      setFormData({ ...formData, receiptImage: imageData });
-      setImagePreview(imageData);
-      stopCamera();
-      
-      // Convert receipt using LLM
-      convertReceiptImage(imageData);
-      toast.success("Photo captured successfully!");
-    } catch (err: any) {
-      console.error("Capture error:", err);
-      setError("Failed to capture photo. Please try again.");
-    }
-  };
-
-  // Stop camera
-  const stopCamera = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => {
-        track.stop();
-        console.log("Camera track stopped");
-      });
-      streamRef.current = null;
-    }
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
-    }
-    setShowCamera(false);
-    setCameraActive(false);
+    // Reset input so same file can be captured again
+    e.target.value = "";
   };
 
   // Handle file upload
@@ -244,6 +77,8 @@ export function ReceiptScannerTesseract() {
       };
       reader.readAsDataURL(file);
     }
+    // Reset input so same file can be uploaded again
+    e.target.value = "";
   };
 
   // Convert receipt image using LLM
@@ -332,26 +167,16 @@ export function ReceiptScannerTesseract() {
           <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 bg-gray-50">
             <h3 className="font-semibold mb-4">Receipt Image (Optional)</h3>
 
-            {!showCamera && !imagePreview && (
+            {!imagePreview && (
               <div className="flex gap-4">
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={startCamera}
-                  disabled={loading}
+                  onClick={() => cameraInputRef.current?.click()}
                   className="flex-1"
                 >
-                  {loading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Opening Camera...
-                    </>
-                  ) : (
-                    <>
-                      <Camera className="w-4 h-4 mr-2" />
-                      Take Photo
-                    </>
-                  )}
+                  <Camera className="w-4 h-4 mr-2" />
+                  Take Photo
                 </Button>
                 <Button
                   type="button"
@@ -363,6 +188,14 @@ export function ReceiptScannerTesseract() {
                   Upload Photo
                 </Button>
                 <input
+                  ref={cameraInputRef}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={handleCameraCapture}
+                  className="hidden"
+                />
+                <input
                   ref={fileInputRef}
                   type="file"
                   accept="image/*"
@@ -372,46 +205,7 @@ export function ReceiptScannerTesseract() {
               </div>
             )}
 
-            {showCamera && (
-              <div className="space-y-4">
-                <div className="relative bg-black rounded-lg overflow-hidden">
-                  <video
-                    ref={videoRef}
-                    autoPlay
-                    playsInline
-                    muted
-                    className="w-full aspect-video object-cover"
-                  />
-                  {!cameraActive && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-                      <Loader2 className="w-8 h-8 animate-spin text-white" />
-                    </div>
-                  )}
-                </div>
-                <canvas ref={canvasRef} className="hidden" />
-                <div className="flex gap-4">
-                  <Button 
-                    type="button" 
-                    onClick={capturePhoto}
-                    disabled={!cameraActive}
-                    className="flex-1"
-                  >
-                    <Camera className="w-4 h-4 mr-2" />
-                    Capture Photo
-                  </Button>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={stopCamera}
-                    className="flex-1"
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {imagePreview && !showCamera && (
+            {imagePreview && !isConverting && (
               <div className="space-y-4">
                 <img src={imagePreview} alt="Receipt preview" className="w-full rounded-lg" />
                 <div className="flex gap-4">
@@ -523,7 +317,7 @@ export function ReceiptScannerTesseract() {
             )}
           </div>
 
-          <Button type="submit" className="w-full" disabled={submitting || loading}>
+          <Button type="submit" className="w-full" disabled={submitting}>
             {submitting ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -534,7 +328,7 @@ export function ReceiptScannerTesseract() {
             )}
           </Button>
 
-          {(loading || submitting) && (
+          {submitting && (
             <p className="text-center text-sm text-gray-500">
               Required fields: Check Number, Address
             </p>
