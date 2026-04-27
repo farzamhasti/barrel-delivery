@@ -38,10 +38,10 @@ export const orders = mysqlTable("orders", {
   // Order number from scanned check (e.g., "CHK-12345")
   orderNumber: varchar("order_number", { length: 50 }).unique().notNull(),
   // Customer info
-  customerAddress: text("customer_address").notNull(),
+  customerAddress: text("customer_address"),
   customerPhone: varchar("customer_phone", { length: 20 }).notNull(),
   // Delivery info
-  area: mysqlEnum("area", ["DN", "CP", "B"]).notNull(),
+  area: mysqlEnum("area", ["DN", "CP", "B"]),
   deliveryTime: timestamp("delivery_time"),
   hasDeliveryTime: boolean("has_delivery_time").default(false),
   // Receipt info - store extracted text from OCR

@@ -42,9 +42,9 @@ export async function initializeDatabase() {
       `CREATE TABLE IF NOT EXISTS orders (
         id int AUTO_INCREMENT NOT NULL,
         order_number varchar(50) NOT NULL UNIQUE,
-        customer_address text NOT NULL,
-        customer_phone varchar(20) NOT NULL,
-        area enum('DN','CP','B') NOT NULL,
+        customer_address text,
+        customer_phone varchar(20),
+        area enum('DN','CP','B'),
         delivery_time timestamp NULL,
         has_delivery_time boolean DEFAULT false,
         receipt_text text,

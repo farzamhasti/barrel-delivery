@@ -13,8 +13,8 @@ export interface PDFMetrics {
 
 export interface PDFOrderTimeline {
   orderId: number;
-  customerName: string;
-  customerAddress: string;
+  orderNumber: string;
+  customerAddress: string | null;
   customerPhone: string;
   total: number;
   statuses: Array<{
@@ -294,7 +294,7 @@ export const PDFReportTemplate = React.forwardRef<
                     #{order.orderId}
                   </td>
                   <td style={{ padding: "8px", borderRight: "1px solid #dddddd" }}>
-                    {order.customerName}
+                    {order.orderNumber}
                   </td>
                   <td style={{ padding: "8px", borderRight: "1px solid #dddddd" }}>
                     {order.customerAddress}

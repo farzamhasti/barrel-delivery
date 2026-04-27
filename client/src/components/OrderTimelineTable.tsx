@@ -11,8 +11,8 @@ interface DurationInfo {
 
 interface OrderTimeline {
   orderId: number;
-  customerName: string;
-  customerAddress: string;
+  orderNumber: string;
+  customerAddress: string | null;
   status: string;
   timestamps: {
     pending: Date | null;
@@ -106,7 +106,7 @@ export function OrderTimelineTable({ timelines, isLoading }: OrderTimelineTableP
             {timelines.map((timeline) => (
               <TableRow key={timeline.orderId} className="hover:bg-gray-50">
                 <TableCell className="font-medium text-blue-600">#{timeline.orderId}</TableCell>
-                <TableCell className="text-sm">{timeline.customerName}</TableCell>
+                <TableCell className="text-sm">{timeline.orderNumber}</TableCell>
                 <TableCell className="text-sm text-gray-600 max-w-xs truncate">
                   {timeline.customerAddress}
                 </TableCell>

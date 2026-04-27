@@ -351,8 +351,8 @@ export function formatMetricsForPDF(metrics: any): PDFMetrics {
 export function formatOrderTimelinesForPDF(orders: any[]): PDFOrderTimeline[] {
   return orders.map((order) => ({
     orderId: order.orderId || 0,
-    customerName: order.customerName || "N/A",
-    customerAddress: order.customerAddress || "N/A",
+    orderNumber: order.orderNumber || "N/A",
+    customerAddress: order.customerAddress || null,
     customerPhone: order.customerPhone || "N/A",
     total: order.total || 0,
     statuses: order.statuses || [],
