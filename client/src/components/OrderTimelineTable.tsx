@@ -13,7 +13,7 @@ interface OrderTimeline {
   orderId: number;
   orderNumber: string;
   customerAddress: string | null;
-  status: string;
+  status: string | null;
   timestamps: {
     pending: Date | null;
     ready: Date | null;
@@ -111,9 +111,13 @@ export function OrderTimelineTable({ timelines, isLoading }: OrderTimelineTableP
                   {timeline.customerAddress}
                 </TableCell>
                 <TableCell>
-                  <Badge className={`${getStatusBadgeColor(timeline.status)}`}>
-                    {timeline.status}
-                  </Badge>
+                  {timeline.status ? (
+                    <Badge className={`${getStatusBadgeColor(timeline.status)}`}>
+                      {timeline.status}
+                    </Badge>
+                  ) : (
+                    <span className="text-gray-500">N/A</span>
+                  )}
                 </TableCell>
                 
                 {/* Pending Time Duration */}

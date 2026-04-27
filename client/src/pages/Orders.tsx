@@ -16,7 +16,6 @@ interface OrderFormData {
   customerAddress: string;
   status: "Pending" | "Ready" | "On the Way" | "Delivered";
   area: string;
-  hasDeliveryTime: boolean;
   deliveryTime: string;
 }
 
@@ -48,7 +47,6 @@ export function Orders() {
     customerAddress: "",
     status: "Pending",
     area: "",
-    hasDeliveryTime: false,
     deliveryTime: "",
   });
 
@@ -108,8 +106,6 @@ export function Orders() {
         customerPhone: formData.customerPhone,
         customerAddress: formData.customerAddress,
         area: formData.area,
-        deliveryTime: formData.hasDeliveryTime && formData.deliveryTime ? formData.deliveryTime : null,
-        hasDeliveryTime: formData.hasDeliveryTime,
       })
     } catch (error) {
       console.error("Error saving order:", error);
@@ -124,7 +120,6 @@ export function Orders() {
       customerAddress: order.customerAddress || "",
       status: order.status,
       area: order.area || "",
-      hasDeliveryTime: !!order.deliveryTime,
       deliveryTime: order.deliveryTime ? new Date(order.deliveryTime).toISOString().slice(0, 16) : "",
     });
   };
@@ -276,13 +271,10 @@ export function Orders() {
 
             <div className="flex items-center gap-2">
               <Checkbox
-                checked={formData.hasDeliveryTime}
-                onCheckedChange={(checked) => setFormData({ ...formData, hasDeliveryTime: checked as boolean })}
               />
               <Label>Has Delivery Time</Label>
             </div>
 
-            {formData.hasDeliveryTime && (
               <div>
                 <Label>Delivery Time</Label>
                 <Input
@@ -291,7 +283,7 @@ export function Orders() {
                   onChange={(e) => setFormData({ ...formData, deliveryTime: e.target.value })}
                 />
               </div>
-            )}
+
 
             <div className="flex gap-2">
               <Button onClick={handleSaveOrder} className="flex-1">

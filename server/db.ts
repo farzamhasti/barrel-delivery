@@ -150,7 +150,6 @@ export async function getOrders(driverId?: number) {
   return result.map(order => ({
     ...order,
     subtotal: Number(order.subtotal),
-    taxPercentage: Number(order.taxPercentage),
     taxAmount: Number(order.taxAmount),
     totalPrice: Number(order.totalPrice),
   }));
@@ -172,7 +171,6 @@ export async function getOrdersWithCustomer(driverId?: number) {
       driverId: orders.driverId,
       status: orders.status,
       area: orders.area,
-      hasDeliveryTime: orders.hasDeliveryTime,
       deliveryTime: orders.deliveryTime,
       createdAt: orders.createdAt,
       updatedAt: orders.updatedAt,
@@ -199,7 +197,6 @@ export async function getOrder(id: number) {
   return {
     ...order,
     subtotal: Number(order.subtotal),
-    taxPercentage: Number(order.taxPercentage),
     taxAmount: Number(order.taxAmount),
     totalPrice: Number(order.totalPrice),
   };
@@ -215,13 +212,11 @@ export async function getOrderWithItems(orderId: number) {
       driverId: orders.driverId,
       status: orders.status,
       subtotal: orders.subtotal,
-      taxPercentage: orders.taxPercentage,
       taxAmount: orders.taxAmount,
       totalPrice: orders.totalPrice,
       area: orders.area,
       orderNumber: orders.orderNumber,
       customerAddress: orders.customerAddress,
-      hasDeliveryTime: orders.hasDeliveryTime,
       deliveryTime: orders.deliveryTime,
       createdAt: orders.createdAt,
       updatedAt: orders.updatedAt,
@@ -247,7 +242,6 @@ export async function getOrderWithItems(orderId: number) {
   return {
     ...orderData,
     subtotal: Number(orderData.subtotal),
-    taxPercentage: Number(orderData.taxPercentage),
     taxAmount: Number(orderData.taxAmount),
     totalPrice: Number(orderData.totalPrice),
     // Coordinates not stored in new simplified schema
@@ -320,12 +314,10 @@ export async function getTodayOrdersWithItems() {
       driverId: orders.driverId,
       status: orders.status,
       subtotal: orders.subtotal,
-      taxPercentage: orders.taxPercentage,
       taxAmount: orders.taxAmount,
       totalPrice: orders.totalPrice,
       area: orders.area,
       deliveryTime: orders.deliveryTime,
-      hasDeliveryTime: orders.hasDeliveryTime,
       createdAt: orders.createdAt,
       updatedAt: orders.updatedAt,
       customerPhone: orders.customerPhone,
@@ -354,7 +346,6 @@ export async function getTodayOrdersWithItems() {
       return {
         ...order,
         subtotal: Number(order.subtotal),
-        taxPercentage: Number(order.taxPercentage),
         taxAmount: Number(order.taxAmount),
         totalPrice: Number(order.totalPrice),
         items: items.map(item => ({
@@ -414,14 +405,12 @@ export async function getOrdersByDateRange(startDate: Date | string, endDate: Da
       driverId: orders.driverId,
       status: orders.status,
       subtotal: orders.subtotal,
-      taxPercentage: orders.taxPercentage,
       taxAmount: orders.taxAmount,
       totalPrice: orders.totalPrice,
       area: orders.area,
       orderNumber: orders.orderNumber,
       customerAddress: orders.customerAddress,
       deliveryTime: orders.deliveryTime,
-      hasDeliveryTime: orders.hasDeliveryTime,
       createdAt: orders.createdAt,
       updatedAt: orders.updatedAt,
       customerPhone: orders.customerPhone,
@@ -434,7 +423,6 @@ export async function getOrdersByDateRange(startDate: Date | string, endDate: Da
   return result.map(order => ({
     ...order,
     subtotal: Number(order.subtotal),
-    taxPercentage: Number(order.taxPercentage),
     taxAmount: Number(order.taxAmount),
     totalPrice: Number(order.totalPrice),
   }))
@@ -531,18 +519,15 @@ export async function deleteAllOrderItems(orderId: number) {
   return db.delete(orderItems).where(eq(orderItems.orderId, orderId));
 }
 
-export async function updateOrder(id: number, data: { status?: string; notes?: string; totalPrice?: number; subtotal?: number; taxPercentage?: number; taxAmount?: number; deliveryTime?: Date | null; hasDeliveryTime?: boolean }) {
+export async function updateOrder(id: number, data: { status?: string; totalPrice?: number; subtotal?: number; taxAmount?: number; deliveryTime?: Date | null }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const updateData: any = {};
   if (data.status) updateData.status = data.status;
-  if (data.notes !== undefined) updateData.notes = data.notes;
   if (data.totalPrice !== undefined) updateData.totalPrice = data.totalPrice;
   if (data.subtotal !== undefined) updateData.subtotal = data.subtotal;
-  if (data.taxPercentage !== undefined) updateData.taxPercentage = data.taxPercentage;
   if (data.taxAmount !== undefined) updateData.taxAmount = data.taxAmount;
   if (data.deliveryTime !== undefined) updateData.deliveryTime = data.deliveryTime;
-  if (data.hasDeliveryTime !== undefined) updateData.hasDeliveryTime = data.hasDeliveryTime;
   return db.update(orders).set(updateData).where(eq(orders.id, id));
 }
 
@@ -604,7 +589,6 @@ export async function createOrder(data: InsertOrder) {
     return {
       ...order,
       subtotal: Number(order.subtotal),
-      taxPercentage: Number(order.taxPercentage),
       taxAmount: Number(order.taxAmount),
       totalPrice: Number(order.totalPrice),
     };
@@ -628,7 +612,6 @@ export async function getOrdersByStatus(statuses?: string[]) {
   return result.map(order => ({
     ...order,
     subtotal: Number(order.subtotal),
-    taxPercentage: Number(order.taxPercentage),
     taxAmount: Number(order.taxAmount),
     totalPrice: Number(order.totalPrice),
   }));

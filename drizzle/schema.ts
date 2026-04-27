@@ -32,30 +32,20 @@ export const drivers = mysqlTable("drivers", {
 export type Driver = typeof drivers.$inferSelect;
 export type InsertDriver = typeof drivers.$inferInsert;
 
-// NEW: Orders table - simplified for scanned receipts
+// Orders table - simplified for scanned receipts
 export const orders = mysqlTable("orders", {
   id: int("id").autoincrement().primaryKey(),
-  // Order number from scanned check (e.g., "CHK-12345")
   orderNumber: varchar("order_number", { length: 50 }).unique().notNull(),
-  // Customer info
   customerAddress: text("customer_address"),
-  customerPhone: varchar("customer_phone", { length: 20 }).notNull(),
-  // Delivery info
-  area: mysqlEnum("area", ["DN", "CP", "B"]),
-  deliveryTime: timestamp("delivery_time"),
-  hasDeliveryTime: boolean("has_delivery_time").default(false),
-  // Receipt info - store extracted text from OCR
-  receiptText: text("receipt_text"),
+  customerPhone: varchar("customer_phone", { length: 20 }),
+  area: varchar("area", { length: 50 }),
+  deliveryTime: varchar("delivery_time", { length: 100 }),
   receiptImage: text("receipt_image"),
-  // Order totals
-  subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull().default("0"),
-  taxPercentage: decimal("tax_percentage", { precision: 5, scale: 2 }).default("13").notNull(),
-  taxAmount: decimal("tax_amount", { precision: 10, scale: 2 }).default("0").notNull(),
-  totalPrice: decimal("total_price", { precision: 10, scale: 2 }).notNull(),
-  // Status and driver
-  status: mysqlEnum("status", ["Pending", "Ready", "On the Way", "Delivered"]).default("Pending").notNull(),
+  subtotal: decimal("subtotal", { precision: 10, scale: 2 }).default("0"),
+  taxAmount: decimal("tax_amount", { precision: 10, scale: 2 }).default("0"),
+  totalPrice: decimal("total_price", { precision: 10, scale: 2 }).default("0"),
+  status: varchar("status", { length: 50 }).default("Pending"),
   driverId: int("driver_id"),
-  // Timestamps
   pickedUpAt: timestamp("picked_up_at"),
   deliveredAt: timestamp("delivered_at"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),

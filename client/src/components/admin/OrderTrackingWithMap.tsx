@@ -357,17 +357,16 @@ export default function OrderTrackingWithMap() {
                             <p className="text-muted-foreground">Area: <span className="font-semibold text-accent">{selectedOrderData.area}</span></p>
                           </div>
                         )}
-                        {selectedOrderData.hasDeliveryTime && selectedOrderData.deliveryTime && (
                           <div>
                             <div className="text-sm text-muted-foreground flex items-center gap-2">
                               <Clock className="w-4 h-4" />
                               Expected Delivery
                             </div>
                             <div className="font-semibold text-foreground">
-                              {new Date(selectedOrderData.deliveryTime).toLocaleString()}
+                              {selectedOrderData.deliveryTime ? new Date(selectedOrderData.deliveryTime).toLocaleString() : 'N/A'}
                             </div>
                           </div>
-                        )}
+
 
                         {/* Notes field removed from new schema */}
                         <div className="pt-3 border-t border-border mt-3">

@@ -15,7 +15,7 @@ export interface PDFOrderTimeline {
   orderId: number;
   orderNumber: string;
   customerAddress: string | null;
-  customerPhone: string;
+  customerPhone: string | null;
   total: number;
   statuses: Array<{
     status: string;
