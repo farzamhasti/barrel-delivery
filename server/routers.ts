@@ -214,8 +214,8 @@ export const appRouter = router({
       .mutation(async ({ input, ctx }) => {
         // Simple credential check - in production, use proper authentication
         const validCredentials = [
-          { username: 'admin', password: 'password', role: 'admin' },
-          { username: 'kitchen', password: 'password', role: 'kitchen' },
+          { username: 'barrel_admin', password: 'Barrel_1981@', role: 'admin' },
+          { username: 'barrel_kitchen', password: '1111', role: 'kitchen' },
         ];
         
         const user = validCredentials.find(
