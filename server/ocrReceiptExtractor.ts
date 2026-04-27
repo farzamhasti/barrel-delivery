@@ -1,8 +1,4 @@
-import Tesseract from 'tesseract.js';
 import { invokeLLM } from './_core/llm';
-import * as fs from 'fs';
-import * as path from 'path';
-import * as os from 'os';
 
 export interface ExtractedReceiptData {
   checkNumber: string;
@@ -17,70 +13,124 @@ export interface ExtractedReceiptData {
 }
 
 /**
- * Extract receipt data from image using Tesseract OCR + LLM parsing
- * @param imageData - Base64 encoded image data (with or without data URL prefix)
+ * Extract receipt data from image using LLM vision + parsing
+ * @param imageData - Can be: S3 URL, data URL with base64, or presigned URL
  * @returns Extracted receipt data with formatted text
  */
 export async function extractReceiptData(imageData: string): Promise<ExtractedReceiptData> {
   try {
-    console.log('[ocrReceiptExtractor] Starting OCR extraction');
+    console.log('[ocrReceiptExtractor] Starting receipt analysis with LLM vision');
     
-    // For demonstration, use mock OCR data
-    // This shows the full order creation workflow works
-    // Real OCR can be integrated later with a more compatible library
-    const mockOCRText = `BAR RESTAURANT\n123 Main Street\nToronto, ON\n\nCHECK #: 40134\nDATE: 2025-09-30\nTIME: 06:53\n\nITEMS:\nLasagna $15.99\nLasagna $15.99\nWings 10% $12.99\nMild $0.00\n2L Diet Pepsi $3.99\n\nSUBTOTAL: $48.96\nTAX: $6.37\nTOTAL: $55.33\n\nSPECIAL NOTES:\nTRAINING\nDO NOT PREPARE`;
+    // Determine the format and prepare for LLM
+    let imageUrl = imageData;
     
-    console.log('[ocrReceiptExtractor] Using mock OCR data for demonstration');
+    // If it's an S3 or HTTP URL, try to fetch it and convert to base64
+    // This is more reliable for LLM vision processing
+    if (imageData.startsWith('http')) {
+      console.log('[ocrReceiptExtractor] Fetching image from URL for LLM processing...');
+      try {
+        const response = await fetch(imageData);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch image: ${response.statusText}`);
+        }
+        const buffer = await response.arrayBuffer();
+        const base64Data = Buffer.from(buffer).toString('base64');
+        imageUrl = `data:image/jpeg;base64,${base64Data}`;
+        console.log('[ocrReceiptExtractor] Successfully converted URL to base64 for LLM');
+      } catch (fetchError) {
+        console.warn('[ocrReceiptExtractor] Failed to fetch URL, will try as-is:', fetchError);
+        // Fall back to using the URL directly
+        imageUrl = imageData;
+      }
+    } else if (imageData.startsWith('data:image')) {
+      // Already a data URL, validate and normalize it
+      const base64Match = imageData.match(/base64,(.+)$/);
+      if (!base64Match) {
+        throw new Error('Invalid data URL format');
+      }
+      let base64Data = base64Match[1];
+      // Clean up the base64 data - remove any whitespace
+      base64Data = base64Data.replace(/\s/g, '');
+      // Try to decode to validate
+      try {
+        Buffer.from(base64Data, 'base64');
+      } catch (e) {
+        throw new Error('Invalid base64 data: ' + (e instanceof Error ? e.message : String(e)));
+      }
+      // Ensure proper data URL format
+      imageUrl = `data:image/jpeg;base64,${base64Data}`;
+      console.log('[ocrReceiptExtractor] Data URL validated and normalized');
+    } else {
+      // Assume it's base64 without prefix
+      let base64Data = imageData.replace(/\s/g, ''); // Remove whitespace
+      try {
+        Buffer.from(base64Data, 'base64');
+      } catch (e) {
+        throw new Error('Invalid base64 data: ' + (e instanceof Error ? e.message : String(e)));
+      }
+      imageUrl = `data:image/jpeg;base64,${base64Data}`;
+      console.log('[ocrReceiptExtractor] Base64 data validated and formatted');
+    }
     
-    // Use LLM to parse and structure the OCR text
-    const parsedData = await parseReceiptText(mockOCRText);
-    
-    return {
-      ...parsedData,
-      rawOCRText: mockOCRText,
-    };
-  } catch (error) {
-    console.error('[ocrReceiptExtractor] Error extracting receipt:', error);
-    throw error;
-  }
-}
-
-/**
- * Parse OCR text using LLM to extract structured receipt data
- */
-async function parseReceiptText(ocrText: string): Promise<Omit<ExtractedReceiptData, 'rawOCRText'>> {
-  try {
+    // Use LLM with vision to analyze the receipt image
+    console.log('[ocrReceiptExtractor] Sending image to LLM for analysis...');
+    console.log('[ocrReceiptExtractor] Image URL format:', imageUrl.substring(0, 50) + '...');
     const response = await invokeLLM({
       messages: [
         {
           role: 'system',
-          content: `You are a receipt parser. Extract information from receipt OCR text and return ONLY valid JSON (no markdown, no extra text).
-          
+          content: `You are a receipt analyzer. Analyze the receipt image and extract information. Return ONLY valid JSON (no markdown, no extra text).
+
 Extract these fields:
-- checkNumber: The check/order number
-- restaurantName: Restaurant or bar name
+- checkNumber: The check/order/invoice number (string)
+- restaurantName: Restaurant, store, or business name (string)
 - date: Date in format YYYY-MM-DD (if not found, use empty string)
 - time: Time in format HH:MM (if not found, use empty string)
-- items: Array of item names/descriptions found on receipt
-- specialNotes: Any special instructions or notes (e.g., "DO NOT PREPARE", "TRAINING", etc.)
-- address: Delivery address if present
-- phone: Phone number if present
+- items: Array of item names/descriptions found on receipt (array of strings)
+- specialNotes: Any special instructions or notes (string)
+- address: Business address if present (string or empty)
+- phone: Phone number if present (string or empty)
 
-Return ONLY the JSON object, nothing else.`,
+Return ONLY the JSON object, nothing else. Example:
+{"checkNumber": "12345", "restaurantName": "Restaurant Name", "date": "2026-04-27", "time": "14:30", "items": ["Item 1", "Item 2"], "specialNotes": "", "address": "", "phone": ""}`,
         },
         {
           role: 'user',
-          content: `Parse this receipt OCR text:\n\n${ocrText}`,
+          content: [
+            {
+              type: 'text',
+              text: 'Please analyze this receipt image and extract the information in JSON format.',
+            },
+            {
+              type: 'image_url',
+              image_url: {
+                url: imageUrl,
+                detail: 'high',
+              },
+            },
+          ],
         },
       ],
     });
     
-    const content = response.choices[0].message.content;
-    if (typeof content !== 'string') {
-      throw new Error('Invalid LLM response format');
+    // Log response (truncated to avoid huge logs)
+    const responseStr = JSON.stringify(response);
+    console.log('[ocrReceiptExtractor] Full LLM response:', responseStr.substring(0, 500) + (responseStr.length > 500 ? '...' : ''));
+    
+    if (!response || !response.choices || !response.choices[0]) {
+      console.error('[ocrReceiptExtractor] Invalid LLM response:', JSON.stringify(response).substring(0, 300));
+      throw new Error(`Invalid LLM response format: ${JSON.stringify(response)}`);
     }
     
-    // Try to parse JSON directly
+    const content = response.choices[0].message.content;
+    if (typeof content !== 'string') {
+      console.error('[ocrReceiptExtractor] Invalid content format:', typeof content);
+      throw new Error(`Invalid content format: ${JSON.stringify(content)}`);
+    }
+    
+    console.log('[ocrReceiptExtractor] LLM vision response:', content.substring(0, 500));
+    
+    // Parse the JSON response
     let parsed;
     try {
       parsed = JSON.parse(content);
@@ -90,22 +140,31 @@ Return ONLY the JSON object, nothing else.`,
       if (jsonMatch) {
         parsed = JSON.parse(jsonMatch[0]);
       } else {
+        console.error('[ocrReceiptExtractor] Failed to parse LLM response:', content);
         throw new Error('No valid JSON found in LLM response');
       }
     }
     
+    // Ensure all fields are strings or arrays
+    const receiptData = {
+      checkNumber: String(parsed.checkNumber || '').trim(),
+      restaurantName: String(parsed.restaurantName || 'Unknown Restaurant').trim(),
+      date: String(parsed.date || '').trim(),
+      time: String(parsed.time || '').trim(),
+      items: Array.isArray(parsed.items) ? parsed.items.map((item: any) => String(item).trim()).filter(Boolean) : [],
+      specialNotes: String(parsed.specialNotes || '').trim(),
+      address: parsed.address ? String(parsed.address).trim() : undefined,
+      phone: parsed.phone ? String(parsed.phone).trim() : undefined,
+    };
+    
+    console.log('[ocrReceiptExtractor] Extracted receipt data:', JSON.stringify(receiptData, null, 2));
+    
     return {
-      checkNumber: parsed.checkNumber || '',
-      restaurantName: parsed.restaurantName || '',
-      date: parsed.date || '',
-      time: parsed.time || '',
-      items: Array.isArray(parsed.items) ? parsed.items : [],
-      specialNotes: parsed.specialNotes || '',
-      address: parsed.address || undefined,
-      phone: parsed.phone || undefined,
+      ...receiptData,
+      rawOCRText: content,
     };
   } catch (error) {
-    console.error('[ocrReceiptExtractor] Error parsing receipt text:', error);
+    console.error('[ocrReceiptExtractor] Error extracting receipt:', error instanceof Error ? error.message : String(error));
     throw error;
   }
 }
@@ -115,43 +174,17 @@ Return ONLY the JSON object, nothing else.`,
  */
 export async function extractReceiptText(imageUrl: string): Promise<string> {
   try {
-    console.log('[ocrReceiptExtractor] Extracting receipt text from URL:', imageUrl);
+    console.log('[ocrReceiptExtractor] Extracting receipt text from image');
     
-    // For demonstration, use mock data
-    const mockOCRText = `BAR RESTAURANT
-123 Main Street
-Toronto, ON
-
-CHECK #: 40134
-DATE: 2025-09-30
-TIME: 06:53
-
-ITEMS:
-Lasagna $15.99
-Lasagna $15.99
-Wings 10% $12.99
-Mild $0.00
-2L Diet Pepsi $3.99
-
-SUBTOTAL: $48.96
-TAX: $6.37
-TOTAL: $55.33
-
-SPECIAL NOTES:
-TRAINING
-DO NOT PREPARE`;
-    
-    const receiptData = await parseReceiptText(mockOCRText);
+    // Extract the receipt data
+    const receiptData = await extractReceiptData(imageUrl);
     
     // Format as readable text
-    const formattedText = formatReceiptText({
-      ...receiptData,
-      rawOCRText: mockOCRText,
-    });
+    const formattedText = formatReceiptText(receiptData);
     
     return formattedText;
   } catch (error) {
-    console.error('[ocrReceiptExtractor] Error extracting receipt text from URL:', error);
+    console.error('[ocrReceiptExtractor] Error extracting receipt text:', error);
     throw error;
   }
 }
@@ -159,7 +192,7 @@ DO NOT PREPARE`;
 /**
  * Format extracted receipt data as readable text
  */
-export function formatReceiptText(data: Partial<ExtractedReceiptData> & { restaurantName: string; checkNumber?: string; date?: string; time?: string; items?: string[]; specialNotes?: string }): string {
+export function formatReceiptText(data: Partial<ExtractedReceiptData> & { restaurantName: string; checkNumber?: string; date?: string; time?: string; items?: (string | any)[]; specialNotes?: string }): string {
   const lines: string[] = [];
   
   lines.push('═══════════════════════════════════════');

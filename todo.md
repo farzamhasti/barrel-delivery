@@ -203,3 +203,16 @@ These features are documented for future enhancement but are not required for th
 - [x] Integrate confirmation dialog into Orders component delete flow
 - [x] Test confirmation dialog and verify delete functionality
 - [x] Fix updateReceipt procedure to upload images to S3 before storing URLs
+
+
+## Phase 21: Fix Receipt Information Display in Order Details
+- [x] Display converted receipt text in Receipt Information section
+- [x] Show formatted receipt preview when formattedReceiptImage exists
+- [x] Handle null/missing receipt data gracefully
+- [x] Test receipt display with existing orders
+
+## Phase 22: Order Management Improvements (User Requested)
+- [ ] Fix delivery time display in order details
+- [ ] Remove Replace Photo button from receipt section
+- [ ] Fix edit order functionality (add update mutation)
+- [ ] Open order details in separate modal window

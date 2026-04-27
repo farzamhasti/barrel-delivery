@@ -146,7 +146,7 @@ export function ReceiptScannerTesseract() {
         area: formData.area as "DT" | "CP" | "B",
         deliveryTime: formData.enableDeliveryTime ? formData.deliveryTime : undefined,
         receiptText: "",
-        receiptImage: convertedReceiptHTML || formData.receiptImage, // Use converted HTML if available, otherwise use original
+        receiptImage: formData.receiptImage, // Always send the original image data for OCR processing
       });
 
       setSubmitSuccess(true);

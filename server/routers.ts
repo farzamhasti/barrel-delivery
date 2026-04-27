@@ -39,11 +39,23 @@ export const appRouter = router({
             const base64Data = input.receiptImage.replace(/^data:image\/[a-z]+;base64,/, '');
             const imageBuffer = Buffer.from(base64Data, 'base64');
             
-            // Analyze receipt with OCR to extract formatted text BEFORE uploading
+            // Upload original receipt image to S3 for storage
+            const { storagePut } = await import('./storage');
+            if (!storagePut) {
+              throw new Error('storagePut function not available');
+            }
+            const timestamp = Date.now();
+            const fileKey = `receipts/temp-${timestamp}.jpg`;
+            const { url: s3ReceiptUrl } = await storagePut(fileKey, imageBuffer, 'image/jpeg');
+            processedReceiptImage = s3ReceiptUrl;
+            console.log('[orders.createFromReceipt] Receipt image uploaded to S3:', s3ReceiptUrl);
+            
+            // Analyze receipt with OCR using base64 data (more reliable for LLM)
             try {
-              console.log('[orders.createFromReceipt] Starting OCR extraction...');
+              console.log('[orders.createFromReceipt] Starting OCR extraction with base64 data...');
               const { extractReceiptData, formatReceiptText } = await import('./ocrReceiptExtractor');
-              const receiptData = await extractReceiptData(input.receiptImage);
+              // Pass the base64 data directly for LLM processing
+              const receiptData = await extractReceiptData(base64Data);
               console.log('[orders.createFromReceipt] OCR extraction complete');
               
               // Store formatted receipt text
@@ -57,17 +69,6 @@ export const appRouter = router({
               console.error('[orders.createFromReceipt] OCR extraction failed:', ocrError);
               // Continue without OCR if analysis fails - the original receipt is still saved
             }
-            
-            // Upload original receipt image to S3
-            const { storagePut } = await import('./storage');
-            if (!storagePut) {
-              throw new Error('storagePut function not available');
-            }
-            const timestamp = Date.now();
-            const fileKey = `receipts/${extractedCheckNumber || 'order'}-${timestamp}.jpg`;
-            const { url: originalReceiptUrl } = await storagePut(fileKey, imageBuffer, 'image/jpeg');
-            processedReceiptImage = originalReceiptUrl;
-            console.log('[orders.createFromReceipt] Receipt image uploaded to S3:', originalReceiptUrl);
           } catch (error) {
             console.error('[orders.createFromReceipt] Error processing receipt image:', error);
             // Continue without image if processing fails
@@ -173,10 +174,9 @@ export const appRouter = router({
       .input(z.object({
         orderId: z.number(),
         receiptImage: z.string().optional(),
-        formattedReceiptImage: z.string().optional(),
       }))
       .mutation(async ({ input }) => {
-        const { storagePut } = await import('server/storage');
+        const { storagePut } = await import('./storage');
         let receiptImageUrl = null;
         let formattedReceiptImageUrl = null;
 
@@ -184,29 +184,31 @@ export const appRouter = router({
           try {
             const base64Data = input.receiptImage.replace(/^data:image\/[a-z]+;base64,/, '');
             const imageBuffer = Buffer.from(base64Data, 'base64');
-            const { url } = await storagePut(
-              `orders/${input.orderId}/receipt-${Date.now()}.jpg`,
+            const timestamp = Date.now();
+            const { url: s3ReceiptUrl } = await storagePut(
+              `receipts/updated-${input.orderId}-${timestamp}.jpg`,
               imageBuffer,
               'image/jpeg'
             );
-            receiptImageUrl = url;
+            receiptImageUrl = s3ReceiptUrl;
+            console.log('[orders.updateReceipt] Receipt image uploaded to S3:', s3ReceiptUrl);
+            
+            // Analyze receipt with OCR using base64 data (more reliable for LLM)
+            try {
+              console.log('[orders.updateReceipt] Starting OCR extraction with base64 data...');
+              const { extractReceiptData, formatReceiptText } = await import('./ocrReceiptExtractor');
+              // Pass the base64 data directly for LLM processing
+              const receiptData = await extractReceiptData(base64Data);
+              console.log('[orders.updateReceipt] OCR extraction complete');
+              
+              // Store formatted receipt text
+              formattedReceiptImageUrl = formatReceiptText(receiptData);
+            } catch (ocrError) {
+              console.error('[orders.updateReceipt] OCR extraction failed:', ocrError);
+              // Continue without OCR if analysis fails
+            }
           } catch (error) {
             console.error('Error uploading receipt image:', error);
-          }
-        }
-
-        if (input.formattedReceiptImage) {
-          try {
-            const base64Data = input.formattedReceiptImage.replace(/^data:image\/[a-z]+;base64,/, '');
-            const imageBuffer = Buffer.from(base64Data, 'base64');
-            const { url } = await storagePut(
-              `orders/${input.orderId}/formatted-receipt-${Date.now()}.png`,
-              imageBuffer,
-              'image/png'
-            );
-            formattedReceiptImageUrl = url;
-          } catch (error) {
-            console.error('Error uploading formatted receipt image:', error);
           }
         }
 
@@ -214,6 +216,31 @@ export const appRouter = router({
         if (receiptImageUrl !== null) updateData.receiptImage = receiptImageUrl;
         if (formattedReceiptImageUrl !== null) updateData.formattedReceiptImage = formattedReceiptImageUrl;
         return db.updateOrder(input.orderId, updateData);
+      }),
+
+    update: publicProcedure
+      .input(z.object({
+        orderId: z.number(),
+        customerAddress: z.string().optional(),
+        customerPhone: z.string().optional(),
+        status: z.enum(['Pending', 'Ready', 'On the Way', 'Delivered']).optional(),
+        area: z.enum(['DT', 'CP', 'B']).optional(),
+        deliveryTime: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { orderId, deliveryTime, ...data } = input;
+        
+        let deliveryTimeValue: Date | null | undefined = undefined;
+        if (deliveryTime) {
+          deliveryTimeValue = new Date(deliveryTime);
+        }
+        
+        const updateData: any = { ...data };
+        if (deliveryTimeValue !== undefined) {
+          updateData.deliveryTime = deliveryTimeValue;
+        }
+        
+        return db.updateOrder(orderId, updateData);
       }),
   }),
 
