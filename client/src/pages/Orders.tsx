@@ -70,10 +70,14 @@ export function Orders() {
     });
   }, [allOrders, selectedDate]);
 
+  const deleteOrderMutation = trpc.orders.delete.useMutation();
+
   const { data: selectedOrderDetails } = trpc.orders.getWithItems.useQuery(
     { orderId: selectedOrderId || 0 },
     { enabled: selectedOrderId !== null }
   );
+
+  const isDeleting = deleteOrderMutation.isPending;
 
   // Update and delete mutations removed - use updateStatus and assignDriver instead
 
@@ -96,9 +100,15 @@ export function Orders() {
   };
 
   const handleDeleteOrder = async (orderId: number) => {
-    // Order deletion disabled - use status updates instead
     if (confirm("Are you sure you want to delete this order?")) {
-      console.log("Delete order:", orderId);
+      try {
+        await deleteOrderMutation.mutateAsync({ orderId });
+        toast.success("Order deleted successfully");
+        await invalidateOrderCache(utils);
+      } catch (error) {
+        console.error("Error deleting order:", error);
+        toast.error("Failed to delete order");
+      }
     }
   };
 
@@ -205,34 +215,21 @@ export function Orders() {
 
             {/* Receipt Images Section */}
             <div className="space-y-4 border-t pt-4">
-              <h3 className="font-semibold text-lg">Receipt Images</h3>
+              <h3 className="font-semibold text-lg">Receipt Information</h3>
               
-              {/* Original Receipt Image */}
-              {selectedOrderDetails.receiptImage && (
-                <div>
-                  <Label className="text-gray-600 mb-2 block">Original Receipt</Label>
-                  <img 
-                    src={selectedOrderDetails.receiptImage} 
-                    alt="Original Receipt" 
-                    className="max-w-md border rounded-lg shadow-md"
-                  />
-                </div>
-              )}
-              
-              {/* Formatted Receipt Image */}
+              {/* Formatted Receipt Text */}
               {selectedOrderDetails.formattedReceiptImage && (
-                <div>
-                  <Label className="text-gray-600 mb-2 block">Formatted Receipt</Label>
-                  <img 
-                    src={selectedOrderDetails.formattedReceiptImage} 
-                    alt="Formatted Receipt" 
-                    className="max-w-md border rounded-lg shadow-md"
-                  />
+                <div className="bg-white rounded-lg p-4 border border-gray-300">
+                  <Label className="text-gray-600 mb-3 block font-semibold">Converted Receipt</Label>
+                  <pre className="text-xs font-mono whitespace-pre-wrap break-words bg-gray-50 p-3 rounded border overflow-auto max-h-96">
+                    {selectedOrderDetails.formattedReceiptImage}
+                  </pre>
                 </div>
               )}
+              
               
               {!selectedOrderDetails.receiptImage && !selectedOrderDetails.formattedReceiptImage && (
-                <p className="text-gray-500 italic">No receipt images available for this order</p>
+                <p className="text-gray-500 italic">No receipt information available for this order</p>
               )}
             </div>
 

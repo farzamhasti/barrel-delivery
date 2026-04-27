@@ -1,6 +1,6 @@
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Loader2, AlertCircle, CheckCircle2, Camera, Upload, X } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -28,8 +28,11 @@ export function ReceiptScannerTesseract() {
   });
 
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [convertedReceiptHTML, setConvertedReceiptHTML] = useState<string | null>(null);
+  const [isConverting, setIsConverting] = useState(false);
 
   const createOrderMutation = trpc.orders.createFromReceipt.useMutation();
+  const convertReceiptMutation = trpc.orders.convertReceiptImage.useMutation();
 
   // Start camera
   const startCamera = async () => {
@@ -56,6 +59,8 @@ export function ReceiptScannerTesseract() {
         setFormData({ ...formData, receiptImage: imageData });
         setImagePreview(imageData);
         stopCamera();
+        // Convert receipt using LLM
+        convertReceiptImage(imageData);
       }
     }
   };
@@ -74,12 +79,38 @@ export function ReceiptScannerTesseract() {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = (event) => {
+      reader.onload = async (event) => {
         const imageData = event.target?.result as string;
         setFormData({ ...formData, receiptImage: imageData });
         setImagePreview(imageData);
+        
+        // Convert receipt using LLM
+        await convertReceiptImage(imageData);
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  // Convert receipt image using LLM
+  const convertReceiptImage = async (imageData: string) => {
+    setIsConverting(true);
+    try {
+      const result = await convertReceiptMutation.mutateAsync({
+        imageData
+      });
+      
+      if (result.html) {
+        setConvertedReceiptHTML(result.html);
+        toast.success('Receipt converted successfully!');
+      } else {
+        throw new Error('No HTML returned from conversion');
+      }
+    } catch (err: any) {
+      console.error('Receipt conversion error:', err);
+      toast.error(err.message || 'Failed to convert receipt image');
+      // Still allow user to proceed with original image
+    } finally {
+      setIsConverting(false);
     }
   };
 
@@ -87,6 +118,7 @@ export function ReceiptScannerTesseract() {
   const clearImage = () => {
     setFormData({ ...formData, receiptImage: "" });
     setImagePreview(null);
+    setConvertedReceiptHTML(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -113,7 +145,7 @@ export function ReceiptScannerTesseract() {
         area: formData.area as "DN" | "DT" | "WE" | "EA",
         deliveryTime: formData.enableDeliveryTime ? formData.deliveryTime : undefined,
         receiptText: "",
-        receiptImage: formData.receiptImage, // Base64 image
+        receiptImage: convertedReceiptHTML || formData.receiptImage, // Use converted HTML if available, otherwise use original
       });
 
       setSubmitSuccess(true);
@@ -131,6 +163,7 @@ export function ReceiptScannerTesseract() {
           receiptImage: "",
         });
         setImagePreview(null);
+        setConvertedReceiptHTML(null);
         setSubmitSuccess(false);
       }, 2000);
     } catch (err: any) {
@@ -217,7 +250,28 @@ export function ReceiptScannerTesseract() {
 
             {imagePreview && (
               <div className="space-y-4">
-                <img src={imagePreview} alt="Receipt preview" className="w-full rounded-lg" />
+                {isConverting && (
+                  <div className="flex items-center justify-center p-8 bg-blue-50 rounded-lg">
+                    <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                    <span>Converting receipt...</span>
+                  </div>
+                )}
+                
+                {convertedReceiptHTML ? (
+                  <div className="space-y-4">
+                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                      <h4 className="font-semibold mb-2 text-sm">Converted Receipt Preview</h4>
+                      <pre className="text-xs font-mono whitespace-pre-wrap break-words bg-gray-50 p-3 rounded border overflow-auto max-h-80">{convertedReceiptHTML}</pre>
+                    </div>
+                    <p className="text-xs text-gray-600 text-center">This is the converted digital receipt that will be stored with your order</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <p className="text-sm text-gray-600">Original receipt photo:</p>
+                    <img src={imagePreview} alt="Receipt preview" className="w-full rounded-lg" />
+                  </div>
+                )}
+                
                 <div className="flex gap-4">
                   <Button
                     type="button"

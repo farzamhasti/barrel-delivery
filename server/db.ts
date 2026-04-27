@@ -571,6 +571,7 @@ export async function createOrder(data: InsertOrder) {
   if (data.deliveryTime) orderData.deliveryTime = data.deliveryTime;
   if (data.driverId) orderData.driverId = data.driverId;
   if (data.receiptImage) orderData.receiptImage = data.receiptImage;
+  if (data.formattedReceiptImage) orderData.formattedReceiptImage = data.formattedReceiptImage;
   
   let result;
   try {

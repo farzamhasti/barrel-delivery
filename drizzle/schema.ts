@@ -35,7 +35,7 @@ export type InsertDriver = typeof drivers.$inferInsert;
 // Orders table - simplified for scanned receipts
 export const orders = mysqlTable("orders", {
   id: int("id").autoincrement().primaryKey(),
-  orderNumber: varchar("order_number", { length: 50 }).unique().notNull(),
+  orderNumber: varchar("order_number", { length: 50 }).notNull(),
   customerAddress: text("customer_address"),
   customerPhone: varchar("customer_phone", { length: 20 }),
   area: varchar("area", { length: 50 }),

@@ -39,47 +39,35 @@ export const appRouter = router({
             const base64Data = input.receiptImage.replace(/^data:image\/[a-z]+;base64,/, '');
             const imageBuffer = Buffer.from(base64Data, 'base64');
             
+            // Analyze receipt with OCR to extract formatted text BEFORE uploading
+            try {
+              console.log('[orders.createFromReceipt] Starting OCR extraction...');
+              const { extractReceiptData, formatReceiptText } = await import('./ocrReceiptExtractor');
+              const receiptData = await extractReceiptData(input.receiptImage);
+              console.log('[orders.createFromReceipt] OCR extraction complete');
+              
+              // Store formatted receipt text
+              formattedReceiptImage = formatReceiptText(receiptData);
+              
+              // Extract check number from receipt data if available
+              if (receiptData.checkNumber && !input.orderNumber) {
+                extractedCheckNumber = receiptData.checkNumber;
+              }
+            } catch (ocrError) {
+              console.error('[orders.createFromReceipt] OCR extraction failed:', ocrError);
+              // Continue without OCR if analysis fails - the original receipt is still saved
+            }
+            
             // Upload original receipt image to S3
             const { storagePut } = await import('./storage');
             if (!storagePut) {
               throw new Error('storagePut function not available');
             }
             const timestamp = Date.now();
-            const fileKey = `receipts/${input.orderNumber || 'order'}-${timestamp}.jpg`;
+            const fileKey = `receipts/${extractedCheckNumber || 'order'}-${timestamp}.jpg`;
             const { url: originalReceiptUrl } = await storagePut(fileKey, imageBuffer, 'image/jpeg');
             processedReceiptImage = originalReceiptUrl;
             console.log('[orders.createFromReceipt] Receipt image uploaded to S3:', originalReceiptUrl);
-            
-            // Analyze receipt with OCR to extract check number and items
-            try {
-              console.log('[orders.createFromReceipt] Starting OCR analysis...');
-              const { analyzeReceiptImage } = await import('./receiptAnalyzer');
-              const receiptData = await analyzeReceiptImage(originalReceiptUrl);
-              console.log('[orders.createFromReceipt] OCR analysis complete:', receiptData);
-              
-              // Generate formatted receipt image from extracted data
-              console.log('[orders.createFromReceipt] Generating formatted receipt image...');
-              const { generateFormattedReceipt } = await import('./receiptGenerator');
-              const formattedReceiptBuffer = await generateFormattedReceipt({
-                checkNumber: receiptData.checkNumber || input.orderNumber || 'N/A',
-                items: receiptData.items || [],
-              });
-              
-              // Upload formatted receipt to S3
-              const formattedFileKey = `receipts/${input.orderNumber || 'order'}-formatted-${timestamp}.png`;
-              const { url: formattedReceiptUrl } = await storagePut(formattedFileKey, formattedReceiptBuffer, 'image/png');
-              console.log('[orders.createFromReceipt] Formatted receipt uploaded to S3:', formattedReceiptUrl);
-              
-              formattedReceiptImage = formattedReceiptUrl;
-              
-              // Use extracted check number if not provided
-              if (receiptData.checkNumber && !input.orderNumber) {
-                extractedCheckNumber = receiptData.checkNumber;
-              }
-            } catch (ocrError) {
-              console.error('[orders.createFromReceipt] OCR analysis failed:', ocrError);
-              // Continue without OCR if analysis fails - the original receipt is still saved
-            }
           } catch (error) {
             console.error('[orders.createFromReceipt] Error processing receipt image:', error);
             // Continue without image if processing fails
@@ -133,12 +121,43 @@ export const appRouter = router({
         return db.updateOrderStatus(input.orderId, input.status);
       }),
 
+    delete: publicProcedure
+      .input(z.object({
+        orderId: z.number(),
+      }))
+      .mutation(async ({ input }) => {
+        return db.deleteOrder(input.orderId);
+      }),
+
     getWithItems: publicProcedure
       .input(z.object({
         orderId: z.number(),
       }))
       .query(async ({ input }) => {
         return db.getOrderWithItems(input.orderId);
+      }),
+
+    convertReceiptImage: publicProcedure
+      .input(z.object({
+        imageData: z.string(),
+      }))
+      .mutation(async ({ input }) => {
+        try {
+          const { extractReceiptData, formatReceiptText } = await import("./ocrReceiptExtractor");
+          
+          // Extract receipt data using OCR + LLM
+          const receiptData = await extractReceiptData(input.imageData);
+          const formattedText = formatReceiptText(receiptData);
+          
+          return {
+            success: true,
+            data: receiptData,
+            html: formattedText,
+          };
+        } catch (error) {
+          console.error("[orders.convertReceiptImage] Error:", error);
+          throw new Error("Failed to convert receipt image");
+        }
       }),
 
     assignDriver: publicProcedure

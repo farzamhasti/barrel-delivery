@@ -172,3 +172,18 @@ These features are documented for future enhancement but are not required for th
 - [x] Test receipt image upload with real receipt and verify display on order click (Order #50001 displays receipt image)
 - [x] Ensure receipt images display in Orders list, Kitchen Dashboard, and Order Tracking (all components updated)
 - [x] Verify both original receipt image and formatted receipt image display correctly (original receipt image displays perfectly)
+
+
+## Phase 17: LLM-Based Receipt Image Conversion (IN PROGRESS)
+- [ ] Create receiptConverter.ts to generate clean digital receipts from photos using LLM
+- [ ] Update ReceiptScannerTesseract to display converted receipt preview before order placement
+- [ ] Update order creation to store converted receipt image instead of original photo
+- [ ] Update order details display to show converted receipt (not original photo)
+- [ ] Test end-to-end workflow with real receipt photo
+- [ ] Verify converted receipt displays correctly in order details
+
+
+## Phase 18: Order Management Improvements
+- [x] Hide original receipt image display from order details page
+- [x] Add delete order functionality to orders tab
+- [x] Remove uniqueness constraint on check numbers in database schema
