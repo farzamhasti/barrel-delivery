@@ -35,7 +35,7 @@ export function ReceiptScannerTesseract() {
   const createOrderMutation = trpc.orders.createFromReceipt.useMutation();
   const convertReceiptMutation = trpc.orders.convertReceiptImage.useMutation();
 
-  // Start camera
+  // Start camera with improved error handling and fallback constraints
   const startCamera = async () => {
     try {
       // Check if browser supports getUserMedia
@@ -44,17 +44,30 @@ export function ReceiptScannerTesseract() {
         return;
       }
 
-      // Try to get camera stream
-      const constraints = {
+      setError(null); // Clear any previous errors
+      
+      // Try with preferred constraints first
+      const preferredConstraints: MediaStreamConstraints = {
         video: {
-          facingMode: "environment",
+          facingMode: { ideal: "environment" },
           width: { ideal: 1280 },
           height: { ideal: 720 },
         },
         audio: false,
       };
 
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia(preferredConstraints);
+      } catch (err: any) {
+        // Fallback to basic constraints if preferred constraints fail
+        console.log("Preferred constraints failed, trying basic constraints...", err);
+        const basicConstraints: MediaStreamConstraints = {
+          video: true,
+          audio: false,
+        };
+        stream = await navigator.mediaDevices.getUserMedia(basicConstraints);
+      }
       
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
@@ -66,16 +79,17 @@ export function ReceiptScannerTesseract() {
           });
         };
         setShowCamera(true);
-        setError(null);
       }
     } catch (err: any) {
       console.error("Camera error:", err);
       if (err.name === "NotAllowedError") {
-        setError("Camera permission denied. Please allow camera access in your browser settings.");
+        setError("Camera permission denied. Please go to Settings > Permissions and allow camera access.");
       } else if (err.name === "NotFoundError") {
         setError("No camera found on your device.");
       } else if (err.name === "NotReadableError") {
-        setError("Camera is already in use by another application.");
+        setError("Camera is already in use by another application. Please close other apps using the camera.");
+      } else if (err.name === "OverconstrainedError") {
+        setError("Camera constraints not supported. Please try again.");
       } else {
         setError(`Camera error: ${err.message || "Unable to access camera. Please check permissions."}`);
       }
@@ -112,13 +126,12 @@ export function ReceiptScannerTesseract() {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = async (event) => {
+      reader.onload = (event) => {
         const imageData = event.target?.result as string;
         setFormData({ ...formData, receiptImage: imageData });
         setImagePreview(imageData);
-        
         // Convert receipt using LLM
-        await convertReceiptImage(imageData);
+        convertReceiptImage(imageData);
       };
       reader.readAsDataURL(file);
     }
@@ -128,45 +141,26 @@ export function ReceiptScannerTesseract() {
   const convertReceiptImage = async (imageData: string) => {
     setIsConverting(true);
     try {
-      const result = await convertReceiptMutation.mutateAsync({
-        imageData
-      });
-      
-      if (result.html) {
-        setConvertedReceiptHTML(result.html);
-        toast.success('Receipt converted successfully!');
-      } else {
-        throw new Error('No HTML returned from conversion');
-      }
+      const result = await convertReceiptMutation.mutateAsync({ imageData });
+      setConvertedReceiptHTML(result.html);
     } catch (err: any) {
-      console.error('Receipt conversion error:', err);
-      toast.error(err.message || 'Failed to convert receipt image');
-      // Still allow user to proceed with original image
+      console.error("Conversion error:", err);
+      setError("Failed to convert receipt. Please try again.");
     } finally {
       setIsConverting(false);
     }
   };
 
-  // Clear image
-  const clearImage = () => {
+  // Remove image
+  const removeImage = () => {
     setFormData({ ...formData, receiptImage: "" });
     setImagePreview(null);
     setConvertedReceiptHTML(null);
   };
 
+  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Validation - only check number and address are required
-    if (!formData.checkNumber.trim()) {
-      setError("Check Number is required");
-      return;
-    }
-    if (!formData.address.trim()) {
-      setError("Address is required");
-      return;
-    }
-
     setSubmitting(true);
     setError(null);
 
@@ -175,10 +169,9 @@ export function ReceiptScannerTesseract() {
         orderNumber: formData.checkNumber,
         customerAddress: formData.address,
         customerPhone: formData.phoneNumber || "",
-        area: formData.area as "DT" | "CP" | "B",
         deliveryTime: formData.enableDeliveryTime ? formData.deliveryTime : undefined,
-        receiptText: "",
-        receiptImage: formData.receiptImage, // Always send the original image data for OCR processing
+        area: formData.area,
+        receiptImage: formData.receiptImage,
       });
 
       setSubmitSuccess(true);
@@ -281,126 +274,109 @@ export function ReceiptScannerTesseract() {
               </div>
             )}
 
-            {imagePreview && (
+            {imagePreview && !showCamera && (
               <div className="space-y-4">
-                {isConverting && (
-                  <div className="flex items-center justify-center p-8 bg-blue-50 rounded-lg">
-                    <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                    <span>Converting receipt...</span>
-                  </div>
-                )}
-                
-                {convertedReceiptHTML ? (
-                  <div className="space-y-4">
-                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                      <h4 className="font-semibold mb-2 text-sm">Converted Receipt Preview</h4>
-                      <pre className="text-xs font-mono whitespace-pre-wrap break-words bg-gray-50 p-3 rounded border overflow-auto max-h-80">{convertedReceiptHTML}</pre>
-                    </div>
-                    <p className="text-xs text-gray-600 text-center">This is the converted digital receipt that will be stored with your order</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <p className="text-sm text-gray-600">Original receipt photo:</p>
-                    <img src={imagePreview} alt="Receipt preview" className="w-full rounded-lg" />
-                  </div>
-                )}
-                
+                <img src={imagePreview} alt="Receipt preview" className="w-full rounded-lg" />
                 <div className="flex gap-4">
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={clearImage}
+                    onClick={removeImage}
                     className="flex-1"
                   >
                     <X className="w-4 h-4 mr-2" />
-                    Remove Photo
-                  </Button>
-                  <Button
-                    type="button"
-                    onClick={startCamera}
-                    variant="outline"
-                    className="flex-1"
-                  >
-                    <Camera className="w-4 h-4 mr-2" />
-                    Retake
+                    Remove
                   </Button>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Check Number - REQUIRED */}
-          <div>
-            <label className="block text-sm font-medium mb-2">
-              Check Number <span className="text-red-500">*</span>
-            </label>
-            <Input
-              type="text"
-              placeholder="Enter check number from receipt"
-              value={formData.checkNumber}
-              onChange={(e) => setFormData({ ...formData, checkNumber: e.target.value })}
-              required
-            />
-          </div>
-
-          {/* Address - REQUIRED */}
-          <div>
-            <label className="block text-sm font-medium mb-2">
-              Delivery Address <span className="text-red-500">*</span>
-            </label>
-            <Input
-              type="text"
-              placeholder="Enter delivery address"
-              value={formData.address}
-              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-              required
-            />
-          </div>
-
-          {/* Phone Number - OPTIONAL */}
-          <div>
-            <label className="block text-sm font-medium mb-2">Phone Number (Optional)</label>
-            <Input
-              type="tel"
-              placeholder="Enter phone number (optional)"
-              value={formData.phoneNumber}
-              onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
-            />
-          </div>
-
-          {/* Area - OPTIONAL */}
-          <div>
-            <label className="block text-sm font-medium mb-2">Area (Optional)</label>
-            <div className="flex gap-6">
-              {["DT", "CP", "B"].map((areaOption) => (
-                <label key={areaOption} className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    name="area"
-                    value={areaOption}
-                    checked={formData.area === areaOption}
-                    onChange={(e) =>
-                      setFormData({ ...formData, area: e.target.value as "DT" | "CP" | "B" })
-                    }
-                    className="w-4 h-4"
-                  />
-                  <span className="text-sm">{areaOption}</span>
-                </label>
-              ))}
+          {/* Converted Receipt Preview */}
+          {isConverting && (
+            <div className="flex items-center gap-2 text-blue-600">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>Converting receipt...</span>
             </div>
-          </div>
+          )}
 
-          {/* Delivery Time - OPTIONAL */}
-          <div>
-            <label className="flex items-center gap-2 text-sm font-medium mb-2">
+          {convertedReceiptHTML && (
+            <div className="border border-gray-300 rounded-lg p-4 bg-gray-50">
+              <h3 className="font-semibold mb-3">Converted Receipt Preview</h3>
+              <pre className="text-xs whitespace-pre-wrap font-mono overflow-auto max-h-48">
+                {convertedReceiptHTML}
+              </pre>
+            </div>
+          )}
+
+          {/* Form Fields */}
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Check Number <span className="text-red-500">*</span>
+              </label>
+              <Input
+                type="text"
+                placeholder="Enter check number from receipt"
+                value={formData.checkNumber}
+                onChange={(e) => setFormData({ ...formData, checkNumber: e.target.value })}
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Delivery Address <span className="text-red-500">*</span>
+              </label>
+              <Input
+                type="text"
+                placeholder="Enter delivery address"
+                value={formData.address}
+                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">Phone Number (Optional)</label>
+              <Input
+                type="tel"
+                placeholder="Enter phone number (optional)"
+                value={formData.phoneNumber}
+                onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">Area (Optional)</label>
+              <div className="flex gap-4">
+                {["DT", "CP", "B"].map((areaOption) => (
+                  <label key={areaOption} className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="area"
+                      value={areaOption}
+                      checked={formData.area === areaOption}
+                      onChange={(e) => setFormData({ ...formData, area: e.target.value as "DT" | "CP" | "B" })}
+                    />
+                    {areaOption}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
               <input
                 type="checkbox"
+                id="deliveryTime"
                 checked={formData.enableDeliveryTime}
                 onChange={(e) => setFormData({ ...formData, enableDeliveryTime: e.target.checked })}
-                className="w-4 h-4"
               />
-              Set Delivery Time (Optional)
-            </label>
+              <label htmlFor="deliveryTime" className="text-sm font-medium">
+                Set Delivery Time (Optional)
+              </label>
+            </div>
+
             {formData.enableDeliveryTime && (
               <Input
                 type="datetime-local"
@@ -410,8 +386,7 @@ export function ReceiptScannerTesseract() {
             )}
           </div>
 
-          {/* Submit Button */}
-          <Button type="submit" disabled={submitting} className="w-full">
+          <Button type="submit" className="w-full" disabled={submitting || loading}>
             {submitting ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -421,11 +396,13 @@ export function ReceiptScannerTesseract() {
               "Create Order"
             )}
           </Button>
-        </form>
 
-        <p className="text-xs text-muted-foreground mt-4 text-center">
-          Required fields: Check Number, Address
-        </p>
+          {(loading || submitting) && (
+            <p className="text-center text-sm text-gray-500">
+              Required fields: Check Number, Address
+            </p>
+          )}
+        </form>
       </Card>
     </div>
   );
