@@ -222,3 +222,35 @@ These features are documented for future enhancement but are not required for th
 - [x] Add browser support detection for getUserMedia
 - [x] Add better logging and debugging for camera issues
 - [x] Test camera functionality (works correctly, no camera in sandbox)
+
+## Phase 24: Replace Photo Feature for Order Editing
+- [x] Add receiptImage field to OrderFormData interface
+- [x] Add state management for receipt preview and file input
+- [x] Implement handleReceiptCapture function for file selection
+- [x] Update handleSaveOrder to include receipt image in update payload
+- [x] Update handleEditOrder to initialize receipt image state
+- [x] Update handleCancelEdit to clear receipt preview
+- [x] Add "Replace Receipt Photo" UI section to Edit Order modal
+- [x] Update orders.update procedure to accept receiptImage parameter
+- [x] Implement image processing: upload to S3 and extract text using LLM
+- [x] Add receiptText column to orders table schema
+- [x] Update updateOrder function to support receiptText and other fields
+- [x] Fix updateOrder to handle partial updates properly
+- [x] Create comprehensive test suite for replace photo functionality
+- [x] Verify TypeScript compilation (0 errors)
+- [x] Verify dev server running successfully
+
+## Phase 25: Take Photo and Receipt Conversion Enhancement
+- [x] Add Camera import to Orders.tsx
+- [x] Add editCameraInputRef for camera input
+- [x] Add "Take Photo" button alongside "Upload New Photo" button
+- [x] Create separate file input with capture="environment" for camera
+- [x] Update orders.update to convert photos to formatted receipts
+- [x] Generate formatted receipt using generateFormattedReceipt
+- [x] Upload formatted receipt to S3 (not original photo)
+- [x] Save formatted receipt URL to receiptImage field
+- [x] Extract text from photo using LLM
+- [x] Store extracted text in receiptText field
+- [x] Create test suite for take photo functionality
+- [x] Verify TypeScript compilation (0 errors)
+- [x] Verify dev server running successfully

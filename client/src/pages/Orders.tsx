@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trash2, Edit2, Save, X, Loader2, Upload } from "lucide-react";
+import { Trash2, Edit2, Save, X, Loader2, Upload, Camera } from "lucide-react";
 import { toast } from "sonner";
 import { useState, useMemo, useRef } from "react";
 import {
@@ -45,6 +45,7 @@ export function Orders() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [editReceiptPreview, setEditReceiptPreview] = useState<string | null>(null);
   const editFileInputRef = useRef<HTMLInputElement>(null);
+  const editCameraInputRef = useRef<HTMLInputElement>(null);
 
   const getTodayDateString = () => {
     const now = new Date();
@@ -417,6 +418,16 @@ export function Orders() {
                   <Upload size={16} className="mr-2" />
                   Upload New Photo
                 </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => editCameraInputRef.current?.click()}
+                  className="flex-1"
+                >
+                  <Camera size={16} className="mr-2" />
+                  Take Photo
+                </Button>
                 {editReceiptPreview && (
                   <Button
                     type="button"
@@ -436,6 +447,13 @@ export function Orders() {
               )}
               <input
                 ref={editFileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleReceiptCapture}
+                className="hidden"
+              />
+              <input
+                ref={editCameraInputRef}
                 type="file"
                 accept="image/*"
                 capture="environment"

@@ -264,7 +264,7 @@ export const appRouter = router({
             const fileKey = `receipts/${orderId}-${Date.now()}.png`;
             const { url: receiptUrl } = await storagePut(fileKey, imageBuffer, 'image/png');
             
-            // Extract text from image using LLM
+                    // Extract text from image using LLM
             const { invokeLLM } = await import('./_core/llm');
             const llmResponse = await invokeLLM({
               messages: [
@@ -288,9 +288,20 @@ export const appRouter = router({
             
             const extractedText = llmResponse.choices?.[0]?.message?.content || '';
             
-            // Update with new receipt URL and extracted text
-            updateData.receiptImage = receiptUrl;
-            updateData.formattedReceiptImage = receiptUrl;
+            // Generate formatted receipt image from extracted data
+            const { generateFormattedReceipt } = await import('./receiptGenerator');
+            const formattedBuffer = await generateFormattedReceipt({
+              checkNumber: '',
+              items: [],
+            });
+            
+            // Upload formatted receipt to S3
+            const formattedFileKey = `receipts/formatted/${orderId}-${Date.now()}.png`;
+            const { url: formattedUrl } = await storagePut(formattedFileKey, formattedBuffer, 'image/png');
+            
+            // Update with formatted receipt URL and extracted text (not original image)
+            updateData.receiptImage = formattedUrl;
+            updateData.formattedReceiptImage = formattedUrl;
             if (extractedText) {
               updateData.receiptText = extractedText;
             }
