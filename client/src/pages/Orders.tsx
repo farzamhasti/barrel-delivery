@@ -235,11 +235,11 @@ export function Orders() {
       {/* Order Details Modal */}
       <Dialog open={selectedOrderId !== null} onOpenChange={(open) => !open && setSelectedOrderId(null)}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Order Details</DialogTitle>
+          </DialogHeader>
           {selectedOrderDetails && (
             <>
-              <DialogHeader>
-                <DialogTitle>Order Details - #{selectedOrderDetails.orderNumber}</DialogTitle>
-              </DialogHeader>
               
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
