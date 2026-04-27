@@ -259,52 +259,37 @@ export const appRouter = router({
             const base64Data = receiptImage.replace(/^data:image\/[a-z]+;base64,/, '');
             const imageBuffer = Buffer.from(base64Data, 'base64');
             
-            // Upload to S3
+            // Optimize image: compress and enhance for better OCR accuracy
+            console.log('[orders.update] Optimizing image for processing...');
+            const { processReceiptImage } = await import('./_core/imageEnhancement');
+            const optimizedBuffer = await processReceiptImage(imageBuffer);
+            console.log('[orders.update] Image optimization complete');
+            
+            // Upload optimized image to S3 temporarily for LLM analysis
             const { storagePut } = await import('./storage');
-            const fileKey = `receipts/${orderId}-${Date.now()}.png`;
-            const { url: receiptUrl } = await storagePut(fileKey, imageBuffer, 'image/png');
+            const tempFileKey = `receipts/temp-${orderId}-${Date.now()}.jpg`;
+            const { url: tempReceiptUrl } = await storagePut(tempFileKey, optimizedBuffer, 'image/jpeg');
+            console.log('[orders.update] Optimized image uploaded to S3:', tempReceiptUrl);
             
-                    // Extract text from image using LLM
-            const { invokeLLM } = await import('./_core/llm');
-            const llmResponse = await invokeLLM({
-              messages: [
-                {
-                  role: 'user',
-                  content: [
-                    {
-                      type: 'text',
-                      text: 'Extract all text from this receipt image. Return the extracted text exactly as shown on the receipt.',
-                    },
-                    {
-                      type: 'image_url',
-                      image_url: {
-                        url: receiptUrl,
-                      },
-                    },
-                  ],
-                },
-              ],
-            });
+            // Use accurate receipt extraction (same as order creation)
+            console.log('[orders.update] Starting accurate receipt extraction...');
+            const { extractReceiptData, formatReceiptText } = await import('./ocrReceiptExtractor');
+            const receiptData = await extractReceiptData(base64Data);
+            console.log('[orders.update] Receipt extraction complete');
             
-            const extractedText = llmResponse.choices?.[0]?.message?.content || '';
+            // Format receipt text with all extracted data
+            const formattedReceiptText = formatReceiptText(receiptData);
             
-            // Generate formatted receipt image from extracted data
-            const { generateFormattedReceipt } = await import('./receiptGenerator');
-            const formattedBuffer = await generateFormattedReceipt({
-              checkNumber: '',
-              items: [],
-            });
+            // Upload original receipt for reference
+            const originalFileKey = `receipts/original-${orderId}-${Date.now()}.jpg`;
+            const { url: originalReceiptUrl } = await storagePut(originalFileKey, optimizedBuffer, 'image/jpeg');
             
-            // Upload formatted receipt to S3
-            const formattedFileKey = `receipts/formatted/${orderId}-${Date.now()}.png`;
-            const { url: formattedUrl } = await storagePut(formattedFileKey, formattedBuffer, 'image/png');
+            // Update with formatted receipt text and extracted data
+            updateData.receiptImage = originalReceiptUrl;
+            updateData.formattedReceiptImage = formattedReceiptText;
+            updateData.receiptText = formattedReceiptText;
             
-            // Update with formatted receipt URL and extracted text (not original image)
-            updateData.receiptImage = formattedUrl;
-            updateData.formattedReceiptImage = formattedUrl;
-            if (extractedText) {
-              updateData.receiptText = extractedText;
-            }
+            console.log('[orders.update] Receipt processing complete');
           } catch (error) {
             console.error('[orders.update] Error processing receipt image:', error);
             throw new Error('Failed to process receipt image');

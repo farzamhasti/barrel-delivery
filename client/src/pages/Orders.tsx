@@ -44,6 +44,7 @@ export function Orders() {
   const [deleteConfirmOrderId, setDeleteConfirmOrderId] = useState<number | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [editReceiptPreview, setEditReceiptPreview] = useState<string | null>(null);
+  const [isProcessingReceipt, setIsProcessingReceipt] = useState(false);
   const editFileInputRef = useRef<HTMLInputElement>(null);
   const editCameraInputRef = useRef<HTMLInputElement>(null);
 
@@ -130,6 +131,8 @@ export function Orders() {
       
       // Include receipt image if a new one was uploaded
       if (formData.receiptImage) {
+        setIsProcessingReceipt(true);
+        toast.loading('Processing receipt photo...');
         updateData.receiptImage = formData.receiptImage;
       }
       
@@ -142,7 +145,9 @@ export function Orders() {
       }
       setEditingOrderId(null);
       setEditReceiptPreview(null);
+      setIsProcessingReceipt(false);
     } catch (error: any) {
+      setIsProcessingReceipt(false);
       toast.error("Failed to update order: " + error.message);
     }
   };
@@ -467,10 +472,10 @@ export function Orders() {
             <Button onClick={handleCancelEdit} variant="outline" disabled={isSaving}>
               <X size={16} className="mr-2" /> Cancel
             </Button>
-            <Button onClick={handleSaveOrder} disabled={isSaving}>
-              {isSaving ? (
+            <Button onClick={handleSaveOrder} disabled={isSaving || isProcessingReceipt}>
+              {isSaving || isProcessingReceipt ? (
                 <>
-                  <Loader2 size={16} className="mr-2 animate-spin" /> Saving...
+                  <Loader2 size={16} className="mr-2 animate-spin" /> {isProcessingReceipt ? 'Processing...' : 'Saving...'}
                 </>
               ) : (
                 <>
