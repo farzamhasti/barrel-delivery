@@ -8,13 +8,10 @@ import { OrderTimelineTable } from "@/components/OrderTimelineTable";
 import { DeliveryGanttChart } from "@/components/DeliveryGanttChart";
 import { DriverPerformanceTable } from "@/components/DriverPerformanceTable";
 import { AdvancedDateRangeSelector, type DateRange } from "@/components/AdvancedDateRangeSelector";
-import { FileText } from "lucide-react";
-import { PDFReportTemplate } from "@/components/PDFReportTemplate";
-import { generatePDFReport } from "@/lib/pdfGenerator";
+// PDF export removed - not required
 
 export function DeliveryReportTab() {
-  const pdfRef = useRef<HTMLDivElement>(null);
-  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  // PDF export removed - not required
   const [dateRange, setDateRange] = useState<DateRange>({
     startDate: new Date(new Date().setDate(new Date().getDate() - 7)),
     endDate: new Date(),
@@ -46,50 +43,7 @@ export function DeliveryReportTab() {
     });
   };
 
-  const handleExportCSV = () => {
-    if (!timelines) return;
-    
-    const headers = ["Order ID", "Customer", "Address", "Pending Time", "Ready Time", "On the Way Time", "Delivered Time"];
-    const rows = timelines.map(t => [
-      t.orderId,
-      t.orderNumber,
-      t.customerAddress,
-      t.durations.pending?.formatted || "N/A",
-      t.durations.ready?.formatted || "N/A",
-      t.durations.onTheWay?.formatted || "N/A",
-      t.timestamps.delivered ? new Date(t.timestamps.delivered).toLocaleString() : "N/A",
-    ]);
-    
-    const csv = [headers, ...rows].map(row => row.join(",")).join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `delivery-report-${dateRange.preset}.csv`;
-    a.click();
-  };
-
-  const handleExportPDF = async () => {
-    if (!pdfRef.current || !metrics || !timelines) return;
-    
-    try {
-      setIsGeneratingPDF(true);
-      await generatePDFReport(
-        pdfRef.current,
-        "barrel-delivery-report",
-        (dateRange.reportType as "Daily" | "Weekly" | "Monthly") || "Daily",
-        {
-          startDate: formatDate(dateRange.startDate),
-          endDate: formatDate(dateRange.endDate),
-        }
-      );
-    } catch (error) {
-      console.error("Error generating PDF:", error);
-      alert("Failed to generate PDF. Please try again.");
-    } finally {
-      setIsGeneratingPDF(false);
-    }
-  };
+  // Export functions removed - not required
 
   return (
     <div className="space-y-6">
@@ -205,40 +159,7 @@ export function DeliveryReportTab() {
         </CardContent>
       </Card>
 
-      {/* Hidden PDF Template for rendering */}
-      {metrics && timelines && (
-        <div style={{ display: "none" }}>
-          <PDFReportTemplate
-            ref={pdfRef}
-            metrics={{
-              totalOrders: metrics.totalOrders,
-              deliveredOrders: metrics.deliveredOrders,
-              deliveryRate: metrics.deliveryRate,
-              averageDeliveryTime: metrics.averageDeliveryTime,
-              dateRange: {
-                startDate: formatDate(dateRange.startDate),
-                endDate: formatDate(dateRange.endDate),
-              },
-            }}
-            orderTimelines={timelines.map(t => ({
-              orderId: t.orderId,
-              orderNumber: t.orderNumber,
-              customerName: t.orderNumber, // Use orderNumber as customerName
-              customerAddress: t.customerAddress,
-              customerPhone: t.customerPhone,
-              total: 0,
-              statuses: [
-                { status: "Pending", timestamp: t.timestamps.pending ? new Date(t.timestamps.pending).toLocaleString() : "N/A", durationMinutes: t.durations.pending?.minutes, durationSeconds: t.durations.pending?.seconds },
-                { status: "Ready", timestamp: t.timestamps.ready ? new Date(t.timestamps.ready).toLocaleString() : "N/A", durationMinutes: t.durations.ready?.minutes, durationSeconds: t.durations.ready?.seconds },
-                { status: "On the Way", timestamp: t.timestamps.onTheWay ? new Date(t.timestamps.onTheWay).toLocaleString() : "N/A", durationMinutes: t.durations.onTheWay?.minutes, durationSeconds: t.durations.onTheWay?.seconds },
-                { status: "Delivered", timestamp: t.timestamps.delivered ? new Date(t.timestamps.delivered).toLocaleString() : "N/A" },
-              ],
-            }))}
-            driverPerformance={[]}
-            reportType={(dateRange.reportType as "Daily" | "Weekly" | "Monthly") || "Daily"}
-          />
-        </div>
-      )}
+      {/* PDF export removed - not required */}
     </div>
   );
 }
