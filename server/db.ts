@@ -561,30 +561,23 @@ export async function createOrder(data: InsertOrder) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
-  // Ensure numeric values are properly formatted for Decimal columns
+  // Build order data with only fields that exist in the simplified schema
   const orderData: any = {
     subtotal: data.subtotal ? String(data.subtotal) : "0",
-    taxPercentage: data.taxPercentage ? String(data.taxPercentage) : "13",
     taxAmount: data.taxAmount ? String(data.taxAmount) : "0",
     totalPrice: data.totalPrice ? String(data.totalPrice) : "0",
-    deliveryTime: data.deliveryTime || null,
-    hasDeliveryTime: data.hasDeliveryTime,
-    driverId: data.driverId,
-    status: data.status,
+    status: data.status || "Pending",
   };
   
   if (data.orderNumber) orderData.orderNumber = data.orderNumber;
   if (data.customerAddress) orderData.customerAddress = data.customerAddress;
   if (data.customerPhone) orderData.customerPhone = data.customerPhone;
-  
-  // Only include area if it's not undefined and not empty
   if (data.area && typeof data.area === 'string' && data.area.trim()) {
     orderData.area = data.area.trim();
   }
-  
-  // Store receipt image and text as-is
+  if (data.deliveryTime) orderData.deliveryTime = data.deliveryTime;
+  if (data.driverId) orderData.driverId = data.driverId;
   if (data.receiptImage) orderData.receiptImage = data.receiptImage;
-  if (data.receiptText) orderData.receiptText = data.receiptText;
   
   let result;
   try {
