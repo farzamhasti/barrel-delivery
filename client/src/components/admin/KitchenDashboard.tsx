@@ -233,7 +233,7 @@ export default function KitchenDashboard() {
             e.stopPropagation();
             try {
               updateStatusMutation.mutate({
-                id: order.id,
+                orderId: order.id,
                 status: "Ready",
               });
             } catch (error) {
@@ -416,7 +416,7 @@ export default function KitchenDashboard() {
               onClick={() => {
                 console.log('[KitchenDashboard] Mark Order as Ready clicked for order:', order.id);
                 updateStatusMutation.mutate({
-                  id: order.id,
+                  orderId: order.id,
                   status: "Ready",
                 });
                 console.log('[KitchenDashboard] Mutation triggered');

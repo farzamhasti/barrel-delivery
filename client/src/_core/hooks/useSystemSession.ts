@@ -4,8 +4,8 @@ import { trpc } from '@/lib/trpc';
 export function useSystemSession() {
   const [isLoading, setIsLoading] = useState(true);
   const [systemSession, setSystemSession] = useState<{
-    username: string;
-    role: string;
+    username: string | null;
+    role: string | null;
   } | null>(null);
 
   // Query to check current system session
@@ -14,8 +14,11 @@ export function useSystemSession() {
   });
 
   useEffect(() => {
-    if (sessionData) {
-      setSystemSession(sessionData);
+    if (sessionData && sessionData.isAuthenticated && sessionData.username && sessionData.role) {
+      setSystemSession({
+        username: sessionData.username,
+        role: sessionData.role,
+      });
       setIsLoading(false);
     } else {
       setSystemSession(null);
@@ -44,9 +47,9 @@ export function useSystemSession() {
   };
 
   return {
-    systemSession,
+    systemSession: systemSession ? { username: systemSession.username || '', role: systemSession.role || '' } : null,
     isLoading,
     logout,
-    isAuthenticated: !!systemSession,
+    isAuthenticated: !!systemSession && !!systemSession.username && !!systemSession.role,
   };
 }

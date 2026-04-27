@@ -110,7 +110,7 @@ export function ReceiptScannerTesseract() {
         orderNumber: formData.checkNumber,
         customerAddress: formData.address,
         customerPhone: formData.phoneNumber || "",
-        area: formData.area as "DN" | "CP" | "B",
+        area: formData.area as "DN" | "DT" | "WE" | "EA",
         deliveryTime: formData.enableDeliveryTime ? formData.deliveryTime : undefined,
         receiptText: "",
         receiptImage: formData.receiptImage, // Base64 image

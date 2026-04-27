@@ -121,6 +121,90 @@ export const appRouter = router({
       .query(async () => {
         return db.getOrdersByDateRange(new Date(), new Date());
       }),
+
+    list: publicProcedure
+      .query(async () => {
+        return db.getOrders();
+      }),
+
+    updateStatus: publicProcedure
+      .input(z.object({
+        orderId: z.number(),
+        status: z.string(),
+      }))
+      .mutation(async ({ input }) => {
+        return db.updateOrderStatus(input.orderId, input.status);
+      }),
+
+    getWithItems: publicProcedure
+      .input(z.object({
+        orderId: z.number(),
+      }))
+      .query(async ({ input }) => {
+        return db.getOrderWithItems(input.orderId);
+      }),
+
+    assignDriver: publicProcedure
+      .input(z.object({
+        orderId: z.number(),
+        driverId: z.number().nullable(),
+      }))
+      .mutation(async ({ input }) => {
+        return db.updateOrder(input.orderId, { driverId: input.driverId });
+      }),
+  }),
+
+  drivers: router({
+    list: publicProcedure
+      .query(async () => {
+        return db.getDrivers();
+      }),
+
+    create: publicProcedure
+      .input(z.object({
+        name: z.string(),
+        phone: z.string().optional(),
+        licenseNumber: z.string().optional(),
+        vehicleType: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        return db.createDriver(input);
+      }),
+
+    update: publicProcedure
+      .input(z.object({
+        id: z.number(),
+        name: z.string().optional(),
+        phone: z.string().optional(),
+        licenseNumber: z.string().optional(),
+        vehicleType: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { id, ...data } = input;
+        return db.updateDriver(id, data);
+      }),
+
+    delete: publicProcedure
+      .input(z.object({
+        id: z.number(),
+      }))
+      .mutation(async ({ input }) => {
+        return db.deleteDriver(input.id);
+      }),
+  }),
+
+  auth: router({
+    me: publicProcedure
+      .query(async ({ ctx }) => {
+        // Return null if no authenticated user
+        return null;
+      }),
+
+    logout: publicProcedure
+      .mutation(async ({ ctx }) => {
+        // Logout logic
+        return { success: true };
+      }),
   }),
 
   system: router({
@@ -128,6 +212,7 @@ export const appRouter = router({
       .input(z.object({
         username: z.string(),
         password: z.string(),
+        role: z.string().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
         // Simple credential check - in production, use proper authentication
@@ -137,7 +222,7 @@ export const appRouter = router({
         ];
         
         const user = validCredentials.find(
-          u => u.username === input.username && u.password === input.password
+          u => u.username === input.username && u.password === input.password && (!input.role || u.role === input.role)
         );
         
         if (!user) {

@@ -10,9 +10,6 @@ export function invalidateOrderCache(utils: ReturnType<typeof trpc.useUtils>) {
   // Invalidate all order list queries
   utils.orders.list.invalidate();
 
-  // Invalidate date-range queries
-  utils.orders.getByDateRange.invalidate();
-
   // Invalidate today's orders queries
   utils.orders.getTodayWithItems.invalidate();
 
@@ -42,7 +39,6 @@ export function invalidateOrderById(
   utils.orders.list.invalidate();
   utils.orders.getTodayWithItems.invalidate();
   utils.orders.getTodayWithItems.invalidate();
-  utils.orders.getByDateRange.invalidate();
 }
 
 /**
@@ -57,7 +53,6 @@ export function invalidateCustomerCache(
   utils.orders.list.invalidate();
   utils.orders.getTodayWithItems.invalidate();
   utils.orders.getTodayWithItems.invalidate();
-  utils.orders.getByDateRange.invalidate();
   utils.orders.getWithItems.invalidate();
 }
 
@@ -70,7 +65,6 @@ export function invalidateMenuCache(utils: ReturnType<typeof trpc.useUtils>) {
   utils.orders.list.invalidate();
   utils.orders.getTodayWithItems.invalidate();
   utils.orders.getTodayWithItems.invalidate();
-  utils.orders.getByDateRange.invalidate();
   utils.orders.getWithItems.invalidate();
 }
 
@@ -85,6 +79,5 @@ export function invalidateDriverCache(utils: ReturnType<typeof trpc.useUtils>) {
   utils.orders.list.invalidate();
   utils.orders.getTodayWithItems.invalidate();
   utils.orders.getTodayWithItems.invalidate();
-  utils.orders.getByDateRange.invalidate();
   utils.orders.getWithItems.invalidate();
 }

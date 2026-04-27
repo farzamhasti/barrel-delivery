@@ -519,7 +519,7 @@ export async function deleteAllOrderItems(orderId: number) {
   return db.delete(orderItems).where(eq(orderItems.orderId, orderId));
 }
 
-export async function updateOrder(id: number, data: { status?: string; totalPrice?: number; subtotal?: number; taxAmount?: number; deliveryTime?: Date | null }) {
+export async function updateOrder(id: number, data: { status?: string; totalPrice?: number; subtotal?: number; taxAmount?: number; deliveryTime?: Date | null; driverId?: number | null }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const updateData: any = {};
@@ -528,6 +528,7 @@ export async function updateOrder(id: number, data: { status?: string; totalPric
   if (data.subtotal !== undefined) updateData.subtotal = data.subtotal;
   if (data.taxAmount !== undefined) updateData.taxAmount = data.taxAmount;
   if (data.deliveryTime !== undefined) updateData.deliveryTime = data.deliveryTime;
+  if (data.driverId !== undefined) updateData.driverId = data.driverId;
   return db.update(orders).set(updateData).where(eq(orders.id, id));
 }
 

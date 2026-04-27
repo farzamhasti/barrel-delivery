@@ -31,7 +31,7 @@ function ProtectedRoute({ component: Component, requiredRole }: { component: any
     return <Home />;
   }
 
-  if (requiredRole && user.role !== requiredRole) {
+  if (requiredRole && (user as any)?.role !== requiredRole) {
     return <NotFound />;
   }
 

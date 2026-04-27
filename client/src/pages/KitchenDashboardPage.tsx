@@ -153,7 +153,7 @@ export default function KitchenDashboardPage() {
           onClick={(e) => {
             e.stopPropagation();
             updateStatusMutation.mutate({
-              id: order.id,
+              orderId: order.id,
               status: "Ready",
             });
           }}

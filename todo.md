@@ -149,10 +149,12 @@ These features are documented for future enhancement but are not required for th
 
 ## Phase 14: System Router & Login Procedure (COMPLETED)
 - [x] Create system router with login procedure (added to routers.ts)
-- [x] Implement login validation with hardcoded credentials (barrel_admin/admin123, barrel_kitchen/kitchen123)
+- [x] Implement login validation with correct credentials (admin/password, kitchen/password)
 - [x] Return sessionToken, role, username on successful login (implemented)
 - [x] Add checkSession procedure for session verification (implemented)
 - [x] Fix "No procedure found on path system.login" error (FIXED)
+- [x] Fix "Invalid credentials" error by updating credentials to match database (FIXED)
+- [x] Test admin login - successfully redirects to admin dashboard (VERIFIED)
 
 ## Phase 15: Display Formatted Receipts in UI (PENDING)
 - [ ] Update Kitchen Dashboard to display formattedReceiptImage (add image display in order cards)

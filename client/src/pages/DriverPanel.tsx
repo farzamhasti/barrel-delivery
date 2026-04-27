@@ -44,7 +44,7 @@ export default function DriverPanel() {
 
   const handleStatusUpdate = (orderId: number, newStatus: "Pending" | "Ready" | "On the Way" | "Delivered") => {
     updateStatusMutation.mutate({
-      id: orderId,
+      orderId: orderId,
       status: newStatus,
     });
   };
