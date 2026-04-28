@@ -168,12 +168,12 @@ export default function DriverDashboard() {
       setSessionToken(null);
       setIsLoggedIn(false);
       
-      // Redirect to home page
-      setLocation("/");
+      // Redirect to driver login page
+      setLocation("/driver-login");
     } catch (error) {
       console.error("Logout failed:", error);
-      // Redirect to home page even if logout fails
-      setLocation("/");
+      // Redirect to driver login page even if logout fails
+      setLocation("/driver-login");
     }
   };
 
