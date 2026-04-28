@@ -355,6 +355,33 @@ export const appRouter = router({
       }),
   }),
 
+  maps: router({
+    geocode: publicProcedure
+      .input(z.object({
+        address: z.string(),
+      }))
+      .mutation(async ({ input }) => {
+        try {
+          const { geocodeAddress } = await import('./geocoding');
+          const result = await geocodeAddress(input.address);
+          
+          if ('error' in result) {
+            return { error: result.error };
+          }
+          
+          return {
+            latitude: result.latitude,
+            longitude: result.longitude,
+            formattedAddress: result.formattedAddress,
+            placeId: result.placeId,
+          };
+        } catch (error) {
+          console.error('[maps.geocode] Error:', error);
+          return { error: 'Failed to geocode address' };
+        }
+      }),
+  }),
+
   system: router({
     login: publicProcedure
       .input(z.object({
