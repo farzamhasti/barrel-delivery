@@ -334,6 +334,9 @@ export async function getTodayOrdersWithItems() {
     .orderBy(desc(orders.createdAt));
   
   console.log('[getTodayOrdersWithItems] Found', todayOrders.length, 'orders');
+  if (todayOrders.length > 0) {
+    console.log('[getTodayOrdersWithItems] Order details:', todayOrders.map(o => ({ id: o.id, orderNumber: o.orderNumber, createdAt: o.createdAt })));
+  }
   
   console.log('[getTodayOrdersWithItems] Processing', todayOrders.length, 'orders with items');
   

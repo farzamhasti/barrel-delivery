@@ -34,6 +34,11 @@ export default function KitchenDashboard() {
   // Fetch today's orders with items
   const { data: allOrders = [], isLoading, refetch } = trpc.orders.getTodayWithItems.useQuery();
 
+  // Invalidate cache on component mount to ensure fresh data
+  useEffect(() => {
+    utils.orders.getTodayWithItems.invalidate();
+  }, [utils.orders.getTodayWithItems]);
+
   // Fetch active drivers
   const { data: drivers = [] } = trpc.drivers.list.useQuery();
   const activeDrivers = drivers.filter((d: any) => d.status === "online" && d.isActive);
@@ -61,7 +66,7 @@ export default function KitchenDashboard() {
         setSelectedOrder(updatedOrder);
       }
     }
-  }, [allOrders, selectedOrder]);
+  }, [allOrders]);
 
   // Filter to pending orders only (for active view)
   const pendingOrders = allOrders.filter((o: any) => o.status === "Pending");
@@ -86,6 +91,14 @@ export default function KitchenDashboard() {
       setSelectedOrder(null);
     }
   }, []);
+
+  // Refetch orders periodically to ensure real-time updates
+  useEffect(() => {
+    const interval = setInterval(() => {
+      refetch();
+    }, 5000); // Refetch every 5 seconds
+    return () => clearInterval(interval);
+  }, [refetch]);
 
   const memoizedOrder = useMemo(() => selectedOrder, [selectedOrder]);
 
