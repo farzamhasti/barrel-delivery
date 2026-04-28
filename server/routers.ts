@@ -299,7 +299,6 @@ export const appRouter = router({
           if (onTheWayOrders.length === 0) {
             return {
               success: true,
-              driverId: input.driverId,
               ordersCount: 0,
               pickupTime: 0,
               deliveryTime: 0,
