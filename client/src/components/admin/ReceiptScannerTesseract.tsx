@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { useState, useRef } from "react";
 import { extractReceiptFromImage } from "@/lib/tesseractOcr";
 import { extractItemsFromOCR, addItem, removeItem, updateItem, type ExtractedItem } from "@/lib/simpleItemExtractor";
+import { processReceiptImage } from "@/lib/receiptImageProcessor";
 
 export function ReceiptScannerTesseract() {
   const [error, setError] = useState<string | null>(null);
@@ -38,6 +39,7 @@ export function ReceiptScannerTesseract() {
 
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isExtracting, setIsExtracting] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [newItemName, setNewItemName] = useState("");
 
   const createOrderMutation = trpc.orders.createFromReceipt.useMutation();
@@ -47,12 +49,24 @@ export function ReceiptScannerTesseract() {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = (event) => {
+      reader.onload = async (event) => {
         const imageData = event.target?.result as string;
-        setFormData({ ...formData, receiptImage: imageData });
-        setImagePreview(imageData);
-        extractItems(imageData);
-        toast.success("Photo captured successfully!");
+        setIsProcessing(true);
+        try {
+          const processedImage = await processReceiptImage(imageData);
+          setFormData({ ...formData, receiptImage: processedImage });
+          setImagePreview(processedImage);
+          extractItems(processedImage);
+          toast.success("Photo captured and processed successfully!");
+        } catch (err) {
+          console.error("Image processing error:", err);
+          setFormData({ ...formData, receiptImage: imageData });
+          setImagePreview(imageData);
+          extractItems(imageData);
+          toast.info("Photo captured. Processing skipped.");
+        } finally {
+          setIsProcessing(false);
+        }
       };
       reader.onerror = () => {
         setError("Failed to read file. Please try again.");
@@ -67,12 +81,24 @@ export function ReceiptScannerTesseract() {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = (event) => {
+      reader.onload = async (event) => {
         const imageData = event.target?.result as string;
-        setFormData({ ...formData, receiptImage: imageData });
-        setImagePreview(imageData);
-        extractItems(imageData);
-        toast.success("Photo uploaded successfully!");
+        setIsProcessing(true);
+        try {
+          const processedImage = await processReceiptImage(imageData);
+          setFormData({ ...formData, receiptImage: processedImage });
+          setImagePreview(processedImage);
+          extractItems(processedImage);
+          toast.success("Photo uploaded and processed successfully!");
+        } catch (err) {
+          console.error("Image processing error:", err);
+          setFormData({ ...formData, receiptImage: imageData });
+          setImagePreview(imageData);
+          extractItems(imageData);
+          toast.info("Photo uploaded. Processing skipped.");
+        } finally {
+          setIsProcessing(false);
+        }
       };
       reader.onerror = () => {
         setError("Failed to read file. Please try again.");
@@ -243,7 +269,7 @@ export function ReceiptScannerTesseract() {
               </div>
             )}
 
-            {imagePreview && !isExtracting && (
+            {imagePreview && !isExtracting && !isProcessing && (
               <div className="space-y-4">
                 <img src={imagePreview} alt="Receipt preview" className="w-full rounded-lg" />
                 <div className="flex gap-4">
@@ -254,16 +280,16 @@ export function ReceiptScannerTesseract() {
                     className="flex-1"
                   >
                     <X className="w-4 h-4 mr-2" />
-                    Remove
+                    Retake
                   </Button>
                 </div>
               </div>
             )}
 
-            {isExtracting && (
+            {(isExtracting || isProcessing) && (
               <div className="flex items-center gap-2 text-blue-600">
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Reading receipt...</span>
+                <span>{isProcessing ? "Processing image..." : "Reading receipt..."}</span>
               </div>
             )}
           </div>

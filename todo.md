@@ -374,3 +374,22 @@ These features are documented for future enhancement but are not required for th
 - [x] Keep all existing UI/layout/styling unchanged
 - [x] TypeScript compilation: 0 errors
 - [x] Dev server: Running successfully
+
+
+## Phase 34: Automatic Receipt Image Processing with OpenCV.js
+- [x] Install opencv.js package
+- [x] Create receiptImageProcessor module with edge detection
+- [x] Implement perspective correction (4-point transform)
+- [x] Add contrast and brightness enhancement via Canvas API
+- [x] Implement grayscale conversion for clean B&W output
+- [x] Add fallback for edge detection failures
+- [x] Integrate processing into ReceiptScannerTesseract component
+- [x] Add loading spinner during processing
+- [x] Show processed image preview
+- [x] Add Retake button for user satisfaction
+- [x] Save processed image with order
+- [x] Verify no text extraction or OCR
+- [x] Verify no UI/layout/styling changes
+- [x] Test with various receipt angles and lighting
+- [x] TypeScript compilation: 0 errors
+- [x] Dev server: Running successfully
