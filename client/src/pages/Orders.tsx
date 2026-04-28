@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Trash2, Edit2, Save, X, Loader2, Upload, Camera } from "lucide-react";
 import { toast } from "sonner";
 import { useState, useMemo, useRef } from "react";
+import { ImageZoomModal } from "@/components/ImageZoomModal";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -46,6 +47,7 @@ export function Orders() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [editReceiptPreview, setEditReceiptPreview] = useState<string | null>(null);
   const [isProcessingReceipt, setIsProcessingReceipt] = useState(false);
+  const [zoomImageUrl, setZoomImageUrl] = useState<string | null>(null);
   const editFileInputRef = useRef<HTMLInputElement>(null);
   const editCameraInputRef = useRef<HTMLInputElement>(null);
 
@@ -319,21 +321,28 @@ export function Orders() {
                         {new Date(selectedOrderDetails.deliveryTime).toLocaleString()}
                       </p>
                     </div>
-                  )}
+                   )}
                 </div>
+              </div>
 
-                {/* Scanned Receipt Image Section */}
-                {selectedOrderDetails.receiptImage && (
-                  <div className="space-y-4 border-t pt-4">
-                    <h3 className="font-semibold text-lg">Scanned Receipt</h3>
-                    <div className="bg-white rounded-lg p-4 border border-gray-300">
-                      <img src={selectedOrderDetails.receiptImage} alt="Scanned Receipt" className="w-full rounded border max-h-96 object-contain" />
-                    </div>
+              {/* Scanned Receipt Image Section */}
+              {selectedOrderDetails.receiptImage && (
+                <div className="space-y-4 border-t pt-4">
+                  <h3 className="font-semibold text-lg">Scanned Receipt</h3>
+                  <div className="bg-white rounded-lg p-4 border border-gray-300">
+                    <img
+                      src={selectedOrderDetails.receiptImage}
+                      alt="Scanned Receipt"
+                      className="w-full rounded border max-h-96 object-contain cursor-pointer hover:opacity-80 transition-opacity"
+                      onClick={() => setZoomImageUrl(selectedOrderDetails.receiptImage)}
+                    />
+                    <p className="text-xs text-gray-500 mt-2 text-center">Click to zoom</p>
                   </div>
-                )}
+                </div>
+              )}
 
-                {/* Receipt Information Section */}
-                {selectedOrderDetails.formattedReceiptImage && (
+              {/* Receipt Information Section */}
+              {selectedOrderDetails.formattedReceiptImage && (
                   <div className="space-y-4 border-t pt-4">
                     <h3 className="font-semibold text-lg">Receipt Information</h3>
                     <div className="bg-white rounded-lg p-4 border border-gray-300">
@@ -349,11 +358,6 @@ export function Orders() {
                   </div>
                 )}
 
-                {!selectedOrderDetails.formattedReceiptImage && (
-                  <p className="text-gray-500 italic">No receipt information available for this order</p>
-                )}
-              </div>
-
               <DialogFooter>
                 <Button 
                   onClick={() => setSelectedOrderId(null)} 
@@ -366,6 +370,14 @@ export function Orders() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Image Zoom Modal */}
+      <ImageZoomModal
+        isOpen={zoomImageUrl !== null}
+        imageUrl={zoomImageUrl || ""}
+        imageAlt="Scanned Receipt"
+        onClose={() => setZoomImageUrl(null)}
+      />
 
       {/* Edit Order Modal */}
       <Dialog open={editingOrderId !== null} onOpenChange={(open) => !open && handleCancelEdit()}>
