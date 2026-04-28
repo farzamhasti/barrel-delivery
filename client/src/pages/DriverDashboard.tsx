@@ -110,18 +110,30 @@ export default function DriverDashboard() {
 
   // Driver status management
   const [driverStatus, setDriverStatus] = useState<"online" | "offline">("offline");
-  const updateStatusMutation = {
-    mutate: (data: any) => {
-      // Mock implementation
-      setDriverStatus(data.status || "offline");
+  const [currentDriverId, setCurrentDriverId] = useState<number | null>(null);
+  
+  // Real tRPC mutation for updating driver status
+  const updateStatusMutation = trpc.drivers.setStatus.useMutation({
+    onSuccess: (data) => {
+      // Update local state after successful mutation
+      if (data && (data as any).status) {
+        setDriverStatus((data as any).status as "online" | "offline");
+      }
+      // Refetch drivers list to update active drivers table
+      refetchOrders();
     },
-    isPending: false,
-  } as any;
+    onError: (error: any) => {
+      console.error("Failed to update driver status:", error);
+    },
+  });
 
-  // Initialize driver status from currentDriver
+  // Initialize driver status and ID from currentDriver
   useEffect(() => {
     if ((currentDriver as any)?.status) {
       setDriverStatus((currentDriver as any).status as "online" | "offline");
+    }
+    if ((currentDriver as any)?.id) {
+      setCurrentDriverId((currentDriver as any).id as number);
     }
   }, [currentDriver]);
 
@@ -321,8 +333,12 @@ export default function DriverDashboard() {
                 <Button
                   size="sm"
                   className="w-full bg-green-600 hover:bg-green-700 text-white"
-                              onClick={() => updateStatusMutation.mutate({ status: "online" })}
-                  disabled={driverStatus === "online" || updateStatusMutation.isPending}
+                  onClick={() => {
+                    if (currentDriverId) {
+                      updateStatusMutation.mutate({ id: currentDriverId, status: "online" });
+                    }
+                  }}
+                  disabled={driverStatus === "online" || updateStatusMutation.isPending || !currentDriverId}
                 >
                   Go Online
                 </Button>
@@ -330,8 +346,12 @@ export default function DriverDashboard() {
                   size="sm"
                   variant="outline"
                   className="w-full"
-                              onClick={() => updateStatusMutation.mutate({ status: "offline" })}
-                  disabled={driverStatus === "offline" || updateStatusMutation.isPending}
+                  onClick={() => {
+                    if (currentDriverId) {
+                      updateStatusMutation.mutate({ id: currentDriverId, status: "offline" });
+                    }
+                  }}
+                  disabled={driverStatus === "offline" || updateStatusMutation.isPending || !currentDriverId}
                 >
                   Go Offline
                 </Button>

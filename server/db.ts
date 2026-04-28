@@ -114,11 +114,9 @@ export async function deleteDriver(id: number) {
 }
 
 export async function updateDriverStatus(id: number, status: "online" | "offline") {
-  // Driver status not implemented in new schema
-  return null;
-  // const db = await getDb();
-  // if (!db) throw new Error("Database not available");
-  // return db.update(drivers).set({ status }).where(eq(drivers.id, id));
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.update(drivers).set({ status }).where(eq(drivers.id, id));
 }
 
 export async function getActiveDrivers() {

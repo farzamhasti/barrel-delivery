@@ -381,6 +381,15 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         return db.deleteDriver(input.id);
       }),
+
+    setStatus: publicProcedure
+      .input(z.object({
+        id: z.number(),
+        status: z.enum(["online", "offline"]),
+      }))
+      .mutation(async ({ input }) => {
+        return db.updateDriverStatus(input.id, input.status);
+      }),
   }),
 
   auth: router({

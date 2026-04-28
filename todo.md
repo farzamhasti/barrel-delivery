@@ -585,3 +585,14 @@ These features are documented for future enhancement but are not required for th
 - [x] Test Order Details modal display
 - [x] TypeScript compilation: 0 errors
 - [x] Dev server: Running successfully
+
+
+## Phase 52: Fix Online/Offline Button Functionality in Drivers Dashboard
+- [ ] Investigate online/offline button implementation
+- [ ] Verify driver online status is being saved to database
+- [ ] Fix Active Drivers table to filter by online status
+- [ ] Test online button - driver should appear in Active Drivers table
+- [ ] Test offline button - driver should disappear from Active Drivers table
+- [ ] Verify overall logic remains unchanged
+- [ ] TypeScript compilation: 0 errors
+- [ ] Dev server: Running successfully

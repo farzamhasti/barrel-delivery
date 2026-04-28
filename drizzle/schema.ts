@@ -24,6 +24,7 @@ export const drivers = mysqlTable("drivers", {
   name: varchar("name", { length: 255 }).notNull(),
   phone: varchar("phone", { length: 20 }),
   licenseNumber: varchar("license_number", { length: 50 }).unique(),
+  status: varchar("status", { length: 20 }).default("offline").notNull(),
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
