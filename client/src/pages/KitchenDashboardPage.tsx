@@ -162,7 +162,7 @@ export default function KitchenDashboardPage() {
 
         {/* Area Badge */}
         <div className="mb-3 flex items-center gap-2">
-          <Badge className="bg-blue-100 text-blue-800 text-xs px-2 py-1">
+          <Badge className="bg-blue-100 text-blue-800 text-sm px-3 py-2 font-semibold">
             Area: {order.area || 'N/A'}
           </Badge>
         </div>
