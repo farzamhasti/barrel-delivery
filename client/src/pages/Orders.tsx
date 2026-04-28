@@ -372,12 +372,14 @@ export function Orders() {
       </Dialog>
 
       {/* Image Zoom Modal */}
-      <ImageZoomModal
-        isOpen={zoomImageUrl !== null}
-        imageUrl={zoomImageUrl || ""}
-        imageAlt="Scanned Receipt"
-        onClose={() => setZoomImageUrl(null)}
-      />
+      {zoomImageUrl && (
+        <ImageZoomModal
+          isOpen={true}
+          imageUrl={zoomImageUrl}
+          imageAlt="Scanned Receipt"
+          onClose={() => setZoomImageUrl(null)}
+        />
+      )}
 
       {/* Edit Order Modal */}
       <Dialog open={editingOrderId !== null} onOpenChange={(open) => !open && handleCancelEdit()}>
