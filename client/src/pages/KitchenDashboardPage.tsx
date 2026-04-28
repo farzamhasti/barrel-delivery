@@ -17,6 +17,8 @@ export default function KitchenDashboardPage() {
   const { logout, isLoading: authLoading } = useSystemSession();
   const { driverReturnTimes } = useDriverReturnTime();
   const [activeTab, setActiveTab] = useState("active");
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [zoomImageUrl, setZoomImageUrl] = useState<string | null>(null);
 
   // Fetch today's orders with items
   const { data: allOrders = [], isLoading, refetch } = trpc.orders.getTodayWithItems.useQuery();
@@ -113,11 +115,11 @@ export default function KitchenDashboardPage() {
     return (
       <Card
         className={`p-3 cursor-pointer transition-all border-2 flex flex-col ${getUrgencyColor(urgency)}`}
-        onClick={() => {}}
+        onClick={() => setSelectedOrder(order)}
       >
         {/* Order Header with Number and Urgency Badge */}
         <div className="flex items-start justify-between gap-2 mb-2">
-          <h3 className="text-lg font-bold text-foreground">#{order.id}</h3>
+          <h3 className="text-lg font-bold text-foreground">#{order.orderNumber}</h3>
           {urgency !== "normal" && (
             <Badge className={`${getUrgencyBadgeColor(urgency)} text-xs px-2 py-0.5 flex items-center gap-1`}>
               {urgency === "late" && <AlertCircle className="w-3 h-3" />}
@@ -128,9 +130,9 @@ export default function KitchenDashboardPage() {
           )}
         </div>
 
-        {/* Items Preview */}
+        {/* Address and Phone */}
         <div className="mb-2">
-          <p className="text-xs text-muted-foreground line-clamp-1">{itemsPreview}{hasMoreItems ? "..." : ""}</p>
+          <p className="text-xs text-muted-foreground line-clamp-1">{order.customerAddress || 'N/A'}</p>
         </div>
 
         {/* Delivery Time */}
@@ -328,16 +330,13 @@ export default function KitchenDashboardPage() {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 auto-rows-max">
                 {sortedReadyOrders.map((order: any) => (
-                  <Card key={order.id} className="p-3 border-2 border-green-500 bg-green-50">
+                  <Card key={order.id} className="p-3 border-2 border-green-500 bg-green-50 cursor-pointer hover:bg-green-100 transition-all" onClick={() => setSelectedOrder(order)}>
                     <div className="flex items-start justify-between gap-2 mb-2">
-                      <h3 className="text-lg font-bold text-foreground">#{order.id}</h3>
+                      <h3 className="text-lg font-bold text-foreground">#{order.orderNumber}</h3>
                       <Badge className="bg-green-600 text-white text-xs px-2 py-0.5">Ready</Badge>
                     </div>
                     <div className="mb-2">
-                      <p className="text-xs text-muted-foreground line-clamp-1">
-                        {order.items?.slice(0, 2).map((item: any) => item.menuItemName).join(", ")}
-                        {(order.items?.length || 0) > 2 ? "..." : ""}
-                      </p>
+                      <p className="text-xs text-muted-foreground line-clamp-1">{order.customerAddress || 'N/A'}</p>
                     </div>
                     <div className="flex items-center gap-1 text-xs text-muted-foreground">
                       <Clock className="w-3 h-3" />
@@ -352,6 +351,67 @@ export default function KitchenDashboardPage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Order Detail Modal */}
+      {selectedOrder && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={() => setSelectedOrder(null)}>
+          <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold">Order #{selectedOrder.orderNumber}</h2>
+                <button onClick={() => setSelectedOrder(null)} className="text-gray-500 hover:text-gray-700 text-2xl">✕</button>
+              </div>
+              
+              {/* Order Details */}
+              <div className="space-y-4 mb-6">
+                <div>
+                  <p className="text-sm text-muted-foreground">Address</p>
+                  <p className="text-lg font-semibold">{selectedOrder.customerAddress || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Area</p>
+                  <p className="text-lg font-semibold">{selectedOrder.area || 'N/A'}</p>
+                </div>
+                {selectedOrder.deliveryTime && (
+                  <div>
+                    <p className="text-sm text-muted-foreground">Delivery Time</p>
+                    <p className="text-lg font-semibold">{new Date(selectedOrder.deliveryTime).toLocaleString()}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Receipt Image */}
+              {selectedOrder.receiptImage && (
+                <div className="mb-6">
+                  <p className="text-sm text-muted-foreground mb-2">Receipt Image</p>
+                  <div className="relative rounded-lg overflow-hidden border border-gray-200 bg-gray-50 p-2 cursor-pointer" onClick={() => setZoomImageUrl(selectedOrder.receiptImage)}>
+                    <img 
+                      src={selectedOrder.receiptImage} 
+                      alt="Receipt" 
+                      className="w-full h-auto max-h-96 object-contain rounded hover:opacity-90 transition-opacity"
+                    />
+                    <p className="text-xs text-center text-muted-foreground mt-2">Click to zoom</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* Image Zoom Modal */}
+      {zoomImageUrl && (
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center p-4 z-50" onClick={() => setZoomImageUrl(null)}>
+          <div className="relative w-full max-w-4xl max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setZoomImageUrl(null)} className="absolute top-4 right-4 text-white hover:text-gray-300 text-2xl">✕</button>
+            <img 
+              src={zoomImageUrl} 
+              alt="Zoomed Receipt" 
+              className="w-full h-full object-contain"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
