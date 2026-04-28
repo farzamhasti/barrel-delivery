@@ -601,11 +601,34 @@ export default function DriverDashboard() {
                   </div>
                 </div>
 
-                {/* Address */}
-                <div>
-                  <p className="text-sm text-gray-600">Delivery Address</p>
-                  <p className="font-semibold">{selectedOrder.customerAddress}</p>
+                {/* Address and Delivery Time */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-600">Delivery Address</p>
+                    <p className="font-semibold">{selectedOrder.customerAddress}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Delivery Time</p>
+                    <p className="font-semibold">
+                      {selectedOrder.deliveryTime 
+                        ? new Date(selectedOrder.deliveryTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
+                        : 'Not set'}
+                    </p>
+                  </div>
                 </div>
+
+                {/* Receipt Image */}
+                {(selectedOrder as any).receiptImage && (
+                  <div>
+                    <p className="text-sm font-semibold text-gray-600 mb-2">Scanned Receipt</p>
+                    <img 
+                      src={(selectedOrder as any).receiptImage} 
+                      alt="Receipt" 
+                      className="w-full max-h-64 object-contain border rounded cursor-pointer hover:opacity-90 transition-opacity"
+                      onClick={() => window.open((selectedOrder as any).receiptImage, '_blank')}
+                    />
+                  </div>
+                )}
 
                 {/* Order Items */}
                 <div>
