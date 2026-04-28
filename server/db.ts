@@ -309,7 +309,6 @@ export async function getTodayOrdersWithItems() {
     endOfDay: endOfDay.toISOString(),
   });
   
-  console.log('[getTodayOrdersWithItems] Querying orders between', startOfDay.toISOString(), 'and', endOfDay.toISOString());
   
   const todayOrders = await db
     .select({
@@ -333,13 +332,7 @@ export async function getTodayOrdersWithItems() {
     .where(and(gte(orders.createdAt, startOfDay), lt(orders.createdAt, endOfDay)))
     .orderBy(desc(orders.createdAt));
   
-  console.log('[getTodayOrdersWithItems] Found', todayOrders.length, 'orders');
-  if (todayOrders.length > 0) {
-    console.log('[getTodayOrdersWithItems] Order details:', todayOrders.map(o => ({ id: o.id, orderNumber: o.orderNumber, createdAt: o.createdAt })));
-  }
-  
-  console.log('[getTodayOrdersWithItems] Processing', todayOrders.length, 'orders with items');
-  
+
   const ordersWithItems = await Promise.all(
     todayOrders.map(async (order) => {
       const items = await db
@@ -353,6 +346,7 @@ export async function getTodayOrdersWithItems() {
         .from(orderItems)
         .where(eq(orderItems.orderId, order.id));
       
+      
       return {
         ...order,
         subtotal: Number(order.subtotal),
@@ -365,6 +359,7 @@ export async function getTodayOrdersWithItems() {
       };
     })
   );
+  
   
   return ordersWithItems;
 }
@@ -610,6 +605,7 @@ export async function createOrder(data: InsertOrder) {
   if (createdOrder[0]) {
     // Convert Decimal values to numbers for the response
     const order = createdOrder[0];
+
     return {
       ...order,
       subtotal: Number(order.subtotal),

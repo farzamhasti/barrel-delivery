@@ -31,13 +31,11 @@ export default function KitchenDashboard() {
     setLocation("/");
   };
 
-  // Fetch today's orders with items
-  const { data: allOrders = [], isLoading, refetch } = trpc.orders.getTodayWithItems.useQuery();
-
-  // Invalidate cache on component mount to ensure fresh data
-  useEffect(() => {
-    utils.orders.getTodayWithItems.invalidate();
-  }, [utils.orders.getTodayWithItems]);
+  // Fetch today's orders with items with stale time 0 to always fetch fresh data
+  const { data: allOrders = [], isLoading, refetch } = trpc.orders.getTodayWithItems.useQuery(undefined, {
+    staleTime: 0, // Always consider data stale
+    gcTime: 0, // Don't cache in garbage collector
+  });
 
   // Fetch active drivers
   const { data: drivers = [] } = trpc.drivers.list.useQuery();
@@ -96,11 +94,18 @@ export default function KitchenDashboard() {
   useEffect(() => {
     const interval = setInterval(() => {
       refetch();
-    }, 5000); // Refetch every 5 seconds
+    }, 3000); // Refetch every 3 seconds for faster updates
     return () => clearInterval(interval);
-  }, [refetch]);
+  }, [refetch])
+
+  // Force refetch on component mount
+  useEffect(() => {
+    refetch();
+  }, []);
 
   const memoizedOrder = useMemo(() => selectedOrder, [selectedOrder]);
+
+
 
   const OrderDetailModal = useCallback(
     ({ order }: { order: any }) => {
