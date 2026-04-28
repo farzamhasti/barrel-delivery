@@ -1,4 +1,3 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -12,6 +11,7 @@ import { useLocation } from "wouter";
 import { DeveloperCredit } from "@/components/DeveloperCredit";
 import { useDriverReturnTime } from "@/contexts/DriverReturnTimeContext";
 import { ImageZoomModal } from "@/components/ImageZoomModal";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 
 export default function KitchenDashboard() {
   const [, setLocation] = useLocation();
@@ -81,372 +81,128 @@ export default function KitchenDashboard() {
   const sortedPendingOrders = sortByDeliveryTime(pendingOrders);
   const sortedReadyOrders = sortByDeliveryTime(readyOrders);
 
-  // Auto-refetch every 3 seconds for real-time updates (but pause when modal is open)
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  
-  useEffect(() => {
-    // Clear any existing interval
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-    
-    // Only refetch if no modal is open
-    if (!selectedOrder) {
-      intervalRef.current = setInterval(() => {
-        refetch();
-        // Also refetch drivers to get real-time status updates
-        utils.drivers.list.invalidate();
-      }, 3000);
-    }
-    
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    };
-  }, [selectedOrder, refetch, utils]);
-
-  // Calculate urgency level based on delivery time
-  const getUrgencyLevel = (deliveryTime: string | null) => {
-    if (!deliveryTime) return "normal";
-    
-    const now = new Date();
-    const delivery = new Date(deliveryTime);
-    const minutesUntilDelivery = (delivery.getTime() - now.getTime()) / (1000 * 60);
-
-    if (minutesUntilDelivery < 0) return "late"; // Past delivery time
-    if (minutesUntilDelivery < 15) return "urgent"; // Less than 15 minutes
-    if (minutesUntilDelivery < 30) return "soon"; // Less than 30 minutes
-    return "normal"; // 30+ minutes
-  };
-
-  const getUrgencyColor = (urgency: string) => {
-    switch (urgency) {
-      case "late":
-        return "border-red-500 bg-red-50 hover:bg-red-100";
-      case "urgent":
-        return "border-orange-500 bg-orange-50 hover:bg-orange-100";
-      case "soon":
-        return "border-yellow-500 bg-yellow-50 hover:bg-yellow-100";
-      default:
-        return "border-green-500 bg-green-50 hover:bg-green-100";
-    }
-  };
-
-  const getUrgencyBadgeColor = (urgency: string) => {
-    switch (urgency) {
-      case "late":
-        return "bg-red-500 text-white";
-      case "urgent":
-        return "bg-orange-500 text-white";
-      case "soon":
-        return "bg-yellow-500 text-white";
-      default:
-        return "bg-green-500 text-white";
-    }
-  };
-
-  const CompactOrderCard = ({ order }: { order: any }) => {
-    const urgency = getUrgencyLevel(order.deliveryTime);
-    const itemsPreview = order.items?.slice(0, 2).map((item: any) => item.menuItemName).join(", ") || "No items";
-    const hasMoreItems = (order.items?.length || 0) > 2;
-    const deliveryTime = order.deliveryTime ? new Date(order.deliveryTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "N/A";
-
-    return (
-      <Card
-        className={`p-3 cursor-pointer transition-all border-2 flex flex-col ${getUrgencyColor(urgency)}`}
-        onClick={() => setSelectedOrder(order)}
-      >
-        {/* Order Header with Number and Urgency Badge */}
-        <div className="flex items-start justify-between gap-2 mb-2">
-          <div>
-            <h3 className="text-lg font-bold text-foreground">#{order.id}</h3>
-            {order.orderNumber && <p className="text-xs text-muted-foreground">Order: {order.orderNumber}</p>}
-          </div>
-          {urgency !== "normal" && (
-            <Badge className={`${getUrgencyBadgeColor(urgency)} text-xs px-2 py-0.5 flex items-center gap-1`}>
-              {urgency === "late" && <AlertCircle className="w-3 h-3" />}
-              {urgency === "urgent" && <Flame className="w-3 h-3" />}
-              {urgency === "soon" && <Clock className="w-3 h-3" />}
-              {urgency === "late" ? "LATE" : urgency === "urgent" ? "URGENT" : "SOON"}
-            </Badge>
-          )}
-        </div>
-
-        {/* Customer Address */}
-        {order.customerAddress && (
-          <div className="mb-2 p-2 bg-blue-50 rounded text-xs">
-            <p className="text-blue-700 line-clamp-2">📍 {order.customerAddress}</p>
-          </div>
-        )}
-
-        {/* Items Preview */}
-        <div className="mb-2">
-          <p className="text-xs text-muted-foreground line-clamp-1">{itemsPreview}{hasMoreItems ? "..." : ""}</p>
-        </div>
-
-        {/* Area Display */}
-        {order.area && (
-          <div className="mb-3 flex items-center gap-2 px-3 py-2 bg-orange-100 border-l-4 border-orange-500 rounded">
-            <MapPin className="w-5 h-5 text-orange-600 flex-shrink-0" />
-            <div>
-              <p className="text-xs text-orange-700 font-medium">Area</p>
-              <p className="text-lg font-bold text-orange-900">{order.area}</p>
-            </div>
-          </div>
-        )}
-
-        {/* Delivery Time and Price */}
-        <div className="flex items-center justify-between gap-2 mb-2 text-xs">
-          <div className="flex items-center gap-1 text-muted-foreground">
-            <Clock className="w-3 h-3" />
-            <span className="font-semibold">{deliveryTime}</span>
-          </div>
-          {order.totalPrice && (
-            <div className="text-lg font-bold text-green-600 bg-green-50 px-2 py-1 rounded">
-              ${parseFloat(order.totalPrice).toFixed(2)}
-            </div>
-          )}
-        </div>
-
-        {/* Notes field removed from new schema */}
-        {/* Receipt Image Preview */}
-        {order.receiptImage && (
-          <div className="mb-2 bg-gray-50 rounded overflow-hidden border border-gray-200">
-            <img
-              src={order.receiptImage}
-              alt="Receipt"
-              className="w-full h-32 object-cover cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={(e) => {
-                e.stopPropagation();
-                setZoomImageUrl(order.receiptImage);
-              }}
-            />
-            <p className="text-xs text-gray-500 p-2 text-center">Click to zoom</p>
-          </div>
-        )}
-
-        {/* Mark Ready Button */}
-        <Button
-          size="sm"
-          className="w-full mt-auto bg-green-600 hover:bg-green-700 text-white"
-          onClick={(e) => {
-            e.stopPropagation();
-            try {
-              updateStatusMutation.mutate({
-                orderId: order.id,
-                status: "Ready",
-              });
-            } catch (error) {
-              console.error("Error marking order ready:", error);
-              toast.error("Failed to mark order as ready");
-            }
-          }}
-          disabled={updateStatusMutation.isPending}
-        >
-          {updateStatusMutation.isPending ? "Updating..." : "Mark Ready"}
-        </Button>
-      </Card>
-    );
-  };
-
-  const EmptyState = ({ message }: { message: string }) => (
-    <div className="flex flex-col items-center justify-center py-12 text-center">
-      <CheckCircle2 className="w-12 h-12 text-green-500 mb-4" />
-      <p className="text-lg font-semibold text-foreground">{message}</p>
-      <p className="text-sm text-muted-foreground mt-2">Great job! Keep up the good work.</p>
-    </div>
-  );
-
-  // Memoize the modal handler to prevent re-creation on every render
   const handleModalOpenChange = useCallback((open: boolean) => {
     if (!open) {
       setSelectedOrder(null);
     }
   }, []);
 
-  // Use useMemo to stabilize the order object
-  const memoizedOrder = useMemo(() => selectedOrder, [selectedOrder?.id]);
-  
-  const OrderDetailModal = useCallback(function OrderDetailModal({ order }: { order: any }) {
-    if (!order) return null;
-    
-    const urgency = getUrgencyLevel(order.deliveryTime);
-    const deliveryTime = order.deliveryTime ? new Date(order.deliveryTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "N/A";
-    const deliveryDate = order.deliveryTime ? new Date(order.deliveryTime).toLocaleDateString() : "N/A"
+  const memoizedOrder = useMemo(() => selectedOrder, [selectedOrder]);
 
-    return (
-      <Dialog open={!!order} onOpenChange={handleModalOpenChange}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" showCloseButton={false}>
-          <DialogDescription className="hidden" />
-          <DialogHeader>
-            <div className="flex items-center justify-between w-full">
-              <div className="flex items-center gap-3">
-                <DialogTitle className="text-2xl">Order #{order.id}</DialogTitle>
-                {urgency !== "normal" && (
-                  <Badge className={`${getUrgencyBadgeColor(urgency)} text-xs px-2 py-0.5 flex items-center gap-1`}>
-                    {urgency === "late" && <AlertCircle className="w-3 h-3" />}
-                    {urgency === "urgent" && <Flame className="w-3 h-3" />}
-                    {urgency === "soon" && <Clock className="w-3 h-3" />}
-                    {urgency === "late" ? "LATE" : urgency === "urgent" ? "URGENT" : "SOON"}
-                  </Badge>
-                )}
+  const OrderDetailModal = useCallback(
+    ({ order }: { order: any }) => {
+      return (
+        <Dialog open={!!order} onOpenChange={handleModalOpenChange}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <div className="flex items-center justify-between w-full">
+                <DialogTitle>Order Details</DialogTitle>
+                <DialogClose asChild>
+                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                    <X className="h-4 w-4" />
+                  </Button>
+                </DialogClose>
               </div>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
-                onClick={() => setSelectedOrder(null)}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-          </DialogHeader>
-
-          <div className="space-y-6">
-            {/* Customer Information Section */}
-            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-              <h3 className="text-sm font-semibold text-purple-900 mb-3">Customer Information</h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex items-start gap-2">
-                  <span className="text-purple-700 font-medium min-w-20">Name:</span>
-                  <span className="text-purple-900">{order.customerName || "N/A"}</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <span className="text-purple-700 font-medium min-w-20">Phone:</span>
-                  <span className="text-purple-900">{order.customerPhone || "N/A"}</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <span className="text-purple-700 font-medium min-w-20">Address:</span>
-                  <span className="text-purple-900 break-words">{order.customerAddress || "N/A"}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Area Section */}
-            <div className="bg-orange-50 border-2 border-orange-300 rounded-lg p-5">
-              <h3 className="text-sm font-semibold text-orange-900 mb-3">Delivery Area</h3>
-              <div className="flex items-center gap-3">
-                <MapPin className="w-8 h-8 text-orange-600" />
-                <div>
-                  <p className="text-xs text-orange-700 font-medium">Area</p>
-                  <p className="text-3xl font-bold text-orange-900">{order.area || "N/A"}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Delivery Time Section */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h3 className="text-sm font-semibold text-blue-900 mb-3">Delivery Time</h3>
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <Clock className="w-5 h-5 text-blue-600" />
+            </DialogHeader>
+            {order && (
+              <>
+                <div className="space-y-4">
+                  {/* Basic Info */}
                   <div>
-                    <p className="text-xs text-blue-700">Time</p>
-                    <p className="text-lg font-bold text-blue-900">{deliveryTime}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-blue-600" />
-                  <div>
-                    <p className="text-xs text-blue-700">Date</p>
-                    <p className="text-lg font-bold text-blue-900">{deliveryDate}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Scanned Receipt Image Section */}
-            {order.receiptImage && (
-              <div className="bg-white border border-gray-300 rounded-lg p-4">
-                <h3 className="text-sm font-semibold text-foreground mb-3">Scanned Receipt</h3>
-                <img
-                  src={order.receiptImage}
-                  alt="Scanned Receipt"
-                  className="w-full rounded border max-h-96 object-contain cursor-pointer hover:opacity-80 transition-opacity"
-                  onClick={() => setZoomImageUrl(order.receiptImage)}
-                />
-                <p className="text-xs text-gray-500 mt-2 text-center">Click to zoom</p>
-              </div>
-            )}
-
-            {/* Order Items Section */}
-            <div>
-              <h3 className="text-sm font-semibold text-foreground mb-3">Order Items</h3>
-              <div className="space-y-2">
-                {order.items && order.items.length > 0 ? (
-                  order.items.map((item: any, idx: number) => (
-                    <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
-                      <div className="flex-1">
-                        <p className="font-medium text-foreground">{item.menuItemName}</p>
-                        <p className="text-xs text-muted-foreground">Qty: {item.quantity}</p>
-                        {item.specialInstructions && (
-                          <p className="text-xs text-orange-600 mt-1">Note: {item.specialInstructions}</p>
-                        )}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm text-gray-600 font-medium">Address</p>
+                        <p className="text-sm font-medium">{order.customerAddress}</p>
                       </div>
-                      <div className="text-right">
-                        <p className="font-semibold text-foreground">${((item.price_at_order || 0) * (item.quantity || 0)).toFixed(2)}</p>
-                        <p className="text-xs text-muted-foreground">${(item.price_at_order || 0).toFixed(2)} each</p>
+                      <div>
+                        <p className="text-sm text-gray-600 font-medium">Phone</p>
+                        <p className="text-sm font-medium">{order.customerPhone}</p>
                       </div>
+                      <div>
+                        <p className="text-sm text-gray-600 font-medium">Area</p>
+                        <p className="text-sm font-medium">{order.area}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600 font-medium">Status</p>
+                        <p className="text-sm font-medium">{order.status}</p>
+                      </div>
+                      {order.deliveryTime && (
+                        <div>
+                          <p className="text-sm text-gray-600 font-medium">Delivery Time</p>
+                          <p className="text-sm font-medium">
+                            {new Date(order.deliveryTime).toLocaleString()}
+                          </p>
+                        </div>
+                      )}
                     </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-muted-foreground text-center py-4">No items</p>
-                )}
-              </div>
-            </div>
-
-            {/* Order Summary */}
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Subtotal:</span>
-                  <span className="font-medium">${((order.total || 0) as number).toFixed(2)}</span>
-                </div>
-                {order.tax && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Tax:</span>
-                    <span className="font-medium">${(order.tax as number).toFixed(2)}</span>
                   </div>
-                )}
-                <div className="border-t border-gray-300 pt-2 flex justify-between">
-                  <span className="font-semibold">Total:</span>
-                  <span className="font-bold text-lg">${(order.total || 0).toFixed(2)}</span>
+
+                  {/* Scanned Receipt Image Section */}
+                  {order.receiptImage && (
+                    <div className="bg-white border border-gray-300 rounded-lg p-4">
+                      <h3 className="text-sm font-semibold text-foreground mb-3">Scanned Receipt</h3>
+                      <img
+                        src={order.receiptImage}
+                        alt="Scanned Receipt"
+                        className="w-full rounded border max-h-96 object-contain cursor-pointer hover:opacity-80 transition-opacity"
+                        onClick={() => setZoomImageUrl(order.receiptImage)}
+                      />
+                      <p className="text-xs text-gray-500 mt-2 text-center">Click to zoom</p>
+                    </div>
+                  )}
+
+                  {/* Order Items Section */}
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground mb-3">Order Items</h3>
+                    <div className="space-y-2">
+                      {order.items && order.items.length > 0 ? (
+                        order.items.map((item: any, idx: number) => (
+                          <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                            <div className="flex-1">
+                              <p className="font-medium text-foreground">{item.menuItemName}</p>
+                              <p className="text-xs text-muted-foreground">Qty: {item.quantity}</p>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-sm text-muted-foreground">No items</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Notes Section */}
+                  {order.notes && (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                      <h3 className="text-sm font-semibold text-yellow-900 mb-2">Special Notes</h3>
+                      <p className="text-sm text-yellow-800">{order.notes}</p>
+                    </div>
+                  )}
+
+                  {/* Mark Ready Button */}
+                  <Button
+                    size="lg"
+                    className="w-full bg-green-600 hover:bg-green-700 text-white"
+                    onClick={() => {
+                      console.log('[KitchenDashboard] Mark Order as Ready clicked for order:', order.id);
+                      updateStatusMutation.mutate({
+                        orderId: order.id,
+                        status: "Ready",
+                      });
+                      console.log('[KitchenDashboard] Mutation triggered');
+                    }}
+                    disabled={updateStatusMutation.isPending}
+                  >
+                    {updateStatusMutation.isPending ? "Updating..." : "Mark Order as Ready"}
+                  </Button>
                 </div>
-              </div>
-            </div>
-
-            {/* Notes Section */}
-            {order.notes && (
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <h3 className="text-sm font-semibold text-yellow-900 mb-2">Special Notes</h3>
-                <p className="text-sm text-yellow-800">{order.notes}</p>
-              </div>
+              </>
             )}
-
-            {/* Mark Ready Button */}
-            <Button
-              size="lg"
-              className="w-full bg-green-600 hover:bg-green-700 text-white"
-              onClick={() => {
-                console.log('[KitchenDashboard] Mark Order as Ready clicked for order:', order.id);
-                updateStatusMutation.mutate({
-                  orderId: order.id,
-                  status: "Ready",
-                });
-                console.log('[KitchenDashboard] Mutation triggered');
-              }}
-              disabled={updateStatusMutation.isPending}
-            >
-              {updateStatusMutation.isPending ? "Updating..." : "Mark Order as Ready"}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-    );
-  }, [handleModalOpenChange, updateStatusMutation, getUrgencyLevel]);
+          </DialogContent>
+        </Dialog>
+      );
+    },
+    [handleModalOpenChange, updateStatusMutation]
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50">
@@ -504,43 +260,6 @@ export default function KitchenDashboard() {
           </Card>
         </div>
 
-        {/* Active Drivers Section */}
-        <Card className="bg-white mb-6">
-          <div className="p-4 border-b border-border">
-            <h2 className="text-lg font-semibold text-gray-900">Active Drivers ({activeDrivers.length})</h2>
-          </div>
-          <div className="p-4">
-            {activeDrivers.length === 0 ? (
-              <p className="text-sm text-gray-500 text-center py-4">No active drivers</p>
-            ) : (
-              <div className="overflow-x-auto flex-1">
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="border-b border-border bg-muted/50">
-                      <th className="text-left py-2 px-3 font-semibold">Name</th>
-                      <th className="text-left py-2 px-3 font-semibold">Status</th>
-                      <th className="text-left py-2 px-3 font-semibold">Est. Return</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {activeDrivers.map((driver: any) => (
-                      <tr key={driver.id} className="border-b border-border hover:bg-muted/30">
-                        <td className="py-2 px-3">{driver.name}</td>
-                        <td className="py-2 px-3">
-                          <Badge className="bg-green-100 text-green-800 text-xs">Online</Badge>
-                        </td>
-                        <td className="py-2 px-3 text-muted-foreground font-mono">
-                          {driverReturnTimes[driver.id] || "00:00"}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        </Card>
-
         {/* Tabs for Orders */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-3 bg-white border border-border gap-0">
@@ -555,27 +274,62 @@ export default function KitchenDashboard() {
           </TabsList>
 
           <TabsContent value="active" className="mt-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
               {sortedPendingOrders.length === 0 ? (
-                <div className="col-span-full text-center py-8 text-gray-500">
-                  <AlertCircle className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                <div className="text-center py-8 text-gray-500">
                   <p>No pending orders</p>
                 </div>
               ) : (
                 sortedPendingOrders.map((order: any) => (
-                  <CompactOrderCard key={order.id} order={order} />
+                  <div
+                    key={order.id}
+                    className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer"
+                    onClick={() => setSelectedOrder(order)}
+                  >
+                    <div className="flex justify-between">
+                      <div className="flex-1">
+                        <p className="font-semibold">Order #{order.orderNumber}</p>
+                        <p className="text-sm text-gray-600">{order.customerAddress}</p>
+                        <p className="text-sm text-gray-600">{order.customerPhone}</p>
+                        <p className="text-sm text-gray-600">Area: {order.area}</p>
+                        {order.deliveryTime && (
+                          <p className="text-sm text-gray-600">Delivery: {new Date(order.deliveryTime).toLocaleString()}</p>
+                        )}
+                        <p className="text-sm font-medium">Status: {order.status}</p>
+                      </div>
+                    </div>
+                  </div>
                 ))
               )}
             </div>
           </TabsContent>
 
           <TabsContent value="prepared" className="mt-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
               {sortedReadyOrders.length === 0 ? (
-                <EmptyState message="No prepared orders yet" />
+                <div className="text-center py-8 text-gray-500">
+                  <p>No prepared orders</p>
+                </div>
               ) : (
                 sortedReadyOrders.map((order: any) => (
-                  <CompactOrderCard key={order.id} order={order} />
+                  <div
+                    key={order.id}
+                    className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer"
+                    onClick={() => setSelectedOrder(order)}
+                  >
+                    <div className="flex justify-between">
+                      <div className="flex-1">
+                        <p className="font-semibold">Order #{order.orderNumber}</p>
+                        <p className="text-sm text-gray-600">{order.customerAddress}</p>
+                        <p className="text-sm text-gray-600">{order.customerPhone}</p>
+                        <p className="text-sm text-gray-600">Area: {order.area}</p>
+                        {order.deliveryTime && (
+                          <p className="text-sm text-gray-600">Delivery: {new Date(order.deliveryTime).toLocaleString()}</p>
+                        )}
+                        <p className="text-sm font-medium">Status: {order.status}</p>
+                      </div>
+                    </div>
+                  </div>
                 ))
               )}
             </div>
@@ -600,6 +354,3 @@ export default function KitchenDashboard() {
     </div>
   );
 }
-
-
-// ReservationsList component removed - not used
