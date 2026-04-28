@@ -5,6 +5,8 @@ import { Loader2, AlertCircle, CheckCircle2, Camera, Upload, X } from "lucide-re
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { useState, useRef } from "react";
+import { extractReceiptFromImage } from "@/lib/tesseractOcr";
+import { parseReceiptText, formatParsedReceipt } from "@/lib/receiptParser";
 
 export function ReceiptScannerTesseract() {
   const [error, setError] = useState<string | null>(null);
@@ -37,7 +39,6 @@ export function ReceiptScannerTesseract() {
   const [isConverting, setIsConverting] = useState(false);
 
   const createOrderMutation = trpc.orders.createFromReceipt.useMutation();
-  const convertReceiptMutation = trpc.orders.convertReceiptImage.useMutation();
 
   // Handle camera capture using native file input with capture attribute
   const handleCameraCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -81,15 +82,27 @@ export function ReceiptScannerTesseract() {
     e.target.value = "";
   };
 
-  // Convert receipt image using LLM
+  // Convert receipt image using Tesseract.js OCR (browser-based, no API calls)
   const convertReceiptImage = async (imageData: string) => {
     setIsConverting(true);
     try {
-      const result = await convertReceiptMutation.mutateAsync({ imageData });
-      setConvertedReceiptHTML(result.html);
+      // Extract text using Tesseract.js (runs in browser)
+      const ocrText = await extractReceiptFromImage(imageData);
+      
+      // Parse the extracted text
+      const parsed = parseReceiptText(ocrText);
+      
+      // Format for display
+      const formatted = formatParsedReceipt(parsed);
+      setConvertedReceiptHTML(formatted);
+      
+      // Auto-fill check number if found
+      if (parsed.checkNumber) {
+        setFormData(prev => ({ ...prev, checkNumber: parsed.checkNumber || "" }));
+      }
     } catch (err: any) {
-      console.error("Conversion error:", err);
-      setError("Failed to convert receipt. Please try again.");
+      console.error("OCR error:", err);
+      setError("Failed to read receipt. Please check the image quality.");
     } finally {
       setIsConverting(false);
     }
@@ -227,13 +240,13 @@ export function ReceiptScannerTesseract() {
           {isConverting && (
             <div className="flex items-center gap-2 text-blue-600">
               <Loader2 className="w-4 h-4 animate-spin" />
-              <span>Converting receipt...</span>
+              <span>Reading receipt with OCR...</span>
             </div>
           )}
 
           {convertedReceiptHTML && (
             <div className="border border-gray-300 rounded-lg p-4 bg-gray-50">
-              <h3 className="font-semibold mb-3">Converted Receipt Preview</h3>
+              <h3 className="font-semibold mb-3">Receipt Data (OCR Extracted)</h3>
               <pre className="text-xs whitespace-pre-wrap font-mono overflow-auto max-h-48">
                 {convertedReceiptHTML}
               </pre>
