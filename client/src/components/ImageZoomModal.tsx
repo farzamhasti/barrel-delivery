@@ -1,7 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
 import { ZoomIn, ZoomOut, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 
 interface ImageZoomModalProps {
   isOpen: boolean;
@@ -12,21 +12,84 @@ interface ImageZoomModalProps {
 
 export function ImageZoomModal({ isOpen, imageUrl, imageAlt, onClose }: ImageZoomModalProps) {
   const [zoom, setZoom] = useState(100);
+  const [touchDistance, setTouchDistance] = useState(0);
   const maxZoom = 300;
   const minZoom = 50;
   const zoomStep = 25;
+  const containerRef = useRef<HTMLDivElement>(null);
+  const imageRef = useRef<HTMLImageElement>(null);
 
+  // Calculate distance between two touch points
+  const getTouchDistance = (touches: React.TouchList) => {
+    if (touches.length !== 2) return 0;
+    const dx = touches[0].clientX - touches[1].clientX;
+    const dy = touches[0].clientY - touches[1].clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  };
+
+  // Handle touch start - record initial distance
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (e.touches.length === 2) {
+      setTouchDistance(getTouchDistance(e.touches));
+    }
+  };
+
+  // Handle touch move - pinch to zoom
+  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (e.touches.length === 2 && touchDistance > 0) {
+      const currentDistance = getTouchDistance(e.touches as React.TouchList);
+      const scale = currentDistance / touchDistance;
+      
+      // Calculate new zoom level based on pinch distance
+      const newZoom = Math.round(zoom * scale);
+      
+      // Constrain zoom within limits
+      if (newZoom >= minZoom && newZoom <= maxZoom) {
+        setZoom(newZoom);
+        setTouchDistance(currentDistance);
+      }
+    }
+  };
+
+  // Handle touch end
+  const handleTouchEnd = () => {
+    setTouchDistance(0);
+  };
+
+  // Handle click to zoom (desktop)
+  const handleImageClick = () => {
+    // Increase zoom by zoomStep on each click
+    const newZoom = zoom + zoomStep;
+    if (newZoom <= maxZoom) {
+      setZoom(newZoom);
+    } else {
+      // If at max, reset to normal
+      setZoom(100);
+    }
+  };
+
+  // Handle zoom in button
   const handleZoomIn = () => {
     setZoom((prev) => Math.min(prev + zoomStep, maxZoom));
   };
 
+  // Handle zoom out button
   const handleZoomOut = () => {
     setZoom((prev) => Math.max(prev - zoomStep, minZoom));
   };
 
+  // Handle reset
   const handleReset = () => {
     setZoom(100);
   };
+
+  // Reset zoom when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setZoom(100);
+      setTouchDistance(0);
+    }
+  }, [isOpen]);
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -77,17 +140,34 @@ export function ImageZoomModal({ isOpen, imageUrl, imageAlt, onClose }: ImageZoo
           </Button>
         </div>
 
+        {/* Instructions */}
+        <div className="text-xs text-gray-500 px-2 py-1">
+          <span className="hidden sm:inline">Desktop: Click image to zoom in • </span>
+          <span className="sm:hidden">Touch: Pinch to zoom • </span>
+          <span>Use buttons or reset to return to normal</span>
+        </div>
+
         {/* Image Container */}
-        <div className="flex-1 overflow-auto flex items-center justify-center bg-gray-100 rounded-lg border border-gray-300 p-4">
+        <div
+          ref={containerRef}
+          className="flex-1 overflow-auto flex items-center justify-center bg-gray-100 rounded-lg border border-gray-300 p-4 select-none"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
           <img
+            ref={imageRef}
             src={imageUrl}
             alt={imageAlt}
+            onClick={handleImageClick}
             style={{
               width: `${zoom}%`,
               height: "auto",
               maxWidth: "100%",
               maxHeight: "100%",
               objectFit: "contain",
+              transition: "width 0.2s ease-out",
+              cursor: "pointer",
             }}
             className="rounded"
           />
