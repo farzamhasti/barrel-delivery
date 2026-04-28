@@ -213,14 +213,16 @@ export default function KitchenDashboard() {
                     className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer"
                     onClick={() => setSelectedOrder(order)}
                   >
-                    <div className="flex justify-between items-start">
+                    <div className="flex justify-between">
                       <div className="flex-1">
                         <p className="font-semibold">Order #{order.orderNumber}</p>
                         <p className="text-sm text-gray-600">{order.customerAddress}</p>
+                        <p className="text-sm text-gray-600">{order.customerPhone}</p>
                         <p className="text-sm text-gray-600">Area: {order.area}</p>
                         {order.deliveryTime && (
                           <p className="text-sm text-gray-600">Delivery: {new Date(order.deliveryTime).toLocaleString()}</p>
                         )}
+                        <p className="text-sm font-medium">Status: {order.status}</p>
                       </div>
                     </div>
                   </div>
@@ -242,14 +244,16 @@ export default function KitchenDashboard() {
                     className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer"
                     onClick={() => setSelectedOrder(order)}
                   >
-                    <div className="flex justify-between items-start">
+                    <div className="flex justify-between">
                       <div className="flex-1">
                         <p className="font-semibold">Order #{order.orderNumber}</p>
                         <p className="text-sm text-gray-600">{order.customerAddress}</p>
+                        <p className="text-sm text-gray-600">{order.customerPhone}</p>
                         <p className="text-sm text-gray-600">Area: {order.area}</p>
                         {order.deliveryTime && (
                           <p className="text-sm text-gray-600">Delivery: {new Date(order.deliveryTime).toLocaleString()}</p>
                         )}
+                        <p className="text-sm font-medium">Status: {order.status}</p>
                       </div>
                     </div>
                   </div>
