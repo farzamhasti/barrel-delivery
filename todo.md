@@ -517,5 +517,6 @@ These features are documented for future enhancement but are not required for th
 - [x] Add receipt image preview in order details section
 - [x] Test driver dashboard end-to-end with receipt images
 - [x] Verify synchronization with Admin Dashboard and Kitchen Dashboard
+- [x] Add /driver-dashboard route to App.tsx for direct access
 - [x] TypeScript compilation: 0 errors
 - [x] Dev server: Running successfully

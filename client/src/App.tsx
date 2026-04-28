@@ -63,9 +63,9 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/admin-login" component={AdminLogin} />
       <Route path="/kitchen-login" component={KitchenLogin} />
-      {/* <Route path="/driver-dashboard" component={DriverDashboard} /> */}
-      <Route path="/admin/*" component={() => <SystemProtectedRoute component={AdminDashboard} requiredRole="admin" />} />
+      <Route path="/driver-dashboard" component={DriverPanel} />
       <Route path="/driver/*" component={DriverPanel} />
+      <Route path="/admin/*" component={() => <SystemProtectedRoute component={AdminDashboard} requiredRole="admin" />} />
       <Route path="/kitchen" component={() => <SystemProtectedRoute component={KitchenDashboardPage} requiredRole="kitchen" />} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
