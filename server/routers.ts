@@ -277,6 +277,72 @@ export const appRouter = router({
         
         return db.updateOrder(orderId, updateData);
       }),
+
+    calculateReturnTime: publicProcedure
+      .input(z.object({
+        sessionToken: z.string().optional(),
+        restaurantLatitude: z.number().optional(),
+        restaurantLongitude: z.number().optional(),
+      }).optional())
+      .mutation(async ({ input }) => {
+        try {
+          // For now, just get all orders for today (driver context not needed for return time calculation)
+          // In a real implementation, you would validate the sessionToken and get driver-specific orders
+          const allOrders = await db.getOrdersForToday();
+          
+          // Filter for orders that are currently on the way (not delivered)
+          const onTheWayOrders = allOrders.filter(
+            (order: any) => order.status === 'On the Way'
+          );
+          
+          // If no on_the_way orders, return zero time
+          if (onTheWayOrders.length === 0) {
+            return {
+              success: true,
+              driverId: input.driverId,
+              ordersCount: 0,
+              pickupTime: 0,
+              deliveryTime: 0,
+              travelTime: 0,
+              totalSeconds: 0,
+              totalMinutes: 0,
+              breakdown: {
+                pickupMinutes: 0,
+                deliveryMinutes: 0,
+                travelMinutes: 0,
+              },
+            };
+          }
+          
+          // Restaurant coordinates: 224 Garrison Rd, Fort Erie, ON L2A 1M7
+          const restaurantLat = input?.restaurantLatitude ?? 42.905191;
+          const restaurantLng = input?.restaurantLongitude ?? -78.9225479;
+          const restaurantAddress = '224 Garrison Rd, Fort Erie, ON L2A 1M7';
+          
+          // Calculate return time using Google Maps Directions API
+          const { calculateReturnTimeWithGoogleMaps } = await import('./googleMapsRouting');
+          const calculation = await calculateReturnTimeWithGoogleMaps(
+            onTheWayOrders.map((order: any) => ({
+              id: order.id,
+              address: order.customerAddress || '',
+              latitude: order.customerLatitude ? Number(order.customerLatitude) : 0,
+              longitude: order.customerLongitude ? Number(order.customerLongitude) : 0,
+            })),
+            restaurantAddress,
+            restaurantLat,
+            restaurantLng
+          );
+          
+          return {
+            success: true,
+            ordersCount: onTheWayOrders.length,
+            ...calculation,
+          };
+        } catch (error: any) {
+          console.error('[orders.calculateReturnTime] Error:', error);
+          throw new Error(error.message || 'Failed to calculate return time');
+        }
+      }),
   }),
 
   drivers: router({

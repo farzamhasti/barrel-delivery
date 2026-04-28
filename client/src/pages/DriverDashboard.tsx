@@ -71,22 +71,26 @@ export default function DriverDashboard() {
 
   // Return Time state
   const { returnTime, setCalculation, clearTimer } = useReturnTimeCalculator();
-  // Mock return time calculation - for now just a placeholder
-  const calculateReturnTimeMutation = {
-    mutate: (data: any) => {
-      // Mock implementation
-      const displayTime = "00:00";
-      setCalculation({
-        totalSeconds: 0,
-        totalMinutes: 0,
-        displayTime,
-        isActive: false,
-        ordersCount: 0,
-        breakdown: { pickupMinutes: 0, deliveryMinutes: 0, travelMinutes: 0 },
-      });
+  
+  // Return time calculation mutation using Google Maps routing
+  const calculateReturnTimeMutation = trpc.orders.calculateReturnTime.useMutation({
+    onSuccess: (data) => {
+      if (data.success) {
+        const displayTime = `${String(Math.floor(data.totalSeconds / 60)).padStart(2, '0')}:${String(data.totalSeconds % 60).padStart(2, '0')}`;
+        setCalculation({
+          totalSeconds: data.totalSeconds,
+          totalMinutes: data.totalMinutes,
+          displayTime,
+          isActive: true,
+          ordersCount: data.ordersCount,
+          breakdown: data.breakdown,
+        });
+      }
     },
-    isPending: false,
-  } as any;
+    onError: (error: any) => {
+      console.error("Failed to calculate return time:", error);
+    },
+  });
 
   // Mutation for marking order as delivered
   const markDeliveredMutation = trpc.orders.updateStatus.useMutation({

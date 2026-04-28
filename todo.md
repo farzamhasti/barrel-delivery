@@ -542,3 +542,26 @@ These features are documented for future enhancement but are not required for th
 - [x] Allow drivers to test different driver accounts
 - [x] TypeScript compilation: 0 errors
 - [x] Dev server: Running successfully
+
+
+## Phase 48: Fix /driver-login Route 404 Error
+- [x] Add /driver-login route to App.tsx pointing to DriverDashboard component
+- [x] Verify route loads successfully with driver login form
+- [x] Test logout redirect to /driver-login works correctly
+- [x] Allow drivers to test multiple driver accounts
+- [x] TypeScript compilation: 0 errors
+- [x] Dev server: Running successfully
+
+
+## Phase 49: Restore Address-Based Return Time and Route Calculation
+- [ ] Create tRPC procedure for calculating return time based on order addresses
+- [ ] Implement algorithm: 1 min pickup + 2 min per order + travel time
+- [ ] Use Google Maps API for optimal route calculation
+- [ ] Update DriverDashboard to call return time calculation mutation
+- [ ] Display return time with countdown timer
+- [ ] Broadcast return time to Admin Dashboard and Kitchen Dashboard
+- [ ] Restore route guidance with Google Maps integration
+- [ ] Test return time calculation with multiple orders
+- [ ] Verify synchronization across all dashboards
+- [ ] TypeScript compilation: 0 errors
+- [ ] Dev server: Running successfully
