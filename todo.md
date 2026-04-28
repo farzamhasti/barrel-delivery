@@ -393,3 +393,17 @@ These features are documented for future enhancement but are not required for th
 - [x] Test with various receipt angles and lighting
 - [x] TypeScript compilation: 0 errors
 - [x] Dev server: Running successfully
+
+
+## Phase 35: Remove All OCR and Text Extraction
+- [x] Remove Tesseract.js imports and code
+- [x] Remove text extraction logic (extractReceiptFromImage)
+- [x] Remove item extraction logic (extractItemsFromOCR)
+- [x] Remove extracted items list from UI
+- [x] Remove isExtracting state
+- [x] Keep image processing (OpenCV.js)
+- [x] Keep manual input fields (address, phone, area, delivery time)
+- [x] Keep Submit Order button
+- [x] Verify no UI/layout changes
+- [x] TypeScript compilation: 0 errors
+- [x] Dev server: Running successfully
