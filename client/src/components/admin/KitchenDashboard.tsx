@@ -355,6 +355,14 @@ export default function KitchenDashboard() {
               </div>
             </div>
 
+            {/* Scanned Receipt Image Section */}
+            {order.receiptImage && (
+              <div className="bg-white border border-gray-300 rounded-lg p-4">
+                <h3 className="text-sm font-semibold text-foreground mb-3">Scanned Receipt</h3>
+                <img src={order.receiptImage} alt="Scanned Receipt" className="w-full rounded border max-h-96 object-contain" />
+              </div>
+            )}
+
             {/* Order Items Section */}
             <div>
               <h3 className="text-sm font-semibold text-foreground mb-3">Order Items</h3>

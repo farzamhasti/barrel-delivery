@@ -322,6 +322,16 @@ export function Orders() {
                   )}
                 </div>
 
+                {/* Scanned Receipt Image Section */}
+                {selectedOrderDetails.receiptImage && (
+                  <div className="space-y-4 border-t pt-4">
+                    <h3 className="font-semibold text-lg">Scanned Receipt</h3>
+                    <div className="bg-white rounded-lg p-4 border border-gray-300">
+                      <img src={selectedOrderDetails.receiptImage} alt="Scanned Receipt" className="w-full rounded border max-h-96 object-contain" />
+                    </div>
+                  </div>
+                )}
+
                 {/* Receipt Information Section */}
                 {selectedOrderDetails.formattedReceiptImage && (
                   <div className="space-y-4 border-t pt-4">

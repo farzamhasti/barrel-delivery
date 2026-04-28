@@ -407,3 +407,14 @@ These features are documented for future enhancement but are not required for th
 - [x] Verify no UI/layout changes
 - [x] TypeScript compilation: 0 errors
 - [x] Dev server: Running successfully
+
+
+## Phase 36: Display Scanned Receipt Image in Order Details
+- [x] Add receipt image display to order details modal
+- [x] Add receipt image display to order summary
+- [x] Show image preview when viewing order
+- [x] Verify image displays correctly
+- [x] Test in all order views (Pending, Ready, On the Way, Delivered)
+- [x] Verify no UI/layout changes
+- [x] TypeScript compilation: 0 errors
+- [x] Dev server: Running successfully
