@@ -23,8 +23,13 @@ export default function OrderTrackingWithMap() {
   const [showMap, setShowMap] = useState(true);
   const [showDriverModal, setShowDriverModal] = useState(false);
   const [orderToAssign, setOrderToAssign] = useState<number | null>(null);
+  const [geocodedLocations, setGeocodedLocations] = useState<{ [key: number]: { lat: number; lng: number } }>({});
   const mapRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.Marker[]>([]);
+  const isMountedRef = useRef(true);
+
+  // Geocoding mutation
+  const geocodeMutation = (trpc as any).maps.geocode.useMutation();
 
   // Fetch today's orders with items for complete data
   const { data: allOrders = [], isLoading, refetch } = trpc.orders.getTodayWithItems.useQuery(undefined, { enabled: !!user });
@@ -43,6 +48,13 @@ export default function OrderTrackingWithMap() {
     ["Pending", "Ready", "On the Way"].includes(o.status)
   ) : [];
 
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
   // Auto-refetch every 5 seconds for real-time updates
   // Also listen for cache invalidation from other components
   useEffect(() => {
@@ -51,6 +63,35 @@ export default function OrderTrackingWithMap() {
     }, 5000);
     return () => clearInterval(interval);
   }, [refetch]);
+
+  // Geocode all active orders
+  useEffect(() => {
+    if (!Array.isArray(orders) || orders.length === 0) return;
+
+    orders.forEach((order: any) => {
+      // Skip if already geocoded
+      if (geocodedLocations[order.id]) return;
+
+      // Skip if no address
+      if (!order.customerAddress) return;
+
+      // Geocode the address
+      geocodeMutation.mutate(
+        { address: order.customerAddress },
+        {
+          onSuccess: (result: any) => {
+            if (!isMountedRef.current) return;
+            if (result && typeof result.latitude === 'number' && typeof result.longitude === 'number') {
+              setGeocodedLocations(prev => ({
+                ...prev,
+                [order.id]: { lat: result.latitude, lng: result.longitude }
+              }));
+            }
+          },
+        }
+      );
+    });
+  }, [orders, geocodedLocations, geocodeMutation]);
 
   // Note: Cache invalidation from Orders tab mutations will trigger
   // automatic refetch through React Query's cache mechanism
@@ -65,13 +106,17 @@ export default function OrderTrackingWithMap() {
 
     // Add markers for each order
     orders.forEach((order: any) => {
-      if (order.customer?.latitude && order.customer?.longitude) {
+      // Use geocoded location or customer coordinates
+      const location = geocodedLocations[order.id] || 
+        (order.customer?.latitude && order.customer?.longitude ? {
+          lat: parseFloat(order.customer.latitude as any),
+          lng: parseFloat(order.customer.longitude as any),
+        } : null);
+
+      if (location) {
         const marker = new google.maps.Marker({
           map: mapRef.current,
-          position: {
-            lat: parseFloat(order.customer.latitude as any),
-            lng: parseFloat(order.customer.longitude as any),
-          },
+          position: location,
           title: `Order #${order.id}`,
           label: {
             text: `#${order.id}`,
@@ -96,7 +141,7 @@ export default function OrderTrackingWithMap() {
         markersRef.current.push(marker);
       }
     });
-  }, [orders]);
+  }, [orders, geocodedLocations]);
 
   // Update map when selected order changes
   useEffect(() => {
@@ -306,28 +351,31 @@ export default function OrderTrackingWithMap() {
                   }`}
                   onClick={() => setSelectedOrderId(order.id)}
                 >
-                  <div className="flex items-start justify-between mb-2">
+                  <div className="space-y-3">
+                    {/* Check Number */}
                     <div>
-                      <h4 className="font-semibold text-foreground">Order #{order.id}</h4>
-                      <p className="text-sm text-muted-foreground">{order.customer?.name}</p>
+                      <p className="text-xs text-muted-foreground font-semibold">Check Number</p>
+                      <p className="font-semibold text-foreground text-lg">#{order.orderNumber}</p>
                     </div>
-                    <Badge className={getStatusColor(order.status)}>
-                      {order.status}
-                    </Badge>
-                  </div>
 
-                  <div className="flex items-start gap-2 text-sm text-muted-foreground">
-                    <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                    <div className="flex-1">
-                      <button
-                        onClick={() => {
-                          // Address click disabled - main map provides this functionality
-                        }}
-                        className="line-clamp-2 text-left hover:text-accent hover:underline transition-colors cursor-pointer"
-                      >
-                        {order.customerAddress || order.customer?.address}
-                      </button>
-                      {order.area && <p className="text-xs font-semibold text-accent mt-1">Area: {order.area}</p>}
+                    {/* Address */}
+                    <div>
+                      <p className="text-xs text-muted-foreground font-semibold">Address</p>
+                      <p className="text-sm text-foreground">{order.customerAddress || order.customer?.address}</p>
+                    </div>
+
+                    {/* Area */}
+                    {order.area && (
+                      <div>
+                        <p className="text-xs text-muted-foreground font-semibold">Area</p>
+                        <p className="font-semibold text-accent">{order.area}</p>
+                      </div>
+                    )}
+
+                    {/* Contact Number */}
+                    <div>
+                      <p className="text-xs text-muted-foreground font-semibold">Contact Number</p>
+                      <p className="text-sm text-foreground">{order.customerPhone}</p>
                     </div>
                   </div>
 

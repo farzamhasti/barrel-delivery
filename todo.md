@@ -298,3 +298,18 @@ These features are documented for future enhancement but are not required for th
 - [x] TypeScript compilation: 0 errors
 - [x] Dev server: Running successfully
 - [x] Tests: All passing (10/10 ✓)
+
+
+## Phase 29: Order Tracking Tab Simplification and Map Restoration
+- [x] Simplify Order Tracking tab display to show only: check number, address, area, contact number
+- [x] Remove unnecessary fields from Order Tracking display
+- [x] Keep "Send to Driver" functionality
+- [x] Restore map marking feature for orders
+- [x] Ensure orders are marked on map with correct location
+- [x] Verify map displays order address correctly
+- [x] Test Send to Driver functionality
+- [x] Preserve existing logic and functionality
+- [x] Verify no changes to overall workflow
+- [x] TypeScript compilation: 0 errors
+- [x] Dev server: Running successfully
+- [x] Tests: All passing (10/10 ✓)
