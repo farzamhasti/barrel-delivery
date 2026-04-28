@@ -120,8 +120,8 @@ export default function DriverPanel() {
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div>
-                        <h3 className="font-semibold text-foreground">Order #{order.orderNumber}</h3>
-                        <p className="text-sm text-muted-foreground">{order.customerName}</p>
+                        <h3 className="font-semibold text-foreground">Order #{order.id}</h3>
+                        <p className="text-sm text-muted-foreground">{order.customer?.name}</p>
                       </div>
                       <Badge className={getStatusColor(order.status)}>
                         {order.status}
@@ -131,11 +131,11 @@ export default function DriverPanel() {
                     <div className="space-y-2 text-sm mb-4">
                       <div className="flex items-center gap-2 text-muted-foreground">
                         <Phone className="w-4 h-4" />
-                        {order.customerPhone}
+                        {order.customer?.phone}
                       </div>
                       <div className="flex items-center gap-2 text-muted-foreground">
                         <MapPin className="w-4 h-4" />
-                        {order.customerAddress}
+                        {order.customer?.address}
                       </div>
                       <div className="flex items-center gap-2 text-muted-foreground">
                         <Clock className="w-4 h-4" />
@@ -194,7 +194,7 @@ export default function DriverPanel() {
                             className="flex-1 gap-2"
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleOpenMaps(order.customerAddress || "");
+                              handleOpenMaps(order.customer?.address || "");
                             }}
                           >
                             <Navigation className="w-4 h-4" />
@@ -238,18 +238,6 @@ export default function DriverPanel() {
                     )}
                   </div>
                 </div>
-
-                {/* Receipt Image Display */}
-                {selectedOrderData.receiptImage && (
-                  <div className="border border-border rounded-lg overflow-hidden">
-                    <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2 p-3 pb-0">Receipt Image</p>
-                    <img
-                      src={selectedOrderData.receiptImage}
-                      alt="Receipt"
-                      className="w-full h-auto object-cover"
-                    />
-                  </div>
-                )}
 
                 {/* Special instructions not available in new schema */}
 
