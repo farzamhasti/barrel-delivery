@@ -288,7 +288,7 @@ export const appRouter = router({
         try {
           // For now, just get all orders for today (driver context not needed for return time calculation)
           // In a real implementation, you would validate the sessionToken and get driver-specific orders
-          const allOrders = await db.getOrdersForToday();
+          const allOrders = await db.getTodayOrdersWithItems();
           
           // Filter for orders that are currently on the way (not delivered)
           const onTheWayOrders = allOrders.filter(
