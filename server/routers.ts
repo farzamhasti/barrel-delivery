@@ -350,6 +350,13 @@ export const appRouter = router({
         return db.getDrivers();
       }),
 
+    getByName: publicProcedure
+      .input(z.object({ name: z.string() }))
+      .query(async ({ input }) => {
+        const drivers = await db.getDrivers();
+        return drivers.find((d: any) => d.name.toLowerCase() === input.name.toLowerCase()) || null;
+      }),
+
     create: publicProcedure
       .input(z.object({
         name: z.string(),

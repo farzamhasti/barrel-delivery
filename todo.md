@@ -592,9 +592,11 @@ These features are documented for future enhancement but are not required for th
 - [x] Add status column to drivers table schema
 - [x] Create migration SQL for status column
 - [x] Implement updateDriverStatus function in db.ts
+- [x] Add await to updateDriverStatus and return updated driver
 - [x] Add setStatus mutation to drivers router
 - [x] Update DriverDashboard to use real tRPC mutation
 - [x] Fix online/offline button click handlers to include driver ID
+- [x] Add query invalidation (utils.drivers.list.invalidate()) to mutation
 - [x] Verify Active Drivers table filtering by status
 - [x] Test online button - driver should appear in Active Drivers table
 - [x] Test offline button - driver should disappear from Active Drivers table

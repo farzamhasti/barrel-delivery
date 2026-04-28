@@ -24,6 +24,7 @@ export default function DriverDashboard() {
   const [loginError, setLoginError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [sessionToken, setSessionToken] = useState<string | null>(null);
+  const [loggedInDriverName, setLoggedInDriverName] = useState<string | null>(null);
   
   // Get stored session token from localStorage on mount
   useEffect(() => {
@@ -130,15 +131,29 @@ export default function DriverDashboard() {
     },
   });
 
-  // Initialize driver status and ID from currentDriver
+  // Fetch driver by name when logged in
+  const { data: driverByName } = trpc.drivers.getByName.useQuery(
+    { name: loggedInDriverName || "" },
+    { enabled: !!loggedInDriverName }
+  );
+
+  // Initialize driver status and ID from driverByName
   useEffect(() => {
-    if ((currentDriver as any)?.status) {
+    if (driverByName) {
+      setCurrentDriverId((driverByName as any).id);
+      setDriverStatus((driverByName as any).status || "offline");
+    }
+  }, [driverByName]);
+
+  // Also initialize from currentDriver if needed
+  useEffect(() => {
+    if ((currentDriver as any)?.status && !driverByName) {
       setDriverStatus((currentDriver as any).status as "online" | "offline");
     }
-    if ((currentDriver as any)?.id) {
+    if ((currentDriver as any)?.id && !driverByName) {
       setCurrentDriverId((currentDriver as any).id as number);
     }
-  }, [currentDriver]);
+  }, [currentDriver, driverByName]);
 
   useEffect(() => {
     if (currentDriver) {
@@ -161,6 +176,7 @@ export default function DriverDashboard() {
       if (result.sessionToken) {
         localStorage.setItem(DRIVER_SESSION_KEY, result.sessionToken);
         setSessionToken(result.sessionToken);
+        setLoggedInDriverName(driverName);
       }
       
       setDriverName("");
@@ -186,6 +202,7 @@ export default function DriverDashboard() {
       localStorage.removeItem(DRIVER_SESSION_KEY);
       setSessionToken(null);
       setIsLoggedIn(false);
+      setLoggedInDriverName(null);
       
       // Redirect to driver login page
       setLocation("/driver-login");
