@@ -116,7 +116,10 @@ export async function deleteDriver(id: number) {
 export async function updateDriverStatus(id: number, status: "online" | "offline") {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  return db.update(drivers).set({ status }).where(eq(drivers.id, id));
+  await db.update(drivers).set({ status }).where(eq(drivers.id, id));
+  // Return the updated driver
+  const result = await db.select().from(drivers).where(eq(drivers.id, id));
+  return result[0] || null;
 }
 
 export async function getActiveDrivers() {

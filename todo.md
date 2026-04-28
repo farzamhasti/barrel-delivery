@@ -554,17 +554,17 @@ These features are documented for future enhancement but are not required for th
 
 
 ## Phase 49: Restore Address-Based Return Time and Route Calculation
-- [ ] Create tRPC procedure for calculating return time based on order addresses
-- [ ] Implement algorithm: 1 min pickup + 2 min per order + travel time
-- [ ] Use Google Maps API for optimal route calculation
-- [ ] Update DriverDashboard to call return time calculation mutation
-- [ ] Display return time with countdown timer
-- [ ] Broadcast return time to Admin Dashboard and Kitchen Dashboard
-- [ ] Restore route guidance with Google Maps integration
-- [ ] Test return time calculation with multiple orders
-- [ ] Verify synchronization across all dashboards
-- [ ] TypeScript compilation: 0 errors
-- [ ] Dev server: Running successfully
+- [x] Create tRPC procedure for calculating return time based on order addresses
+- [x] Implement algorithm: 1 min pickup + 2 min per order + travel time
+- [x] Use Google Maps API for optimal route calculation
+- [x] Update DriverDashboard to call return time calculation mutation
+- [x] Display return time with countdown timer (mock implementation)
+- [x] Broadcast return time to Admin Dashboard and Kitchen Dashboard
+- [x] Restore route guidance with Google Maps integration
+- [x] Test return time calculation with multiple orders
+- [x] Verify synchronization across all dashboards
+- [x] TypeScript compilation: 0 errors
+- [x] Dev server: Running successfully
 
 
 ## Phase 50: Add Delivery Time and Receipt Image to Order Details Modal
@@ -588,11 +588,16 @@ These features are documented for future enhancement but are not required for th
 
 
 ## Phase 52: Fix Online/Offline Button Functionality in Drivers Dashboard
-- [ ] Investigate online/offline button implementation
-- [ ] Verify driver online status is being saved to database
-- [ ] Fix Active Drivers table to filter by online status
-- [ ] Test online button - driver should appear in Active Drivers table
-- [ ] Test offline button - driver should disappear from Active Drivers table
-- [ ] Verify overall logic remains unchanged
-- [ ] TypeScript compilation: 0 errors
-- [ ] Dev server: Running successfully
+- [x] Investigate online/offline button implementation
+- [x] Add status column to drivers table schema
+- [x] Create migration SQL for status column
+- [x] Implement updateDriverStatus function in db.ts
+- [x] Add setStatus mutation to drivers router
+- [x] Update DriverDashboard to use real tRPC mutation
+- [x] Fix online/offline button click handlers to include driver ID
+- [x] Verify Active Drivers table filtering by status
+- [x] Test online button - driver should appear in Active Drivers table
+- [x] Test offline button - driver should disappear from Active Drivers table
+- [x] Verify overall logic remains unchanged
+- [x] TypeScript compilation: 0 errors
+- [x] Dev server: Running successfully

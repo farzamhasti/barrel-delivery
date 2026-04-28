@@ -119,7 +119,10 @@ export default function DriverDashboard() {
       if (data && (data as any).status) {
         setDriverStatus((data as any).status as "online" | "offline");
       }
-      // Refetch drivers list to update active drivers table
+      // Invalidate drivers list query to refresh active drivers table
+      const utils = trpc.useUtils();
+      utils.drivers.list.invalidate();
+      // Refetch orders as well
       refetchOrders();
     },
     onError: (error: any) => {
