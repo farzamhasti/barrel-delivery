@@ -130,15 +130,16 @@ export default function KitchenDashboardPage() {
           )}
         </div>
 
-        {/* Address and Phone */}
-        <div className="mb-2">
-          <p className="text-xs text-muted-foreground line-clamp-1">{order.customerAddress || 'N/A'}</p>
+        {/* Address with Location Icon */}
+        <div className="mb-3 flex items-start gap-2">
+          <MapPin className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+          <p className="text-sm font-semibold text-foreground line-clamp-2">{order.customerAddress || 'N/A'}</p>
         </div>
 
-        {/* Delivery Time */}
-        <div className="flex items-center gap-1 mb-3 text-xs text-muted-foreground">
-          <Clock className="w-3 h-3" />
-          <span className="font-semibold">{deliveryTime}</span>
+        {/* Delivery Time with Clock Icon */}
+        <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-foreground">
+          <Clock className="w-5 h-5 text-orange-600 flex-shrink-0" />
+          <span>{deliveryTime}</span>
         </div>
 
         {/* Formatted Receipt Image */}
@@ -164,9 +165,6 @@ export default function KitchenDashboardPage() {
           <Badge className="bg-blue-100 text-blue-800 text-xs px-2 py-1">
             Area: {order.area || 'N/A'}
           </Badge>
-          {order.customerPhone && (
-            <span className="text-xs text-muted-foreground">{order.customerPhone}</span>
-          )}
         </div>
 
         {/* Mark Ready Button */}
