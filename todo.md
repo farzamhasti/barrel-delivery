@@ -360,3 +360,17 @@ These features are documented for future enhancement but are not required for th
 - [x] Verify no external API calls
 - [x] TypeScript compilation: 0 errors
 - [x] Dev server: Running successfully
+
+
+## Phase 33: Smart Position-Based Item Extraction for ANY Aloha Receipt
+- [x] Update simpleItemExtractor to use position-based logic
+- [x] Find cutoff point using TRAINING/DO NOT PREPARE markers
+- [x] Extract items only after cutoff point
+- [x] Remove non-food patterns (prices, dates, times, etc.)
+- [x] Combine duplicate items with counts
+- [x] Preserve modifiers with items
+- [x] Test with multiple Aloha receipt examples
+- [x] Verify works for any receipt structure
+- [x] Keep all existing UI/layout/styling unchanged
+- [x] TypeScript compilation: 0 errors
+- [x] Dev server: Running successfully
