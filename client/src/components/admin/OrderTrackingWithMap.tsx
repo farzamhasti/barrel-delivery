@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MapPin, Eye, EyeOff, Clock, Send } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { trpc } from "@/lib/trpc";
 import { invalidateOrderCache } from "@/lib/invalidation";
 import { MapView } from "@/components/Map";
@@ -23,6 +24,7 @@ export default function OrderTrackingWithMap() {
   const [showMap, setShowMap] = useState(true);
   const [showDriverModal, setShowDriverModal] = useState(false);
   const [orderToAssign, setOrderToAssign] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState("pending");
   const [geocodedLocations, setGeocodedLocations] = useState<{ [key: number]: { lat: number; lng: number } }>({});
   const [failedGeocodings, setFailedGeocodings] = useState<Set<number>>(new Set());
   const mapRef = useRef<google.maps.Map | null>(null);
@@ -46,7 +48,13 @@ export default function OrderTrackingWithMap() {
     ? allOrders.find((o: any) => o.id === selectedOrderId)
     : null;
 
-  // Filter to active orders
+  // Filter orders by status
+  const pendingOrders = Array.isArray(allOrders) ? allOrders.filter((o: any) => o.status === "Pending") : [];
+  const readyOrders = Array.isArray(allOrders) ? allOrders.filter((o: any) => o.status === "Ready") : [];
+  const onTheWayOrders = Array.isArray(allOrders) ? allOrders.filter((o: any) => o.status === "On the Way") : [];
+  const deliveredOrders = Array.isArray(allOrders) ? allOrders.filter((o: any) => o.status === "Delivered") : [];
+  
+  // All active orders for map (exclude Delivered)
   const orders = Array.isArray(allOrders) ? allOrders.filter((o: any) =>
     ["Pending", "Ready", "On the Way"].includes(o.status)
   ) : [];
@@ -98,122 +106,81 @@ export default function OrderTrackingWithMap() {
             [orderId]: { lat: (result as any).latitude, lng: (result as any).longitude }
           }));
         } else if (result && typeof result === 'object' && 'error' in (result as any)) {
-          setFailedGeocodings(prev => {
-            const newSet = new Set(prev);
-            newSet.add(orderId);
-            return newSet;
-          });
+          setFailedGeocodings(prev => new Set(prev).add(orderId));
         }
       } catch (error) {
-        if (!isMountedRef.current) return;
-        console.error('[OrderTrackingWithMap] Geocoding error for order', orderId, ':', error);
-        setFailedGeocodings(prev => {
-          const newSet = new Set(prev);
-          newSet.add(orderId);
-          return newSet;
-        });
+        setFailedGeocodings(prev => new Set(prev).add(orderId));
       } finally {
         geocodingInProgressRef.current.delete(orderId);
+        setTimeout(processQueue, 500);
       }
     };
 
-    const interval = setInterval(processQueue, 500);
-    return () => clearInterval(interval);
+    processQueue();
   }, [orders, geocodeMutation]);
 
   // Queue orders for geocoding
   useEffect(() => {
-    if (!Array.isArray(orders) || orders.length === 0) return;
-
-    orders.forEach((order: any) => {
-      // Skip if already geocoded
-      if (geocodedLocations[order.id]) return;
-
-      // Skip if geocoding already failed for this order
-      if (failedGeocodings.has(order.id)) return;
-
-      // Skip if no address
-      if (!order.customerAddress) return;
-
-      // Add to queue if not already there
-      const isInProgress = Array.from(geocodingInProgressRef.current).includes(order.id);
-      if (!geocodingQueueRef.current.includes(order.id) && !isInProgress) {
+    orders.forEach(order => {
+      if (
+        order.customerAddress &&
+        !geocodedLocations[order.id] &&
+        !failedGeocodings.has(order.id) &&
+        !geocodingInProgressRef.current.has(order.id) &&
+        !geocodingQueueRef.current.includes(order.id)
+      ) {
         geocodingQueueRef.current.push(order.id);
       }
     });
   }, [orders, geocodedLocations, failedGeocodings]);
 
-  // Update map markers when orders change
+  // Update map markers when orders or selected order changes
   useEffect(() => {
     if (!mapRef.current) return;
 
-    // Clear existing markers
+    // Clear old markers
     markersRef.current.forEach(marker => marker.setMap(null));
     markersRef.current = [];
 
-    // Add markers for each order
+    // Add new markers for each order
     orders.forEach((order: any) => {
-      // Use geocoded location
       const location = geocodedLocations[order.id];
-
       if (location) {
         const marker = new google.maps.Marker({
           map: mapRef.current,
           position: location,
-          title: `Order #${order.id}`,
+          title: `Order #${order.orderNumber}`,
           label: {
-            text: `#${order.id}`,
+            text: order.orderNumber.toString(),
             color: "white",
-            fontSize: "14px",
+            fontSize: "12px",
             fontWeight: "bold",
           },
-          icon: {
-            path: google.maps.SymbolPath.CIRCLE,
-            scale: 16,
-            fillColor: "#3b82f6",
-            fillOpacity: 1,
-            strokeColor: "white",
-            strokeWeight: 2,
-          },
         });
-
-        marker.addListener("click", () => {
-          setSelectedOrderId(order.id);
-        });
-
         markersRef.current.push(marker);
       }
     });
-  }, [orders, geocodedLocations]);
 
-  // Update map when selected order changes
-  useEffect(() => {
-    if (!mapRef.current || !selectedOrderId) return;
-
-    // Find the selected order
-    const order = orders.find((o: any) => o.id === selectedOrderId);
-    if (!order) return;
-
-    // Get location
-    const location = geocodedLocations[selectedOrderId];
-
-    if (location) {
-      // Update marker colors
-      markersRef.current.forEach((marker, index) => {
-        const orderId = orders[index]?.id;
-        marker.setIcon({
-          path: google.maps.SymbolPath.CIRCLE,
-          scale: orderId === selectedOrderId ? 20 : 16,
-          fillColor: orderId === selectedOrderId ? "#ef4444" : "#3b82f6",
-          fillOpacity: 1,
-          strokeColor: "white",
-          strokeWeight: 2,
-        });
+    // Update marker colors
+    markersRef.current.forEach((marker, index) => {
+      const orderId = orders[index]?.id;
+      marker.setIcon({
+        path: google.maps.SymbolPath.CIRCLE,
+        scale: orderId === selectedOrderId ? 20 : 16,
+        fillColor: orderId === selectedOrderId ? "#ef4444" : "#3b82f6",
+        fillOpacity: 1,
+        strokeColor: "white",
+        strokeWeight: 2,
       });
+    });
 
-      // Pan to selected order
-      mapRef.current.panTo(location);
-      mapRef.current.setZoom(16);
+    // Pan to selected order
+    if (selectedOrderId) {
+      const location = geocodedLocations[selectedOrderId];
+      if (location && mapRef.current) {
+        mapRef.current.panTo(location);
+        mapRef.current.setZoom(16);
+      }
     }
   }, [selectedOrderId, orders, geocodedLocations]);
 
@@ -252,6 +219,67 @@ export default function OrderTrackingWithMap() {
         return "bg-gray-500 text-white";
     }
   };
+
+  const OrderCard = ({ order, isSelected, onSelect, onSendToDriver }: any) => (
+    <Card
+      key={order.id}
+      className={`p-4 cursor-pointer transition-all border-2 ${
+        isSelected
+          ? "border-accent bg-accent/5"
+          : "border-border hover:border-accent/50"
+      }`}
+      onClick={() => onSelect(order.id)}
+    >
+      <div className="space-y-3">
+        {/* Check Number */}
+        <div>
+          <p className="text-xs text-muted-foreground font-semibold">Check Number</p>
+          <p className="font-semibold text-foreground text-lg">#{order.orderNumber}</p>
+        </div>
+
+        {/* Address */}
+        <div>
+          <p className="text-xs text-muted-foreground font-semibold">Address</p>
+          <p className="text-sm text-foreground">{order.customerAddress}</p>
+        </div>
+
+        {/* Area */}
+        {order.area && (
+          <div>
+            <p className="text-xs text-muted-foreground font-semibold">Area</p>
+            <p className="font-semibold text-accent">{order.area}</p>
+          </div>
+        )}
+
+        {/* Contact Number */}
+        <div>
+          <p className="text-xs text-muted-foreground font-semibold">Contact Number</p>
+          <p className="text-sm text-foreground">{order.customerPhone}</p>
+        </div>
+      </div>
+
+      {isSelected && selectedOrderData && (
+        <div className="border-t border-border pt-3 mt-3">
+          <div className="space-y-2 text-sm">
+            {selectedOrderData.deliveryTime && (
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Clock className="w-4 h-4" />
+                <span>{new Date(selectedOrderData.deliveryTime).toLocaleTimeString()}</span>
+              </div>
+            )}
+            <Button
+              size="sm"
+              className="w-full mt-2"
+              onClick={() => onSendToDriver(order.id)}
+            >
+              <Send className="w-4 h-4 mr-2" />
+              Send to Driver
+            </Button>
+          </div>
+        </div>
+      )}
+    </Card>
+  );
 
   return (
     <div className="flex gap-4 h-full">
@@ -296,75 +324,88 @@ export default function OrderTrackingWithMap() {
           {showMap ? "Hide Map" : "Show Map"}
         </Button>
 
-        {/* Orders List */}
-        <div className="flex-1 overflow-y-auto space-y-2">
-          {isLoading ? (
-            <div className="text-center text-muted-foreground py-8">Loading orders...</div>
-          ) : orders.length === 0 ? (
-            <div className="text-center text-muted-foreground py-8">No active orders</div>
-          ) : (
-            orders.map((order: any) => (
-              <Card
-                key={order.id}
-                className={`p-4 cursor-pointer transition-all border-2 ${
-                  selectedOrderId === order.id
-                    ? "border-accent bg-accent/5"
-                    : "border-border hover:border-accent/50"
-                }`}
-                onClick={() => setSelectedOrderId(order.id)}
-              >
-                <div className="space-y-3">
-                  {/* Check Number */}
-                  <div>
-                    <p className="text-xs text-muted-foreground font-semibold">Check Number</p>
-                    <p className="font-semibold text-foreground text-lg">#{order.orderNumber}</p>
-                  </div>
+        {/* Status Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex flex-col flex-1">
+          <TabsList className="grid w-full grid-cols-4 text-xs h-auto">
+            <TabsTrigger value="pending" className="text-xs py-2">Pending ({pendingOrders.length})</TabsTrigger>
+            <TabsTrigger value="ready" className="text-xs py-2">Ready ({readyOrders.length})</TabsTrigger>
+            <TabsTrigger value="on-way" className="text-xs py-2">On Way ({onTheWayOrders.length})</TabsTrigger>
+            <TabsTrigger value="delivered" className="text-xs py-2">Delivered ({deliveredOrders.length})</TabsTrigger>
+          </TabsList>
 
-                  {/* Address */}
-                  <div>
-                    <p className="text-xs text-muted-foreground font-semibold">Address</p>
-                    <p className="text-sm text-foreground">{order.customerAddress}</p>
-                  </div>
-
-                  {/* Area */}
-                  {order.area && (
-                    <div>
-                      <p className="text-xs text-muted-foreground font-semibold">Area</p>
-                      <p className="font-semibold text-accent">{order.area}</p>
-                    </div>
+          {/* Orders List */}
+          <div className="flex-1 overflow-y-auto space-y-2 mt-4">
+            {isLoading ? (
+              <div className="text-center text-muted-foreground py-8">Loading orders...</div>
+            ) : (
+              <>
+                <TabsContent value="pending" className="space-y-2 mt-0">
+                  {pendingOrders.length === 0 ? (
+                    <div className="text-center text-muted-foreground py-8">No pending orders</div>
+                  ) : (
+                    pendingOrders.map((order: any) => (
+                      <OrderCard
+                        key={order.id}
+                        order={order}
+                        isSelected={selectedOrderId === order.id}
+                        onSelect={setSelectedOrderId}
+                        onSendToDriver={handleSendToDriver}
+                      />
+                    ))
                   )}
+                </TabsContent>
 
-                  {/* Contact Number */}
-                  <div>
-                    <p className="text-xs text-muted-foreground font-semibold">Contact Number</p>
-                    <p className="text-sm text-foreground">{order.customerPhone}</p>
-                  </div>
-                </div>
+                <TabsContent value="ready" className="space-y-2 mt-0">
+                  {readyOrders.length === 0 ? (
+                    <div className="text-center text-muted-foreground py-8">No ready orders</div>
+                  ) : (
+                    readyOrders.map((order: any) => (
+                      <OrderCard
+                        key={order.id}
+                        order={order}
+                        isSelected={selectedOrderId === order.id}
+                        onSelect={setSelectedOrderId}
+                        onSendToDriver={handleSendToDriver}
+                      />
+                    ))
+                  )}
+                </TabsContent>
 
-                {selectedOrderId === order.id && selectedOrderData && (
-                  <div className="border-t border-border pt-3 mt-3">
-                    <div className="space-y-2 text-sm">
-                      {selectedOrderData.deliveryTime && (
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <Clock className="w-4 h-4" />
-                          <span>{new Date(selectedOrderData.deliveryTime).toLocaleTimeString()}</span>
-                        </div>
-                      )}
-                      <Button
-                        size="sm"
-                        className="w-full mt-2"
-                        onClick={() => handleSendToDriver(order.id)}
-                      >
-                        <Send className="w-4 h-4 mr-2" />
-                        Send to Driver
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </Card>
-            ))
-          )}
-        </div>
+                <TabsContent value="on-way" className="space-y-2 mt-0">
+                  {onTheWayOrders.length === 0 ? (
+                    <div className="text-center text-muted-foreground py-8">No orders on the way</div>
+                  ) : (
+                    onTheWayOrders.map((order: any) => (
+                      <OrderCard
+                        key={order.id}
+                        order={order}
+                        isSelected={selectedOrderId === order.id}
+                        onSelect={setSelectedOrderId}
+                        onSendToDriver={handleSendToDriver}
+                      />
+                    ))
+                  )}
+                </TabsContent>
+
+                <TabsContent value="delivered" className="space-y-2 mt-0">
+                  {deliveredOrders.length === 0 ? (
+                    <div className="text-center text-muted-foreground py-8">No delivered orders</div>
+                  ) : (
+                    deliveredOrders.map((order: any) => (
+                      <OrderCard
+                        key={order.id}
+                        order={order}
+                        isSelected={selectedOrderId === order.id}
+                        onSelect={setSelectedOrderId}
+                        onSendToDriver={handleSendToDriver}
+                      />
+                    ))
+                  )}
+                </TabsContent>
+              </>
+            )}
+          </div>
+        </Tabs>
 
         {/* Active Drivers Section */}
         <div className="border-t border-border pt-4">
