@@ -488,12 +488,22 @@ These features are documented for future enhancement but are not required for th
 
 
 ## Phase 42: Order Tracking Tab Status Pages
-- [ ] Add 4 status tabs (Pending, Ready, On the Way, Delivered) to Order Tracking page
-- [ ] Filter orders by status like Orders tab
-- [ ] Display orders in cards matching Orders tab layout
-- [ ] Ensure orders automatically move to correct page when status changes
-- [ ] Preserve all existing Order Tracking functionality and logic
-- [ ] Test status transitions
-- [ ] Verify no UI/layout regressions
-- [ ] TypeScript compilation: 0 errors
-- [ ] Dev server: Running successfully
+- [x] Add 4 status tabs (Pending, Ready, On the Way, Delivered) to Order Tracking page
+- [x] Filter orders by status like Orders tab
+- [x] Display orders in cards matching Orders tab layout
+- [x] Ensure orders automatically move to correct page when status changes
+- [x] Preserve all existing Order Tracking functionality and logic
+- [x] Test status transitions
+- [x] Verify no UI/layout regressions
+- [x] TypeScript compilation: 0 errors
+- [x] Dev server: Running successfully
+
+
+## Phase 43: Reorganize Order Tracking Layout
+- [x] Move 4 status tabs below the map
+- [x] Place active drivers table on the right side of the map
+- [x] Adjust layout to accommodate new structure
+- [x] Test responsive design on desktop and tablet
+- [x] Verify all functionality preserved
+- [x] TypeScript compilation: 0 errors
+- [x] Dev server: Running successfully

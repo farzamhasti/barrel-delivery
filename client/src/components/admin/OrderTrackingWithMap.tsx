@@ -1,3 +1,4 @@
+"use client";
 import { useState, useEffect, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -98,18 +99,21 @@ export default function OrderTrackingWithMap() {
           );
         });
 
-        if (!isMountedRef.current) return;
-
-        if (result && typeof (result as any).latitude === 'number' && typeof (result as any).longitude === 'number' && !('error' in (result as any))) {
-          setGeocodedLocations(prev => ({
+        if (isMountedRef.current && result) {
+          const { lat, lng } = result as any;
+          setGeocodedLocations((prev) => ({
             ...prev,
-            [orderId]: { lat: (result as any).latitude, lng: (result as any).longitude }
+            [orderId]: { lat, lng },
           }));
-        } else if (result && typeof result === 'object' && 'error' in (result as any)) {
-          setFailedGeocodings(prev => new Set(prev).add(orderId));
         }
       } catch (error) {
-        setFailedGeocodings(prev => new Set(prev).add(orderId));
+        if (isMountedRef.current) {
+          setFailedGeocodings((prev) => {
+            const newSet = new Set(prev);
+            newSet.add(orderId);
+            return newSet;
+          });
+        }
       } finally {
         geocodingInProgressRef.current.delete(orderId);
         setTimeout(processQueue, 500);
@@ -119,85 +123,72 @@ export default function OrderTrackingWithMap() {
     processQueue();
   }, [orders, geocodeMutation]);
 
+  // Update map markers when geocoded locations change
+  useEffect(() => {
+    if (!mapRef.current) return;
+
+    // Clear existing markers
+    markersRef.current.forEach((marker) => marker.setMap(null));
+    markersRef.current = [];
+
+    // Add new markers for geocoded locations
+    Object.entries(geocodedLocations).forEach(([orderId, location]) => {
+      const order = orders.find((o: any) => o.id === parseInt(orderId));
+      if (!order) return;
+
+      const marker = new google.maps.Marker({
+        map: mapRef.current,
+        position: location,
+        title: `Order #${order.orderNumber}`,
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 10,
+          fillColor:
+            order.status === "Pending"
+              ? "#eab308"
+              : order.status === "Ready"
+                ? "#22c55e"
+                : "#3b82f6",
+          fillOpacity: 1,
+          strokeColor: "white",
+          strokeWeight: 2,
+        },
+      });
+
+      marker.addListener("click", () => {
+        setSelectedOrderId(order.id);
+      });
+
+      markersRef.current.push(marker);
+    });
+  }, [geocodedLocations, orders]);
+
   // Queue orders for geocoding
   useEffect(() => {
-    orders.forEach(order => {
+    orders.forEach((order: any) => {
       if (
-        order.customerAddress &&
         !geocodedLocations[order.id] &&
         !failedGeocodings.has(order.id) &&
-        !geocodingInProgressRef.current.has(order.id) &&
-        !geocodingQueueRef.current.includes(order.id)
+        !geocodingInProgressRef.current.has(order.id)
       ) {
         geocodingQueueRef.current.push(order.id);
       }
     });
   }, [orders, geocodedLocations, failedGeocodings]);
 
-  // Update map markers when orders or selected order changes
-  useEffect(() => {
-    if (!mapRef.current) return;
-
-    // Clear old markers
-    markersRef.current.forEach(marker => marker.setMap(null));
-    markersRef.current = [];
-
-    // Add new markers for each order
-    orders.forEach((order: any) => {
-      const location = geocodedLocations[order.id];
-      if (location) {
-        const marker = new google.maps.Marker({
-          map: mapRef.current,
-          position: location,
-          title: `Order #${order.orderNumber}`,
-          label: {
-            text: order.orderNumber.toString(),
-            color: "white",
-            fontSize: "12px",
-            fontWeight: "bold",
-          },
-        });
-        markersRef.current.push(marker);
-      }
-    });
-
-    // Update marker colors
-    markersRef.current.forEach((marker, index) => {
-      const orderId = orders[index]?.id;
-      marker.setIcon({
-        path: google.maps.SymbolPath.CIRCLE,
-        scale: orderId === selectedOrderId ? 20 : 16,
-        fillColor: orderId === selectedOrderId ? "#ef4444" : "#3b82f6",
-        fillOpacity: 1,
-        strokeColor: "white",
-        strokeWeight: 2,
-      });
-    });
-
-    // Pan to selected order
-    if (selectedOrderId) {
-      const location = geocodedLocations[selectedOrderId];
-      if (location && mapRef.current) {
-        mapRef.current.panTo(location);
-        mapRef.current.setZoom(16);
-      }
-    }
-  }, [selectedOrderId, orders, geocodedLocations]);
-
-  const handleSendToDriver = (orderId: number) => {
+  const handleSendToDriver = async (orderId: number) => {
     setOrderToAssign(orderId);
     setShowDriverModal(true);
   };
 
-  const handleAssignDriver = async () => {
+  const handleAssignDriver = async (driverId: number) => {
     if (!orderToAssign) return;
-
     try {
-      await (trpc as any).orders.assignDriver.useMutation().mutateAsync({
+      await (trpc.orders.assignDriver as any).mutate({
         orderId: orderToAssign,
+        driverId,
       });
-
-      await invalidateOrderCache(utils);
+      invalidateOrderCache(utils);
       setShowDriverModal(false);
       setOrderToAssign(null);
     } catch (error) {
@@ -282,135 +273,51 @@ export default function OrderTrackingWithMap() {
   );
 
   return (
-    <div className="flex gap-4 h-full">
-      {/* Map Section */}
-      {showMap && (
-        <div className="flex-1 rounded-lg overflow-hidden border border-border">
-          <MapView
-            onMapReady={(map) => {
-              mapRef.current = map;
-              map.setCenter(FORT_ERIE_CENTER);
-              map.setZoom(13);
+    <div className="flex flex-col h-full gap-4">
+      {/* Top Section: Map and Active Drivers */}
+      <div className="flex gap-4 flex-1">
+        {/* Map Section */}
+        {showMap && (
+          <div className="flex-1 rounded-lg overflow-hidden border border-border">
+            <MapView
+              onMapReady={(map) => {
+                mapRef.current = map;
+                map.setCenter(FORT_ERIE_CENTER);
+                map.setZoom(13);
 
-              // Add restaurant marker
-              new google.maps.Marker({
-                map,
-                position: RESTAURANT_ADDRESS,
-                title: "Restaurant",
-                icon: {
-                  path: google.maps.SymbolPath.CIRCLE,
-                  scale: 14,
-                  fillColor: "#ef4444",
-                  fillOpacity: 1,
-                  strokeColor: "white",
-                  strokeWeight: 2,
-                },
-              });
-            }}
-          />
-        </div>
-      )}
-
-      {/* Orders List Section */}
-      <div className="w-80 flex flex-col gap-4">
-        {/* Toggle Map Button */}
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setShowMap(!showMap)}
-          className="w-full"
-        >
-          {showMap ? <EyeOff className="w-4 h-4 mr-2" /> : <Eye className="w-4 h-4 mr-2" />}
-          {showMap ? "Hide Map" : "Show Map"}
-        </Button>
-
-        {/* Status Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex flex-col flex-1">
-          <TabsList className="grid w-full grid-cols-4 text-xs h-auto">
-            <TabsTrigger value="pending" className="text-xs py-2">Pending ({pendingOrders.length})</TabsTrigger>
-            <TabsTrigger value="ready" className="text-xs py-2">Ready ({readyOrders.length})</TabsTrigger>
-            <TabsTrigger value="on-way" className="text-xs py-2">On Way ({onTheWayOrders.length})</TabsTrigger>
-            <TabsTrigger value="delivered" className="text-xs py-2">Delivered ({deliveredOrders.length})</TabsTrigger>
-          </TabsList>
-
-          {/* Orders List */}
-          <div className="flex-1 overflow-y-auto space-y-2 mt-4">
-            {isLoading ? (
-              <div className="text-center text-muted-foreground py-8">Loading orders...</div>
-            ) : (
-              <>
-                <TabsContent value="pending" className="space-y-2 mt-0">
-                  {pendingOrders.length === 0 ? (
-                    <div className="text-center text-muted-foreground py-8">No pending orders</div>
-                  ) : (
-                    pendingOrders.map((order: any) => (
-                      <OrderCard
-                        key={order.id}
-                        order={order}
-                        isSelected={selectedOrderId === order.id}
-                        onSelect={setSelectedOrderId}
-                        onSendToDriver={handleSendToDriver}
-                      />
-                    ))
-                  )}
-                </TabsContent>
-
-                <TabsContent value="ready" className="space-y-2 mt-0">
-                  {readyOrders.length === 0 ? (
-                    <div className="text-center text-muted-foreground py-8">No ready orders</div>
-                  ) : (
-                    readyOrders.map((order: any) => (
-                      <OrderCard
-                        key={order.id}
-                        order={order}
-                        isSelected={selectedOrderId === order.id}
-                        onSelect={setSelectedOrderId}
-                        onSendToDriver={handleSendToDriver}
-                      />
-                    ))
-                  )}
-                </TabsContent>
-
-                <TabsContent value="on-way" className="space-y-2 mt-0">
-                  {onTheWayOrders.length === 0 ? (
-                    <div className="text-center text-muted-foreground py-8">No orders on the way</div>
-                  ) : (
-                    onTheWayOrders.map((order: any) => (
-                      <OrderCard
-                        key={order.id}
-                        order={order}
-                        isSelected={selectedOrderId === order.id}
-                        onSelect={setSelectedOrderId}
-                        onSendToDriver={handleSendToDriver}
-                      />
-                    ))
-                  )}
-                </TabsContent>
-
-                <TabsContent value="delivered" className="space-y-2 mt-0">
-                  {deliveredOrders.length === 0 ? (
-                    <div className="text-center text-muted-foreground py-8">No delivered orders</div>
-                  ) : (
-                    deliveredOrders.map((order: any) => (
-                      <OrderCard
-                        key={order.id}
-                        order={order}
-                        isSelected={selectedOrderId === order.id}
-                        onSelect={setSelectedOrderId}
-                        onSendToDriver={handleSendToDriver}
-                      />
-                    ))
-                  )}
-                </TabsContent>
-              </>
-            )}
+                // Add restaurant marker
+                new google.maps.Marker({
+                  map,
+                  position: RESTAURANT_ADDRESS,
+                  title: "Restaurant",
+                  icon: {
+                    path: google.maps.SymbolPath.CIRCLE,
+                    scale: 14,
+                    fillColor: "#ef4444",
+                    fillOpacity: 1,
+                    strokeColor: "white",
+                    strokeWeight: 2,
+                  },
+                });
+              }}
+            />
           </div>
-        </Tabs>
+        )}
 
-        {/* Active Drivers Section */}
-        <div className="border-t border-border pt-4">
-          <h3 className="font-semibold text-sm mb-2">Active Drivers</h3>
-          <div className="space-y-2 max-h-40 overflow-y-auto">
+        {/* Active Drivers Section - Right Side */}
+        <div className="w-64 flex flex-col gap-2 border border-border rounded-lg p-4 bg-background">
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold text-sm">Active Drivers</h3>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowMap(!showMap)}
+            >
+              {showMap ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </Button>
+          </div>
+          
+          <div className="space-y-2 flex-1 overflow-y-auto">
             {driversLoading ? (
               <div className="text-xs text-muted-foreground">Loading drivers...</div>
             ) : activeDrivers.length === 0 ? (
@@ -429,13 +336,98 @@ export default function OrderTrackingWithMap() {
         </div>
       </div>
 
+      {/* Bottom Section: Status Tabs */}
+      <div className="border border-border rounded-lg p-4 bg-background">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-4 text-xs h-auto mb-4">
+            <TabsTrigger value="pending" className="text-xs py-2">Pending ({pendingOrders.length})</TabsTrigger>
+            <TabsTrigger value="ready" className="text-xs py-2">Ready ({readyOrders.length})</TabsTrigger>
+            <TabsTrigger value="on-way" className="text-xs py-2">On Way ({onTheWayOrders.length})</TabsTrigger>
+            <TabsTrigger value="delivered" className="text-xs py-2">Delivered ({deliveredOrders.length})</TabsTrigger>
+          </TabsList>
+
+          {/* Orders List */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto">
+            {isLoading ? (
+              <div className="text-center text-muted-foreground py-8 col-span-full">Loading orders...</div>
+            ) : (
+              <>
+                <TabsContent value="pending" className="space-y-2 mt-0 col-span-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {pendingOrders.length === 0 ? (
+                    <div className="text-center text-muted-foreground py-8 col-span-full">No pending orders</div>
+                  ) : (
+                    pendingOrders.map((order: any) => (
+                      <OrderCard
+                        key={order.id}
+                        order={order}
+                        isSelected={selectedOrderId === order.id}
+                        onSelect={setSelectedOrderId}
+                        onSendToDriver={handleSendToDriver}
+                      />
+                    ))
+                  )}
+                </TabsContent>
+
+                <TabsContent value="ready" className="space-y-2 mt-0 col-span-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {readyOrders.length === 0 ? (
+                    <div className="text-center text-muted-foreground py-8 col-span-full">No ready orders</div>
+                  ) : (
+                    readyOrders.map((order: any) => (
+                      <OrderCard
+                        key={order.id}
+                        order={order}
+                        isSelected={selectedOrderId === order.id}
+                        onSelect={setSelectedOrderId}
+                        onSendToDriver={handleSendToDriver}
+                      />
+                    ))
+                  )}
+                </TabsContent>
+
+                <TabsContent value="on-way" className="space-y-2 mt-0 col-span-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {onTheWayOrders.length === 0 ? (
+                    <div className="text-center text-muted-foreground py-8 col-span-full">No orders on the way</div>
+                  ) : (
+                    onTheWayOrders.map((order: any) => (
+                      <OrderCard
+                        key={order.id}
+                        order={order}
+                        isSelected={selectedOrderId === order.id}
+                        onSelect={setSelectedOrderId}
+                        onSendToDriver={handleSendToDriver}
+                      />
+                    ))
+                  )}
+                </TabsContent>
+
+                <TabsContent value="delivered" className="space-y-2 mt-0 col-span-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {deliveredOrders.length === 0 ? (
+                    <div className="text-center text-muted-foreground py-8 col-span-full">No delivered orders</div>
+                  ) : (
+                    deliveredOrders.map((order: any) => (
+                      <OrderCard
+                        key={order.id}
+                        order={order}
+                        isSelected={selectedOrderId === order.id}
+                        onSelect={setSelectedOrderId}
+                        onSendToDriver={handleSendToDriver}
+                      />
+                    ))
+                  )}
+                </TabsContent>
+              </>
+            )}
+          </div>
+        </Tabs>
+      </div>
+
       {/* Driver Selection Modal */}
       {orderToAssign && (
         <DriverSelectionModal
           isOpen={showDriverModal}
           orderId={orderToAssign}
           onClose={() => setShowDriverModal(false)}
-          onAssign={handleAssignDriver}
+          onAssign={(driverId: number) => handleAssignDriver(driverId)}
         />
       )}
     </div>

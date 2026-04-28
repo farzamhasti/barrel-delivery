@@ -16,7 +16,7 @@ interface DriverSelectionModalProps {
   isOpen: boolean;
   orderId: number;
   onClose: () => void;
-  onAssign: () => void;
+  onAssign: (driverId: number) => void;
 }
 
 export function DriverSelectionModal({
@@ -35,9 +35,11 @@ export function DriverSelectionModal({
   // Mutation for assigning order
   const assignMutation = trpc.orders.assignDriver.useMutation({
     onSuccess: () => {
+      if (selectedDriverId) {
+        onAssign(selectedDriverId);
+      }
       setSelectedDriverId(null);
       setIsAssigning(false);
-      onAssign();
       onClose();
     },
     onError: (error: any) => {
