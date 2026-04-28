@@ -575,3 +575,13 @@ These features are documented for future enhancement but are not required for th
 - [x] Test order details modal with all fields
 - [x] TypeScript compilation: 0 errors
 - [x] Dev server: Running successfully
+
+
+## Phase 51: Simplify Order Details Modal
+- [x] Remove Customer Name section from Order Details modal
+- [x] Remove Order Items section from Order Details modal
+- [x] Remove Total section from Order Details modal
+- [x] Keep only: Order number, Phone, Address, Delivery Time, and Scanned Receipt
+- [x] Test Order Details modal display
+- [x] TypeScript compilation: 0 errors
+- [x] Dev server: Running successfully

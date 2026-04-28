@@ -589,16 +589,10 @@ export default function DriverDashboard() {
             </DialogHeader>
             {selectedOrder && (
               <div className="space-y-4">
-                {/* Customer Information */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-gray-600">Customer Name</p>
-                    <p className="font-semibold">{selectedOrder.customerName}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Phone</p>
-                    <p className="font-semibold">{selectedOrder.customerPhone}</p>
-                  </div>
+                {/* Phone Information */}
+                <div>
+                  <p className="text-sm text-gray-600">Phone</p>
+                  <p className="font-semibold">{selectedOrder.customerPhone}</p>
                 </div>
 
                 {/* Address and Delivery Time */}
@@ -630,25 +624,7 @@ export default function DriverDashboard() {
                   </div>
                 )}
 
-                {/* Order Items */}
-                <div>
-                  <p className="text-sm font-semibold text-gray-600 mb-2">Order Items</p>
-                  {selectedOrder.items && selectedOrder.items.length > 0 ? (
-                    <div className="space-y-2">
-                      {selectedOrder.items.map((item: any, index: number) => (
-                        <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                          <div>
-                            <p className="font-medium">{item.menuItemName || item.itemName || 'Unknown Item'}</p>
-                            <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
-                          </div>
-                          <p className="font-semibold">${Number(item.priceAtOrder || item.price || 0).toFixed(2)}</p>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-gray-600">No items in this order</p>
-                  )}
-                </div>
+
 
                 {/* Special Notes */}
                 {selectedOrder.notes && (
@@ -657,14 +633,6 @@ export default function DriverDashboard() {
                     <p className="text-sm text-gray-700 p-2 bg-yellow-50 rounded">{selectedOrder.notes}</p>
                   </div>
                 )}
-
-                {/* Order Total */}
-                <div className="border-t pt-4">
-                  <div className="flex justify-between items-center">
-                    <p className="font-semibold">Total</p>
-                    <p className="text-xl font-bold">${Number(selectedOrder.totalPrice).toFixed(2)}</p>
-                  </div>
-                </div>
 
                 {/* Action Buttons */}
                 <div className="flex gap-2 pt-4">
