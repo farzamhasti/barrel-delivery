@@ -64,6 +64,7 @@ export function Orders() {
     return `${year}-${month}-${day}`;
   };
   const [selectedDate, setSelectedDate] = useState<string>(getTodayDateString());
+  const [statusFilter, setStatusFilter] = useState<"Pending" | "Ready" | "On the Way" | "Delivered">("Pending");
 
   const [formData, setFormData] = useState<OrderFormData>({
     orderNumber: "",
@@ -90,9 +91,9 @@ export function Orders() {
       const month = parts.find((p) => p.type === "month")?.value;
       const day = parts.find((p) => p.type === "day")?.value;
       const orderDateStr = `${year}-${month}-${day}`;
-      return orderDateStr === selectedDate;
+      return orderDateStr === selectedDate && order.status === statusFilter;
     });
-  }, [allOrders, selectedDate]);
+  }, [allOrders, selectedDate, statusFilter]);
 
   const deleteOrderMutation = trpc.orders.delete.useMutation();
   const updateOrderMutation = trpc.orders.update.useMutation();
@@ -212,7 +213,21 @@ export function Orders() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Orders for {selectedDate}</CardTitle>
+          <div className="flex justify-between items-center mb-4">
+            <CardTitle>Orders for {selectedDate}</CardTitle>
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            {(["Pending", "Ready", "On the Way", "Delivered"] as const).map((status) => (
+              <Button
+                key={status}
+                variant={statusFilter === status ? "default" : "outline"}
+                onClick={() => setStatusFilter(status)}
+                className="px-4 py-2"
+              >
+                {status}
+              </Button>
+            ))}
+          </div>
         </CardHeader>
         <CardContent>
           {isLoadingOrders ? (
