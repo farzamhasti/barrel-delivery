@@ -507,3 +507,21 @@ These features are documented for future enhancement but are not required for th
 - [x] Verify all functionality preserved
 - [x] TypeScript compilation: 0 errors
 - [x] Dev server: Running successfully
+
+
+## Phase 45: Restore Previous Driver Dashboard with Menu and Per-Driver Pages
+- [x] Restore full DriverDashboard.tsx with driver login menu
+- [x] Restore per-driver page structure with session tokens
+- [x] Update order display to use orderNumber (not order.id)
+- [x] Update customer data access to use direct fields (customerName, customerPhone, customerAddress)
+- [x] Add receipt image display to order details modal
+- [x] Restore return time calculation functionality (mock implementation)
+- [x] Restore route guidance with Google Maps integration
+- [x] Restore performance metrics display (mock implementation)
+- [x] Add customerName field to orders table schema
+- [x] Test driver login and dashboard access
+- [x] Test order status updates and delivery marking
+- [x] Test return time calculation
+- [x] Test map navigation
+- [x] TypeScript compilation: 0 errors
+- [x] Dev server: Running successfully
