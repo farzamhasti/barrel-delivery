@@ -51,21 +51,6 @@ export function Orders() {
   const editFileInputRef = useRef<HTMLInputElement>(null);
   const editCameraInputRef = useRef<HTMLInputElement>(null);
 
-  const getTodayDateString = () => {
-    const now = new Date();
-    const formatter = new Intl.DateTimeFormat("en-US", {
-      timeZone: "America/Toronto",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    });
-    const parts = formatter.formatToParts(now);
-    const year = parts.find((p) => p.type === "year")?.value;
-    const month = parts.find((p) => p.type === "month")?.value;
-    const day = parts.find((p) => p.type === "day")?.value;
-    return `${year}-${month}-${day}`;
-  };
-  const [selectedDate, setSelectedDate] = useState<string>(getTodayDateString());
   const [statusFilter, setStatusFilter] = useState<"Pending" | "Ready" | "On the Way" | "Delivered">("Pending");
 
   const [formData, setFormData] = useState<OrderFormData>({
@@ -77,32 +62,18 @@ export function Orders() {
     deliveryTime: "",
   });
 
-  const { data: allOrders = [], isLoading: isLoadingOrders } = trpc.orders.list.useQuery();
+  const { data: allOrders = [], isLoading: isLoadingOrders } = trpc.orders.getTodayWithItems.useQuery();
   
   const orders = useMemo(() => {
-    return allOrders.filter((order: any) => {
-      const orderDate = new Date(order.createdAt);
-      const formatter = new Intl.DateTimeFormat("en-US", {
-        timeZone: "America/Toronto",
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-      });
-      const parts = formatter.formatToParts(orderDate);
-      const year = parts.find((p) => p.type === "year")?.value;
-      const month = parts.find((p) => p.type === "month")?.value;
-      const day = parts.find((p) => p.type === "day")?.value;
-      const orderDateStr = `${year}-${month}-${day}`;
-      return orderDateStr === selectedDate && order.status === statusFilter;
-    });
-  }, [allOrders, selectedDate, statusFilter]);
+    return allOrders.filter((order: any) => order.status === statusFilter);
+  }, [allOrders, statusFilter]);
 
   const deleteOrderMutation = trpc.orders.delete.useMutation();
   const updateOrderMutation = trpc.orders.update.useMutation();
 
   const { data: selectedOrderDetails } = trpc.orders.getWithItems.useQuery(
     { orderId: selectedOrderId || 0 },
-    { enabled: selectedOrderId !== null }
+    { enabled: !!selectedOrderId }
   );
 
   const isDeleting = deleteOrderMutation.isPending;
