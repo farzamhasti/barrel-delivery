@@ -343,3 +343,20 @@ These features are documented for future enhancement but are not required for th
 - [x] TypeScript compilation: 0 errors
 - [x] Dev server: Running successfully
 - [x] Tests: Parser working (9/10 passing - minor test adjustments needed)
+
+
+## Phase 32: Simplify Receipt Scanner - Items Only with Tesseract.js
+- [x] Create simple item extractor from OCR text
+- [x] Extract items as simple list (no AI analysis)
+- [x] Add editable items list UI to receipt scanner
+- [x] Allow staff to add items manually
+- [x] Allow staff to edit items
+- [x] Allow staff to remove items
+- [x] Remove all LLM/AI API calls from receipt scanner
+- [x] Remove convertReceiptImage mutation
+- [x] Keep all existing UI/layout/styling unchanged
+- [x] Keep manual input fields (address, phone, area, delivery time)
+- [x] Test item extraction and editing
+- [x] Verify no external API calls
+- [x] TypeScript compilation: 0 errors
+- [x] Dev server: Running successfully

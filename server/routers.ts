@@ -38,10 +38,8 @@ export const appRouter = router({
           }
         }
         
-        // Process receipt image if provided
+        // Process receipt image if provided (simple storage only, no LLM/AI processing)
         let processedReceiptImage = null;
-        let formattedReceiptImage = null;
-        let receiptTextExtracted = input.receiptText;
         let extractedCheckNumber = input.orderNumber;
         
         if (input.receiptImage) {
@@ -50,7 +48,7 @@ export const appRouter = router({
             const base64Data = input.receiptImage.replace(/^data:image\/[a-z]+;base64,/, '');
             const imageBuffer = Buffer.from(base64Data, 'base64');
             
-            // Upload original receipt image to S3 for storage
+            // Upload receipt image to S3 for storage
             const { storagePut } = await import('./storage');
             if (!storagePut) {
               throw new Error('storagePut function not available');
@@ -60,26 +58,6 @@ export const appRouter = router({
             const { url: s3ReceiptUrl } = await storagePut(fileKey, imageBuffer, 'image/jpeg');
             processedReceiptImage = s3ReceiptUrl;
             console.log('[orders.createFromReceipt] Receipt image uploaded to S3:', s3ReceiptUrl);
-            
-            // Analyze receipt with OCR using base64 data (more reliable for LLM)
-            try {
-              console.log('[orders.createFromReceipt] Starting OCR extraction with base64 data...');
-              const { extractReceiptData, formatReceiptText } = await import('./ocrReceiptExtractor');
-              // Pass the base64 data directly for LLM processing
-              const receiptData = await extractReceiptData(base64Data);
-              console.log('[orders.createFromReceipt] OCR extraction complete');
-              
-              // Store formatted receipt text
-              formattedReceiptImage = formatReceiptText(receiptData);
-              
-              // Extract check number from receipt data if available
-              if (receiptData.checkNumber && !input.orderNumber) {
-                extractedCheckNumber = receiptData.checkNumber;
-              }
-            } catch (ocrError) {
-              console.error('[orders.createFromReceipt] OCR extraction failed:', ocrError);
-              // Continue without OCR if analysis fails - the original receipt is still saved
-            }
           } catch (error) {
             console.error('[orders.createFromReceipt] Error processing receipt image:', error);
             // Continue without image if processing fails
@@ -94,7 +72,6 @@ export const appRouter = router({
           area: input.area,
           deliveryTime: deliveryTimeValue ? deliveryTimeValue.toISOString() : null,
           receiptImage: processedReceiptImage,
-          formattedReceiptImage: formattedReceiptImage,
           status: 'Pending',
           driverId: null,
           subtotal: 0,
