@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { useLocation } from "wouter";
 import { DeveloperCredit } from "@/components/DeveloperCredit";
 import { useDriverReturnTime } from "@/contexts/DriverReturnTimeContext";
+import { ImageZoomModal } from "@/components/ImageZoomModal";
 
 export default function KitchenDashboard() {
   const [, setLocation] = useLocation();
@@ -18,6 +19,7 @@ export default function KitchenDashboard() {
   const { driverReturnTimes } = useDriverReturnTime();
   const [activeTab, setActiveTab] = useState("active");
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [zoomImageUrl, setZoomImageUrl] = useState<string | null>(null);
 
 
   const handleLogout = () => {
@@ -219,9 +221,10 @@ export default function KitchenDashboard() {
               className="w-full h-32 object-cover cursor-pointer hover:opacity-80 transition-opacity"
               onClick={(e) => {
                 e.stopPropagation();
-                setSelectedOrder(order);
+                setZoomImageUrl(order.receiptImage);
               }}
             />
+            <p className="text-xs text-gray-500 p-2 text-center">Click to zoom</p>
           </div>
         )}
 
@@ -359,7 +362,13 @@ export default function KitchenDashboard() {
             {order.receiptImage && (
               <div className="bg-white border border-gray-300 rounded-lg p-4">
                 <h3 className="text-sm font-semibold text-foreground mb-3">Scanned Receipt</h3>
-                <img src={order.receiptImage} alt="Scanned Receipt" className="w-full rounded border max-h-96 object-contain" />
+                <img
+                  src={order.receiptImage}
+                  alt="Scanned Receipt"
+                  className="w-full rounded border max-h-96 object-contain cursor-pointer hover:opacity-80 transition-opacity"
+                  onClick={() => setZoomImageUrl(order.receiptImage)}
+                />
+                <p className="text-xs text-gray-500 mt-2 text-center">Click to zoom</p>
               </div>
             )}
 
@@ -575,6 +584,16 @@ export default function KitchenDashboard() {
 
       {/* Order Detail Modal */}
       {memoizedOrder && <OrderDetailModal order={memoizedOrder} />}
+
+      {/* Image Zoom Modal */}
+      {zoomImageUrl && (
+        <ImageZoomModal
+          isOpen={true}
+          imageUrl={zoomImageUrl}
+          imageAlt="Scanned Receipt"
+          onClose={() => setZoomImageUrl(null)}
+        />
+      )}
       </div>
 
     <DeveloperCredit />
