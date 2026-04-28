@@ -202,21 +202,8 @@ export function Orders() {
     <div className="space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle>Select Date</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Input
-            type="date"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-          />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
           <div className="flex justify-between items-center mb-4">
-            <CardTitle>Orders for {selectedDate}</CardTitle>
+            <CardTitle>Orders for Today</CardTitle>
           </div>
           <div className="flex gap-2 flex-wrap">
             {(["Pending", "Ready", "On the Way", "Delivered"] as const).map((status) => (
@@ -237,7 +224,7 @@ export function Orders() {
               <Loader2 className="animate-spin" />
             </div>
           ) : orders.length === 0 ? (
-            <p className="text-gray-500">No orders for this date</p>
+            <p className="text-gray-500">No orders for today</p>
           ) : (
             <div className="space-y-2">
               {orders.map((order: any) => (
