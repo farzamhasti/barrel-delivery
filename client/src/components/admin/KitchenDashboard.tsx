@@ -96,7 +96,7 @@ export default function KitchenDashboard() {
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <div className="flex items-center justify-between w-full">
-                <DialogTitle>Order Details</DialogTitle>
+                <DialogTitle>Order #{order?.orderNumber} - Scanned Receipt</DialogTitle>
                 <DialogClose asChild>
                   <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
                     <X className="h-4 w-4" />
@@ -105,103 +105,30 @@ export default function KitchenDashboard() {
               </div>
             </DialogHeader>
             {order && (
-              <>
-                <div className="space-y-4">
-                  {/* Basic Info */}
-                  <div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm text-gray-600 font-medium">Address</p>
-                        <p className="text-sm font-medium">{order.customerAddress}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600 font-medium">Phone</p>
-                        <p className="text-sm font-medium">{order.customerPhone}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600 font-medium">Area</p>
-                        <p className="text-sm font-medium">{order.area}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600 font-medium">Status</p>
-                        <p className="text-sm font-medium">{order.status}</p>
-                      </div>
-                      {order.deliveryTime && (
-                        <div>
-                          <p className="text-sm text-gray-600 font-medium">Delivery Time</p>
-                          <p className="text-sm font-medium">
-                            {new Date(order.deliveryTime).toLocaleString()}
-                          </p>
-                        </div>
-                      )}
-                    </div>
+              <div className="space-y-4">
+                {/* Scanned Receipt Image Section */}
+                {order.receiptImage ? (
+                  <div className="bg-white border border-gray-300 rounded-lg p-4">
+                    <img
+                      src={order.receiptImage}
+                      alt="Scanned Receipt"
+                      className="w-full rounded border object-contain cursor-pointer hover:opacity-80 transition-opacity"
+                      onClick={() => setZoomImageUrl(order.receiptImage)}
+                    />
+                    <p className="text-xs text-gray-500 mt-2 text-center">Click to zoom</p>
                   </div>
-
-                  {/* Scanned Receipt Image Section */}
-                  {order.receiptImage && (
-                    <div className="bg-white border border-gray-300 rounded-lg p-4">
-                      <h3 className="text-sm font-semibold text-foreground mb-3">Scanned Receipt</h3>
-                      <img
-                        src={order.receiptImage}
-                        alt="Scanned Receipt"
-                        className="w-full rounded border max-h-96 object-contain cursor-pointer hover:opacity-80 transition-opacity"
-                        onClick={() => setZoomImageUrl(order.receiptImage)}
-                      />
-                      <p className="text-xs text-gray-500 mt-2 text-center">Click to zoom</p>
-                    </div>
-                  )}
-
-                  {/* Order Items Section */}
-                  <div>
-                    <h3 className="text-sm font-semibold text-foreground mb-3">Order Items</h3>
-                    <div className="space-y-2">
-                      {order.items && order.items.length > 0 ? (
-                        order.items.map((item: any, idx: number) => (
-                          <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
-                            <div className="flex-1">
-                              <p className="font-medium text-foreground">{item.menuItemName}</p>
-                              <p className="text-xs text-muted-foreground">Qty: {item.quantity}</p>
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <p className="text-sm text-muted-foreground">No items</p>
-                      )}
-                    </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <p>No scanned receipt image available for this order</p>
                   </div>
-
-                  {/* Notes Section */}
-                  {order.notes && (
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                      <h3 className="text-sm font-semibold text-yellow-900 mb-2">Special Notes</h3>
-                      <p className="text-sm text-yellow-800">{order.notes}</p>
-                    </div>
-                  )}
-
-                  {/* Mark Ready Button */}
-                  <Button
-                    size="lg"
-                    className="w-full bg-green-600 hover:bg-green-700 text-white"
-                    onClick={() => {
-                      console.log('[KitchenDashboard] Mark Order as Ready clicked for order:', order.id);
-                      updateStatusMutation.mutate({
-                        orderId: order.id,
-                        status: "Ready",
-                      });
-                      console.log('[KitchenDashboard] Mutation triggered');
-                    }}
-                    disabled={updateStatusMutation.isPending}
-                  >
-                    {updateStatusMutation.isPending ? "Updating..." : "Mark Order as Ready"}
-                  </Button>
-                </div>
-              </>
+                )}
+              </div>
             )}
           </DialogContent>
         </Dialog>
       );
     },
-    [handleModalOpenChange, updateStatusMutation]
+    [handleModalOpenChange]
   );
 
   return (
@@ -286,16 +213,14 @@ export default function KitchenDashboard() {
                     className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer"
                     onClick={() => setSelectedOrder(order)}
                   >
-                    <div className="flex justify-between">
+                    <div className="flex justify-between items-start">
                       <div className="flex-1">
                         <p className="font-semibold">Order #{order.orderNumber}</p>
                         <p className="text-sm text-gray-600">{order.customerAddress}</p>
-                        <p className="text-sm text-gray-600">{order.customerPhone}</p>
                         <p className="text-sm text-gray-600">Area: {order.area}</p>
                         {order.deliveryTime && (
                           <p className="text-sm text-gray-600">Delivery: {new Date(order.deliveryTime).toLocaleString()}</p>
                         )}
-                        <p className="text-sm font-medium">Status: {order.status}</p>
                       </div>
                     </div>
                   </div>
@@ -317,16 +242,14 @@ export default function KitchenDashboard() {
                     className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer"
                     onClick={() => setSelectedOrder(order)}
                   >
-                    <div className="flex justify-between">
+                    <div className="flex justify-between items-start">
                       <div className="flex-1">
                         <p className="font-semibold">Order #{order.orderNumber}</p>
                         <p className="text-sm text-gray-600">{order.customerAddress}</p>
-                        <p className="text-sm text-gray-600">{order.customerPhone}</p>
                         <p className="text-sm text-gray-600">Area: {order.area}</p>
                         {order.deliveryTime && (
                           <p className="text-sm text-gray-600">Delivery: {new Date(order.deliveryTime).toLocaleString()}</p>
                         )}
-                        <p className="text-sm font-medium">Status: {order.status}</p>
                       </div>
                     </div>
                   </div>
