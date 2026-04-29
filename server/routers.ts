@@ -87,8 +87,16 @@ export const appRouter = router({
       }),
 
     getTodayWithItems: publicProcedure
-      .query(async () => {
-        return db.getTodayOrdersWithItems();
+      .input(z.object({
+        driverId: z.number().optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        const allOrders = await db.getTodayOrdersWithItems();
+        // If driverId is provided, filter for orders assigned to that driver
+        if (input?.driverId) {
+          return allOrders.filter((order: any) => order.driverId === input.driverId);
+        }
+        return allOrders;
       }),
 
     getReadyOrders: publicProcedure
@@ -124,6 +132,19 @@ export const appRouter = router({
       }))
       .query(async ({ input }) => {
         return db.getOrderWithItems(input.orderId);
+      }),
+
+    sendToDriver: publicProcedure
+      .input(z.object({
+        orderId: z.number(),
+        driverId: z.number(),
+      }))
+      .mutation(async ({ input }) => {
+        // Update order with driver assignment and change status to "On the Way"
+        return db.updateOrder(input.orderId, {
+          driverId: input.driverId,
+          status: 'On the Way',
+        });
       }),
 
     convertReceiptImage: publicProcedure

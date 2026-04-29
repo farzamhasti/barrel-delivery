@@ -25,6 +25,8 @@ export default function DriverDashboard() {
   const [isLoading, setIsLoading] = useState(false);
   const [sessionToken, setSessionToken] = useState<string | null>(null);
   const [loggedInDriverName, setLoggedInDriverName] = useState<string | null>(null);
+  const [currentDriverId, setCurrentDriverId] = useState<number | null>(null);
+  const [driverStatus, setDriverStatus] = useState<"online" | "offline">("offline");
   
   // Get stored session token from localStorage on mount
   useEffect(() => {
@@ -62,8 +64,8 @@ export default function DriverDashboard() {
   } as any;
   
   const { data: assignedOrdersRaw = [], isLoading: ordersLoading, refetch: refetchOrders } = trpc.orders.getTodayWithItems.useQuery(
-    undefined,
-    { enabled: !!sessionToken }
+    currentDriverId ? { driverId: currentDriverId } : undefined,
+    { enabled: !!sessionToken && !!currentDriverId }
   );
   const assignedOrders = (assignedOrdersRaw as any) || [];
 
@@ -120,9 +122,7 @@ export default function DriverDashboard() {
     },
   });
 
-  // Driver status management
-  const [driverStatus, setDriverStatus] = useState<"online" | "offline">("offline");
-  const [currentDriverId, setCurrentDriverId] = useState<number | null>(null);
+  // Driver status management (already declared above)
   
   // Get tRPC utils for query invalidation
   const utils = trpc.useUtils();
