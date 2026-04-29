@@ -694,3 +694,16 @@ These features are documented for future enhancement but are not required for th
 - [x] No console errors
 - [x] TypeScript compilation: 0 errors
 - [x] Dev server: Running successfully
+
+
+## Phase 61: Fix Map Bugs - Order Markers and Stability
+- [x] Fix map blinking/flickering by initializing map only once in onMapReady
+- [x] Add restaurant marker to map with proper styling
+- [x] Implement geocoding queue for order addresses with rate limiting
+- [x] Display order location markers with emoji labels (📦)
+- [x] Ensure map stays centered on Fort Erie (42.905191, -78.9225479)
+- [x] Test marker display with multiple orders
+- [x] Verify no console errors
+- [x] TypeScript compilation: 0 errors
+- [x] Dev server: Running successfully
+- [x] Both bugs fixed: Map is stable and shows order markers
