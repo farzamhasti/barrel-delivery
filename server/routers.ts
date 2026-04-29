@@ -428,8 +428,8 @@ export const appRouter = router({
           }
           
           return {
-            latitude: result.latitude,
-            longitude: result.longitude,
+            lat: result.latitude,
+            lng: result.longitude,
             formattedAddress: result.formattedAddress,
             placeId: result.placeId,
           };
