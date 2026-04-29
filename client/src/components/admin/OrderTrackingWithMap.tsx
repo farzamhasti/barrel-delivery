@@ -37,8 +37,11 @@ export default function OrderTrackingWithMap() {
   // Fetch today's orders with items for complete data
   const { data: allOrders = [], isLoading, refetch } = trpc.orders.getTodayWithItems.useQuery(undefined, { enabled: !!user });
   
-  // Fetch drivers for Active Drivers section
-  const { data: drivers = [], isLoading: driversLoading } = trpc.drivers.list.useQuery(undefined, { enabled: !!user });
+  // Fetch drivers for Active Drivers section with real-time polling (3-second interval)
+  const { data: drivers = [], isLoading: driversLoading } = trpc.drivers.list.useQuery(undefined, { 
+    enabled: !!user,
+    refetchInterval: 3000, // Poll every 3 seconds for real-time updates
+  });
   const activeDrivers = drivers.filter((d: any) => d.status === "online" && d.isActive);
 
   // Fetch selected order from allOrders
@@ -174,27 +177,37 @@ export default function OrderTrackingWithMap() {
             <div className="p-4 border-b border-border flex-shrink-0">
               <h3 className="text-lg font-semibold text-foreground">Active Drivers ({activeDrivers.length})</h3>
             </div>
-            <div className="flex-1 overflow-y-auto">
-              {activeDrivers.length === 0 ? (
-                <div className="p-4 text-center text-muted-foreground">No active drivers</div>
-              ) : (
-                <div className="divide-y divide-border">
-                  {activeDrivers.map((driver: any) => (
-                    <div key={driver.id} className="p-4 hover:bg-muted/50 transition-colors">
-                      <div className="font-medium text-foreground">{driver.name}</div>
-                      <div className="flex items-center gap-2 mt-2 text-sm">
-                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                          Online
-                        </Badge>
-                        <span className="text-muted-foreground font-mono">
-                          {driverReturnTimes[driver.id] || "N/A"}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            
+            {activeDrivers.length === 0 ? (
+              <div className="p-6 text-center flex-1 flex items-center justify-center">
+                <p className="text-muted-foreground">No active drivers</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto flex-1">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/50">
+                      <th className="text-left py-2 px-3 font-semibold">Name</th>
+                      <th className="text-left py-2 px-3 font-semibold">Status</th>
+                      <th className="text-left py-2 px-3 font-semibold">Est. Return</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {activeDrivers.map((driver: any) => (
+                      <tr key={driver.id} className="border-b border-border hover:bg-muted/30">
+                        <td className="py-2 px-3">{driver.name}</td>
+                        <td className="py-2 px-3">
+                          <Badge className="bg-green-100 text-green-800 text-xs">Online</Badge>
+                        </td>
+                        <td className="py-2 px-3 text-muted-foreground font-mono">
+                          {driverReturnTimes[driver.id] || "00:00"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </Card>
         </div>
       </div>

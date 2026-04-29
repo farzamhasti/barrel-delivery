@@ -707,3 +707,14 @@ These features are documented for future enhancement but are not required for th
 - [x] TypeScript compilation: 0 errors
 - [x] Dev server: Running successfully
 - [x] Both bugs fixed: Map is stable and shows order markers
+
+
+## Phase 62: Match Active Drivers Table Styling & Add Real-Time Updates
+- [x] Convert Order Tracking Active Drivers from card layout to table layout
+- [x] Match Dashboard table structure (Name, Status, Est. Return columns)
+- [x] Match Dashboard styling (Card, header, table, badges)
+- [x] Add real-time polling (refetchInterval: 3000) to drivers query
+- [x] Driver status updates instantly without tab switching
+- [x] Verify table styling matches exactly between Dashboard and Order Tracking
+- [x] TypeScript compilation: 0 errors
+- [x] Dev server: Running successfully
