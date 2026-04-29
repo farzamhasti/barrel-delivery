@@ -125,7 +125,7 @@ export default function OrderTrackingWithMap() {
     });
   }, [orders, geocodedLocations, failedGeocodings]);
 
-  const assignDriverMutation = trpc.orders.assignDriver.useMutation();
+  const assignDriverMutation = trpc.orders.sendToDriver.useMutation();
 
   const handleSendToDriver = async (orderId: number, driverId: number) => {
     try {
