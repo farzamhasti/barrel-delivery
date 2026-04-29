@@ -587,6 +587,14 @@ These features are documented for future enhancement but are not required for th
 - [x] Dev server: Running successfully
 
 
+## Phase 54: Fix Offline Button Not Working on First Attempt
+- [x] Investigate why offline button doesn't work after first login
+- [x] Add invalidation of drivers.getByName query
+- [x] Ensure driver data is refetched after status changes
+- [x] Test online/offline toggle multiple times
+- [x] TypeScript compilation: 0 errors
+- [x] Dev server: Running successfully
+
 ## Phase 53: Fix Invalid Hook Call Error in DriverDashboard
 - [x] Move trpc.useUtils() outside mutation definition
 - [x] Call hooks at component level, not in callbacks
@@ -613,3 +621,13 @@ These features are documented for future enhancement but are not required for th
 - [x] Verify overall logic remains unchanged
 - [x] TypeScript compilation: 0 errors
 - [x] Dev server: Running successfully
+
+
+## Phase 55: Make Active Drivers Table Styling Consistent
+- [ ] Compare Active Drivers table in Order Tracking tab vs Admin Dashboard
+- [ ] Identify styling differences
+- [ ] Update Order Tracking Active Drivers table to match Admin Dashboard style
+- [ ] Test responsive design on desktop and tablet
+- [ ] Verify all functionality preserved
+- [ ] TypeScript compilation: 0 errors
+- [ ] Dev server: Running successfully
