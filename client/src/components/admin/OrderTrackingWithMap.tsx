@@ -125,22 +125,16 @@ export default function OrderTrackingWithMap() {
     });
   }, [orders, geocodedLocations, failedGeocodings]);
 
-  const sendOrderToDriverMutation = trpc.drivers.sendOrderToDriver.useMutation({
-    onSuccess: () => {
-      utils.orders.getTodayWithItems.invalidate();
-      setShowDriverModal(false);
-      setOrderToAssign(null);
-    },
-    onError: (error: any) => {
-      console.error("Failed to send order to driver:", error);
-    },
-  });
+  const assignDriverMutation = trpc.orders.assignDriver.useMutation();
 
   const handleSendToDriver = async (orderId: number, driverId: number) => {
     try {
-      await sendOrderToDriverMutation.mutateAsync({ orderId, driverId });
+      await assignDriverMutation.mutateAsync({ orderId, driverId });
+      await utils.orders.getTodayWithItems.invalidate();
+      setShowDriverModal(false);
+      setOrderToAssign(null);
     } catch (error) {
-      console.error("Failed to send order to driver:", error);
+      console.error("Failed to assign driver:", error);
     }
   };
 
