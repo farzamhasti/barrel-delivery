@@ -9,7 +9,7 @@ import { Menu, Package2, Truck, LogOut, Settings, Plus, Map, X, Calendar, Gift }
 
 import { Orders } from "@/pages/Orders";
 import DriverManagement from "@/components/admin/DriverManagement";
-import Dashboard from "@/components/admin/Dashboard";
+
 import { ReceiptScannerTesseract } from "@/components/admin/ReceiptScannerTesseract";
 import OrderTrackingWithMap from "@/components/admin/OrderTrackingWithMap";
 import { DeliveryReportTab } from "@/components/DeliveryReportTab";
@@ -184,14 +184,12 @@ export default function AdminDashboard() {
           <div className="flex-1 overflow-auto">
             <div className="w-full h-full p-4 md:p-6">
               <div className="w-full max-w-7xl mx-auto">
-                {currentTab === "dashboard" && <Dashboard />}
                 {currentTab === "create-order" && <ReceiptScannerTesseract />}
-
                 {currentTab === "orders" && <Orders />}
-                {currentTab === "drivers" && <DriverManagement />}
                 {currentTab === "order-tracking" && <OrderTrackingWithMap />}
+                {currentTab === "reservations" && <div>Reservations</div>}
+                {currentTab === "drivers" && <DriverManagement />}
                 {currentTab === "delivery-report" && <DeliveryReportTab />}
-                {/* Reservations tab disabled for now */}
 
               </div>
             </div>
@@ -214,29 +212,16 @@ function SidebarContent({
       {/* Navigation */}
       <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
         <NavItem
-          href="/admin/dashboard"
-          icon={<Package2 className="w-5 h-5" />}
-          label="Dashboard"
-          active={currentTab === "dashboard"}
-        />
-        <NavItem
           href="/admin/create-order"
           icon={<Plus className="w-5 h-5" />}
           label="New Order"
           active={currentTab === "create-order"}
         />
-
         <NavItem
           href="/admin/orders"
           icon={<Package2 className="w-5 h-5" />}
           label="Orders"
           active={currentTab === "orders"}
-        />
-        <NavItem
-          href="/admin/drivers"
-          icon={<Truck className="w-5 h-5" />}
-          label="Drivers"
-          active={currentTab === "drivers"}
         />
         <NavItem
           href="/admin/order-tracking"
@@ -245,18 +230,23 @@ function SidebarContent({
           active={currentTab === "order-tracking"}
         />
         <NavItem
-          href="/admin/delivery-report"
-          icon={<Calendar className="w-5 h-5" />}
-          label="Delivery Report"
-          active={currentTab === "delivery-report"}
-        />
-        <NavItem
           href="/admin/reservations"
           icon={<Gift className="w-5 h-5" />}
           label="Reservations"
           active={currentTab === "reservations"}
         />
-
+        <NavItem
+          href="/admin/drivers"
+          icon={<Truck className="w-5 h-5" />}
+          label="Drivers"
+          active={currentTab === "drivers"}
+        />
+        <NavItem
+          href="/admin/delivery-report"
+          icon={<Calendar className="w-5 h-5" />}
+          label="Delivery Report"
+          active={currentTab === "delivery-report"}
+        />
       </nav>
 
       {/* Footer */}
