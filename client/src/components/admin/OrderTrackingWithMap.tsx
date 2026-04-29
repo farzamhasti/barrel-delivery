@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MapPin, Eye, EyeOff, Clock, Send } from "lucide-react";
@@ -305,43 +305,45 @@ export default function OrderTrackingWithMap() {
         )}
 
         {/* Active Drivers Section - Right Side */}
-        <div className="w-80 flex flex-col overflow-hidden border border-border rounded-lg bg-background">
-          <div className="p-4 border-b border-border flex-shrink-0">
-            <h3 className="font-semibold text-sm">Active Drivers ({activeDrivers.length})</h3>
-          </div>
-          
-          {driversLoading ? (
-            <div className="p-4 text-xs text-muted-foreground">Loading drivers...</div>
-          ) : activeDrivers.length === 0 ? (
-            <div className="p-6 text-center flex-1 flex items-center justify-center">
-              <p className="text-xs text-muted-foreground">No active drivers</p>
+        <div className="w-80 flex flex-col overflow-hidden">
+          <Card className="overflow-hidden flex-1 flex flex-col">
+            <div className="p-4 border-b border-border flex-shrink-0">
+              <h3 className="text-lg font-semibold text-foreground">Active Drivers ({activeDrivers.length})</h3>
             </div>
-          ) : (
-            <div className="overflow-x-auto flex-1">
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="border-b border-border bg-muted/50">
-                    <th className="text-left py-2 px-3 font-semibold">Name</th>
-                    <th className="text-left py-2 px-3 font-semibold">Status</th>
-                    <th className="text-left py-2 px-3 font-semibold">Est. Return</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {activeDrivers.map((driver: any) => (
-                    <tr key={driver.id} className="border-b border-border hover:bg-muted/30">
-                      <td className="py-2 px-3">{driver.name}</td>
-                      <td className="py-2 px-3">
-                        <Badge className="bg-green-100 text-green-800 text-xs">Online</Badge>
-                      </td>
-                      <td className="py-2 px-3 text-muted-foreground font-mono">
-                        {driverReturnTimes[driver.id] || "00:00"}
-                      </td>
+            
+            {driversLoading ? (
+              <div className="p-4 text-xs text-muted-foreground">Loading drivers...</div>
+            ) : activeDrivers.length === 0 ? (
+              <div className="p-6 text-center flex-1 flex items-center justify-center">
+                <p className="text-muted-foreground">No active drivers</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto flex-1">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/50">
+                      <th className="text-left py-2 px-3 font-semibold">Name</th>
+                      <th className="text-left py-2 px-3 font-semibold">Status</th>
+                      <th className="text-left py-2 px-3 font-semibold">Est. Return</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+                  </thead>
+                  <tbody>
+                    {activeDrivers.map((driver: any) => (
+                      <tr key={driver.id} className="border-b border-border hover:bg-muted/30">
+                        <td className="py-2 px-3">{driver.name}</td>
+                        <td className="py-2 px-3">
+                          <Badge className="bg-green-100 text-green-800 text-xs">Online</Badge>
+                        </td>
+                        <td className="py-2 px-3 text-muted-foreground font-mono">
+                          {driverReturnTimes[driver.id] || "00:00"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </Card>
         </div>
       </div>
 

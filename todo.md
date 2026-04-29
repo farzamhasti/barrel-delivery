@@ -421,15 +421,15 @@ These features are documented for future enhancement but are not required for th
 
 
 ## Phase 37: Remove No Receipt Message and Add Image Zoom
-- [ ] Remove "No receipt information available" message from Orders.tsx
-- [ ] Remove "No receipt information available" message from KitchenDashboard.tsx
-- [ ] Create ImageZoomModal component for zooming
-- [ ] Add zoom button to scanned receipt images in Orders.tsx
-- [ ] Add zoom button to scanned receipt images in KitchenDashboard.tsx
-- [ ] Test zoom on desktop and tablet
-- [ ] Verify no UI/layout changes
-- [ ] TypeScript compilation: 0 errors
-- [ ] Dev server: Running successfully
+- [x] Remove "No receipt information available" message from Orders.tsx
+- [x] Remove "No receipt information available" message from KitchenDashboard.tsx
+- [x] Create ImageZoomModal component for zooming
+- [x] Add zoom button to scanned receipt images in Orders.tsx
+- [x] Add zoom button to scanned receipt images in KitchenDashboard.tsx
+- [x] Test zoom on desktop and tablet
+- [x] Verify no UI/layout changes
+- [x] TypeScript compilation: 0 errors
+- [x] Dev server: Running successfully
 
 
 ## Phase 37: Remove No Receipt Information Message and Add Image Zoom
@@ -624,10 +624,11 @@ These features are documented for future enhancement but are not required for th
 
 
 ## Phase 55: Make Active Drivers Table Styling Consistent
-- [ ] Compare Active Drivers table in Order Tracking tab vs Admin Dashboard
-- [ ] Identify styling differences
-- [ ] Update Order Tracking Active Drivers table to match Admin Dashboard style
-- [ ] Test responsive design on desktop and tablet
-- [ ] Verify all functionality preserved
-- [ ] TypeScript compilation: 0 errors
-- [ ] Dev server: Running successfully
+- [x] Compare Active Drivers table in Order Tracking tab vs Admin Dashboard
+- [x] Identify styling differences
+- [x] Update Order Tracking Active Drivers table to match Admin Dashboard style (wrapped in Card component)
+- [x] Test responsive design on desktop and tablet
+- [x] Verify all functionality preserved
+- [x] TypeScript compilation: 0 errors
+- [x] Dev server: Running successfully
+- [x] Verified both tables use Card component with consistent styling
