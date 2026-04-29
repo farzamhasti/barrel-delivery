@@ -125,6 +125,8 @@ export default function DriverDashboard() {
       }
       // Invalidate drivers list query to refresh active drivers table
       utils.drivers.list.invalidate();
+      // Invalidate getByName query to refresh driver status
+      utils.drivers.getByName.invalidate({ name: loggedInDriverName || "" });
       // Refetch orders as well
       refetchOrders();
     },

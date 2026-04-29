@@ -587,6 +587,13 @@ These features are documented for future enhancement but are not required for th
 - [x] Dev server: Running successfully
 
 
+## Phase 53: Fix Invalid Hook Call Error in DriverDashboard
+- [x] Move trpc.useUtils() outside mutation definition
+- [x] Call hooks at component level, not in callbacks
+- [x] Fix "Invalid hook call" error
+- [x] TypeScript compilation: 0 errors
+- [x] Dev server: Running successfully
+
 ## Phase 52: Fix Online/Offline Button Functionality in Drivers Dashboard
 - [x] Investigate online/offline button implementation
 - [x] Add status column to drivers table schema
