@@ -5,10 +5,12 @@ import { trpc } from "@/lib/trpc";
 import { useDriverReturnTime } from "@/contexts/DriverReturnTimeContext";
 
 export default function Dashboard() {
-  const { data: activeDrivers = [] } = trpc.drivers.list.useQuery();
+  const { data: drivers = [] } = trpc.drivers.list.useQuery();
   const { data: todayOrders = [] } = trpc.orders.getTodayWithItems.useQuery();
   const { driverReturnTimes } = useDriverReturnTime();
 
+  // Filter drivers by online status
+  const activeDrivers = drivers.filter((d: any) => d.status === "online" && d.isActive);
   const activeDriverCount = activeDrivers.length;
 
   const getStatusBadgeClass = (status: string) => {
