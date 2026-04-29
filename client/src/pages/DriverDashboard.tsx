@@ -113,6 +113,9 @@ export default function DriverDashboard() {
   const [driverStatus, setDriverStatus] = useState<"online" | "offline">("offline");
   const [currentDriverId, setCurrentDriverId] = useState<number | null>(null);
   
+  // Get tRPC utils for query invalidation
+  const utils = trpc.useUtils();
+
   // Real tRPC mutation for updating driver status
   const updateStatusMutation = trpc.drivers.setStatus.useMutation({
     onSuccess: (data) => {
@@ -121,7 +124,6 @@ export default function DriverDashboard() {
         setDriverStatus((data as any).status as "online" | "offline");
       }
       // Invalidate drivers list query to refresh active drivers table
-      const utils = trpc.useUtils();
       utils.drivers.list.invalidate();
       // Refetch orders as well
       refetchOrders();

@@ -597,6 +597,9 @@ These features are documented for future enhancement but are not required for th
 - [x] Update DriverDashboard to use real tRPC mutation
 - [x] Fix online/offline button click handlers to include driver ID
 - [x] Add query invalidation (utils.drivers.list.invalidate()) to mutation
+- [x] Add loggedInDriverName state to track logged-in driver
+- [x] Add getByName query to drivers router
+- [x] Use driver lookup to set currentDriverId
 - [x] Verify Active Drivers table filtering by status
 - [x] Test online button - driver should appear in Active Drivers table
 - [x] Test offline button - driver should disappear from Active Drivers table
