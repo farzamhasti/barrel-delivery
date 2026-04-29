@@ -397,6 +397,23 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         return db.updateDriverStatus(input.id, input.status);
       }),
+
+    login: publicProcedure
+      .input(z.object({
+        name: z.string(),
+        licenseNumber: z.string(),
+      }))
+      .mutation(async ({ input }) => {
+        const driver = await db.getDriverByNameAndLicense(input.name, input.licenseNumber);
+        if (!driver) {
+          throw new Error('Invalid credentials. Driver not found.');
+        }
+        return {
+          sessionToken: `driver_${driver.id}_${Date.now()}`,
+          driverId: driver.id,
+          driverName: driver.name,
+        };
+      }),
   }),
 
   auth: router({

@@ -40,11 +40,22 @@ export default function DriverDashboard() {
     { enabled: !!sessionToken }
   );
   
-  // Mock login/logout - use localStorage for session management
-  const loginMutation = {
-    mutateAsync: async (data: any) => ({ sessionToken: 'mock-token' }),
-    isPending: false,
-  } as any;
+  // Real driver login mutation
+  const loginMutation = trpc.drivers.login.useMutation({
+    onSuccess: (data: any) => {
+      localStorage.setItem(DRIVER_SESSION_KEY, data.sessionToken);
+      setSessionToken(data.sessionToken);
+      setLoggedInDriverName(data.driverName);
+      setCurrentDriverId(data.driverId);
+      setIsLoggedIn(true);
+      setDriverName("");
+      setLicenseNumber("");
+    },
+    onError: (error: any) => {
+      setLoginError(error.message || "Login failed. Please check your credentials.");
+    },
+  });
+  
   const logoutMutation = {
     mutateAsync: async (data: any) => ({}),
     isPending: false,
@@ -171,21 +182,10 @@ export default function DriverDashboard() {
     setIsLoading(true);
 
     try {
-      const result = await loginMutation.mutateAsync({
+      await loginMutation.mutateAsync({
         name: driverName,
         licenseNumber: licenseNumber,
       });
-      
-      // Store session token in localStorage
-      if (result.sessionToken) {
-        localStorage.setItem(DRIVER_SESSION_KEY, result.sessionToken);
-        setSessionToken(result.sessionToken);
-        setLoggedInDriverName(driverName);
-      }
-      
-      setDriverName("");
-      setLicenseNumber("");
-      setIsLoggedIn(true);
       
       // Refresh driver data
       refetchDriver();
