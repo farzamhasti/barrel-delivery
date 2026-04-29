@@ -67,13 +67,13 @@ export default function OrderTrackingWithMap() {
     };
   }, []);
 
-  // Auto-refetch every 5 seconds for real-time updates
-  useEffect(() => {
-    const interval = setInterval(() => {
-      refetch();
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [refetch]);
+  // Auto-refetch disabled to prevent map blinking - use manual refresh instead
+  // useEffect(() => {
+  //   const interval = setInterval(() => {
+  //     refetch();
+  //   }, 5000);
+  //   return () => clearInterval(interval);
+  // }, [refetch]);
 
   // Process geocoding queue with rate limiting (1 request per 500ms)
   useEffect(() => {
@@ -100,11 +100,15 @@ export default function OrderTrackingWithMap() {
         });
 
         if (isMountedRef.current && result) {
-          const { lat, lng } = result as any;
-          setGeocodedLocations((prev) => ({
-            ...prev,
-            [orderId]: { lat, lng },
-          }));
+          const { lat, lng, error } = result as any;
+          if (!error && lat && lng && typeof lat === 'number' && typeof lng === 'number') {
+            setGeocodedLocations((prev) => ({
+              ...prev,
+              [orderId]: { lat, lng },
+            }));
+          } else {
+            throw new Error('Invalid geocoding result');
+          }
         }
       } catch (error) {
         if (isMountedRef.current) {
@@ -166,7 +170,7 @@ export default function OrderTrackingWithMap() {
   // Queue orders for geocoding
   useEffect(() => {
     orders.forEach((order: any) => {
-      if (
+      if (order.customerAddress && !geocodingQueueRef.current.includes(order.id) && 
         !geocodedLocations[order.id] &&
         !failedGeocodings.has(order.id) &&
         !geocodingInProgressRef.current.has(order.id)
