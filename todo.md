@@ -679,3 +679,18 @@ These features are documented for future enhancement but are not required for th
 - [x] TypeScript compilation: 0 errors
 - [x] Dev server: Running successfully
 - [x] No console errors on map rendering
+
+
+## Phase 60: Fix Map Bugs - Flickering and Order Markers
+- [x] Bug 1 - Order location not showing on map: Implemented geocoding queue and marker display
+- [x] Bug 2 - Map flickering/blinking: Moved map initialization to useEffect with empty dependency array
+- [x] Initialize map only once using useRef and mapInitializedRef flag
+- [x] Add restaurant marker only once in separate useEffect
+- [x] Simplify MapView onMapReady callback to only set mapRef
+- [x] Prevent map reinitialization on every render
+- [x] Geocoding queue properly queues orders for address-to-coordinates conversion
+- [x] Order markers display with color coding (yellow=Pending, green=Ready, blue=On Way)
+- [x] Map stays stable without flickering
+- [x] No console errors
+- [x] TypeScript compilation: 0 errors
+- [x] Dev server: Running successfully

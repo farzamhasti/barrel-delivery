@@ -30,9 +30,11 @@ export default function OrderTrackingWithMap() {
   const [failedGeocodings, setFailedGeocodings] = useState<Set<number>>(new Set());
   const mapRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.Marker[]>([]);
+  const restaurantMarkerRef = useRef<google.maps.Marker | null>(null);
   const isMountedRef = useRef(true);
   const geocodingQueueRef = useRef<number[]>([]);
   const geocodingInProgressRef = useRef<Set<number>>(new Set());
+  const mapInitializedRef = useRef(false);
 
   // Geocoding mutation
   const geocodeMutation = (trpc as any).maps.geocode.useMutation();
@@ -65,6 +67,32 @@ export default function OrderTrackingWithMap() {
     return () => {
       isMountedRef.current = false;
     };
+  }, []);
+
+  // Initialize map only once when mapRef is set
+  useEffect(() => {
+    if (!mapRef.current || mapInitializedRef.current) return;
+    
+    mapInitializedRef.current = true;
+    mapRef.current.setCenter(FORT_ERIE_CENTER);
+    mapRef.current.setZoom(13);
+
+    // Add restaurant marker only once
+    if (!restaurantMarkerRef.current) {
+      restaurantMarkerRef.current = new google.maps.Marker({
+        map: mapRef.current,
+        position: RESTAURANT_ADDRESS,
+        title: "Restaurant",
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 14,
+          fillColor: "#ef4444",
+          fillOpacity: 1,
+          strokeColor: "white",
+          strokeWeight: 2,
+        },
+      });
+    }
   }, []);
 
   // Auto-refetch disabled to prevent map blinking - use manual refresh instead
@@ -286,23 +314,6 @@ export default function OrderTrackingWithMap() {
             <MapView
               onMapReady={(map) => {
                 mapRef.current = map;
-                map.setCenter(FORT_ERIE_CENTER);
-                map.setZoom(13);
-
-                // Add restaurant marker
-                new google.maps.Marker({
-                  map,
-                  position: RESTAURANT_ADDRESS,
-                  title: "Restaurant",
-                  icon: {
-                    path: google.maps.SymbolPath.CIRCLE,
-                    scale: 14,
-                    fillColor: "#ef4444",
-                    fillOpacity: 1,
-                    strokeColor: "white",
-                    strokeWeight: 2,
-                  },
-                });
               }}
             />
           </div>
