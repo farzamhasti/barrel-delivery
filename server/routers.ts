@@ -397,6 +397,38 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         return db.updateDriverStatus(input.id, input.status);
       }),
+
+    login: publicProcedure
+      .input(z.object({
+        name: z.string(),
+        licenseNumber: z.string(),
+      }))
+      .mutation(async ({ input }) => {
+        const driver = await db.getDriverByNameAndLicense(input.name, input.licenseNumber);
+        if (!driver) {
+          throw new Error('Invalid driver credentials');
+        }
+        return { success: true, driverId: driver.id, driverName: driver.name };
+      }),
+
+    getAssignedOrders: publicProcedure
+      .input(z.object({
+        driverId: z.number(),
+      }))
+      .query(async ({ input }) => {
+        return db.getOrdersWithCustomer(input.driverId);
+      }),
+
+    sendOrderToDriver: publicProcedure
+      .input(z.object({
+        orderId: z.number(),
+        driverId: z.number(),
+      }))
+      .mutation(async ({ input }) => {
+        await db.assignOrderToDriver(input.orderId, input.driverId);
+        await db.updateOrder(input.orderId, { status: 'On the Way' });
+        return { success: true };
+      }),
   }),
 
   auth: router({
