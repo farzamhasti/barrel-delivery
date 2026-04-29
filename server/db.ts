@@ -295,8 +295,8 @@ export async function getTodayOrdersWithItems() {
   
   // Start of day in UTC: midnight Toronto time + offset
   const midnightTorontoMs = new Date(year, month - 1, day, 0, 0, 0, 0).getTime();
-  const startOfDay = new Date(midnightTorontoMs + offsetMs - 7 * 24 * 60 * 60 * 1000); // 7 days ago
-  const endOfDay = new Date(midnightTorontoMs + offsetMs + 24 * 60 * 60 * 1000); // Tomorrow
+  const startOfDay = new Date(midnightTorontoMs + offsetMs);
+  const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000);
   
   console.log('[getTodayOrdersWithItems] Timezone calculation:', {
     torontoDate: `${year}-${month}-${day}`,
