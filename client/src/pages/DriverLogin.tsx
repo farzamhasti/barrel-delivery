@@ -16,13 +16,15 @@ export default function DriverLogin() {
   const [loginError, setLoginError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  // Note: Redirect is handled by DriverDashboard component after login
+
   // Real driver login mutation
   const loginMutation = trpc.drivers.login.useMutation({
     onSuccess: (data: any) => {
       localStorage.setItem(DRIVER_SESSION_KEY, data.sessionToken);
       setDriverName("");
       setLicenseNumber("");
-      // Redirect to driver dashboard after successful login
+      // Redirect to driver dashboard
       setLocation("/driver-dashboard");
     },
     onError: (error: any) => {
@@ -42,7 +44,6 @@ export default function DriverLogin() {
       });
     } catch (error: any) {
       setLoginError(error.message || "Login failed. Please check your credentials.");
-    } finally {
       setIsLoading(false);
     }
   };
