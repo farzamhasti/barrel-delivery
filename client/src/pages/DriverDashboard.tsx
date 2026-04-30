@@ -245,6 +245,12 @@ export default function DriverDashboard() {
     }
   };
 
+  // Redirect to login if not authenticated
+  if (!sessionToken) {
+    setLocation("/driver-login");
+    return null;
+  }
+
   if (checkingAuth && sessionToken) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -256,80 +262,10 @@ export default function DriverDashboard() {
     );
   }
 
-  // Login Form
+  // Redirect to login if no driver data
   if (!isLoggedIn || !currentDriver) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col">
-        <DeveloperCredit />
-        <div className="flex-1 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-              <img 
-                src="/barrel-logo.png" 
-                alt="The Barrel Restaurant (Pizza & Pasta)" 
-                className="h-16 w-auto object-contain"
-              />
-            </div>
-            <CardTitle className="text-2xl">Driver Login</CardTitle>
-            <CardDescription>The Barrel Restaurant (Pizza & Pasta)</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Driver Name</Label>
-                <Input
-                  id="name"
-                  placeholder="Enter your name"
-                  value={driverName}
-                  onChange={(e) => setDriverName(e.target.value)}
-                  disabled={isLoading}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="license">License Number</Label>
-                <Input
-                  id="license"
-                  placeholder="Enter your license number"
-                  value={licenseNumber}
-                  onChange={(e) => setLicenseNumber(e.target.value)}
-                  disabled={isLoading}
-                  required
-                />
-              </div>
-
-              {loginError && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm">
-                  {loginError}
-                </div>
-              )}
-
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={isLoading || !driverName || !licenseNumber}
-              >
-                {isLoading ? "Logging in..." : "Login"}
-              </Button>
-
-              {/* Back Link */}
-              <div className="text-center">
-                <button
-                  type="button"
-                  onClick={() => setLocation("/")}
-                  className="text-sm text-blue-600 hover:text-blue-700 underline"
-                >
-                  Back to Home
-                </button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-        </div>
-      </div>
-    );
+    setLocation("/driver-login");
+    return null;
   }
 
   // Filter orders by status
