@@ -37,7 +37,6 @@ export default function DriverManagement() {
     name: "",
     phone: "",
     licenseNumber: "",
-    vehicleType: "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -64,7 +63,6 @@ export default function DriverManagement() {
         name: "",
         phone: "",
         licenseNumber: "",
-        vehicleType: "",
       });
       setShowForm(false);
     } catch (error) {
@@ -102,12 +100,11 @@ export default function DriverManagement() {
           className="gap-2" 
           onClick={() => {
             setEditingId(null);
-            setFormData({
-              name: "",
-              phone: "",
-              licenseNumber: "",
-              vehicleType: "",
-            });
+    setFormData({
+      name: "",
+      phone: "",
+      licenseNumber: "",
+    });
             setShowForm(!showForm);
           }}
         >
@@ -168,15 +165,7 @@ export default function DriverManagement() {
               />
             </div>
 
-            <div>
-              <Label htmlFor="driver-vehicle">Vehicle Type</Label>
-              <Input
-                id="driver-vehicle"
-                value={formData.vehicleType}
-                onChange={(e) => setFormData({ ...formData, vehicleType: e.target.value })}
-                placeholder="e.g., Motorcycle, Car, Truck"
-              />
-            </div>
+
 
             <div className="flex gap-2">
               <Button type="submit" className="flex-1">
@@ -218,7 +207,7 @@ export default function DriverManagement() {
                   <th className="text-left py-3 px-4 font-semibold">Name</th>
                   <th className="text-left py-3 px-4 font-semibold">Phone</th>
                   <th className="text-left py-3 px-4 font-semibold">License</th>
-                  <th className="text-left py-3 px-4 font-semibold">Vehicle Type</th>
+
                   <th className="text-left py-3 px-4 font-semibold">Status</th>
                   <th className="text-center py-3 px-4 font-semibold">Actions</th>
                 </tr>
@@ -229,7 +218,7 @@ export default function DriverManagement() {
                     <td className="py-3 px-4 font-medium">{driver.name}</td>
                     <td className="py-3 px-4">{driver.phone || "—"}</td>
                     <td className="py-3 px-4">{driver.licenseNumber || "—"}</td>
-                    <td className="py-3 px-4">{driver.vehicleType || "—"}</td>
+
                     <td className="py-3 px-4 text-center">
                       <Button
                         size="sm"

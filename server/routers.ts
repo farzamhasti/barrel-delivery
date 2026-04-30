@@ -159,45 +159,67 @@ export const appRouter = router({
   drivers: router({
     list: publicProcedure
       .query(async () => {
-        return await db.getAllDrivers();
+        return await db.getDrivers();
       }),
     create: publicProcedure
       .input(z.object({
         name: z.string(),
         licenseNumber: z.string(),
         phone: z.string().optional(),
-        vehicle: z.string().optional(),
       }))
       .mutation(async ({ input }) => {
         return await db.createDriver({
           name: input.name,
           licenseNumber: input.licenseNumber,
           phone: input.phone,
-          vehicle: input.vehicle,
           status: 'offline',
           isActive: true,
         });
       }),
 
+    update: publicProcedure
+      .input(z.object({
+        id: z.number(),
+        name: z.string(),
+        licenseNumber: z.string(),
+        phone: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        return await db.updateDriver(input.id, {
+          name: input.name,
+          licenseNumber: input.licenseNumber,
+          phone: input.phone,
+        });
+      }),
+
+    delete: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        return await db.deleteDriver(input.id);
+      }),
+
+    setStatus: publicProcedure
+      .input(z.object({
+        id: z.number(),
+        status: z.enum(['online', 'offline']),
+      }))
+      .mutation(async ({ input }) => {
+        return await db.updateDriverStatus(input.id, input.status);
+      }),
+
     getAll: publicProcedure
       .query(async () => {
-        return await db.getAllDrivers();
+        return await db.getDrivers();
       }),
 
     getById: publicProcedure
       .input(z.object({ id: z.number() }))
       .query(async ({ input }) => {
-        return await db.getDriverById(input.id);
+        const drivers = await db.getDrivers();
+        return drivers.find(d => d.id === input.id);
       }),
 
-    updateStatus: publicProcedure
-      .input(z.object({
-        id: z.number(),
-        status: z.enum(['online', 'offline', 'on_delivery']),
-      }))
-      .mutation(async ({ input }) => {
-        return await db.updateDriverStatus(input.id, input.status);
-      }),
+
 
     login: publicProcedure
       .input(z.object({
