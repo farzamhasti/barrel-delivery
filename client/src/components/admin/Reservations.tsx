@@ -163,12 +163,29 @@ export function Reservations() {
                   <Calendar className="h-4 w-4 inline mr-2" />
                   Date & Time
                 </label>
-                <Input
-                  type="datetime-local"
-                  value={formData.dateTime}
-                  onChange={(e) => setFormData({ ...formData, dateTime: e.target.value })}
-                  required
-                />
+                <div className="flex gap-2">
+                  <Input
+                    type="datetime-local"
+                    value={formData.dateTime}
+                    onChange={(e) => setFormData({ ...formData, dateTime: e.target.value })}
+                    required
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      // OK button just confirms the date/time is set
+                      // The form submission will handle the actual save
+                      if (!formData.dateTime) {
+                        alert('Please select a date and time');
+                      }
+                    }}
+                    className="px-4"
+                  >
+                    OK
+                  </Button>
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1">
