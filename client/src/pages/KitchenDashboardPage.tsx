@@ -212,6 +212,7 @@ export default function KitchenDashboardPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100 p-4 md:p-6">
+      <DeveloperCredit />
       {/* Header */}
       <div className="max-w-7xl mx-auto mb-6">
         <div className="flex items-center justify-between mb-6">
@@ -425,7 +426,6 @@ export default function KitchenDashboardPage() {
           </div>
         </div>
       )}
-      <DeveloperCredit />
     </div>
   );
 }
