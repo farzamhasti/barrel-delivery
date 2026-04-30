@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useDriverReturnTime } from "@/contexts/DriverReturnTimeContext";
 import { Clock, CheckCircle2, Truck, Package } from "lucide-react";
+import { toast } from "sonner";
 
 const FORT_ERIE_CENTER = { lat: 42.905191, lng: -78.9225479 };
 const RESTAURANT_ADDRESS = { lat: 42.905191, lng: -78.9225479 }; // 224 Garrison Rd, Fort Erie, ON L2A 1M7
@@ -30,6 +31,7 @@ export default function OrderTrackingWithMap() {
   const [showMap, setShowMap] = useState(true);
   const [showDriverModal, setShowDriverModal] = useState(false);
   const [orderToAssign, setOrderToAssign] = useState<number | null>(null);
+  const [selectedDriver, setSelectedDriver] = useState<{ id: number; name: string } | null>(null);
   const [activeTab, setActiveTab] = useState("pending");
   const [geocodedLocations, setGeocodedLocations] = useState<{ [key: number]: { lat: number; lng: number } }>({});
   const [failedGeocodings, setFailedGeocodings] = useState<Set<number>>(new Set());
@@ -147,14 +149,19 @@ export default function OrderTrackingWithMap() {
 
   const assignDriverMutation = trpc.orders.sendToDriver.useMutation();
 
-  const handleSendToDriver = async (orderId: number, driverId: number) => {
+  const handleSendToDriver = async () => {
+    if (!orderToAssign || !selectedDriver) return;
     try {
-      await assignDriverMutation.mutateAsync({ orderId, driverId });
+      const order = allOrders.find(o => o.id === orderToAssign);
+      await assignDriverMutation.mutateAsync({ orderId: orderToAssign, driverId: selectedDriver.id });
       await utils.orders.getTodayWithItems.invalidate();
+      toast.success(`Order #${order?.orderNumber} has been sent to the driver ${selectedDriver.name}`);
       setShowDriverModal(false);
       setOrderToAssign(null);
+      setSelectedDriver(null);
     } catch (error) {
       console.error("Failed to assign driver:", error);
+      toast.error("Failed to send order to driver");
     }
   };
 
@@ -312,6 +319,9 @@ export default function OrderTrackingWithMap() {
                     <div className="text-sm text-muted-foreground mt-1">Phone: {order.customerPhone}</div>
                     <div className="text-sm text-muted-foreground">Area: {order.area || 'N/A'}</div>
                     <div className="text-sm text-muted-foreground">Delivery: {order.deliveryTime || 'N/A'}</div>
+                    {order.driverName && (
+                      <div className="text-sm font-medium text-green-600 mt-2">Driver: {order.driverName}</div>
+                    )}
                   </Card>
                 ))
               )}
@@ -328,6 +338,9 @@ export default function OrderTrackingWithMap() {
                     <div className="text-sm text-muted-foreground mt-1">Phone: {order.customerPhone}</div>
                     <div className="text-sm text-muted-foreground">Area: {order.area || 'N/A'}</div>
                     <div className="text-sm text-muted-foreground">Delivery: {order.deliveryTime || 'N/A'}</div>
+                    {order.driverName && (
+                      <div className="text-sm font-medium text-green-600 mt-2">Driver: {order.driverName}</div>
+                    )}
                   </Card>
                 ))
               )}
@@ -346,17 +359,23 @@ export default function OrderTrackingWithMap() {
             {activeDrivers.map((driver: any) => (
               <Button
                 key={driver.id}
-                variant="outline"
+                variant={selectedDriver?.id === driver.id ? "default" : "outline"}
                 className="w-full justify-start"
                 onClick={() => {
-                  if (orderToAssign) {
-                    handleSendToDriver(orderToAssign, driver.id);
-                  }
+                  setSelectedDriver({ id: driver.id, name: driver.name });
                 }}
               >
                 {driver.name}
               </Button>
             ))}
+            {selectedDriver && (
+              <Button
+                className="w-full mt-4"
+                onClick={handleSendToDriver}
+              >
+                Send
+              </Button>
+            )}
           </div>
         </DialogContent>
       </Dialog>

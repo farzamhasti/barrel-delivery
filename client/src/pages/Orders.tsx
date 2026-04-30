@@ -225,6 +225,9 @@ export function Orders() {
                         <p className="text-sm text-gray-600">Delivery: {new Date(order.deliveryTime).toLocaleString()}</p>
                       )}
                       <p className="text-sm font-medium">Status: {order.status}</p>
+                      {(order.status === "On the Way" || order.status === "Delivered") && order.driverName && (
+                        <p className="text-sm font-medium text-green-600">Driver: {order.driverName}</p>
+                      )}
                     </div>
                     <div className="flex gap-2">
                       <Button

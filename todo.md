@@ -987,3 +987,19 @@ These features are documented for future enhancement but are not required for th
 - [x] Verify icon colors display correctly on all status filter buttons
 - [x] TypeScript compilation: 0 errors
 - [x] Dev server: Running successfully
+
+
+## Phase 86: Driver Assignment with Send Button and Green Driver Name Display
+- [x] Add Send button to driver assignment dialog in Order Tracking
+- [x] Implement driver assignment logic when Send button is clicked
+- [x] Display confirmation message: "Order (Order Number) has been sent to the driver (Driver Name)"
+- [x] Update order status to "On the Way" when driver is assigned
+- [x] Display driver name in green in Orders tab for on-the-way orders
+- [x] Display driver name in green in Orders tab for delivered orders
+- [x] Display driver name in green in Order Tracking tab for on-the-way orders
+- [x] Display driver name in green in Order Tracking tab for delivered orders
+- [x] Ensure driver name display does not change overall appearance and logic
+- [x] Test driver assignment flow in Order Tracking
+- [x] Test green driver name display in both tabs
+- [x] TypeScript compilation: 0 errors
+- [x] Dev server: Running successfully
