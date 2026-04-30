@@ -12,6 +12,7 @@ import { invalidateOrderCache } from "@/lib/invalidation";
 import { toast } from "sonner";
 import { useDriverReturnTime } from "@/contexts/DriverReturnTimeContext";
 import { KitchenReservations } from "@/pages/KitchenReservations";
+import { DeveloperCredit } from "@/components/DeveloperCredit";
 
 export default function KitchenDashboardPage() {
   const utils = trpc.useUtils();
@@ -424,6 +425,7 @@ export default function KitchenDashboardPage() {
           </div>
         </div>
       )}
+      <DeveloperCredit />
     </div>
   );
 }
