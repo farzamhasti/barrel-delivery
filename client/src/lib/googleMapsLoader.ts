@@ -1,11 +1,7 @@
-// Utility to load Google Maps with Places library through Manus proxy
-// This ensures consistent API key handling and Places library availability
+// Utility to load Google Maps with Places library using direct API key
+// Works on both Manus hosting and external deployments (Railway, etc.)
 
-const API_KEY = import.meta.env.VITE_FRONTEND_FORGE_API_KEY || "";
-const FORGE_BASE_URL =
-  import.meta.env.VITE_FRONTEND_FORGE_API_URL ||
-  "https://forge.butterfly-effect.dev";
-const MAPS_PROXY_URL = `${FORGE_BASE_URL}/v1/maps/proxy`;
+const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "";
 
 let mapScriptPromise: Promise<void> | null = null;
 
@@ -50,18 +46,19 @@ export function loadGoogleMapsWithPlaces(): Promise<void> {
     }
 
     if (!API_KEY) {
-      console.error("[GoogleMapsLoader] API_KEY is not configured");
-      reject(new Error("API_KEY not configured"));
+      console.error("[GoogleMapsLoader] VITE_GOOGLE_MAPS_API_KEY is not configured");
+      reject(new Error("Google Maps API key not configured"));
       return;
     }
 
     const script = document.createElement("script");
-    // Load Google Maps API with Places library through Manus proxy
-    script.src = `${MAPS_PROXY_URL}/maps/api/js?key=${API_KEY}&v=weekly&libraries=places,geocoding,geometry`;
+    // Load Google Maps API with Places library using direct API key
+    // This works on both Manus hosting and external deployments
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${API_KEY}&v=weekly&libraries=places,geocoding,geometry`;
     script.async = true;
     script.defer = true;
     script.crossOrigin = "anonymous";
-    console.log("[GoogleMapsLoader] Loading Google Maps script from:", script.src);
+    console.log("[GoogleMapsLoader] Loading Google Maps script with direct API key");
 
     script.onload = () => {
       console.log("[GoogleMapsLoader] Google Maps script loaded successfully");
@@ -70,7 +67,7 @@ export function loadGoogleMapsWithPlaces(): Promise<void> {
 
     script.onerror = () => {
       mapScriptPromise = null; // Reset on error so it can be retried
-      console.error("[GoogleMapsLoader] Failed to load Google Maps script", script.src);
+      console.error("[GoogleMapsLoader] Failed to load Google Maps script");
       reject(new Error("Failed to load Google Maps script"));
     };
 

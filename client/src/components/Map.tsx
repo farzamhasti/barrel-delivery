@@ -73,17 +73,11 @@ declare global {
   }
 }
 
-const API_KEY = import.meta.env.VITE_FRONTEND_FORGE_API_KEY || "";
-const FORGE_BASE_URL =
-  import.meta.env.VITE_FRONTEND_FORGE_API_URL ||
-  "https://forge.butterfly-effect.dev";
-const MAPS_PROXY_URL = `${FORGE_BASE_URL}/v1/maps/proxy`;
+const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "";
 
 // Log environment for debugging
 if (typeof window !== "undefined") {
-  console.log("[Map] API_KEY present:", !!API_KEY);
-  console.log("[Map] FORGE_BASE_URL:", FORGE_BASE_URL);
-  console.log("[Map] MAPS_PROXY_URL:", MAPS_PROXY_URL);
+  console.log("[Map] Google Maps API_KEY present:", !!API_KEY);
 }
 
 // Track if the script is already loaded or loading
@@ -131,20 +125,18 @@ function loadMapScript(): Promise<void> {
 
     if (!API_KEY) {
       console.error("[Map] API_KEY is not configured. Google Maps will not load.");
-      reject(new Error("Google Maps API key not configured (VITE_FRONTEND_FORGE_API_KEY missing)"));
+      reject(new Error("Google Maps API key not configured (VITE_GOOGLE_MAPS_API_KEY missing)"));
       return;
     }
 
     const script = document.createElement("script");
-    // Load Google Maps API with required libraries
-    // Note: 'marker' library is included for future AdvancedMarkerElement support
-    // Currently using legacy Marker API which doesn't require mapId
-    script.src = `${MAPS_PROXY_URL}/maps/api/js?key=${API_KEY}&v=weekly&libraries=places,geocoding,geometry`;
+    // Load Google Maps API with required libraries using direct API key
+    // This works on both Manus hosting and external deployments (Railway, etc.)
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${API_KEY}&v=weekly&libraries=places,geocoding,geometry`;
     script.async = true;
     script.defer = true;
     script.crossOrigin = "anonymous";
-    console.log("[Map] Loading Google Maps script from:", script.src);
-    console.log("[Map] Note: Using legacy Marker API. For AdvancedMarkerElement, add mapId to map options.");
+    console.log("[Map] Loading Google Maps script with direct API key");
 
     script.onload = () => {
       console.log("[Map] Google Maps script loaded successfully");
