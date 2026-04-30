@@ -204,6 +204,15 @@ export const appRouter = router({
         return await db.updateDriverStatus(input.id, input.status);
       }),
 
+    updateStatus: publicProcedure
+      .input(z.object({
+        id: z.number(),
+        status: z.enum(['online', 'offline']),
+      }))
+      .mutation(async ({ input }) => {
+        return await db.updateDriverStatus(input.id, input.status);
+      }),
+
     getAll: publicProcedure
       .query(async () => {
         return await db.getDrivers();
@@ -233,6 +242,11 @@ export const appRouter = router({
           driverId: driver.id,
           driverName: driver.name,
         };
+      }),
+
+    logout: publicProcedure
+      .mutation(async () => {
+        return { success: true };
       }),
   }),
 
