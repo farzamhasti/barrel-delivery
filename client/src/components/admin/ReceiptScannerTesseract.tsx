@@ -13,6 +13,7 @@ export function ReceiptScannerTesseract() {
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const addressInputRef = useRef<HTMLInputElement>(null);
 
   // Form state - only manual input fields
   const [formData, setFormData] = useState({
@@ -25,87 +26,39 @@ export function ReceiptScannerTesseract() {
     receiptImage: "",
   });
 
-  // Google Places Autocomplete state
-  const [addressSuggestions, setAddressSuggestions] = useState<any[]>([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [sessionToken, setSessionToken] = useState<any>(null);
-  const addressInputRef = useRef<HTMLInputElement>(null);
   const [placeCoordinates, setPlaceCoordinates] = useState<{ lat: number; lng: number } | null>(null);
-
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Initialize Google Places Autocomplete session token
+  // Initialize Google Places Autocomplete
   useEffect(() => {
-    if (typeof window !== 'undefined' && (window as any).google?.maps?.places) {
-      const token = new (window as any).google.maps.places.AutocompleteSessionToken();
-      setSessionToken(token);
+    if (!addressInputRef.current || !window.google) return;
+
+    try {
+      const autocomplete = new window.google.maps.places.Autocomplete(addressInputRef.current, {
+        types: ['address'],
+        componentRestrictions: { country: 'ca' },
+        fields: ['formatted_address', 'geometry']
+      });
+
+      autocomplete.addListener('place_changed', () => {
+        const place = autocomplete.getPlace();
+        if (place.formatted_address) {
+          setFormData(prev => ({ ...prev, address: place.formatted_address || '' }));
+        }
+        if (place.geometry?.location) {
+          setPlaceCoordinates({
+            lat: place.geometry.location.lat(),
+            lng: place.geometry.location.lng()
+          });
+        }
+      });
+    } catch (err) {
+      console.error('Error initializing autocomplete:', err);
     }
   }, []);
 
   const createOrderMutation = trpc.orders.createFromReceipt.useMutation();
-
-  // Handle address input with autocomplete
-  const handleAddressInputChange = async (value: string) => {
-    setFormData({ ...formData, address: value });
-
-    if (!value || value.length < 3) {
-      setAddressSuggestions([]);
-      setShowSuggestions(false);
-      return;
-    }
-
-    try {
-      // Use backend API to proxy Google Places Autocomplete
-      const response = await fetch('/api/trpc/places.autocomplete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          input: { input: value, sessionToken: sessionToken?.toString() || '' }
-        })
-      });
-      const data = await response.json();
-
-      if (data.predictions) {
-        setAddressSuggestions(data.predictions);
-        setShowSuggestions(true);
-      }
-    } catch (err) {
-      console.error('Autocomplete error:', err);
-    }
-  };
-
-  // Handle address selection from suggestions
-  const handleAddressSelect = async (prediction: any) => {
-    const placeId = prediction.place_id;
-    const mainText = prediction.main_text || '';
-    const secondaryText = prediction.secondary_text || '';
-    const fullAddress = `${mainText}${secondaryText ? ', ' + secondaryText : ''}`;
-
-    setFormData({ ...formData, address: fullAddress });
-    setShowSuggestions(false);
-    setAddressSuggestions([]);
-
-    // Get place details to extract coordinates
-    try {
-      // Use backend API to proxy Google Places Details
-      const response = await fetch('/api/trpc/places.placeDetails', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          input: { placeId: placeId, sessionToken: sessionToken?.toString() || '' }
-        })
-      });
-      const detailsData = await response.json();
-
-      if (detailsData.result?.geometry?.location) {
-        const { lat, lng } = detailsData.result.geometry.location;
-        setPlaceCoordinates({ lat, lng });
-      }
-    } catch (err) {
-      console.error('Place details error:', err);
-    }
-  };
 
   // Handle camera capture
   const handleCameraCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -205,6 +158,7 @@ export function ReceiptScannerTesseract() {
         });
         setImagePreview(null);
         setSubmitSuccess(false);
+        setPlaceCoordinates(null);
       }, 2000);
     } catch (err: any) {
       setError(err.message || "Failed to create order");
@@ -313,35 +267,18 @@ export function ReceiptScannerTesseract() {
               />
             </div>
 
-            <div className="relative">
+            <div>
               <label className="block text-sm font-medium mb-1">Address</label>
               <Input
                 ref={addressInputRef}
+                id="address-input"
                 type="text"
                 placeholder="Enter delivery address"
                 value={formData.address}
-                onChange={(e) => handleAddressInputChange(e.target.value)}
-                onFocus={() => formData.address.length >= 3 && setShowSuggestions(true)}
-                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                autoComplete="off"
                 required
               />
-              {showSuggestions && addressSuggestions.length > 0 && (
-                <div className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-md mt-1 shadow-lg z-50 max-h-48 overflow-y-auto">
-                  {addressSuggestions.map((suggestion, index) => (
-                    <button
-                      key={index}
-                      type="button"
-                      onClick={() => handleAddressSelect(suggestion)}
-                      className="w-full text-left px-3 py-2 hover:bg-gray-100 border-b border-gray-200 last:border-b-0 text-sm"
-                    >
-                      <div className="font-medium">{suggestion.main_text}</div>
-                      {suggestion.secondary_text && (
-                        <div className="text-xs text-gray-500">{suggestion.secondary_text}</div>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              )}
             </div>
 
             <div>
