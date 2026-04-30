@@ -275,6 +275,9 @@ export default function OrderTrackingWithMap() {
                         <div className="text-sm text-muted-foreground mt-1">Phone: {order.customerPhone}</div>
                         <div className="text-sm text-muted-foreground">Area: {order.area || 'N/A'}</div>
                         <div className={`text-sm font-medium ${order.driverName ? 'text-green-600' : 'text-muted-foreground'}`}>Driver: {order.driverName || 'N/A'}</div>
+                        {order.deliveryTime && (
+                          <div className="text-sm text-muted-foreground mt-1">Delivery Time: {new Date(order.deliveryTime).toLocaleString()}</div>
+                        )}
                       </div>
                       <Button size="sm" onClick={(e) => { e.stopPropagation(); setOrderToAssign(order.id); setShowDriverModal(true); }}>
                         Assign to Driver
@@ -298,6 +301,9 @@ export default function OrderTrackingWithMap() {
                         <div className="text-sm text-muted-foreground mt-1">Phone: {order.customerPhone}</div>
                         <div className="text-sm text-muted-foreground">Area: {order.area || 'N/A'}</div>
                         <div className={`text-sm font-medium ${order.driverName ? 'text-green-600' : 'text-muted-foreground'}`}>Driver: {order.driverName || 'N/A'}</div>
+                        {order.deliveryTime && (
+                          <div className="text-sm text-muted-foreground mt-1">Delivery Time: {new Date(order.deliveryTime).toLocaleString()}</div>
+                        )}
                       </div>
                       <Button size="sm" onClick={(e) => { e.stopPropagation(); setOrderToAssign(order.id); setShowDriverModal(true); }}>
                         Assign to Driver
@@ -319,11 +325,15 @@ export default function OrderTrackingWithMap() {
                     <div className="text-sm text-muted-foreground mt-1">Phone: {order.customerPhone}</div>
                     <div className="text-sm text-muted-foreground">Area: {order.area || 'N/A'}</div>
                     <div className={`text-sm font-medium ${order.driverName ? 'text-green-600' : 'text-muted-foreground'}`}>Driver: {order.driverName || 'N/A'}</div>
+                    {order.deliveryTime && (
+                      <div className="text-sm text-muted-foreground mt-1">Delivery Time: {new Date(order.deliveryTime).toLocaleString()}</div>
+                    )}
                   </Card>
                 ))
               )}
             </TabsContent>
 
+            {/* Delivered Tab */}
             <TabsContent value="delivered" className="space-y-3">
               {deliveredOrders.length === 0 ? (
                 <div className="text-center text-muted-foreground py-8">No delivered orders</div>
@@ -335,6 +345,9 @@ export default function OrderTrackingWithMap() {
                     <div className="text-sm text-muted-foreground mt-1">Phone: {order.customerPhone}</div>
                     <div className="text-sm text-muted-foreground">Area: {order.area || 'N/A'}</div>
                     <div className={`text-sm font-medium ${order.driverName ? 'text-green-600' : 'text-muted-foreground'}`}>Driver: {order.driverName || 'N/A'}</div>
+                    {order.deliveryTime && (
+                      <div className="text-sm text-muted-foreground mt-1">Delivery Time: {new Date(order.deliveryTime).toLocaleString()}</div>
+                    )}
                   </Card>
                 ))
               )}
