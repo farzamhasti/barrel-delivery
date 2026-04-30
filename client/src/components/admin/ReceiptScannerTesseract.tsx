@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, AlertCircle, CheckCircle2, Camera, Upload, X } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { processReceiptImage } from "@/lib/receiptImageProcessor";
 
 export function ReceiptScannerTesseract() {
@@ -25,10 +25,81 @@ export function ReceiptScannerTesseract() {
     receiptImage: "",
   });
 
+  // Google Places Autocomplete state
+  const [addressSuggestions, setAddressSuggestions] = useState<any[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [sessionToken, setSessionToken] = useState<any>(null);
+  const addressInputRef = useRef<HTMLInputElement>(null);
+  const [placeCoordinates, setPlaceCoordinates] = useState<{ lat: number; lng: number } | null>(null);
+
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
+  // Initialize Google Places Autocomplete session token
+  useEffect(() => {
+    if (typeof window !== 'undefined' && (window as any).google?.maps?.places) {
+      const token = new (window as any).google.maps.places.AutocompleteSessionToken();
+      setSessionToken(token);
+    }
+  }, []);
+
   const createOrderMutation = trpc.orders.createFromReceipt.useMutation();
+
+  // Handle address input with autocomplete
+  const handleAddressInputChange = async (value: string) => {
+    setFormData({ ...formData, address: value });
+
+    if (!value || value.length < 3) {
+      setAddressSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    try {
+      const apiKey = import.meta.env.VITE_FRONTEND_FORGE_API_KEY;
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(
+          value
+        )}&key=${apiKey}&components=country:ca&sessionToken=${sessionToken}`
+      );
+
+      const data = await response.json();
+      if (data.predictions) {
+        setAddressSuggestions(data.predictions);
+        setShowSuggestions(true);
+      }
+    } catch (err) {
+      console.error('Autocomplete error:', err);
+    }
+  };
+
+  // Handle address selection from suggestions
+  const handleAddressSelect = async (prediction: any) => {
+    const placeId = prediction.place_id;
+    const mainText = prediction.main_text || '';
+    const secondaryText = prediction.secondary_text || '';
+    const fullAddress = `${mainText}${secondaryText ? ', ' + secondaryText : ''}`;
+
+    setFormData({ ...formData, address: fullAddress });
+    setShowSuggestions(false);
+    setAddressSuggestions([]);
+
+    // Get place details to extract coordinates
+    try {
+      const apiKey = import.meta.env.VITE_FRONTEND_FORGE_API_KEY;
+      const detailsResponse = await fetch(
+        `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=geometry&key=${apiKey}&sessionToken=${sessionToken}`
+      );
+
+      const detailsData = await detailsResponse.json();
+      if (detailsData.result?.geometry?.location) {
+        const { lat, lng } = detailsData.result.geometry.location;
+        setPlaceCoordinates({ lat, lng });
+      }
+    } catch (err) {
+      console.error('Place details error:', err);
+    }
+  };
 
   // Handle camera capture
   const handleCameraCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -236,15 +307,35 @@ export function ReceiptScannerTesseract() {
               />
             </div>
 
-            <div>
+            <div className="relative">
               <label className="block text-sm font-medium mb-1">Address</label>
               <Input
+                ref={addressInputRef}
                 type="text"
                 placeholder="Enter delivery address"
                 value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                onChange={(e) => handleAddressInputChange(e.target.value)}
+                onFocus={() => formData.address.length >= 3 && setShowSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                 required
               />
+              {showSuggestions && addressSuggestions.length > 0 && (
+                <div className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-md mt-1 shadow-lg z-50 max-h-48 overflow-y-auto">
+                  {addressSuggestions.map((suggestion, index) => (
+                    <button
+                      key={index}
+                      type="button"
+                      onClick={() => handleAddressSelect(suggestion)}
+                      className="w-full text-left px-3 py-2 hover:bg-gray-100 border-b border-gray-200 last:border-b-0 text-sm"
+                    >
+                      <div className="font-medium">{suggestion.main_text}</div>
+                      {suggestion.secondary_text && (
+                        <div className="text-xs text-gray-500">{suggestion.secondary_text}</div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div>
