@@ -224,8 +224,10 @@ export async function getOrderWithItems(orderId: number) {
       customerPhone: orders.customerPhone,
       receiptImage: orders.receiptImage,
       formattedReceiptImage: orders.formattedReceiptImage,
+      driverName: drivers.name,
     })
     .from(orders)
+    .leftJoin(drivers, eq(orders.driverId, drivers.id))
     .where(eq(orders.id, orderId));
   if (!order.length) return null;
 
