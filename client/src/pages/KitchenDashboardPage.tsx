@@ -28,6 +28,10 @@ export default function KitchenDashboardPage() {
   const { data: drivers = [] } = trpc.drivers.list.useQuery();
   const activeDrivers = drivers.filter((d: any) => d.status === "online" && d.isActive);
 
+  // Fetch pending reservations count
+  const { data: allReservations = [] } = trpc.reservations.getAll.useQuery();
+  const pendingReservationsCount = allReservations.filter((r: any) => r.status === "Pending").length;
+
   // Mutation to update order status to ready
   const updateStatusMutation = trpc.orders.updateStatus.useMutation({
     onSuccess: async () => {
@@ -301,7 +305,7 @@ export default function KitchenDashboardPage() {
             </TabsTrigger>
             <TabsTrigger value="reservations" className="flex items-center gap-2">
               <AlertCircle className="w-4 h-4" />
-              Reservations
+              Reservations ({pendingReservationsCount})
             </TabsTrigger>
           </TabsList>
 

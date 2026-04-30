@@ -1130,3 +1130,21 @@ These features are documented for future enhancement but are not required for th
 - [x] Integrate KitchenReservations component into Kitchen Dashboard
 - [x] Verify TypeScript compilation (0 errors)
 - [x] Verify dev server running successfully
+
+## Phase 98: Fix Reservations Form and Table Display
+- [x] Fix Dialog trigger to properly open form when button clicked
+- [x] Add Description column to reservations table
+- [x] Display description with truncation for long text
+- [x] Verify form submission works correctly
+- [x] Verify edit and delete functionality
+- [x] Verify TypeScript compilation (0 errors)
+- [x] Verify dev server running successfully
+
+
+## Phase 99: Display Pending Reservations Count in Kitchen Dashboard
+- [ ] Fetch pending reservations count in KitchenDashboardPage
+- [ ] Display count next to Reservations tab icon (e.g., "Reservations (3)")
+- [ ] Update count when reservation status changes to Done
+- [ ] Auto-refresh count when reservations are created or deleted
+- [ ] Verify TypeScript compilation (0 errors)
+- [ ] Verify dev server running successfully
