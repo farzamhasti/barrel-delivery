@@ -1,4 +1,12 @@
 import { trpc } from "@/lib/trpc";
+
+// Color scheme for order statuses
+const STATUS_COLORS = {
+  Pending: { bg: 'bg-gray-50', border: 'border-gray-200', badge: 'bg-gray-100 text-gray-800' },
+  Ready: { bg: 'bg-blue-50', border: 'border-blue-200', badge: 'bg-blue-100 text-blue-800' },
+  'On the Way': { bg: 'bg-orange-50', border: 'border-orange-200', badge: 'bg-orange-100 text-orange-800' },
+  Delivered: { bg: 'bg-green-50', border: 'border-green-200', badge: 'bg-green-100 text-green-800' },
+};
 import { invalidateOrderCache } from "@/lib/invalidation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -170,7 +178,12 @@ export function Orders() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className={`space-y-4 p-4 rounded-lg transition-colors ${
+      statusFilter === 'Pending' ? STATUS_COLORS.Pending.bg :
+      statusFilter === 'Ready' ? STATUS_COLORS.Ready.bg :
+      statusFilter === 'On the Way' ? STATUS_COLORS['On the Way'].bg :
+      STATUS_COLORS.Delivered.bg
+    }`}>
       <Card>
         <CardHeader>
           <div className="flex justify-between items-center mb-4">
