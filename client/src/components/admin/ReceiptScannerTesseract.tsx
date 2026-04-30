@@ -4,9 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Loader2, AlertCircle, CheckCircle2, Camera, Upload, X } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { processReceiptImage } from "@/lib/receiptImageProcessor";
-import { getAddressSuggestions } from "@/lib/addressSuggestions";
 
 export function ReceiptScannerTesseract() {
   const [error, setError] = useState<string | null>(null);
@@ -14,6 +13,7 @@ export function ReceiptScannerTesseract() {
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const addressInputRef = useRef<HTMLInputElement>(null);
 
   // Form state - only manual input fields
   const [formData, setFormData] = useState({
@@ -29,30 +29,47 @@ export function ReceiptScannerTesseract() {
   const [placeCoordinates, setPlaceCoordinates] = useState<{ lat: number; lng: number } | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [addressSuggestions, setAddressSuggestions] = useState<Array<{ address: string; lat: number; lng: number }>>([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
 
-  // Handle address input with suggestions
-  const handleAddressInputChange = (value: string) => {
-    setFormData({ ...formData, address: value });
-    
-    if (value.length >= 2) {
-      const suggestions = getAddressSuggestions(value);
-      setAddressSuggestions(suggestions);
-      setShowSuggestions(suggestions.length > 0);
-    } else {
-      setAddressSuggestions([]);
-      setShowSuggestions(false);
-    }
-  };
+  // Initialize Google Places Autocomplete
+  useEffect(() => {
+    if (!addressInputRef.current) return;
 
-  // Handle address selection from suggestions
-  const handleAddressSelect = (suggestion: { address: string; lat: number; lng: number }) => {
-    setFormData({ ...formData, address: suggestion.address });
-    setPlaceCoordinates({ lat: suggestion.lat, lng: suggestion.lng });
-    setShowSuggestions(false);
-    setAddressSuggestions([]);
-  };
+    // Function to initialize autocomplete
+    const initializeAutocomplete = () => {
+      if (!window.google?.maps?.places?.Autocomplete) {
+        console.warn('[Autocomplete] Google Maps Places API not yet loaded, retrying...');
+        setTimeout(initializeAutocomplete, 500);
+        return;
+      }
+
+      try {
+        const autocomplete = new window.google.maps.places.Autocomplete(addressInputRef.current!, {
+          types: ['address'],
+          componentRestrictions: { country: 'ca' },
+          fields: ['formatted_address', 'geometry']
+        });
+
+        autocomplete.addListener('place_changed', () => {
+          const place = autocomplete.getPlace();
+          if (place.formatted_address) {
+            setFormData(prev => ({ ...prev, address: place.formatted_address || '' }));
+          }
+          if (place.geometry?.location) {
+            setPlaceCoordinates({
+              lat: place.geometry.location.lat(),
+              lng: place.geometry.location.lng()
+            });
+          }
+        });
+        console.log('[Autocomplete] Google Places Autocomplete initialized successfully');
+      } catch (err) {
+        console.error('[Autocomplete] Error initializing autocomplete:', err);
+      }
+    };
+
+    // Start initialization
+    initializeAutocomplete();
+  }, []);
 
   const createOrderMutation = trpc.orders.createFromReceipt.useMutation();
 
@@ -263,34 +280,18 @@ export function ReceiptScannerTesseract() {
               />
             </div>
 
-            <div className="relative">
+            <div>
               <label className="block text-sm font-medium mb-1">Address</label>
               <Input
+                ref={addressInputRef}
                 id="address-input"
                 type="text"
                 placeholder="Enter delivery address"
                 value={formData.address}
-                onChange={(e) => handleAddressInputChange(e.target.value)}
-                onFocus={() => formData.address.length >= 2 && setShowSuggestions(true)}
+                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                 autoComplete="off"
                 required
               />
-              
-              {/* Address Suggestions Dropdown */}
-              {showSuggestions && addressSuggestions.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto">
-                  {addressSuggestions.map((suggestion, index) => (
-                    <button
-                      key={index}
-                      type="button"
-                      onClick={() => handleAddressSelect(suggestion)}
-                      className="w-full text-left px-4 py-2 hover:bg-blue-50 border-b last:border-b-0 text-sm"
-                    >
-                      {suggestion.address}
-                    </button>
-                  ))}
-                </div>
-              )}
             </div>
 
             <div>
