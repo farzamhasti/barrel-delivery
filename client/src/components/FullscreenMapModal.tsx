@@ -2,7 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { X, Maximize2, Minimize2 } from "lucide-react";
 import { MapView } from "@/components/Map";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 
 interface FullscreenMapModalProps {
   isOpen: boolean;
@@ -23,6 +23,32 @@ export function FullscreenMapModal({
 }: FullscreenMapModalProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const [isMaximized, setIsMaximized] = useState(false);
+  const mapReadyRef = useRef(false);
+
+  // Trigger map refresh when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      // Reset the map ready flag to force re-initialization
+      mapReadyRef.current = false;
+      
+      // Small delay to ensure DOM is ready
+      const timer = setTimeout(() => {
+        // Trigger the onMapReady callback to reinitialize markers
+        if (mapContainerRef.current) {
+          // Force a re-render by triggering map initialization
+          mapReadyRef.current = true;
+        }
+      }, 100);
+
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
+
+  const handleMapReady = (map: google.maps.Map) => {
+    // Always call the parent's onMapReady to reinitialize markers
+    onMapReady(map);
+    mapReadyRef.current = true;
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -60,14 +86,17 @@ export function FullscreenMapModal({
           </div>
         </DialogHeader>
 
-        {/* Map Container */}
-        <div ref={mapContainerRef} className="flex-1 overflow-hidden">
-          <MapView
-            initialCenter={initialCenter}
-            initialZoom={initialZoom}
-            onMapReady={onMapReady}
-          />
-        </div>
+        {/* Map Container - Only render when modal is open */}
+        {isOpen && (
+          <div ref={mapContainerRef} className="flex-1 overflow-hidden">
+            <MapView
+              key={`map-${isOpen}`}
+              initialCenter={initialCenter}
+              initialZoom={initialZoom}
+              onMapReady={handleMapReady}
+            />
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

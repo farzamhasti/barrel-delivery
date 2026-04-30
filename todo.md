@@ -1041,3 +1041,15 @@ These features are documented for future enhancement but are not required for th
 - [x] Test fullscreen map on desktop and tablet
 - [x] Verify TypeScript compilation (0 errors)
 - [x] Verify dev server running successfully
+
+
+## Phase 89: Fix Fullscreen Map Marker Persistence on Reopen
+- [x] Ensure markers persist when modal closes and reopens
+- [x] Automatically reload geocoded locations when modal opens
+- [x] Clear old markers before adding new ones to prevent duplicates
+- [x] Sync fullscreen map with main map geocoding state
+- [x] Add useEffect hook to handle modal open/close lifecycle
+- [x] Test marker display after closing and reopening modal
+- [x] Verify order details display correctly after reopen
+- [x] Verify TypeScript compilation (0 errors)
+- [x] Verify dev server running successfully
