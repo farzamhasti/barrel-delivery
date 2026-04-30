@@ -89,7 +89,7 @@ export const appRouter = router({
 
     getAll: publicProcedure
       .query(async () => {
-        return await db.getAllOrders();
+        return await db.getOrders();
       }),
 
     getById: publicProcedure
@@ -147,12 +147,9 @@ export const appRouter = router({
     getTodayWithItems: publicProcedure
       .query(async () => {
         // Get all orders for today
-        const allOrders = await db.getAllOrders();
-        // Return orders with items (items are already included in the order object)
-        return allOrders.map(order => ({
-          ...order,
-          items: order.items || [],
-        }));
+        const allOrders = await db.getOrders();
+        // Return orders with items
+        return allOrders;
       }),
   }),
 
