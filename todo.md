@@ -942,3 +942,17 @@ These features are documented for future enhancement but are not required for th
 - [x] Maintained form functionality and appearance
 - [x] TypeScript compilation: 0 errors
 - [x] Dev server: Running successfully
+
+
+## Phase 83: Add Color Scheme for Order Status and Enhance Order Details Display
+- [x] Define color scheme for each order status (Pending, Ready, On the Way, Delivered)
+- [x] Apply color scheme to order cards in Order Tracking tab
+- [x] Added left border (border-l-4) with status colors to order cards
+- [x] Update OrderTrackingWithMap to display full order details like Orders tab
+- [x] Add address, phone, area, delivery time to order cards in Order Tracking
+- [x] Apply status colors to page backgrounds and order details
+- [x] Ensure color scheme is consistent across all tabs
+- [x] Maintain overall look and feel of the app
+- [x] Test color scheme with different order statuses
+- [x] TypeScript compilation: 0 errors
+- [x] Dev server: Running successfully

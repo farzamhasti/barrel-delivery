@@ -12,6 +12,14 @@ import { useDriverReturnTime } from "@/contexts/DriverReturnTimeContext";
 const FORT_ERIE_CENTER = { lat: 42.905191, lng: -78.9225479 };
 const RESTAURANT_ADDRESS = { lat: 42.905191, lng: -78.9225479 }; // 224 Garrison Rd, Fort Erie, ON L2A 1M7
 
+// Color scheme for order statuses
+const STATUS_COLORS = {
+  Pending: { bg: 'bg-gray-50', border: 'border-gray-200', badge: 'bg-gray-100 text-gray-800', tab: 'data-[state=active]:bg-gray-100' },
+  Ready: { bg: 'bg-blue-50', border: 'border-blue-200', badge: 'bg-blue-100 text-blue-800', tab: 'data-[state=active]:bg-blue-100' },
+  'On the Way': { bg: 'bg-orange-50', border: 'border-orange-200', badge: 'bg-orange-100 text-orange-800', tab: 'data-[state=active]:bg-orange-100' },
+  Delivered: { bg: 'bg-green-50', border: 'border-green-200', badge: 'bg-green-100 text-green-800', tab: 'data-[state=active]:bg-green-100' },
+};
+
 export default function OrderTrackingWithMap() {
   const utils = trpc.useUtils();
   const { driverReturnTimes } = useDriverReturnTime();
@@ -239,11 +247,14 @@ export default function OrderTrackingWithMap() {
                 <div className="text-center text-muted-foreground py-8">No pending orders</div>
               ) : (
                 pendingOrders.map((order: any) => (
-                  <Card key={order.id} className="p-4 cursor-pointer hover:shadow-md transition-shadow" onClick={() => setSelectedOrderId(order.id)}>
+                  <Card key={order.id} className={`p-4 cursor-pointer hover:shadow-md transition-shadow border-l-4 ${STATUS_COLORS.Pending.bg} ${STATUS_COLORS.Pending.border}`} onClick={() => setSelectedOrderId(order.id)}>
                     <div className="flex justify-between items-start">
-                      <div>
+                      <div className="flex-1">
                         <div className="font-semibold">Order #{order.orderNumber}</div>
                         <div className="text-sm text-muted-foreground">{order.customerAddress}</div>
+                        <div className="text-sm text-muted-foreground mt-1">Phone: {order.customerPhone}</div>
+                        <div className="text-sm text-muted-foreground">Area: {order.area || 'N/A'}</div>
+                        <div className="text-sm text-muted-foreground">Delivery: {order.deliveryTime || 'N/A'}</div>
                       </div>
                       <Button size="sm" onClick={(e) => { e.stopPropagation(); setOrderToAssign(order.id); setShowDriverModal(true); }}>
                         Assign
@@ -259,11 +270,14 @@ export default function OrderTrackingWithMap() {
                 <div className="text-center text-muted-foreground py-8">No ready orders</div>
               ) : (
                 readyOrders.map((order: any) => (
-                  <Card key={order.id} className="p-4 cursor-pointer hover:shadow-md transition-shadow" onClick={() => setSelectedOrderId(order.id)}>
+                  <Card key={order.id} className={`p-4 cursor-pointer hover:shadow-md transition-shadow border-l-4 ${STATUS_COLORS.Ready.bg} ${STATUS_COLORS.Ready.border}`} onClick={() => setSelectedOrderId(order.id)}>
                     <div className="flex justify-between items-start">
-                      <div>
+                      <div className="flex-1">
                         <div className="font-semibold">Order #{order.orderNumber}</div>
                         <div className="text-sm text-muted-foreground">{order.customerAddress}</div>
+                        <div className="text-sm text-muted-foreground mt-1">Phone: {order.customerPhone}</div>
+                        <div className="text-sm text-muted-foreground">Area: {order.area || 'N/A'}</div>
+                        <div className="text-sm text-muted-foreground">Delivery: {order.deliveryTime || 'N/A'}</div>
                       </div>
                       <Button size="sm" onClick={(e) => { e.stopPropagation(); setOrderToAssign(order.id); setShowDriverModal(true); }}>
                         Send
@@ -279,10 +293,12 @@ export default function OrderTrackingWithMap() {
                 <div className="text-center text-muted-foreground py-8">No orders on the way</div>
               ) : (
                 onTheWayOrders.map((order: any) => (
-                  <Card key={order.id} className="p-4 cursor-pointer hover:shadow-md transition-shadow" onClick={() => setSelectedOrderId(order.id)}>
+                  <Card key={order.id} className={`p-4 cursor-pointer hover:shadow-md transition-shadow border-l-4 ${STATUS_COLORS['On the Way'].bg} ${STATUS_COLORS['On the Way'].border}`} onClick={() => setSelectedOrderId(order.id)}>
                     <div className="font-semibold">Order #{order.orderNumber}</div>
                     <div className="text-sm text-muted-foreground">{order.customerAddress}</div>
-                    <div className="text-sm text-muted-foreground mt-2">Area: {order.area || 'N/A'}</div>
+                    <div className="text-sm text-muted-foreground mt-1">Phone: {order.customerPhone}</div>
+                    <div className="text-sm text-muted-foreground">Area: {order.area || 'N/A'}</div>
+                    <div className="text-sm text-muted-foreground">Delivery: {order.deliveryTime || 'N/A'}</div>
                   </Card>
                 ))
               )}
@@ -293,10 +309,12 @@ export default function OrderTrackingWithMap() {
                 <div className="text-center text-muted-foreground py-8">No delivered orders</div>
               ) : (
                 deliveredOrders.map((order: any) => (
-                  <Card key={order.id} className="p-4 cursor-pointer hover:shadow-md transition-shadow" onClick={() => setSelectedOrderId(order.id)}>
+                  <Card key={order.id} className={`p-4 cursor-pointer hover:shadow-md transition-shadow border-l-4 ${STATUS_COLORS.Delivered.bg} ${STATUS_COLORS.Delivered.border}`} onClick={() => setSelectedOrderId(order.id)}>
                     <div className="font-semibold">Order #{order.orderNumber}</div>
                     <div className="text-sm text-muted-foreground">{order.customerAddress}</div>
-                    <div className="text-sm text-muted-foreground mt-2">Area: {order.area || 'N/A'}</div>
+                    <div className="text-sm text-muted-foreground mt-1">Phone: {order.customerPhone}</div>
+                    <div className="text-sm text-muted-foreground">Area: {order.area || 'N/A'}</div>
+                    <div className="text-sm text-muted-foreground">Delivery: {order.deliveryTime || 'N/A'}</div>
                   </Card>
                 ))
               )}
