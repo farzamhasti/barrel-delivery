@@ -280,45 +280,122 @@ export function Orders() {
       <Dialog open={selectedOrderId !== null} onOpenChange={(open) => !open && setSelectedOrderId(null)}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Order Details</DialogTitle>
+            <DialogTitle className="text-2xl font-bold">Order #<span className="text-blue-600">{selectedOrderDetails?.orderNumber}</span></DialogTitle>
           </DialogHeader>
           {selectedOrderDetails && (
             <>
-              
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-gray-600">Address</Label>
-                    <p className="font-medium">{selectedOrderDetails.customerAddress}</p>
-                  </div>
-                  <div>
-                    <Label className="text-gray-600">Phone</Label>
-                    <p className="font-medium">{selectedOrderDetails.customerPhone}</p>
-                  </div>
-                  <div>
-                    <Label className="text-gray-600">Area</Label>
-                    <p className="font-medium">{selectedOrderDetails.area}</p>
-                  </div>
-                  <div>
-                    <Label className="text-gray-600">Status</Label>
-                    <p className="font-medium">{selectedOrderDetails.status}</p>
-                  </div>
-                  {(selectedOrderDetails.status === "On the Way" || selectedOrderDetails.status === "Delivered") && (selectedOrderDetails as any).driverName && (
-                    <div>
-                      <Label className="text-gray-600">Driver</Label>
-                      <p className="font-medium text-green-600">{(selectedOrderDetails as any).driverName}</p>
+              {/* Main Details Card */}
+              <Card className="border-0 shadow-sm bg-gradient-to-br from-slate-50 to-white">
+                <CardContent className="pt-6">
+                  <div className="space-y-6">
+                    {/* Address Section */}
+                    <div className="flex items-start space-x-4 pb-4 border-b border-slate-200">
+                      <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Address</p>
+                        <p className="text-base font-medium text-gray-900 mt-1">{selectedOrderDetails.customerAddress}</p>
+                      </div>
                     </div>
-                  )}
-                  {selectedOrderDetails.deliveryTime && (
-                    <div>
-                      <Label className="text-gray-600">Delivery Time</Label>
-                      <p className="font-medium">
-                        {new Date(selectedOrderDetails.deliveryTime).toLocaleString()}
-                      </p>
+
+                    {/* Contact Number Section */}
+                    <div className="flex items-start space-x-4 pb-4 border-b border-slate-200">
+                      <div className="flex-shrink-0 w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                        <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                        </svg>
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Contact Number</p>
+                        <p className="text-base font-medium text-gray-900 mt-1">{selectedOrderDetails.customerPhone || "N/A"}</p>
+                      </div>
                     </div>
-                   )}
-                </div>
-              </div>
+
+                    {/* Area Section */}
+                    <div className="flex items-start space-x-4 pb-4 border-b border-slate-200">
+                      <div className="flex-shrink-0 w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6.553 3.276A1 1 0 0021 20.382V9.618a1 1 0 00-1.447-.894L15 11m0 13V11m0 0L9 7" />
+                        </svg>
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Area</p>
+                        <div className="mt-1">
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
+                            {selectedOrderDetails.area}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Delivery Time Section */}
+                    {selectedOrderDetails.deliveryTime && (
+                      <div className="flex items-start space-x-4 pb-4 border-b border-slate-200">
+                        <div className="flex-shrink-0 w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                          <Clock className="w-5 h-5 text-orange-600" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Delivery Time</p>
+                          <p className="text-base font-medium text-gray-900 mt-1">
+                            {new Date(selectedOrderDetails.deliveryTime).toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Status Section */}
+                    <div className="flex items-start space-x-4 pb-4 border-b border-slate-200">
+                      <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <Package className="w-5 h-5 text-blue-600" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Order Status</p>
+                        <div className="mt-1">
+                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                            selectedOrderDetails.status === "Pending" ? "bg-gray-100 text-gray-800" :
+                            selectedOrderDetails.status === "Ready" ? "bg-blue-100 text-blue-800" :
+                            selectedOrderDetails.status === "On the Way" ? "bg-orange-100 text-orange-800" :
+                            "bg-green-100 text-green-800"
+                          }`}>
+                            {selectedOrderDetails.status}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Driver Section */}
+                    {(selectedOrderDetails as any).driverName ? (
+                      <div className="flex items-start space-x-4">
+                        <div className="flex-shrink-0 w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                          <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Assigned Driver</p>
+                          <p className="text-base font-medium text-green-600 mt-1">{(selectedOrderDetails as any).driverName}</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-start space-x-4">
+                        <div className="flex-shrink-0 w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                          <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Assigned Driver</p>
+                          <p className="text-base font-medium text-gray-500 mt-1">Not assigned</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
 
               {/* Scanned Receipt Image Section */}
               {selectedOrderDetails.receiptImage && (
