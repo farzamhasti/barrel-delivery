@@ -328,8 +328,10 @@ export async function getTodayOrdersWithItems() {
       receiptImage: orders.receiptImage,
       formattedReceiptImage: orders.formattedReceiptImage,
       customerAddress: orders.customerAddress,
+      driverName: drivers.name,
     })
     .from(orders)
+    .leftJoin(drivers, eq(orders.driverId, drivers.id))
     .where(and(gte(orders.createdAt, startOfDay), lt(orders.createdAt, endOfDay)))
     .orderBy(desc(orders.createdAt));
   
