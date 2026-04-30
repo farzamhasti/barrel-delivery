@@ -38,8 +38,7 @@ export default function OrderTrackingWithMap() {
   const { data: allOrders = [], isLoading, refetch } = trpc.orders.getTodayWithItems.useQuery(undefined, { enabled: !!user });
   
   // Fetch drivers for Active Drivers section with real-time polling (3-second interval)
-  const { data: drivers = [], isLoading: driversLoading, refetch: refetchDrivers } = trpc.drivers.list.useQuery(undefined, { 
-    enabled: !!user,
+  const { data: drivers = [], isLoading: driversLoading } = trpc.drivers.list.useQuery(undefined, { 
     staleTime: 0, // Always consider data stale
     gcTime: 0, // Don't cache
     refetchInterval: 3000, // Poll every 3 seconds for real-time updates
@@ -47,14 +46,6 @@ export default function OrderTrackingWithMap() {
     refetchOnMount: true,
   });
   const activeDrivers = drivers.filter((d: any) => d.status === "online" && d.isActive);
-
-  // Immediately refetch drivers on component mount to ensure they're loaded
-  useEffect(() => {
-    if (user) {
-      // Force refetch on mount
-      refetchDrivers();
-    }
-  }, []);
 
   // Fetch selected order from allOrders
   const selectedOrderData = selectedOrderId && Array.isArray(allOrders)
@@ -79,13 +70,7 @@ export default function OrderTrackingWithMap() {
     };
   }, []);
 
-  // Refetch drivers periodically to ensure real-time updates
-  useEffect(() => {
-    const interval = setInterval(() => {
-      refetchDrivers();
-    }, 3000); // Refetch every 3 seconds for faster updates
-    return () => clearInterval(interval);
-  }, [refetchDrivers]);
+
 
   // Process geocoding queue with rate limiting (1 request per 500ms)
   useEffect(() => {
