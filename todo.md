@@ -1035,6 +1035,9 @@ These features are documented for future enhancement but are not required for th
 - [x] Enable clicking markers to view order details
 - [x] Add restaurant marker to fullscreen map
 - [x] Sync geocoded locations from main map to fullscreen map
+- [x] Replace close button with X icon
+- [x] Add maximize icon to expand modal to full screen
+- [x] Add minimize icon to restore modal to normal size
 - [x] Test fullscreen map on desktop and tablet
 - [x] Verify TypeScript compilation (0 errors)
 - [x] Verify dev server running successfully
