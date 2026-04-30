@@ -1,12 +1,22 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { trpc } from '@/lib/trpc';
 import { CheckCircle2, Clock, Calendar, Users, FileText } from 'lucide-react';
 
 export function KitchenReservations() {
-  const { data: reservations, refetch } = trpc.reservations.getAll.useQuery();
+  const [selectedDate, setSelectedDate] = useState<string>('');
+  const { data: allReservations = [], refetch } = trpc.reservations.getAll.useQuery();
   const markDoneMutation = trpc.reservations.markDone.useMutation();
+
+  // Filter reservations by selected date
+  const filteredReservations = selectedDate
+    ? allReservations.filter((r: any) => {
+        const reservationDate = new Date(r.dateTime).toISOString().split('T')[0];
+        return reservationDate === selectedDate;
+      })
+    : allReservations;
 
   // Auto-refetch every 5 seconds to keep data in sync
   useEffect(() => {
@@ -25,11 +35,33 @@ export function KitchenReservations() {
     }
   };
 
-  const pendingReservations = reservations?.filter((r: any) => r.status === 'Pending') || [];
-  const doneReservations = reservations?.filter((r: any) => r.status === 'Done') || [];
+  const pendingReservations = filteredReservations?.filter((r: any) => r.status === 'Pending') || [];
+  const doneReservations = filteredReservations?.filter((r: any) => r.status === 'Done') || [];
 
   return (
     <div className="space-y-8">
+      {/* Date Filter */}
+      <div className="flex items-center gap-2 bg-muted/50 p-4 rounded-lg">
+        <Calendar className="h-5 w-5 text-muted-foreground" />
+        <Input
+          type="date"
+          value={selectedDate}
+          onChange={(e) => setSelectedDate(e.target.value)}
+          className="w-40"
+          placeholder="Filter by date"
+        />
+        {selectedDate && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSelectedDate('')}
+            className="text-xs"
+          >
+            Clear
+          </Button>
+        )}
+      </div>
+
       {/* Pending Reservations Section */}
       <div>
         <div className="flex items-center gap-2 mb-4">

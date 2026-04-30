@@ -10,6 +10,7 @@ import { Trash2, Edit2, Plus, Calendar, Users, FileText, Tag } from 'lucide-reac
 export function Reservations() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [selectedDate, setSelectedDate] = useState<string>('');
   const [formData, setFormData] = useState({
     eventType: '',
     numberOfPeople: '',
@@ -17,10 +18,18 @@ export function Reservations() {
     description: '',
   });
 
-  const { data: reservations, refetch } = trpc.reservations.getAll.useQuery();
+  const { data: allReservations = [], refetch } = trpc.reservations.getAll.useQuery();
   const createMutation = trpc.reservations.create.useMutation();
   const updateMutation = trpc.reservations.update.useMutation();
   const deleteMutation = trpc.reservations.delete.useMutation();
+
+  // Filter reservations by selected date
+  const filteredReservations = selectedDate
+    ? allReservations.filter((r: any) => {
+        const reservationDate = new Date(r.dateTime).toISOString().split('T')[0];
+        return reservationDate === selectedDate;
+      })
+    : allReservations;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,6 +58,7 @@ export function Reservations() {
       setEditingId(null);
       setIsFormOpen(false);
       refetch();
+      setSelectedDate(''); // Reset date filter after creating
     } catch (error) {
       console.error('Error saving reservation:', error);
     }
@@ -86,7 +96,29 @@ export function Reservations() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-foreground">Reservations</h2>
+        <div>
+          <h2 className="text-2xl font-bold text-foreground">Reservations</h2>
+          <div className="mt-3 flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <Input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="w-40"
+              placeholder="Filter by date"
+            />
+            {selectedDate && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelectedDate('')}
+                className="text-xs"
+              >
+                Clear
+              </Button>
+            )}
+          </div>
+        </div>
         <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
           <DialogTrigger asChild>
             <Button onClick={() => setIsFormOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white">
@@ -179,8 +211,8 @@ export function Reservations() {
               </tr>
             </thead>
             <tbody>
-              {reservations && reservations.length > 0 ? (
-                reservations.map((reservation: any) => (
+              {filteredReservations && filteredReservations.length > 0 ? (
+                filteredReservations.map((reservation: any) => (
                   <tr key={reservation.id} className="border-b border-border hover:bg-muted/50 transition-colors">
                     <td className="px-6 py-4 text-sm text-foreground">{reservation.eventType}</td>
                     <td className="px-6 py-4 text-sm text-foreground">{reservation.numberOfPeople}</td>
