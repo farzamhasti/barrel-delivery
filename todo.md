@@ -838,3 +838,14 @@ These features are documented for future enhancement but are not required for th
 - [x] Verify real-time updates work in both locations
 - [x] TypeScript compilation: 0 errors
 - [x] Dev server: Running successfully
+
+
+## Phase 74: Fix Active Drivers Table Not Showing on Initial Load
+- [x] Debug why drivers query isn't fetching on component mount
+- [x] Ensure drivers query is enabled when user is authenticated
+- [x] Add immediate refetch on component mount
+- [x] Verify Active Drivers table shows without navigating to Drivers tab first
+- [x] Maintain existing polling interval and functionality
+- [x] Test with multiple driver states (online/offline)
+- [x] TypeScript compilation: 0 errors
+- [x] Dev server: Running successfully
