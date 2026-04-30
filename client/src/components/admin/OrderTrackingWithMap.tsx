@@ -41,6 +41,8 @@ export default function OrderTrackingWithMap() {
   const { data: drivers = [], isLoading: driversLoading } = trpc.drivers.list.useQuery(undefined, { 
     enabled: !!user,
     refetchInterval: 3000, // Poll every 3 seconds for real-time updates
+    refetchOnWindowFocus: false,
+    refetchOnMount: true,
   });
   const activeDrivers = drivers.filter((d: any) => d.status === "online" && d.isActive);
 

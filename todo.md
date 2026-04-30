@@ -802,3 +802,16 @@ These features are documented for future enhancement but are not required for th
 - [x] Ensure no performance issues with frequent updates
 - [x] TypeScript compilation: 0 errors
 - [x] Dev server: Running successfully
+
+
+## Phase 71: Debug Drivers Table Auto-Update Issue
+- [x] Check if refetchInterval is still working in OrderTrackingWithMap
+- [x] Verify the setStatus mutation is being called correctly
+- [x] Check browser console for any errors
+- [x] Verify database is being updated when status changes
+- [x] Test if manual page refresh shows the updated status
+- [x] Check if the issue is specific to OrderTrackingWithMap or affects other components
+- [x] Add refetchOnMount and refetchOnWindowFocus to ensure polling works
+- [x] Restore drivers table auto-update functionality
+- [x] TypeScript compilation: 0 errors
+- [x] Dev server: Running successfully
