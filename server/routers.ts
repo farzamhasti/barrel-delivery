@@ -89,9 +89,10 @@ export const appRouter = router({
     getTodayWithItems: publicProcedure
       .input(z.object({
         driverId: z.number().optional(),
+        date: z.string().optional(),
       }).optional())
       .query(async ({ input }) => {
-        const allOrders = await db.getTodayOrdersWithItems();
+        const allOrders = await db.getTodayOrdersWithItems(input?.date);
         // If driverId is provided, filter for orders assigned to that driver
         if (input?.driverId) {
           return allOrders.filter((order: any) => order.driverId === input.driverId);

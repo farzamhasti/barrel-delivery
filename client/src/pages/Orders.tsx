@@ -52,6 +52,7 @@ export function Orders() {
   const editCameraInputRef = useRef<HTMLInputElement>(null);
 
   const [statusFilter, setStatusFilter] = useState<"Pending" | "Ready" | "On the Way" | "Delivered">("Pending");
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
   const [formData, setFormData] = useState<OrderFormData>({
     orderNumber: "",
@@ -62,7 +63,9 @@ export function Orders() {
     deliveryTime: "",
   });
 
-  const { data: allOrders = [], isLoading: isLoadingOrders } = trpc.orders.getTodayWithItems.useQuery();
+  const { data: allOrders = [], isLoading: isLoadingOrders } = trpc.orders.getTodayWithItems.useQuery({
+    date: selectedDate.toISOString().split('T')[0],
+  });
   
   const orders = useMemo(() => {
     return allOrders.filter((order: any) => order.status === statusFilter);
@@ -174,7 +177,19 @@ export function Orders() {
       <Card>
         <CardHeader>
           <div className="flex justify-between items-center mb-4">
-            <CardTitle>Orders for Today</CardTitle>
+            <div>
+              <CardTitle>Orders for Today</CardTitle>
+              <div className="mt-3 flex items-center gap-2">
+                <Label htmlFor="order-date" className="text-sm font-medium">Select Date:</Label>
+                <Input
+                  id="order-date"
+                  type="date"
+                  value={selectedDate.toISOString().split('T')[0]}
+                  onChange={(e) => setSelectedDate(new Date(e.target.value))}
+                  className="w-40"
+                />
+              </div>
+            </div>
           </div>
           <div className="flex gap-2 flex-wrap">
             {(["Pending", "Ready", "On the Way", "Delivered"] as const).map((status) => {
