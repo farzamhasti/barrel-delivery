@@ -281,6 +281,12 @@ export function Orders() {
                     <Label className="text-gray-600">Status</Label>
                     <p className="font-medium">{selectedOrderDetails.status}</p>
                   </div>
+                  {(selectedOrderDetails.status === "On the Way" || selectedOrderDetails.status === "Delivered") && (selectedOrderDetails as any).driverName && (
+                    <div>
+                      <Label className="text-gray-600">Driver</Label>
+                      <p className="font-medium text-green-600">{(selectedOrderDetails as any).driverName}</p>
+                    </div>
+                  )}
                   {selectedOrderDetails.deliveryTime && (
                     <div>
                       <Label className="text-gray-600">Delivery Time</Label>
