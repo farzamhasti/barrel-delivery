@@ -790,3 +790,15 @@ These features are documented for future enhancement but are not required for th
 - [x] Ensure all existing logic and functionality remains unchanged
 - [x] TypeScript compilation: 0 errors
 - [x] Dev server: Running successfully
+
+
+## Phase 70: Fix Active Drivers Table Auto-Update
+- [x] Investigate why active drivers table doesn't update when drivers go online/offline
+- [x] Check if query is being refetched when driver status changes
+- [x] Implement auto-refresh or polling for active drivers table
+- [x] Add online/offline toggle button to active drivers table
+- [x] Verify table updates immediately when driver status changes
+- [x] Test online/offline transitions
+- [x] Ensure no performance issues with frequent updates
+- [x] TypeScript compilation: 0 errors
+- [x] Dev server: Running successfully

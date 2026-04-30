@@ -44,6 +44,13 @@ export default function OrderTrackingWithMap() {
   });
   const activeDrivers = drivers.filter((d: any) => d.status === "online" && d.isActive);
 
+  // Mutation to toggle driver status
+  const setDriverStatusMutation = trpc.drivers.setStatus.useMutation({
+    onSuccess: () => {
+      utils.drivers.list.invalidate();
+    },
+  });
+
   // Fetch selected order from allOrders
   const selectedOrderData = selectedOrderId && Array.isArray(allOrders)
     ? allOrders.find((o: any) => o.id === selectedOrderId)
@@ -197,7 +204,15 @@ export default function OrderTrackingWithMap() {
                       <tr key={driver.id} className="border-b border-border hover:bg-muted/30">
                         <td className="py-2 px-3">{driver.name}</td>
                         <td className="py-2 px-3">
-                          <Badge className="bg-green-100 text-green-800 text-xs">Online</Badge>
+                          <Button
+                            size="sm"
+                            variant={driver.status === "online" ? "default" : "outline"}
+                            onClick={() => setDriverStatusMutation.mutate({ id: driver.id, status: driver.status === "online" ? "offline" : "online" })}
+                            disabled={setDriverStatusMutation.isPending}
+                            className="text-xs"
+                          >
+                            {driver.status === "online" ? "Online" : "Offline"}
+                          </Button>
                         </td>
                         <td className="py-2 px-3 text-muted-foreground font-mono">
                           {driverReturnTimes[driver.id] || "00:00"}
