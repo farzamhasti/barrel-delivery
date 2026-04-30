@@ -8,8 +8,9 @@ import { MapView } from "@/components/Map";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useDriverReturnTime } from "@/contexts/DriverReturnTimeContext";
-import { Clock, CheckCircle2, Truck, Package } from "lucide-react";
+import { Clock, CheckCircle2, Truck, Package, Maximize2 } from "lucide-react";
 import { toast } from "sonner";
+import { FullscreenMapModal } from "@/components/FullscreenMapModal";
 
 const FORT_ERIE_CENTER = { lat: 42.905191, lng: -78.9225479 };
 const RESTAURANT_ADDRESS = { lat: 42.905191, lng: -78.9225479 }; // 224 Garrison Rd, Fort Erie, ON L2A 1M7
@@ -30,17 +31,25 @@ export default function OrderTrackingWithMap() {
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
   const [showMap, setShowMap] = useState(true);
   const [showDriverModal, setShowDriverModal] = useState(false);
+  const [showFullscreenMap, setShowFullscreenMap] = useState(false);
   const [orderToAssign, setOrderToAssign] = useState<number | null>(null);
   const [selectedDriver, setSelectedDriver] = useState<{ id: number; name: string } | null>(null);
   const [activeTab, setActiveTab] = useState("pending");
   const [geocodedLocations, setGeocodedLocations] = useState<{ [key: number]: { lat: number; lng: number } }>({});
   const [failedGeocodings, setFailedGeocodings] = useState<Set<number>>(new Set());
+  const [fullscreenGeocodedLocations, setFullscreenGeocodedLocations] = useState<{ [key: number]: { lat: number; lng: number } }>({});
+  const [fullscreenFailedGeocodings, setFullscreenFailedGeocodings] = useState<Set<number>>(new Set());
   const mapRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.Marker[]>([]);
   const restaurantMarkerRef = useRef<google.maps.Marker | null>(null);
   const isMountedRef = useRef(true);
   const geocodingQueueRef = useRef<number[]>([]);
   const geocodingInProgressRef = useRef<Set<number>>(new Set());
+  const fullscreenMapRef = useRef<google.maps.Map | null>(null);
+  const fullscreenMarkersRef = useRef<google.maps.Marker[]>([]);
+  const fullscreenRestaurantMarkerRef = useRef<google.maps.Marker | null>(null);
+  const fullscreenGeocodingQueueRef = useRef<number[]>([]);
+  const fullscreenGeocodingInProgressRef = useRef<Set<number>>(new Set());
 
   // Geocoding mutation
   const geocodeMutation = (trpc as any).maps.geocode.useMutation();
@@ -175,6 +184,19 @@ export default function OrderTrackingWithMap() {
 
   return (
     <div className="flex flex-col h-full gap-4 p-4">
+      {/* Better Map View Button */}
+      <div className="flex justify-end">
+        <Button
+          onClick={() => setShowFullscreenMap(true)}
+          variant="outline"
+          size="sm"
+          className="gap-2"
+        >
+          <Maximize2 className="w-4 h-4" />
+          Better Map View
+        </Button>
+      </div>
+
       <div className="flex gap-4 flex-1">
         {/* Map Section */}
         {showMap && (
@@ -519,6 +541,35 @@ export default function OrderTrackingWithMap() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Fullscreen Map Modal */}
+      <FullscreenMapModal
+        isOpen={showFullscreenMap}
+        onClose={() => setShowFullscreenMap(false)}
+        initialCenter={FORT_ERIE_CENTER}
+        initialZoom={13}
+        title="Order Tracking Map"
+        onMapReady={(map) => {
+          fullscreenMapRef.current = map;
+          
+          // Add restaurant marker
+          if (!fullscreenRestaurantMarkerRef.current) {
+            fullscreenRestaurantMarkerRef.current = new google.maps.Marker({
+              map,
+              position: RESTAURANT_ADDRESS,
+              title: "Restaurant",
+              icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 14,
+                fillColor: "#ef4444",
+                fillOpacity: 1,
+                strokeColor: "white",
+                strokeWeight: 2,
+              },
+            });
+          }
+        }}
+      />
     </div>
   );
 }
