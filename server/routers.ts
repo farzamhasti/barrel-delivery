@@ -11,7 +11,7 @@ export const appRouter = router({
         orderNumber: z.string().optional(),
         customerAddress: z.string(),
         customerPhone: z.string(),
-        area: z.enum(['DT', 'CP', 'B']),
+        area: z.enum(['Downtown', 'Central Park', 'Both']),
         deliveryTime: z.string().optional(),
         hasDeliveryTime: z.boolean().default(false),
         receiptText: z.string().optional(),

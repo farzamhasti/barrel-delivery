@@ -21,7 +21,7 @@ export function ReceiptScannerTesseract() {
     phoneNumber: "",
     deliveryTime: "",
     enableDeliveryTime: false,
-    area: "DT" as "DT" | "CP" | "B",
+    area: "Downtown" as "Downtown" | "Central Park" | "Both",
     receiptImage: "",
   });
 
@@ -123,7 +123,7 @@ export function ReceiptScannerTesseract() {
           phoneNumber: "",
           deliveryTime: "",
           enableDeliveryTime: false,
-          area: "DT" as "DT" | "CP" | "B",
+          area: "Downtown" as "Downtown" | "Central Park" | "Both",
           receiptImage: "",
         });
         setImagePreview(null);
@@ -261,12 +261,12 @@ export function ReceiptScannerTesseract() {
               <label className="block text-sm font-medium mb-1">Area</label>
               <select
                 value={formData.area}
-                onChange={(e) => setFormData({ ...formData, area: e.target.value as "DT" | "CP" | "B" })}
+                onChange={(e) => setFormData({ ...formData, area: e.target.value as "Downtown" | "Central Park" | "Both" })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="DT">Downtown (DT)</option>
-                <option value="CP">Central Park (CP)</option>
-                <option value="B">Bronx (B)</option>
+                <option value="Downtown">Downtown</option>
+                <option value="Central Park">Central Park</option>
+                <option value="Both">Both</option>
               </select>
             </div>
 
