@@ -518,6 +518,71 @@ export const appRouter = router({
         };
       }),
   }),
+
+  reservations: router({
+    create: publicProcedure
+      .input(z.object({
+        eventType: z.string(),
+        numberOfPeople: z.number().int().positive(),
+        dateTime: z.date(),
+        description: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const reservation = await db.createReservation({
+          eventType: input.eventType,
+          numberOfPeople: input.numberOfPeople,
+          dateTime: input.dateTime,
+          description: input.description,
+          status: 'Pending',
+        });
+        return reservation;
+      }),
+
+    getAll: publicProcedure
+      .query(async () => {
+        const reservations = await db.getReservations();
+        return reservations;
+      }),
+
+    getById: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ input }) => {
+        const reservation = await db.getReservationById(input.id);
+        return reservation;
+      }),
+
+    update: publicProcedure
+      .input(z.object({
+        id: z.number(),
+        eventType: z.string().optional(),
+        numberOfPeople: z.number().int().positive().optional(),
+        dateTime: z.date().optional(),
+        description: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const reservation = await db.updateReservation(input.id, {
+          eventType: input.eventType,
+          numberOfPeople: input.numberOfPeople,
+          dateTime: input.dateTime,
+          description: input.description,
+        });
+        return reservation;
+      }),
+
+    delete: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        await db.deleteReservation(input.id);
+        return { success: true };
+      }),
+
+    markDone: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        await db.updateReservationStatus(input.id, 'Done');
+        return { success: true };
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

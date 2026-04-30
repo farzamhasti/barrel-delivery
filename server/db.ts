@@ -1322,7 +1322,7 @@ export async function getReservations() {
 
   const results = await db.select()
     .from(reservations)
-    .orderBy(desc(reservations.reservationDate));
+    .orderBy(desc(reservations.dateTime));
 
   return results;
 }
@@ -1338,7 +1338,24 @@ export async function getReservationById(id: number) {
   return result[0] || null;
 }
 
-export async function updateReservationStatus(id: number, status: "Pending" | "Confirmed" | "Cancelled") {
+export async function updateReservation(id: number, data: Partial<Omit<InsertReservation, 'status'>>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const updateData: any = {};
+  if (data.eventType !== undefined) updateData.eventType = data.eventType;
+  if (data.numberOfPeople !== undefined) updateData.numberOfPeople = data.numberOfPeople;
+  if (data.dateTime !== undefined) updateData.dateTime = data.dateTime;
+  if (data.description !== undefined) updateData.description = data.description;
+
+  const result = await db.update(reservations)
+    .set(updateData)
+    .where(eq(reservations.id, id));
+
+  return result;
+}
+
+export async function updateReservationStatus(id: number, status: "Pending" | "Done") {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 

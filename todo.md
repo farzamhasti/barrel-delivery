@@ -1081,3 +1081,43 @@ These features are documented for future enhancement but are not required for th
 - [x] Verify single X icon displays correctly
 - [x] Verify TypeScript compilation (0 errors)
 - [x] Verify dev server running successfully
+
+
+## Phase 93: Reservations Feature - Database and Backend
+- [x] Create reservations table in database schema (event_type, num_people, date_time, description, status)
+- [x] Add database migration for reservations table
+- [x] Create query helpers for reservation CRUD operations
+- [x] Create tRPC procedures: createReservation, getReservations, updateReservation, deleteReservation, markReservationDone
+- [x] Implement real-time status updates via tRPC
+- [x] Verify TypeScript compilation (0 errors)
+
+## Phase 94: Reservations Feature - Admin Dashboard
+- [x] Create Reservations tab in Admin Dashboard
+- [x] Add form for entering: event type, number of people, date/time, description
+- [x] Create reservation with Pending status when form submitted
+- [x] Display all reservations in table with columns: event type, people, date/time, status
+- [x] Add edit button for each reservation
+- [x] Add delete button for each reservation
+- [x] Implement edit form modal
+- [x] Implement delete confirmation dialog
+- [x] Auto-refresh reservations list when status changes
+- [x] Verify TypeScript compilation (0 errors)
+
+## Phase 95: Reservations Feature - Kitchen Dashboard
+- [x] Create Reservations page in Kitchen Dashboard
+- [x] Display all reservations with: event type, number of people, date/time, description, status
+- [x] Add "Done" button for each reservation
+- [x] When Done clicked, update reservation status to Done
+- [x] Sync status change back to Admin Dashboard in real-time
+- [x] Display Pending and Done reservations with different styling
+- [x] Verify TypeScript compilation (0 errors)
+
+## Phase 96: Reservations Feature - Testing and Finalization
+- [x] Write Vitest tests for reservation CRUD operations
+- [x] Write Vitest tests for status sync between dashboards
+- [x] Test create, edit, delete functionality in Admin Dashboard
+- [x] Test Done button functionality in Kitchen Dashboard
+- [x] Verify status updates sync correctly
+- [x] Verify no changes to existing app functionality
+- [x] Verify TypeScript compilation (0 errors)
+- [x] Verify dev server running successfully
