@@ -245,12 +245,21 @@ export default function DriverDashboard() {
     }
   };
 
-  // Redirect to login if not authenticated
-  if (!sessionToken) {
-    setLocation("/driver-login");
-    return null;
-  }
+  // Use useEffect to handle redirects instead of doing it in render
+  useEffect(() => {
+    if (!sessionToken) {
+      setLocation("/driver-login");
+    }
+  }, [sessionToken, setLocation]);
 
+  // Use useEffect to redirect if no driver data after auth check completes
+  useEffect(() => {
+    if (!checkingAuth && (!isLoggedIn || !currentDriver)) {
+      setLocation("/driver-login");
+    }
+  }, [checkingAuth, isLoggedIn, currentDriver, setLocation]);
+
+  // Show loading state while checking auth
   if (checkingAuth && sessionToken) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -262,10 +271,16 @@ export default function DriverDashboard() {
     );
   }
 
-  // Redirect to login if no driver data
-  if (!isLoggedIn || !currentDriver) {
-    setLocation("/driver-login");
-    return null;
+  // Show loading state while redirecting
+  if (!sessionToken || !isLoggedIn || !currentDriver) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p>Redirecting...</p>
+        </div>
+      </div>
+    );
   }
 
   // Filter orders by status
