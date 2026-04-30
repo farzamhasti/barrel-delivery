@@ -151,6 +151,40 @@ export const appRouter = router({
         // Return orders with items
         return allOrders;
       }),
+
+    createFromReceipt: publicProcedure
+      .input(z.object({
+        customerName: z.string(),
+        customerPhone: z.string().optional(),
+        address: z.string(),
+        items: z.array(z.object({
+          name: z.string(),
+          quantity: z.number().int().positive(),
+          price: z.number().positive(),
+        })),
+        checkNumber: z.string().optional(),
+        area: z.string().optional(),
+        deliveryTime: z.string().optional(),
+        receiptImage: z.string().optional(),
+        customerLatitude: z.number().optional(),
+        customerLongitude: z.number().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const order = await db.createOrder({
+          customerName: input.customerName,
+          customerPhone: input.customerPhone,
+          address: input.address,
+          items: input.items,
+          checkNumber: input.checkNumber,
+          area: input.area,
+          deliveryTime: input.deliveryTime,
+          receiptImage: input.receiptImage,
+          customerLatitude: input.customerLatitude,
+          customerLongitude: input.customerLongitude,
+          status: 'Pending',
+        });
+        return order;
+      }),
   }),
 
   drivers: router({
