@@ -586,13 +586,12 @@ export async function createOrder(data: InsertOrder) {
   
   // Build order data with only fields that exist in the simplified schema
   const orderData: any = {
+    orderNumber: data.orderNumber || `ORD-${Date.now()}`,
     subtotal: data.subtotal ? String(data.subtotal) : "0",
     taxAmount: data.taxAmount ? String(data.taxAmount) : "0",
     totalPrice: data.totalPrice ? String(data.totalPrice) : "0",
     status: data.status || "Pending",
   };
-  
-  if (data.orderNumber) orderData.orderNumber = data.orderNumber;
   if (data.customerAddress) orderData.customerAddress = data.customerAddress;
   if (data.customerPhone) orderData.customerPhone = data.customerPhone;
   if (data.area && typeof data.area === 'string' && data.area.trim()) {

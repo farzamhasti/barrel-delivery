@@ -154,15 +154,9 @@ export const appRouter = router({
 
     createFromReceipt: publicProcedure
       .input(z.object({
-        customerName: z.string(),
+        orderNumber: z.string(),
+        customerAddress: z.string(),
         customerPhone: z.string().optional(),
-        address: z.string(),
-        items: z.array(z.object({
-          name: z.string(),
-          quantity: z.number().int().positive(),
-          price: z.number().positive(),
-        })),
-        checkNumber: z.string().optional(),
         area: z.string().optional(),
         deliveryTime: z.string().optional(),
         receiptImage: z.string().optional(),
@@ -171,11 +165,11 @@ export const appRouter = router({
       }))
       .mutation(async ({ input }) => {
         const order = await db.createOrder({
-          customerName: input.customerName,
-          customerPhone: input.customerPhone,
-          address: input.address,
-          items: input.items,
-          checkNumber: input.checkNumber,
+          customerName: 'From Receipt',
+          customerPhone: input.customerPhone || '',
+          address: input.customerAddress,
+          items: [],
+          checkNumber: input.orderNumber,
           area: input.area,
           deliveryTime: input.deliveryTime,
           receiptImage: input.receiptImage,
