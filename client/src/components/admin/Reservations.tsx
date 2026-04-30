@@ -87,9 +87,9 @@ export function Reservations() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-foreground">Reservations</h2>
-        <Dialog open={isFormOpen} onOpenChange={(open) => !open && handleCloseForm()}>
+        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+            <Button onClick={() => setIsFormOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white">
               <Plus className="h-4 w-4 mr-2" />
               New Reservation
             </Button>
@@ -173,6 +173,7 @@ export function Reservations() {
                 <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Event Type</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">People</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Date & Time</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Description</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Status</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Actions</th>
               </tr>
@@ -185,6 +186,9 @@ export function Reservations() {
                     <td className="px-6 py-4 text-sm text-foreground">{reservation.numberOfPeople}</td>
                     <td className="px-6 py-4 text-sm text-foreground">
                       {new Date(reservation.dateTime).toLocaleString()}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-foreground max-w-xs truncate">
+                      {reservation.description || '-'}
                     </td>
                     <td className="px-6 py-4 text-sm">
                       <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
