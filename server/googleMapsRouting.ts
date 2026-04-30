@@ -34,6 +34,31 @@ export interface RoutingCalculation {
 }
 
 /**
+ * Normalize address by appending city and province if not already present
+ * Handles incomplete addresses like "1 Hospitality Dr" → "1 Hospitality Dr, Fort Erie, ON"
+ */
+export function normalizeAddress(address: string): string {
+  if (!address) return address;
+  
+  const normalized = address.trim();
+  
+  // If address already contains Fort Erie, assume it's complete
+  if (normalized.toLowerCase().includes('fort erie')) {
+    return normalized;
+  }
+  
+  // Check if address contains "ON" as a separate word (not part of postal code)
+  // Ontario postal codes start with letters, so we check for ", ON" or " ON" patterns
+  const hasOntarioProvince = /,\s*ON\b|\s+ON\b/i.test(normalized);
+  if (hasOntarioProvince) {
+    return normalized;
+  }
+  
+  // Append Fort Erie, ON to incomplete addresses
+  return `${normalized}, Fort Erie, ON`;
+}
+
+/**
  * Calculate return time using Google Maps Directions API
  * 
  * For single order:
@@ -130,8 +155,8 @@ export async function calculateReturnTimeWithGoogleMaps(
 /**
  * Calculate travel time using Google Maps Directions API
  * 
- * Single order: Direct round trip
- * Multiple orders: Optimized route with waypoints
+ * Single order: Direct round trip (Restaurant → Order → Restaurant)
+ * Multiple orders: Optimized route with waypoints (Restaurant → Orders → Restaurant)
  * 
  * Uses text addresses instead of coordinates for better reliability
  * 
@@ -143,39 +168,97 @@ async function calculateGoogleMapsTravelTime(
   restaurantLat: number,
   restaurantLng: number
 ): Promise<number> {
+  console.log('[GoogleMapsRouting] calculateGoogleMapsTravelTime called with:', {
+    ordersCount: orders.length,
+    orders: orders.map(o => ({ id: o.id, address: o.address, normalized: normalizeAddress(o.address) })),
+    restaurantAddress,
+  });
+
   if (orders.length === 1) {
     // Single order: direct round trip
     const order = orders[0];
 
     try {
-      // Get directions from restaurant to order location using text addresses
+      const normalizedOrderAddress = normalizeAddress(order.address);
+      
+      console.log('[GoogleMapsRouting] Single order routing:', {
+        origin: restaurantAddress,
+        destination: order.address,
+        normalizedDestination: normalizedOrderAddress,
+      });
+
+      // Get directions from restaurant to order location
       const directionsResult = await makeRequest<DirectionsResult>(
         "/maps/api/directions/json",
         {
           origin: restaurantAddress,
-          destination: restaurantAddress, // Return to restaurant
-          waypoints: order.address, // Single waypoint using text address
+          destination: normalizedOrderAddress,
           mode: "driving",
-          optimize: "true", // Optimize the route
         }
       );
+
+      console.log('[GoogleMapsRouting] Outbound response status:', directionsResult.status);
 
       if (
         directionsResult.status === "OK" &&
         directionsResult.routes.length > 0
       ) {
         const route = directionsResult.routes[0];
-        let totalDuration = 0;
+        let outboundDuration = 0;
 
-        // Sum up all leg durations
+        // Sum up all leg durations for outbound trip
         for (const leg of route.legs) {
-          totalDuration += leg.duration.value; // duration.value is in seconds
+          outboundDuration += leg.duration.value; // duration.value is in seconds
         }
 
-        return totalDuration;
+        console.log('[GoogleMapsRouting] Outbound duration:', outboundDuration, 'seconds');
+
+        // Now get return trip from order location back to restaurant
+        const normalizedOrderAddressForReturn = normalizeAddress(order.address);
+        
+        console.log('[GoogleMapsRouting] Requesting return trip:', {
+          origin: order.address,
+          normalizedOrigin: normalizedOrderAddressForReturn,
+          destination: restaurantAddress,
+        });
+
+        const returnResult = await makeRequest<DirectionsResult>(
+          "/maps/api/directions/json",
+          {
+            origin: normalizedOrderAddressForReturn,
+            destination: restaurantAddress,
+            mode: "driving",
+          }
+        );
+
+        console.log('[GoogleMapsRouting] Return response status:', returnResult.status);
+
+        if (
+          returnResult.status === "OK" &&
+          returnResult.routes.length > 0
+        ) {
+          const returnRoute = returnResult.routes[0];
+          let returnDuration = 0;
+
+          // Sum up all leg durations for return trip
+          for (const leg of returnRoute.legs) {
+            returnDuration += leg.duration.value;
+          }
+
+          console.log('[GoogleMapsRouting] Return duration:', returnDuration, 'seconds');
+          console.log('[GoogleMapsRouting] Total travel time:', outboundDuration + returnDuration, 'seconds');
+
+          return outboundDuration + returnDuration;
+        } else {
+          console.warn(
+            `[GoogleMapsRouting] Return trip API returned status: ${returnResult.status}`
+          );
+          return outboundDuration * 2; // Estimate return as same as outbound
+        }
       } else {
         console.warn(
-          `[GoogleMapsRouting] Directions API returned status: ${directionsResult.status}`
+          `[GoogleMapsRouting] Directions API returned status: ${directionsResult.status}`,
+          { status: directionsResult.status, error_message: (directionsResult as any).error_message }
         );
         return 0;
       }
@@ -185,9 +268,16 @@ async function calculateGoogleMapsTravelTime(
     }
   } else {
     // Multiple orders: optimized route with all addresses as waypoints
-    const waypoints = orders
-      .map((order) => order.address)
+    const normalizedWaypoints = orders
+      .map((order) => normalizeAddress(order.address))
       .join("|");
+
+    console.log('[GoogleMapsRouting] Multiple orders routing:', {
+      origin: restaurantAddress,
+      destination: restaurantAddress,
+      waypointsCount: orders.length,
+      waypoints: normalizedWaypoints.substring(0, 100) + (normalizedWaypoints.length > 100 ? '...' : ''),
+    });
 
     try {
       const directionsResult = await makeRequest<DirectionsResult>(
@@ -195,11 +285,13 @@ async function calculateGoogleMapsTravelTime(
         {
           origin: restaurantAddress,
           destination: restaurantAddress, // Return to restaurant
-          waypoints: waypoints,
+          waypoints: normalizedWaypoints,
           mode: "driving",
           optimize: "true", // Enable waypoint optimization
         }
       );
+
+      console.log('[GoogleMapsRouting] Multiple orders response status:', directionsResult.status);
 
       if (
         directionsResult.status === "OK" &&
@@ -213,10 +305,13 @@ async function calculateGoogleMapsTravelTime(
           totalDuration += leg.duration.value; // duration.value is in seconds
         }
 
+        console.log('[GoogleMapsRouting] Total travel time (multiple orders):', totalDuration, 'seconds');
+
         return totalDuration;
       } else {
         console.warn(
-          `[GoogleMapsRouting] Directions API returned status: ${directionsResult.status}`
+          `[GoogleMapsRouting] Directions API returned status: ${directionsResult.status}`,
+          { status: directionsResult.status, error_message: (directionsResult as any).error_message }
         );
         return 0;
       }

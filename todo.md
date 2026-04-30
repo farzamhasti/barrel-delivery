@@ -1214,3 +1214,18 @@ These features are documented for future enhancement but are not required for th
 - [x] Test multiple orders: Restaurant → Order 1 → Order 2 → Restaurant (optimized route)
 - [x] Fix return time display to show accurate Google-calculated times
 - [x] Verify return time updates correctly when driver marks orders as delivered
+
+
+## Phase 106: Fix Return Time Calculation - Address Normalization
+- [x] Add database migration to add customer_latitude and customer_longitude columns
+- [x] Apply migration to the database (ALTER TABLE orders ADD COLUMN...)
+- [x] Create normalizeAddress function to append city/province to incomplete addresses
+- [x] Update googleMapsRouting.ts to use normalized addresses in API requests
+- [x] Fix single order routing: Restaurant → Order → Restaurant (separate API calls)
+- [x] Fix multiple orders routing: Restaurant → Orders → Restaurant (waypoint optimization)
+- [x] Add comprehensive debug logging to googleMapsRouting.ts
+- [x] Create googleMapsRouting.test.ts with 17 tests for address normalization
+- [x] Verify all tests pass (17/17 passing)
+- [x] Test with real addresses: "1 Hospitality Dr" → "1 Hospitality Dr, Fort Erie, ON"
+- [x] Test with real addresses: "323 Niagara" → "323 Niagara, Fort Erie, ON"
+- [x] Ensure return time calculation no longer shows inflated times (742 minutes issue fixed)
