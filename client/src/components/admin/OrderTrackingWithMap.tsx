@@ -274,7 +274,7 @@ export default function OrderTrackingWithMap() {
                         <div className="text-sm text-muted-foreground">{order.customerAddress}</div>
                         <div className="text-sm text-muted-foreground mt-1">Phone: {order.customerPhone}</div>
                         <div className="text-sm text-muted-foreground">Area: {order.area || 'N/A'}</div>
-                        <div className="text-sm text-muted-foreground">Driver: {order.driverName || 'N/A'}</div>
+                        <div className={`text-sm font-medium ${order.driverName ? 'text-green-600' : 'text-muted-foreground'}`}>Driver: {order.driverName || 'N/A'}</div>
                       </div>
                       <Button size="sm" onClick={(e) => { e.stopPropagation(); setOrderToAssign(order.id); setShowDriverModal(true); }}>
                         Assign
@@ -297,7 +297,7 @@ export default function OrderTrackingWithMap() {
                         <div className="text-sm text-muted-foreground">{order.customerAddress}</div>
                         <div className="text-sm text-muted-foreground mt-1">Phone: {order.customerPhone}</div>
                         <div className="text-sm text-muted-foreground">Area: {order.area || 'N/A'}</div>
-                        <div className="text-sm text-muted-foreground">Driver: {order.driverName || 'N/A'}</div>
+                        <div className={`text-sm font-medium ${order.driverName ? 'text-green-600' : 'text-muted-foreground'}`}>Driver: {order.driverName || 'N/A'}</div>
                       </div>
                       <Button size="sm" onClick={(e) => { e.stopPropagation(); setOrderToAssign(order.id); setShowDriverModal(true); }}>
                         Send
@@ -318,10 +318,7 @@ export default function OrderTrackingWithMap() {
                     <div className="text-sm text-muted-foreground">{order.customerAddress}</div>
                     <div className="text-sm text-muted-foreground mt-1">Phone: {order.customerPhone}</div>
                     <div className="text-sm text-muted-foreground">Area: {order.area || 'N/A'}</div>
-                    <div className="text-sm text-muted-foreground">Delivery: {order.deliveryTime || 'N/A'}</div>
-                    {order.driverName && (
-                      <div className="text-sm font-medium text-green-600 mt-2">Driver: {order.driverName}</div>
-                    )}
+                    <div className={`text-sm font-medium ${order.driverName ? 'text-green-600' : 'text-muted-foreground'}`}>Driver: {order.driverName || 'N/A'}</div>
                   </Card>
                 ))
               )}
@@ -337,10 +334,7 @@ export default function OrderTrackingWithMap() {
                     <div className="text-sm text-muted-foreground">{order.customerAddress}</div>
                     <div className="text-sm text-muted-foreground mt-1">Phone: {order.customerPhone}</div>
                     <div className="text-sm text-muted-foreground">Area: {order.area || 'N/A'}</div>
-                    <div className="text-sm text-muted-foreground">Delivery: {order.deliveryTime || 'N/A'}</div>
-                    {order.driverName && (
-                      <div className="text-sm font-medium text-green-600 mt-2">Driver: {order.driverName}</div>
-                    )}
+                    <div className={`text-sm font-medium ${order.driverName ? 'text-green-600' : 'text-muted-foreground'}`}>Driver: {order.driverName || 'N/A'}</div>
                   </Card>
                 ))
               )}

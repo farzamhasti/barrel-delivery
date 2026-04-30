@@ -222,7 +222,7 @@ export function Orders() {
                       <p className="text-sm text-gray-600">{order.customerPhone}</p>
                       <p className="text-sm text-gray-600">Area: {order.area}</p>
                       <p className="text-sm font-medium">Status: {order.status}</p>
-                      <p className="text-sm text-gray-600">Driver: {order.driverName || 'N/A'}</p>
+                      <p className={`text-sm font-medium ${order.driverName ? 'text-green-600' : 'text-gray-600'}`}>Driver: {order.driverName || 'N/A'}</p>
                     </div>
                     <div className="flex gap-2">
                       <Button
