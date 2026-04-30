@@ -6,6 +6,56 @@ import fs from 'fs';
 import { convertOntarioTimeToUTC } from './timezoneHelper';
 
 export const appRouter = router({
+  places: router({
+    autocomplete: publicProcedure
+      .input(z.object({
+        input: z.string(),
+        sessionToken: z.string().optional(),
+      }))
+      .query(async ({ input }) => {
+        try {
+          const apiKey = process.env.VITE_FRONTEND_FORGE_API_KEY;
+          const response = await fetch(
+            `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(
+              input.input
+            )}&key=${apiKey}&components=country:ca&sessionToken=${input.sessionToken || ''}`
+          );
+
+          if (!response.ok) {
+            throw new Error(`Google Places API error: ${response.statusText}`);
+          }
+
+          const data = await response.json();
+          return data;
+        } catch (error) {
+          console.error('[places.autocomplete] Error:', error);
+          throw new Error('Failed to fetch autocomplete suggestions');
+        }
+      }),
+    placeDetails: publicProcedure
+      .input(z.object({
+        placeId: z.string(),
+        sessionToken: z.string().optional(),
+      }))
+      .query(async ({ input }) => {
+        try {
+          const apiKey = process.env.VITE_FRONTEND_FORGE_API_KEY;
+          const response = await fetch(
+            `https://maps.googleapis.com/maps/api/place/details/json?place_id=${input.placeId}&fields=geometry&key=${apiKey}&sessionToken=${input.sessionToken || ''}`
+          );
+
+          if (!response.ok) {
+            throw new Error(`Google Places API error: ${response.statusText}`);
+          }
+
+          const data = await response.json();
+          return data;
+        } catch (error) {
+          console.error('[places.placeDetails] Error:', error);
+          throw new Error('Failed to fetch place details');
+        }
+      }),
+  }),
   orders: router({
     createFromReceipt: publicProcedure
       .input(z.object({

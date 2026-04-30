@@ -56,14 +56,16 @@ export function ReceiptScannerTesseract() {
     }
 
     try {
-      const apiKey = import.meta.env.VITE_FRONTEND_FORGE_API_KEY;
-      const response = await fetch(
-        `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(
-          value
-        )}&key=${apiKey}&components=country:ca&sessionToken=${sessionToken}`
-      );
-
+      // Use backend API to proxy Google Places Autocomplete
+      const response = await fetch('/api/trpc/places.autocomplete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          input: { input: value, sessionToken: sessionToken?.toString() || '' }
+        })
+      });
       const data = await response.json();
+
       if (data.predictions) {
         setAddressSuggestions(data.predictions);
         setShowSuggestions(true);
@@ -86,12 +88,16 @@ export function ReceiptScannerTesseract() {
 
     // Get place details to extract coordinates
     try {
-      const apiKey = import.meta.env.VITE_FRONTEND_FORGE_API_KEY;
-      const detailsResponse = await fetch(
-        `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=geometry&key=${apiKey}&sessionToken=${sessionToken}`
-      );
+      // Use backend API to proxy Google Places Details
+      const response = await fetch('/api/trpc/places.placeDetails', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          input: { placeId: placeId, sessionToken: sessionToken?.toString() || '' }
+        })
+      });
+      const detailsData = await response.json();
 
-      const detailsData = await detailsResponse.json();
       if (detailsData.result?.geometry?.location) {
         const { lat, lng } = detailsData.result.geometry.location;
         setPlaceCoordinates({ lat, lng });
