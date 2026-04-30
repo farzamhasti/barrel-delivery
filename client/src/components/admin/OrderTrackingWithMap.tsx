@@ -542,7 +542,7 @@ export default function OrderTrackingWithMap() {
         </DialogContent>
       </Dialog>
 
-      {/* Fullscreen Map Modal */}
+      {/* Fullscreen Map Modal with all features */}
       <FullscreenMapModal
         isOpen={showFullscreenMap}
         onClose={() => setShowFullscreenMap(false)}
@@ -568,6 +568,37 @@ export default function OrderTrackingWithMap() {
               },
             });
           }
+          
+          // Add all order markers from geocoded locations
+          Object.entries(geocodedLocations).forEach(([orderId, location]) => {
+            const order = orders.find((o: any) => o.id === parseInt(orderId));
+            if (order && fullscreenMapRef.current && fullscreenMarkersRef.current) {
+              const markerExists = fullscreenMarkersRef.current.some(
+                (m) => m.getPosition()?.lat() === location.lat && m.getPosition()?.lng() === location.lng
+              );
+              
+              if (!markerExists) {
+                const svgMarker = `<svg width="48" height="56" viewBox="0 0 48 56" xmlns="http://www.w3.org/2000/svg"><defs><filter id="shadow" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.3"/></filter><linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#60a5fa;stop-opacity:1" /><stop offset="100%" style="stop-color:#3b82f6;stop-opacity:1" /></linearGradient></defs><path d="M24 0C13.507 0 5 8.507 5 19c0 8 19 37 19 37s19-29 19-37c0-10.493-8.507-19-19-19z" fill="url(#grad)" stroke="white" stroke-width="2" filter="url(#shadow)"/><circle cx="24" cy="18" r="10" fill="white" opacity="0.95"/><text x="24" y="22" text-anchor="middle" font-size="10" font-weight="bold" fill="#3b82f6">#${order.orderNumber}</text></svg>`;
+                
+                const marker = new google.maps.Marker({
+                  map: fullscreenMapRef.current,
+                  position: { lat: location.lat, lng: location.lng },
+                  title: `Order #${order.orderNumber}`,
+                  icon: {
+                    url: `data:image/svg+xml;base64,${btoa(svgMarker)}`,
+                    scaledSize: new google.maps.Size(48, 56),
+                    anchor: new google.maps.Point(24, 56),
+                  },
+                });
+                
+                marker.addListener('click', () => {
+                  setSelectedOrderId(order.id);
+                });
+                
+                fullscreenMarkersRef.current.push(marker);
+              }
+            }
+          });
         }}
       />
     </div>

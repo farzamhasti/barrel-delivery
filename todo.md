@@ -1030,6 +1030,11 @@ These features are documented for future enhancement but are not required for th
 - [x] Add close button to fullscreen map modal
 - [x] Ensure all markers display correctly in fullscreen view
 - [x] Preserve driver assignment functionality in fullscreen view
+- [x] Add zoom in/out controls (inherited from MapView)
+- [x] Display all marked points with order numbers
+- [x] Enable clicking markers to view order details
+- [x] Add restaurant marker to fullscreen map
+- [x] Sync geocoded locations from main map to fullscreen map
 - [x] Test fullscreen map on desktop and tablet
 - [x] Verify TypeScript compilation (0 errors)
 - [x] Verify dev server running successfully
