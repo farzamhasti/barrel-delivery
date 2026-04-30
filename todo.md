@@ -1251,7 +1251,7 @@ These features are documented for future enhancement but are not required for th
 - [x] Add `orders.getTodayWithItems` procedure to routers.ts (FIXED)
 - [x] Add `drivers.list` procedure to routers.ts (FIXED)
 - [x] Test admin/drivers page loads without errors (VERIFIED - page loads successfully)
-- [ ] Investigate driver creation not persisting in database (needs investigation)
+- [x] Investigate driver creation not persisting in database (FIXED - drivers now persist correctly)
 
 
 ## Phase 110: Fix Driver Login Functionality (COMPLETED)
@@ -1288,3 +1288,11 @@ These features are documented for future enhancement but are not required for th
 - [x] Sync status change with admin dashboard immediately (COMPLETED)
 - [x] Test order movement between tabs (COMPLETED - tabs functional)
 - [x] Verify admin dashboard updates in real-time (COMPLETED - mutation calls API)
+
+
+## Phase 114: Fix Missing createFromReceipt Procedure
+- [x] Add orders.createFromReceipt procedure to routers.ts (COMPLETED)
+- [x] Accept receipt data: customer info, items, check number, area, delivery time, receipt image (COMPLETED)
+- [x] Create order with Pending status (COMPLETED)
+- [x] Verify create order page loads without errors (COMPLETED)
+- [x] Test order creation workflow (COMPLETED)
