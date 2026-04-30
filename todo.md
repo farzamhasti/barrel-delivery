@@ -1053,3 +1053,11 @@ These features are documented for future enhancement but are not required for th
 - [x] Verify order details display correctly after reopen
 - [x] Verify TypeScript compilation (0 errors)
 - [x] Verify dev server running successfully
+
+
+## Phase 90: Remove Duplicate Close Icon from Fullscreen Map Modal
+- [x] Remove maximize/minimize icon from modal header
+- [x] Keep only single X close icon
+- [x] Verify modal header appearance
+- [x] Verify TypeScript compilation (0 errors)
+- [x] Verify dev server running successfully
