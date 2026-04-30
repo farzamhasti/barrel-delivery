@@ -989,17 +989,17 @@ These features are documented for future enhancement but are not required for th
 - [x] Dev server: Running successfully
 
 
-## Phase 86: Driver Assignment with Send Button and Green Driver Name Display
+## Phase 86: Driver Assignment with Send Button and Driver Name Display
 - [x] Add Send button to driver assignment dialog in Order Tracking
 - [x] Implement driver assignment logic when Send button is clicked
 - [x] Display confirmation message: "Order (Order Number) has been sent to the driver (Driver Name)"
-- [x] Update order status to "On the Way" when driver is assigned
-- [x] Display driver name in green in Orders tab for on-the-way orders
-- [x] Display driver name in green in Orders tab for delivered orders
-- [x] Display driver name in green in Order Tracking tab for on-the-way orders
-- [x] Display driver name in green in Order Tracking tab for delivered orders
+- [x] Change "Delivery:" label to "Driver:" in order details
+- [x] Display driver name in Orders tab (all statuses)
+- [x] Display driver name in Order Tracking tab (all statuses)
+- [x] Show "N/A" when no driver is assigned
+- [x] Show driver name when driver is assigned
 - [x] Ensure driver name display does not change overall appearance and logic
 - [x] Test driver assignment flow in Order Tracking
-- [x] Test green driver name display in both tabs
+- [x] Test driver name display in both tabs
 - [x] TypeScript compilation: 0 errors
 - [x] Dev server: Running successfully

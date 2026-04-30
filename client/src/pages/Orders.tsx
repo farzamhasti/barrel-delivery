@@ -221,13 +221,8 @@ export function Orders() {
                       <p className="text-sm text-gray-600">{order.customerAddress}</p>
                       <p className="text-sm text-gray-600">{order.customerPhone}</p>
                       <p className="text-sm text-gray-600">Area: {order.area}</p>
-                      {order.deliveryTime && (
-                        <p className="text-sm text-gray-600">Delivery: {new Date(order.deliveryTime).toLocaleString()}</p>
-                      )}
                       <p className="text-sm font-medium">Status: {order.status}</p>
-                      {(order.status === "On the Way" || order.status === "Delivered") && order.driverName && (
-                        <p className="text-sm font-medium text-green-600">Driver: {order.driverName}</p>
-                      )}
+                      <p className="text-sm text-gray-600">Driver: {order.driverName || 'N/A'}</p>
                     </div>
                     <div className="flex gap-2">
                       <Button
