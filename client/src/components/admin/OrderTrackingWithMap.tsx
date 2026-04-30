@@ -229,7 +229,7 @@ export default function OrderTrackingWithMap() {
           <TabsList className="grid w-full grid-cols-4 mb-4">
             <TabsTrigger value="pending">Pending ({pendingOrders.length})</TabsTrigger>
             <TabsTrigger value="ready">Ready ({readyOrders.length})</TabsTrigger>
-            <TabsTrigger value="on-way">On Way ({onTheWayOrders.length})</TabsTrigger>
+            <TabsTrigger value="on-way">On the way ({onTheWayOrders.length})</TabsTrigger>
             <TabsTrigger value="delivered">Delivered ({deliveredOrders.length})</TabsTrigger>
           </TabsList>
 
@@ -282,6 +282,7 @@ export default function OrderTrackingWithMap() {
                   <Card key={order.id} className="p-4 cursor-pointer hover:shadow-md transition-shadow" onClick={() => setSelectedOrderId(order.id)}>
                     <div className="font-semibold">Order #{order.orderNumber}</div>
                     <div className="text-sm text-muted-foreground">{order.customerAddress}</div>
+                    <div className="text-sm text-muted-foreground mt-2">Area: {order.area || 'N/A'}</div>
                   </Card>
                 ))
               )}
@@ -295,6 +296,7 @@ export default function OrderTrackingWithMap() {
                   <Card key={order.id} className="p-4 cursor-pointer hover:shadow-md transition-shadow" onClick={() => setSelectedOrderId(order.id)}>
                     <div className="font-semibold">Order #{order.orderNumber}</div>
                     <div className="text-sm text-muted-foreground">{order.customerAddress}</div>
+                    <div className="text-sm text-muted-foreground mt-2">Area: {order.area || 'N/A'}</div>
                   </Card>
                 ))
               )}

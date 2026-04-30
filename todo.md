@@ -909,3 +909,16 @@ These features are documented for future enhancement but are not required for th
 - [x] Updated status badge colors for consistency
 - [x] TypeScript compilation: 0 errors
 - [x] Dev server: Running successfully
+
+
+## Phase 80: Show Order Details for On the Way and Delivered Orders
+- [x] Add tracking number display to order details (orderNumber field)
+- [x] Add address display to order details (customerAddress field)
+- [x] Add contact number display to order details (customerPhone field)
+- [x] Add area display to order details (area field)
+- [x] Add delivery time display to order details (deliveryTime field)
+- [x] Fix typo "On way" to "On the way" in Order Tracking tab
+- [x] Ensure details display for "On the Way" and "Delivered" orders
+- [x] Maintain overall look and feel of the app
+- [x] TypeScript compilation: 0 errors
+- [x] Dev server: Running successfully

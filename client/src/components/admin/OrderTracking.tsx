@@ -107,6 +107,17 @@ export default function OrderTracking() {
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
+                      <div className="text-sm text-muted-foreground">Tracking Number</div>
+                      <div className="font-semibold text-foreground">{selectedOrder.orderNumber}</div>
+                    </div>
+                    <div>
+                      <div className="text-sm text-muted-foreground">Area</div>
+                      <div className="font-semibold text-foreground">{selectedOrder.area || 'N/A'}</div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
                       <div className="text-sm text-muted-foreground">Customer</div>
                       <div className="font-semibold text-foreground">{selectedOrder.customerName}</div>
                     </div>
