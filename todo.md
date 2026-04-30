@@ -1205,3 +1205,12 @@ These features are documented for future enhancement but are not required for th
 - [x] Ensure driver dashboard updates without page refresh
 - [x] Test that orders are removed correctly when status changes
 - [x] Verify return time recalculation works properly
+
+
+## Phase 105: Fix Return Time Calculation with Google Maps Routing
+- [x] Verify orders have latitude/longitude coordinates from Google Places Autocomplete
+- [x] Ensure calculateReturnTime uses Google Maps Directions API with waypoint optimization
+- [x] Test single order: Restaurant → Order → Restaurant calculation
+- [x] Test multiple orders: Restaurant → Order 1 → Order 2 → Restaurant (optimized route)
+- [x] Fix return time display to show accurate Google-calculated times
+- [x] Verify return time updates correctly when driver marks orders as delivered

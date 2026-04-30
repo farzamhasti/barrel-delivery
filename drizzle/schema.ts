@@ -42,6 +42,8 @@ export const orders = mysqlTable("orders", {
   customerPhone: varchar("customer_phone", { length: 20 }),
   area: mysqlEnum("area", ["Downtown", "Central Park", "Both"]),
   deliveryTime: varchar("delivery_time", { length: 100 }),
+  customerLatitude: decimal("customer_latitude", { precision: 10, scale: 6 }),
+  customerLongitude: decimal("customer_longitude", { precision: 10, scale: 6 }),
   receiptImage: text("receipt_image"),
   formattedReceiptImage: text("formatted_receipt_image"),
   receiptText: text("receipt_text"),
@@ -58,6 +60,12 @@ export const orders = mysqlTable("orders", {
 
 export type Order = typeof orders.$inferSelect;
 export type InsertOrder = typeof orders.$inferInsert;
+
+// Coordinate type for orders
+export interface OrderCoordinates {
+  latitude: number;
+  longitude: number;
+}
 
 // Order Items (items within an order)
 export const orderItems = mysqlTable("order_items", {

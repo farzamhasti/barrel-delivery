@@ -172,6 +172,8 @@ export function ReceiptScannerTesseract() {
         deliveryTime: formData.enableDeliveryTime ? formData.deliveryTime : undefined,
         area: formData.area,
         receiptImage: formData.receiptImage,
+        customerLatitude: placeCoordinates?.lat,
+        customerLongitude: placeCoordinates?.lng,
       });
 
       setSubmitSuccess(true);

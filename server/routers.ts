@@ -67,6 +67,8 @@ export const appRouter = router({
         hasDeliveryTime: z.boolean().default(false),
         receiptText: z.string().optional(),
         receiptImage: z.string().optional(),
+        customerLatitude: z.number().optional(),
+        customerLongitude: z.number().optional(),
       }))
       .mutation(async ({ input }) => {
         // Convert datetime-local string (YYYY-MM-DDTHH:MM format) to proper timestamp
@@ -129,6 +131,8 @@ export const appRouter = router({
           subtotal: 0,
           taxAmount: 0,
           totalPrice: 0,
+          customerLatitude: input.customerLatitude,
+          customerLongitude: input.customerLongitude,
         };
         
         console.log('[orders.createFromReceipt] Order data:', JSON.stringify(orderData, null, 2));
