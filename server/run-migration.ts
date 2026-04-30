@@ -10,6 +10,18 @@ async function runMigration() {
 
     console.log('Starting migration...');
 
+    // Fix area enum to match new area names: Downtown, Central Park, Both
+    console.log('Fixing area enum...');
+    try {
+      await db.execute(`
+        ALTER TABLE \`orders\` 
+        MODIFY COLUMN \`area\` enum('Downtown', 'Central Park', 'Both')
+      `);
+      console.log('✓ area enum fixed');
+    } catch (error) {
+      console.log('⚠ area enum fix skipped (may already be correct):', error instanceof Error ? error.message : String(error));
+    }
+
     // Check if the column already exists
     const [result] = await db.execute(`
       SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
