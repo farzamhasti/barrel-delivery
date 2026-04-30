@@ -958,15 +958,15 @@ These features are documented for future enhancement but are not required for th
 - [x] Dev server: Running successfully
 
 
-## Phase 84: Apply Status Color Scheme to Page Backgrounds
-- [x] Apply background color to Orders tab pages based on selected status
-- [x] Apply background color to Order Tracking tab pages based on selected status
-- [x] Pending status: gray background
-- [x] Ready status: blue background
-- [x] On the Way status: orange background
-- [x] Delivered status: green background
-- [x] Ensure color scheme is visible but not overwhelming
-- [x] Maintain readability of content on colored backgrounds
-- [x] Test color scheme across all status tabs
+## Phase 84: Apply Status Color Scheme to Sidebar Page Icons
+- [x] Add STATUS_COLORS constant with status-based color palette
+- [x] Modify NavItem component to accept statusColor prop
+- [x] Apply constant gray color to Orders tab icon (text-gray-600)
+- [x] Apply constant gray color to Order Tracking tab icon (text-gray-600)
+- [x] Define color scheme: Pending (gray), Ready (blue), On the Way (orange), Delivered (green)
+- [x] Icons display constant colors independent of active status filter
+- [x] Sidebar navigation icons are visually distinct and easy to identify
+- [x] Test icon colors across all status tabs in Orders page
+- [x] Test icon colors across all status tabs in Order Tracking page
 - [x] TypeScript compilation: 0 errors
 - [x] Dev server: Running successfully

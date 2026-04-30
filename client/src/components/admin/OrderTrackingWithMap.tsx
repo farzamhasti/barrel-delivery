@@ -241,12 +241,7 @@ export default function OrderTrackingWithMap() {
             <TabsTrigger value="delivered">Delivered ({deliveredOrders.length})</TabsTrigger>
           </TabsList>
 
-          <div className={`flex-1 overflow-y-auto p-4 transition-colors ${
-            activeTab === 'pending' ? STATUS_COLORS.Pending.bg :
-            activeTab === 'ready' ? STATUS_COLORS.Ready.bg :
-            activeTab === 'on-way' ? STATUS_COLORS['On the Way'].bg :
-            STATUS_COLORS.Delivered.bg
-          }`}>
+          <div className="flex-1 overflow-y-auto">
             <TabsContent value="pending" className="space-y-3">
               {pendingOrders.length === 0 ? (
                 <div className="text-center text-muted-foreground py-8">No pending orders</div>
@@ -270,7 +265,7 @@ export default function OrderTrackingWithMap() {
               )}
             </TabsContent>
 
-            <TabsContent value="ready" className="space-y-3 -m-4 p-4">
+            <TabsContent value="ready" className="space-y-3">
               {readyOrders.length === 0 ? (
                 <div className="text-center text-muted-foreground py-8">No ready orders</div>
               ) : (
@@ -293,7 +288,7 @@ export default function OrderTrackingWithMap() {
               )}
             </TabsContent>
 
-            <TabsContent value="on-way" className="space-y-3 -m-4 p-4">
+            <TabsContent value="on-way" className="space-y-3">
               {onTheWayOrders.length === 0 ? (
                 <div className="text-center text-muted-foreground py-8">No orders on the way</div>
               ) : (
@@ -309,7 +304,7 @@ export default function OrderTrackingWithMap() {
               )}
             </TabsContent>
 
-            <TabsContent value="delivered" className="space-y-3 -m-4 p-4">
+            <TabsContent value="delivered" className="space-y-3">
               {deliveredOrders.length === 0 ? (
                 <div className="text-center text-muted-foreground py-8">No delivered orders</div>
               ) : (

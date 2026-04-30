@@ -16,6 +16,14 @@ import { DeliveryReportTab } from "@/components/DeliveryReportTab";
 // import ReservationManagement from "@/components/admin/ReservationManagement";
 
 
+// Color scheme for order statuses
+const STATUS_COLORS = {
+  Pending: 'text-gray-600',
+  Ready: 'text-blue-600',
+  'On the Way': 'text-orange-600',
+  Delivered: 'text-green-600',
+};
+
 // Helper hook to get window width
 function useWindowWidth() {
   const [width, setWidth] = useState(typeof window !== "undefined" ? window.innerWidth : 1024);
@@ -235,12 +243,14 @@ function SidebarContent({
           icon={<Package2 className="w-5 h-5" />}
           label="Orders"
           active={currentTab === "orders"}
+          statusColor={STATUS_COLORS.Pending}
         />
         <NavItem
           href="/admin/order-tracking"
           icon={<Map className="w-5 h-5" />}
           label="Order Tracking"
           active={currentTab === "order-tracking"}
+          statusColor={STATUS_COLORS.Pending}
         />
         <NavItem
           href="/admin/reservations"
@@ -273,11 +283,13 @@ function NavItem({
   icon,
   label,
   active,
+  statusColor,
 }: {
   href: string;
   icon: React.ReactNode;
   label: string;
   active: boolean;
+  statusColor?: string;
 }) {
   return (
     <a href={href} className="block" onClick={(e) => {
@@ -290,7 +302,9 @@ function NavItem({
         variant={active ? "default" : "ghost"}
         className="w-full justify-start gap-3 text-sm h-9"
       >
-        {icon}
+        <span className={statusColor}>
+          {icon}
+        </span>
         <span className="truncate">{label}</span>
       </Button>
     </a>
