@@ -6,6 +6,7 @@ import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { useState, useRef, useEffect } from "react";
 import { processReceiptImage } from "@/lib/receiptImageProcessor";
+import { loadGoogleMapsWithPlaces } from "@/lib/googleMapsLoader";
 
 export function ReceiptScannerTesseract() {
   const [error, setError] = useState<string | null>(null);
@@ -32,38 +33,35 @@ export function ReceiptScannerTesseract() {
 
   // Initialize Google Places Autocomplete
   useEffect(() => {
-    let attempts = 0;
-    const maxAttempts = 20;
-    
-    const init = setInterval(() => {
-      attempts++;
-      
-      // Debug logging
-      if (attempts === 1) {
-        console.log('[Autocomplete Debug] Starting initialization...');
-        console.log('[Autocomplete Debug] window.google:', typeof window.google);
-        console.log('[Autocomplete Debug] window.google?.maps:', typeof window.google?.maps);
-        console.log('[Autocomplete Debug] window.google?.maps?.places:', typeof window.google?.maps?.places);
-        console.log('[Autocomplete Debug] window.google?.maps?.places?.Autocomplete:', typeof window.google?.maps?.places?.Autocomplete);
-      }
-      
-      if (window.google?.maps?.places?.Autocomplete) {
-        clearInterval(init);
-        const input = document.getElementById('address-input');
+    let isMounted = true;
+
+    const initializeAutocomplete = async () => {
+      try {
+        // Load Google Maps with Places library through Manus proxy
+        await loadGoogleMapsWithPlaces();
+
+        if (!isMounted) return;
+
+        const input = document.getElementById('address-input') as HTMLInputElement;
         if (!input) {
           console.error('[Autocomplete] Input element not found');
           return;
         }
-        
+
+        if (!window.google?.maps?.places?.Autocomplete) {
+          console.error('[Autocomplete] Places Autocomplete not available');
+          return;
+        }
+
         try {
-          const ac = new window.google.maps.places.Autocomplete(input as HTMLInputElement, {
+          const autocomplete = new window.google.maps.places.Autocomplete(input, {
             types: ['address'],
             componentRestrictions: { country: 'ca' },
             fields: ['formatted_address', 'geometry']
           });
-          
-          ac.addListener('place_changed', () => {
-            const place = ac.getPlace();
+
+          autocomplete.addListener('place_changed', () => {
+            const place = autocomplete.getPlace();
             console.log('[Autocomplete] Place selected:', place);
             if (place?.formatted_address) {
               setFormData(prev => ({ ...prev, address: place.formatted_address || '' }));
@@ -75,23 +73,21 @@ export function ReceiptScannerTesseract() {
               });
             }
           });
-          
-          console.log('[Autocomplete] Autocomplete initialized successfully on attempt', attempts);
+
+          console.log('[Autocomplete] Autocomplete initialized successfully');
         } catch (err) {
           console.error('[Autocomplete] Error creating Autocomplete instance:', err);
         }
-      } else if (attempts >= maxAttempts) {
-        clearInterval(init);
-        console.error('[Autocomplete] Places API never loaded after', maxAttempts, 'attempts');
-        console.error('[Autocomplete] Final state:');
-        console.error('  - window.google:', typeof window.google);
-        console.error('  - window.google?.maps:', typeof window.google?.maps);
-        console.error('  - window.google?.maps?.places:', typeof window.google?.maps?.places);
-        console.error('  - window.google?.maps?.places?.Autocomplete:', typeof window.google?.maps?.places?.Autocomplete);
+      } catch (err) {
+        console.error('[Autocomplete] Error loading Google Maps:', err);
       }
-    }, 500);
-    
-    return () => clearInterval(init);
+    };
+
+    initializeAutocomplete();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const createOrderMutation = trpc.orders.createFromReceipt.useMutation();
