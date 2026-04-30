@@ -194,7 +194,7 @@ export function Orders() {
                   className="px-4 py-2 flex items-center gap-2"
                 >
                   <IconComponent className={`w-4 h-4 ${config.color}`} />
-                  {status}
+                  {status} ({orders.filter(o => o.status === status).length})
                 </Button>
               );
             })}
