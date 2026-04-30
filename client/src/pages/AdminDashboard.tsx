@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useRoute } from "wouter";
+import { useRoute, useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/useMobile";
@@ -32,6 +32,7 @@ function useWindowWidth() {
 export default function AdminDashboard() {
   // All hooks must be at the top level, in the same order every render
   const [, params] = useRoute("/admin/*");
+  const [location, setLocation] = useLocation();
   const { logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const isMobile = useIsMobile();
@@ -40,6 +41,13 @@ export default function AdminDashboard() {
   const isTablet = width >= 768 && width < 1024;
   const isDesktop = width >= 1024;
   const currentTab = (params as any)?.["*"] || "create-order";
+  
+  // Redirect to create-order if accessing /admin or /admin/dashboard
+  useEffect(() => {
+    if (location === "/admin" || location === "/admin/dashboard" || !currentTab) {
+      setLocation("/admin/create-order");
+    }
+  }, [location, currentTab, setLocation]);
 
   // Auto-close sidebar on mobile when navigating
   useEffect(() => {
@@ -56,6 +64,11 @@ export default function AdminDashboard() {
       setSidebarOpen(true);
     }
   }, [isMobile]);
+  
+  // If redirecting, don't render content yet
+  if (location === "/admin" || location === "/admin/dashboard") {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
