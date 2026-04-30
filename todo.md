@@ -1160,9 +1160,18 @@ These features are documented for future enhancement but are not required for th
 - [x] Verify dev server running successfully
 
 
+<<<<<<< Updated upstream
 ## Phase 101: Remove OK Button from Date & Time Field
 - [x] Remove OK button from Date & Time input in Reservations form
 - [x] Use standard datetime-local input without OK button
 - [x] Maintain form validation and functionality
+=======
+## Phase 101: Add OK Button Inside Date & Time Picker
+- [x] Create custom date/time picker component with OK button inside
+- [x] Replace datetime-local input with custom picker
+- [x] OK button inside picker confirms and records the selected date/time
+- [x] Maintain form validation and functionality
+- [x] Write Vitest tests for date/time parsing and formatting
+>>>>>>> Stashed changes
 - [x] Verify TypeScript compilation (0 errors)
 - [x] Verify dev server running successfully

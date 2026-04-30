@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { trpc } from '@/lib/trpc';
 import { Trash2, Edit2, Plus, Calendar, Users, FileText, Tag } from 'lucide-react';
+import { CustomDateTimePicker } from '@/components/CustomDateTimePicker';
 
 export function Reservations() {
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -163,11 +164,17 @@ export function Reservations() {
                   <Calendar className="h-4 w-4 inline mr-2" />
                   Date & Time
                 </label>
+<<<<<<< Updated upstream
                 <Input
                   type="datetime-local"
                   value={formData.dateTime}
                   onChange={(e) => setFormData({ ...formData, dateTime: e.target.value })}
                   required
+=======
+                <CustomDateTimePicker
+                  value={formData.dateTime}
+                  onChange={(value) => setFormData({ ...formData, dateTime: value })}
+>>>>>>> Stashed changes
                 />
               </div>
               <div>
