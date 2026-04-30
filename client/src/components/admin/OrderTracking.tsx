@@ -13,9 +13,9 @@ export default function OrderTracking() {
   // Fetch all orders and filter on client side
   const { data: allOrders = [], isLoading, refetch } = trpc.orders.list.useQuery();
   
-  // Filter to active orders
+  // Filter to active orders (On the Way and Delivered)
   const orders = allOrders.filter((o: any) => 
-    ["preparing", "ready", "on_the_way"].includes(o.status)
+    ["On the Way", "Delivered"].includes(o.status)
   );
 
   // Auto-refetch every 5 seconds for real-time updates
@@ -30,12 +30,10 @@ export default function OrderTracking() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "preparing":
-        return "bg-yellow-100 text-yellow-800";
-      case "ready":
+      case "On the Way":
         return "bg-blue-100 text-blue-800";
-      case "on_the_way":
-        return "bg-purple-100 text-purple-800";
+      case "Delivered":
+        return "bg-green-100 text-green-800";
       default:
         return "bg-gray-100 text-gray-800";
     }

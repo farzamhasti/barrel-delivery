@@ -49,6 +49,7 @@ export default function OrderManagement() {
             <SelectContent>
               <SelectItem value="all">All Orders</SelectItem>
               <SelectItem value="Pending">Pending</SelectItem>
+              <SelectItem value="Ready">Ready</SelectItem>
               <SelectItem value="On the Way">On the Way</SelectItem>
               <SelectItem value="Delivered">Delivered</SelectItem>
             </SelectContent>
@@ -135,6 +136,8 @@ function getStatusBadgeClass(status: string) {
   switch (status) {
     case "Pending":
       return "bg-yellow-100 text-yellow-800";
+    case "Ready":
+      return "bg-orange-100 text-orange-800";
     case "On the Way":
       return "bg-blue-100 text-blue-800";
     case "Delivered":
