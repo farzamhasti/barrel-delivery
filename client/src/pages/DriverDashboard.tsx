@@ -24,6 +24,7 @@ export default function DriverDashboard() {
   const [loggedInDriverName, setLoggedInDriverName] = useState<string | null>(null);
   const [currentDriverId, setCurrentDriverId] = useState<number | null>(null);
   const [driverStatus, setDriverStatus] = useState<"online" | "offline">("offline");
+  const [deliveredOrders, setDeliveredOrders] = useState<Set<number>>(new Set());
   
   // Get stored session token from localStorage on mount
   useEffect(() => {
@@ -67,6 +68,16 @@ export default function DriverDashboard() {
       console.error("Failed to update status:", error);
     },
   });
+
+  // Update order status mutation
+  const updateOrderStatusMutation = trpc.orders.updateStatus.useMutation({
+    onSuccess: () => {
+      // Order status updated successfully
+    },
+    onError: (error: any) => {
+      console.error("Failed to update order status:", error);
+    },
+  });
   
   // Get assigned orders for today
   const { data: assignedOrdersRaw = [] } = trpc.orders.getTodayWithItems.useQuery(
@@ -74,6 +85,10 @@ export default function DriverDashboard() {
     { enabled: !!sessionToken && !!currentDriverId }
   );
   const assignedOrders = (assignedOrdersRaw as any) || [];
+
+  // Separate orders into "On the way" and "Delivered"
+  const onTheWayOrders = assignedOrders.filter((order: any) => !deliveredOrders.has(order.id));
+  const deliveredOrdersList = assignedOrders.filter((order: any) => deliveredOrders.has(order.id));
 
   // Handle login form submission
   const handleLogin = async (e: React.FormEvent) => {
@@ -105,6 +120,7 @@ export default function DriverDashboard() {
     setDriverName("");
     setLicenseNumber("");
     setLoginError("");
+    setDeliveredOrders(new Set());
   };
 
   // Handle online status
@@ -121,6 +137,12 @@ export default function DriverDashboard() {
       setDriverStatus("offline");
       updateStatusMutation.mutate({ id: currentDriverId, status: "offline" });
     }
+  };
+
+  // Handle mark as delivered
+  const handleMarkDelivered = (orderId: number) => {
+    setDeliveredOrders(new Set([...deliveredOrders, orderId]));
+    updateOrderStatusMutation.mutate({ id: orderId, status: "Delivered" });
   };
 
   // Show login form if not logged in
@@ -252,7 +274,7 @@ export default function DriverDashboard() {
           </CardContent>
         </Card>
 
-        {/* Orders Section */}
+        {/* Orders Section with Tabs */}
         <Card>
           <CardHeader>
             <CardTitle className="text-2xl">Your Deliveries</CardTitle>
@@ -263,41 +285,101 @@ export default function DriverDashboard() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {assignedOrders.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-gray-500 text-lg">No deliveries assigned yet</p>
-                <p className="text-gray-400 mt-2">Check back soon for new orders</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {assignedOrders.map((order: any) => (
-                  <Card key={order.id} className="border-l-4 border-l-blue-500">
-                    <CardContent className="pt-6">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-sm text-gray-600">Order #</p>
-                          <p className="text-lg font-semibold">{order.checkNumber || order.id}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-600">Status</p>
-                          <Badge variant="outline">{order.status || "Pending"}</Badge>
-                        </div>
-                        <div className="col-span-2">
-                          <p className="text-sm text-gray-600">Delivery Address</p>
-                          <p className="text-md font-medium">{order.customerAddress || order.area || "N/A"}</p>
-                        </div>
-                        {order.customerPhone && (
-                          <div className="col-span-2">
-                            <p className="text-sm text-gray-600">Customer Phone</p>
-                            <p className="text-md font-medium">{order.customerPhone}</p>
+            <Tabs defaultValue="on-the-way" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="on-the-way">
+                  On the way ({onTheWayOrders.length})
+                </TabsTrigger>
+                <TabsTrigger value="delivered">
+                  Delivered ({deliveredOrdersList.length})
+                </TabsTrigger>
+              </TabsList>
+
+              {/* On the way tab */}
+              <TabsContent value="on-the-way" className="mt-6">
+                {onTheWayOrders.length === 0 ? (
+                  <div className="text-center py-12">
+                    <p className="text-gray-500 text-lg">No deliveries on the way</p>
+                    <p className="text-gray-400 mt-2">Check back soon for new orders</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {onTheWayOrders.map((order: any) => (
+                      <Card key={order.id} className="border-l-4 border-l-blue-500">
+                        <CardContent className="pt-6">
+                          <div className="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                              <p className="text-sm text-gray-600">Order #</p>
+                              <p className="text-lg font-semibold">{order.checkNumber || order.id}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm text-gray-600">Status</p>
+                              <Badge className="bg-blue-600">In Transit</Badge>
+                            </div>
+                            <div className="col-span-2">
+                              <p className="text-sm text-gray-600">Delivery Address</p>
+                              <p className="text-md font-medium">{order.customerAddress || order.area || "N/A"}</p>
+                            </div>
+                            {order.customerPhone && (
+                              <div className="col-span-2">
+                                <p className="text-sm text-gray-600">Customer Phone</p>
+                                <p className="text-md font-medium">{order.customerPhone}</p>
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
+                          <Button
+                            className="w-full bg-green-600 hover:bg-green-700 text-white"
+                            onClick={() => handleMarkDelivered(order.id)}
+                            disabled={updateOrderStatusMutation.isPending}
+                          >
+                            Mark as Delivered
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+
+              {/* Delivered tab */}
+              <TabsContent value="delivered" className="mt-6">
+                {deliveredOrdersList.length === 0 ? (
+                  <div className="text-center py-12">
+                    <p className="text-gray-500 text-lg">No delivered orders yet</p>
+                    <p className="text-gray-400 mt-2">Orders will appear here once delivered</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {deliveredOrdersList.map((order: any) => (
+                      <Card key={order.id} className="border-l-4 border-l-green-500">
+                        <CardContent className="pt-6">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <p className="text-sm text-gray-600">Order #</p>
+                              <p className="text-lg font-semibold">{order.checkNumber || order.id}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm text-gray-600">Status</p>
+                              <Badge className="bg-green-600">Delivered</Badge>
+                            </div>
+                            <div className="col-span-2">
+                              <p className="text-sm text-gray-600">Delivery Address</p>
+                              <p className="text-md font-medium">{order.customerAddress || order.area || "N/A"}</p>
+                            </div>
+                            {order.customerPhone && (
+                              <div className="col-span-2">
+                                <p className="text-sm text-gray-600">Customer Phone</p>
+                                <p className="text-md font-medium">{order.customerPhone}</p>
+                              </div>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
           </CardContent>
         </Card>
       </div>
