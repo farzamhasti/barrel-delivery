@@ -177,16 +177,24 @@ export function Orders() {
             <CardTitle>Orders for Today</CardTitle>
           </div>
           <div className="flex gap-2 flex-wrap">
-            {(["Pending", "Ready", "On the Way", "Delivered"] as const).map((status) => (
-              <Button
-                key={status}
-                variant={statusFilter === status ? "default" : "outline"}
-                onClick={() => setStatusFilter(status)}
-                className="px-4 py-2"
-              >
-                {status}
-              </Button>
-            ))}
+            {(["Pending", "Ready", "On the Way", "Delivered"] as const).map((status) => {
+              const statusColors = {
+                Pending: "text-gray-600",
+                Ready: "text-blue-600",
+                "On the Way": "text-orange-600",
+                Delivered: "text-green-600",
+              };
+              return (
+                <Button
+                  key={status}
+                  variant={statusFilter === status ? "default" : "outline"}
+                  onClick={() => setStatusFilter(status)}
+                  className={`px-4 py-2 ${statusColors[status]}`}
+                >
+                  {status}
+                </Button>
+              );
+            })}
           </div>
         </CardHeader>
         <CardContent>

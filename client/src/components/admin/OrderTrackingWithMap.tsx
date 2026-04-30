@@ -235,10 +235,10 @@ export default function OrderTrackingWithMap() {
       <div className="flex-1 overflow-hidden">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
           <TabsList className="grid w-full grid-cols-4 mb-4">
-            <TabsTrigger value="pending">Pending ({pendingOrders.length})</TabsTrigger>
-            <TabsTrigger value="ready">Ready ({readyOrders.length})</TabsTrigger>
-            <TabsTrigger value="on-way">On the way ({onTheWayOrders.length})</TabsTrigger>
-            <TabsTrigger value="delivered">Delivered ({deliveredOrders.length})</TabsTrigger>
+            <TabsTrigger value="pending" className="text-gray-600">Pending ({pendingOrders.length})</TabsTrigger>
+            <TabsTrigger value="ready" className="text-blue-600">Ready ({readyOrders.length})</TabsTrigger>
+            <TabsTrigger value="on-way" className="text-orange-600">On the way ({onTheWayOrders.length})</TabsTrigger>
+            <TabsTrigger value="delivered" className="text-green-600">Delivered ({deliveredOrders.length})</TabsTrigger>
           </TabsList>
 
           <div className="flex-1 overflow-y-auto">
