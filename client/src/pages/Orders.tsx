@@ -242,6 +242,9 @@ export function Orders() {
                       <p className="text-sm text-gray-600">Area: {order.area}</p>
                       <p className="text-sm font-medium">Status: {order.status}</p>
                       <p className={`text-sm font-medium ${order.driverName ? 'text-green-600' : 'text-gray-600'}`}>Driver: {order.driverName || 'N/A'}</p>
+                      {order.deliveryTime && (
+                        <p className="text-sm text-gray-600 mt-1">Delivery Time: {new Date(order.deliveryTime).toLocaleString()}</p>
+                      )}
                     </div>
                     <div className="flex gap-2">
                       <Button
