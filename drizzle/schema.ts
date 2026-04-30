@@ -40,7 +40,7 @@ export const orders = mysqlTable("orders", {
   customerName: varchar("customer_name", { length: 100 }),
   customerAddress: text("customer_address"),
   customerPhone: varchar("customer_phone", { length: 20 }),
-  area: varchar("area", { length: 50 }),
+  area: mysqlEnum("area", ["Downtown", "Central Park", "Both"]),
   deliveryTime: varchar("delivery_time", { length: 100 }),
   receiptImage: text("receipt_image"),
   formattedReceiptImage: text("formatted_receipt_image"),
