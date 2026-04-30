@@ -329,7 +329,7 @@ export default function DriverDashboard() {
             />
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Driver Dashboard</h1>
-              <p className="text-gray-600 mt-1">Welcome, {(currentDriver as any)?.name || 'Driver'}</p>
+              <p className="text-gray-600 mt-1">Welcome, {loggedInDriverName || 'Driver'}</p>
             </div>
           </div>
           <Button variant="outline" onClick={handleLogout}>
