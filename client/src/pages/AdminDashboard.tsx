@@ -39,7 +39,7 @@ export default function AdminDashboard() {
   
   const isTablet = width >= 768 && width < 1024;
   const isDesktop = width >= 1024;
-  const currentTab = (params as any)?.["*"] || "dashboard";
+  const currentTab = (params as any)?.["*"] || "create-order";
 
   // Auto-close sidebar on mobile when navigating
   useEffect(() => {
