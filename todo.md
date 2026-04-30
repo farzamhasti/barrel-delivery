@@ -1175,3 +1175,15 @@ These features are documented for future enhancement but are not required for th
 >>>>>>> Stashed changes
 - [x] Verify TypeScript compilation (0 errors)
 - [x] Verify dev server running successfully
+
+
+## Phase 102: Responsive Design - Hide Map on Mobile
+- [x] Add useIsMobile hook import to OrderTrackingWithMap component
+- [x] Implement mobile detection using MOBILE_BREAKPOINT = 768px
+- [x] Hide map on mobile phones (< 768px)
+- [x] Hide Active Drivers table on mobile phones
+- [x] Keep map and drivers table visible on tablets and desktop (≥ 768px)
+- [x] Maintain all functionality and logic - only layout changes
+- [x] Resolve merge conflict in Reservations.tsx
+- [x] TypeScript compilation: 0 errors
+- [x] Dev server: Running successfully

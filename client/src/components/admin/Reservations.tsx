@@ -164,17 +164,11 @@ export function Reservations() {
                   <Calendar className="h-4 w-4 inline mr-2" />
                   Date & Time
                 </label>
-<<<<<<< Updated upstream
                 <Input
                   type="datetime-local"
                   value={formData.dateTime}
                   onChange={(e) => setFormData({ ...formData, dateTime: e.target.value })}
                   required
-=======
-                <CustomDateTimePicker
-                  value={formData.dateTime}
-                  onChange={(value) => setFormData({ ...formData, dateTime: value })}
->>>>>>> Stashed changes
                 />
               </div>
               <div>

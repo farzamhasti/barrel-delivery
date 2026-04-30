@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
+import { useIsMobile } from "@/hooks/useMobile";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +28,7 @@ export default function OrderTrackingWithMap() {
   const utils = trpc.useUtils();
   const { driverReturnTimes } = useDriverReturnTime();
   const { user } = useAuth();
+  const isMobile = useIsMobile();
 
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
   const [showMap, setShowMap] = useState(true);
@@ -198,8 +200,8 @@ export default function OrderTrackingWithMap() {
       </div>
 
       <div className="flex gap-4 flex-1">
-        {/* Map Section */}
-        {showMap && (
+        {/* Map Section - Hidden on Mobile */}
+        {showMap && !isMobile && (
           <div className="flex-1 rounded-lg overflow-hidden border border-border">
             <MapView
               initialCenter={FORT_ERIE_CENTER}
@@ -228,7 +230,8 @@ export default function OrderTrackingWithMap() {
           </div>
         )}
 
-        {/* Active Drivers Section - Right Side */}
+        {/* Active Drivers Section - Right Side - Hidden on Mobile */}
+        {!isMobile && (
         <div className="w-80 flex flex-col overflow-hidden">
           <Card className="overflow-hidden flex-1 flex flex-col">
             <div className="p-4 border-b border-border flex-shrink-0">
@@ -267,6 +270,7 @@ export default function OrderTrackingWithMap() {
             )}
           </Card>
         </div>
+        )}
       </div>
 
       {/* Orders Section */}
