@@ -277,7 +277,7 @@ export default function OrderTrackingWithMap() {
                         <div className={`text-sm font-medium ${order.driverName ? 'text-green-600' : 'text-muted-foreground'}`}>Driver: {order.driverName || 'N/A'}</div>
                       </div>
                       <Button size="sm" onClick={(e) => { e.stopPropagation(); setOrderToAssign(order.id); setShowDriverModal(true); }}>
-                        Assign
+                        Assign to Driver
                       </Button>
                     </div>
                   </Card>
