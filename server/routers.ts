@@ -3,6 +3,7 @@ import { publicProcedure, router } from './_core/trpc';
 import * as db from './db';
 import path from 'path';
 import fs from 'fs';
+import { convertOntarioTimeToUTC } from './timezoneHelper';
 
 export const appRouter = router({
   orders: router({
@@ -19,15 +20,16 @@ export const appRouter = router({
       }))
       .mutation(async ({ input }) => {
         // Convert datetime-local string (YYYY-MM-DDTHH:MM format) to proper timestamp
+        // The datetime-local input is in Ontario local time, convert to UTC for storage
         let deliveryTimeValue: Date | null = null;
         if (input.deliveryTime) {
           try {
             // Handle both formats: datetime-local (YYYY-MM-DDTHH:MM) and ISO string
             if (input.deliveryTime.includes('T')) {
-              // datetime-local format: YYYY-MM-DDTHH:MM
-              deliveryTimeValue = new Date(input.deliveryTime);
+              // datetime-local format: YYYY-MM-DDTHH:MM (in Ontario timezone)
+              deliveryTimeValue = convertOntarioTimeToUTC(input.deliveryTime);
             } else if (input.deliveryTime.includes(':')) {
-              // HH:MM format (legacy)
+              // HH:MM format (legacy) - assume Ontario timezone
               const today = new Date();
               const [hours, minutes] = input.deliveryTime.split(':');
               today.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
@@ -245,7 +247,12 @@ export const appRouter = router({
         if (deliveryTime === null) {
           deliveryTimeValue = null;
         } else if (deliveryTime) {
-          deliveryTimeValue = new Date(deliveryTime);
+          // Convert Ontario local time to UTC for storage
+          if (deliveryTime.includes('T')) {
+            deliveryTimeValue = convertOntarioTimeToUTC(deliveryTime);
+          } else {
+            deliveryTimeValue = new Date(deliveryTime);
+          }
         }
         
         const updateData: any = { ...data };
