@@ -233,7 +233,7 @@ export const appRouter = router({
         customerAddress: z.string().optional(),
         customerPhone: z.string().optional(),
         status: z.enum(['Pending', 'Ready', 'On the Way', 'Delivered']).optional(),
-        area: z.enum(['DT', 'CP', 'B']).optional(),
+        area: z.enum(['Downtown', 'Central Park', 'Both']).optional(),
         deliveryTime: z.string().nullable().optional(),
         receiptImage: z.string().optional(),
       }))
