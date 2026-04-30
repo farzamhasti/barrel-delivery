@@ -186,8 +186,20 @@ export default function OrderTrackingWithMap() {
 
   return (
     <div className="flex flex-col h-full gap-4 p-4">
-      {/* Better Map View Button */}
-      <div className="flex justify-end">
+      {/* Map Controls */}
+      <div className="flex justify-between items-center">
+        <div>
+          {!isMobile && (
+            <Button
+              onClick={() => setShowMap(!showMap)}
+              variant={showMap ? "default" : "outline"}
+              size="sm"
+              className="gap-2"
+            >
+              {showMap ? "Hide Map" : "Show Map"}
+            </Button>
+          )}
+        </div>
         <Button
           onClick={() => setShowFullscreenMap(true)}
           variant="outline"
