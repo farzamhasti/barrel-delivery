@@ -13,7 +13,7 @@ import DriverManagement from "@/components/admin/DriverManagement";
 import { ReceiptScannerTesseract } from "@/components/admin/ReceiptScannerTesseract";
 import OrderTrackingWithMap from "@/components/admin/OrderTrackingWithMap";
 import { DeliveryReportTab } from "@/components/DeliveryReportTab";
-// import ReservationManagement from "@/components/admin/ReservationManagement";
+import { Reservations } from "@/components/admin/Reservations";
 
 
 // Color scheme for order statuses
@@ -208,7 +208,7 @@ export default function AdminDashboard() {
                 {currentTab === "create-order" && <ReceiptScannerTesseract />}
                 {currentTab === "orders" && <Orders />}
                 {currentTab === "order-tracking" && <OrderTrackingWithMap />}
-                {currentTab === "reservations" && <div>Reservations</div>}
+                {currentTab === "reservations" && <Reservations />}
                 {currentTab === "drivers" && <DriverManagement />}
                 {currentTab === "delivery-report" && <DeliveryReportTab />}
 

@@ -1121,3 +1121,12 @@ These features are documented for future enhancement but are not required for th
 - [x] Verify no changes to existing app functionality
 - [x] Verify TypeScript compilation (0 errors)
 - [x] Verify dev server running successfully
+
+## Phase 97: Reservations Integration into Dashboards
+- [x] Fix missing useState import in Reservations component
+- [x] Wire Reservations component into Admin Dashboard
+- [x] Add Reservations tab to Kitchen Dashboard
+- [x] Update Kitchen Dashboard tabs from 2 to 3 columns
+- [x] Integrate KitchenReservations component into Kitchen Dashboard
+- [x] Verify TypeScript compilation (0 errors)
+- [x] Verify dev server running successfully

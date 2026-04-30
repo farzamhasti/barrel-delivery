@@ -11,6 +11,7 @@ import { trpc } from "@/lib/trpc";
 import { invalidateOrderCache } from "@/lib/invalidation";
 import { toast } from "sonner";
 import { useDriverReturnTime } from "@/contexts/DriverReturnTimeContext";
+import { KitchenReservations } from "@/pages/KitchenReservations";
 
 export default function KitchenDashboardPage() {
   const utils = trpc.useUtils();
@@ -289,7 +290,7 @@ export default function KitchenDashboardPage() {
       {/* Tabs */}
       <div className="max-w-7xl mx-auto">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full" defaultValue="active">
-          <TabsList className="grid w-full grid-cols-2 mb-6 bg-white rounded-lg shadow-sm">
+          <TabsList className="grid w-full grid-cols-3 mb-6 bg-white rounded-lg shadow-sm">
             <TabsTrigger value="active" className="flex items-center gap-2">
               <ChefHat className="w-4 h-4" />
               Active Orders ({pendingOrders.length})
@@ -297,6 +298,10 @@ export default function KitchenDashboardPage() {
             <TabsTrigger value="ready" className="flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4" />
               Prepared Orders ({readyOrders.length})
+            </TabsTrigger>
+            <TabsTrigger value="reservations" className="flex items-center gap-2">
+              <AlertCircle className="w-4 h-4" />
+              Reservations
             </TabsTrigger>
           </TabsList>
 
@@ -315,6 +320,11 @@ export default function KitchenDashboardPage() {
                 ))}
               </div>
             )}
+          </TabsContent>
+
+          {/* Reservations Tab */}
+          <TabsContent value="reservations" className="space-y-4 mt-6">
+            <KitchenReservations />
           </TabsContent>
 
           {/* Prepared Orders Tab */}
