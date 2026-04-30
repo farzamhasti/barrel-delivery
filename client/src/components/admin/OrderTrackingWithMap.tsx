@@ -8,6 +8,7 @@ import { MapView } from "@/components/Map";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useDriverReturnTime } from "@/contexts/DriverReturnTimeContext";
+import { Clock, CheckCircle2, Truck, Package } from "lucide-react";
 
 const FORT_ERIE_CENTER = { lat: 42.905191, lng: -78.9225479 };
 const RESTAURANT_ADDRESS = { lat: 42.905191, lng: -78.9225479 }; // 224 Garrison Rd, Fort Erie, ON L2A 1M7
@@ -235,10 +236,22 @@ export default function OrderTrackingWithMap() {
       <div className="flex-1 overflow-hidden">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
           <TabsList className="grid w-full grid-cols-4 mb-4">
-            <TabsTrigger value="pending" className="text-gray-600">Pending ({pendingOrders.length})</TabsTrigger>
-            <TabsTrigger value="ready" className="text-blue-600">Ready ({readyOrders.length})</TabsTrigger>
-            <TabsTrigger value="on-way" className="text-orange-600">On the way ({onTheWayOrders.length})</TabsTrigger>
-            <TabsTrigger value="delivered" className="text-green-600">Delivered ({deliveredOrders.length})</TabsTrigger>
+            <TabsTrigger value="pending" className="flex items-center gap-2">
+              <Clock className="w-4 h-4 text-gray-600" />
+              Pending ({pendingOrders.length})
+            </TabsTrigger>
+            <TabsTrigger value="ready" className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-blue-600" />
+              Ready ({readyOrders.length})
+            </TabsTrigger>
+            <TabsTrigger value="on-way" className="flex items-center gap-2">
+              <Truck className="w-4 h-4 text-orange-600" />
+              On the way ({onTheWayOrders.length})
+            </TabsTrigger>
+            <TabsTrigger value="delivered" className="flex items-center gap-2">
+              <Package className="w-4 h-4 text-green-600" />
+              Delivered ({deliveredOrders.length})
+            </TabsTrigger>
           </TabsList>
 
           <div className="flex-1 overflow-y-auto">

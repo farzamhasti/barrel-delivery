@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trash2, Edit2, Save, X, Loader2, Upload, Camera } from "lucide-react";
+import { Trash2, Edit2, Save, X, Loader2, Upload, Camera, Clock, CheckCircle2, Truck, Package } from "lucide-react";
 import { toast } from "sonner";
 import { useState, useMemo, useRef } from "react";
 import { ImageZoomModal } from "@/components/ImageZoomModal";
@@ -178,19 +178,22 @@ export function Orders() {
           </div>
           <div className="flex gap-2 flex-wrap">
             {(["Pending", "Ready", "On the Way", "Delivered"] as const).map((status) => {
-              const statusColors = {
-                Pending: "text-gray-600",
-                Ready: "text-blue-600",
-                "On the Way": "text-orange-600",
-                Delivered: "text-green-600",
+              const statusConfig = {
+                Pending: { icon: Clock, color: "text-gray-600" },
+                Ready: { icon: CheckCircle2, color: "text-blue-600" },
+                "On the Way": { icon: Truck, color: "text-orange-600" },
+                Delivered: { icon: Package, color: "text-green-600" },
               };
+              const config = statusConfig[status];
+              const IconComponent = config.icon;
               return (
                 <Button
                   key={status}
                   variant={statusFilter === status ? "default" : "outline"}
                   onClick={() => setStatusFilter(status)}
-                  className={`px-4 py-2 ${statusColors[status]}`}
+                  className="px-4 py-2 flex items-center gap-2"
                 >
+                  <IconComponent className={`w-4 h-4 ${config.color}`} />
                   {status}
                 </Button>
               );
