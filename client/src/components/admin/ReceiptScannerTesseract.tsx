@@ -32,30 +32,43 @@ export function ReceiptScannerTesseract() {
 
   // Initialize Google Places Autocomplete
   useEffect(() => {
-    if (!addressInputRef.current || !window.google) return;
+    if (!addressInputRef.current) return;
 
-    try {
-      const autocomplete = new window.google.maps.places.Autocomplete(addressInputRef.current, {
-        types: ['address'],
-        componentRestrictions: { country: 'ca' },
-        fields: ['formatted_address', 'geometry']
-      });
+    // Function to initialize autocomplete
+    const initializeAutocomplete = () => {
+      if (!window.google?.maps?.places) {
+        console.warn('Google Maps Places API not yet loaded, retrying...');
+        setTimeout(initializeAutocomplete, 500);
+        return;
+      }
 
-      autocomplete.addListener('place_changed', () => {
-        const place = autocomplete.getPlace();
-        if (place.formatted_address) {
-          setFormData(prev => ({ ...prev, address: place.formatted_address || '' }));
-        }
-        if (place.geometry?.location) {
-          setPlaceCoordinates({
-            lat: place.geometry.location.lat(),
-            lng: place.geometry.location.lng()
-          });
-        }
-      });
-    } catch (err) {
-      console.error('Error initializing autocomplete:', err);
-    }
+      try {
+        const autocomplete = new window.google.maps.places.Autocomplete(addressInputRef.current!, {
+          types: ['address'],
+          componentRestrictions: { country: 'ca' },
+          fields: ['formatted_address', 'geometry']
+        });
+
+        autocomplete.addListener('place_changed', () => {
+          const place = autocomplete.getPlace();
+          if (place.formatted_address) {
+            setFormData(prev => ({ ...prev, address: place.formatted_address || '' }));
+          }
+          if (place.geometry?.location) {
+            setPlaceCoordinates({
+              lat: place.geometry.location.lat(),
+              lng: place.geometry.location.lng()
+            });
+          }
+        });
+        console.log('Google Places Autocomplete initialized successfully');
+      } catch (err) {
+        console.error('Error initializing autocomplete:', err);
+      }
+    };
+
+    // Start initialization
+    initializeAutocomplete();
   }, []);
 
   const createOrderMutation = trpc.orders.createFromReceipt.useMutation();
