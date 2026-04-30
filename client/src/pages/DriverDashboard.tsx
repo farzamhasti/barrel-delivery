@@ -122,6 +122,34 @@ export default function DriverDashboard() {
     },
   });
 
+
+  // Auto-remove orders from driver dashboard when status changes to "Ready"
+  // and recalculate return time
+  useEffect(() => {
+    const interval = setInterval(() => {
+      refetchOrders();
+    }, 3000); // Refetch every 3 seconds to catch status changes
+
+    return () => clearInterval(interval);
+  }, [refetchOrders]);
+
+  // Filter out orders that are no longer "On the Way" and recalculate return time
+  useEffect(() => {
+    const onTheWayOrders = displayedOrders.filter((order: any) => order.status === "On the Way");
+    
+    // If orders were removed (status changed to Ready or other), recalculate return time
+    if (onTheWayOrders.length < displayedOrders.length && sessionToken && onTheWayOrders.length > 0) {
+      // Auto-recalculate return time with remaining orders
+      calculateReturnTimeMutation.mutate({ sessionToken });
+    } else if (onTheWayOrders.length === 0) {
+      // All orders completed, clear the timer
+      clearTimer();
+    }
+  }, [assignedOrders, sessionToken, calculateReturnTimeMutation, clearTimer]);
+
+  // Filter assigned orders to show only "On the Way" orders
+  const displayedOrders = assignedOrders.filter((order: any) => order.status === "On the Way");
+
   // Driver status management (already declared above)
   
   // Get tRPC utils for query invalidation
@@ -305,8 +333,8 @@ export default function DriverDashboard() {
   }
 
   // Filter orders by status
-  const onTheWayOrders = (assignedOrders as any[]).filter((order: any) => order.status !== "Delivered");
-  const deliveredOrders = (assignedOrders as any[]).filter((order: any) => order.status === "Delivered");
+  const onTheWayOrders = (displayedOrders as any[]).filter((order: any) => order.status !== "Delivered");
+  const deliveredOrders = (displayedOrders as any[]).filter((order: any) => order.status === "Delivered");
   
   // Map area field to customerAddress for Google Maps navigation
   const ordersForMap = (onTheWayOrders as any[]).map((order: any) => ({
@@ -388,7 +416,7 @@ export default function DriverDashboard() {
               <CardTitle className="text-sm font-medium text-gray-600">Total Orders</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">{assignedOrders.length}</div>
+              <div className="text-3xl font-bold">{displayedOrders.length}</div>
               <p className="text-sm text-gray-600 mt-2">
                 {onTheWayOrders.length} on the way • {deliveredOrders.length} delivered
               </p>
