@@ -52,7 +52,7 @@ export function FullscreenMapModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className={`${isMaximized ? 'max-w-full h-screen' : 'max-w-7xl h-[90vh]'} p-0 flex flex-col transition-all duration-300`}>
+      <DialogContent className={`${isMaximized ? 'max-w-full h-screen' : 'max-w-7xl h-[90vh]'} p-0 flex flex-col transition-all duration-300`} showCloseButton={false}>
         <DialogHeader className="p-4 border-b border-border flex-shrink-0 bg-background">
           <div className="flex items-center justify-between w-full">
             <DialogTitle className="text-xl font-bold">{title}</DialogTitle>
