@@ -117,8 +117,19 @@ export default function OrderTrackingWithMap() {
                 position: { lat: result.lat, lng: result.lng },
                 title: `Order #${order.orderNumber}`,
                 label: {
-                  text: "📦",
-                  fontSize: "16px",
+                  text: `#${order.orderNumber}`,
+                  fontSize: "12px",
+                  fontWeight: "bold",
+                  color: "white",
+                  className: "order-marker-label",
+                },
+                icon: {
+                  path: google.maps.SymbolPath.CIRCLE,
+                  scale: 12,
+                  fillColor: "#3b82f6",
+                  fillOpacity: 1,
+                  strokeColor: "white",
+                  strokeWeight: 3,
                 },
               });
               markersRef.current.push(marker);
