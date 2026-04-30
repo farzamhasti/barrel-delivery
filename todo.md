@@ -1245,3 +1245,10 @@ These features are documented for future enhancement but are not required for th
 - [x] Fix "Cannot update a component (Home) while rendering a different component (DriverDashboard)" error
 - [x] Show loading/redirecting spinner while navigation completes
 - [x] Verify no console errors after fix
+
+
+## Phase 109: Fix Missing tRPC Procedures
+- [x] Add `orders.getTodayWithItems` procedure to routers.ts (FIXED)
+- [x] Add `drivers.list` procedure to routers.ts (FIXED)
+- [x] Test admin/drivers page loads without errors (VERIFIED - page loads successfully)
+- [ ] Investigate driver creation not persisting in database (needs investigation)
