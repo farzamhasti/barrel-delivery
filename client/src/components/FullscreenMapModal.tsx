@@ -60,10 +60,10 @@ export function FullscreenMapModal({
               variant="ghost"
               size="sm"
               onClick={onClose}
-              className="h-8 w-8 p-0 hover:bg-muted"
+              className="h-10 w-10 p-0 rounded-lg bg-gray-100 hover:bg-red-100 text-gray-700 hover:text-red-600 transition-all duration-200 flex items-center justify-center shadow-sm hover:shadow-md"
               title="Close"
             >
-              <X className="h-4 w-4" />
+              <X className="h-5 w-5" />
             </Button>
           </div>
         </DialogHeader>
