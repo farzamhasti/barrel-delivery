@@ -32,43 +32,66 @@ export function ReceiptScannerTesseract() {
 
   // Initialize Google Places Autocomplete
   useEffect(() => {
-    if (!addressInputRef.current) return;
-
-    // Function to initialize autocomplete
-    const initializeAutocomplete = () => {
-      if (!window.google?.maps?.places?.Autocomplete) {
-        console.warn('[Autocomplete] Google Maps Places API not yet loaded, retrying...');
-        setTimeout(initializeAutocomplete, 500);
-        return;
+    let attempts = 0;
+    const maxAttempts = 20;
+    
+    const init = setInterval(() => {
+      attempts++;
+      
+      // Debug logging
+      if (attempts === 1) {
+        console.log('[Autocomplete Debug] Starting initialization...');
+        console.log('[Autocomplete Debug] window.google:', typeof window.google);
+        console.log('[Autocomplete Debug] window.google?.maps:', typeof window.google?.maps);
+        console.log('[Autocomplete Debug] window.google?.maps?.places:', typeof window.google?.maps?.places);
+        console.log('[Autocomplete Debug] window.google?.maps?.places?.Autocomplete:', typeof window.google?.maps?.places?.Autocomplete);
       }
-
-      try {
-        const autocomplete = new window.google.maps.places.Autocomplete(addressInputRef.current!, {
-          types: ['address'],
-          componentRestrictions: { country: 'ca' },
-          fields: ['formatted_address', 'geometry']
-        });
-
-        autocomplete.addListener('place_changed', () => {
-          const place = autocomplete.getPlace();
-          if (place.formatted_address) {
-            setFormData(prev => ({ ...prev, address: place.formatted_address || '' }));
-          }
-          if (place.geometry?.location) {
-            setPlaceCoordinates({
-              lat: place.geometry.location.lat(),
-              lng: place.geometry.location.lng()
-            });
-          }
-        });
-        console.log('[Autocomplete] Google Places Autocomplete initialized successfully');
-      } catch (err) {
-        console.error('[Autocomplete] Error initializing autocomplete:', err);
+      
+      if (window.google?.maps?.places?.Autocomplete) {
+        clearInterval(init);
+        const input = document.getElementById('address-input');
+        if (!input) {
+          console.error('[Autocomplete] Input element not found');
+          return;
+        }
+        
+        try {
+          const ac = new window.google.maps.places.Autocomplete(input as HTMLInputElement, {
+            types: ['address'],
+            componentRestrictions: { country: 'ca' },
+            fields: ['formatted_address', 'geometry']
+          });
+          
+          ac.addListener('place_changed', () => {
+            const place = ac.getPlace();
+            console.log('[Autocomplete] Place selected:', place);
+            if (place?.formatted_address) {
+              setFormData(prev => ({ ...prev, address: place.formatted_address || '' }));
+            }
+            if (place?.geometry?.location) {
+              setPlaceCoordinates({
+                lat: place.geometry.location.lat(),
+                lng: place.geometry.location.lng()
+              });
+            }
+          });
+          
+          console.log('[Autocomplete] Autocomplete initialized successfully on attempt', attempts);
+        } catch (err) {
+          console.error('[Autocomplete] Error creating Autocomplete instance:', err);
+        }
+      } else if (attempts >= maxAttempts) {
+        clearInterval(init);
+        console.error('[Autocomplete] Places API never loaded after', maxAttempts, 'attempts');
+        console.error('[Autocomplete] Final state:');
+        console.error('  - window.google:', typeof window.google);
+        console.error('  - window.google?.maps:', typeof window.google?.maps);
+        console.error('  - window.google?.maps?.places:', typeof window.google?.maps?.places);
+        console.error('  - window.google?.maps?.places?.Autocomplete:', typeof window.google?.maps?.places?.Autocomplete);
       }
-    };
-
-    // Start initialization
-    initializeAutocomplete();
+    }, 500);
+    
+    return () => clearInterval(init);
   }, []);
 
   const createOrderMutation = trpc.orders.createFromReceipt.useMutation();

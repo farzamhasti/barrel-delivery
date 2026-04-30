@@ -246,3 +246,32 @@
     }
   }
 }
+
+/* Google Places Autocomplete dropdown styling */
+.pac-container {
+  z-index: 9999 !important;
+  pointer-events: all !important;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-top: none;
+  font-family: Roboto, sans-serif;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.pac-item {
+  cursor: pointer;
+  padding: 10px;
+  border-bottom: 1px solid #e1e1e1;
+}
+
+.pac-item:hover {
+  background-color: #f0f0f0;
+}
+
+.pac-item-selected {
+  background-color: #e8f0fe;
+}
+
+.pac-matched {
+  font-weight: bold;
+}
