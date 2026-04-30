@@ -31,7 +31,7 @@ export default function OrderTrackingWithMap() {
   const isMobile = useIsMobile();
 
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
-  const [showMap, setShowMap] = useState(true);
+  const [showMap, setShowMap] = useState(false);
   const [showDriverModal, setShowDriverModal] = useState(false);
   const [showFullscreenMap, setShowFullscreenMap] = useState(false);
   const [orderToAssign, setOrderToAssign] = useState<number | null>(null);
@@ -221,22 +221,52 @@ export default function OrderTrackingWithMap() {
               onMapReady={(map) => {
                 mapRef.current = map;
                 
-                // Add restaurant marker only once
-                if (!restaurantMarkerRef.current) {
-                  restaurantMarkerRef.current = new google.maps.Marker({
-                    map,
-                    position: RESTAURANT_ADDRESS,
-                    title: "Restaurant",
-                    icon: {
-                      path: google.maps.SymbolPath.CIRCLE,
-                      scale: 14,
-                      fillColor: "#ef4444",
-                      fillOpacity: 1,
-                      strokeColor: "white",
-                      strokeWeight: 2,
-                    },
-                  });
+                // Clear existing markers when map remounts (e.g., when toggled)
+                markersRef.current.forEach((marker) => marker.setMap(null));
+                markersRef.current = [];
+                
+                // Recreate restaurant marker
+                if (restaurantMarkerRef.current) {
+                  restaurantMarkerRef.current.setMap(null);
                 }
+                restaurantMarkerRef.current = new google.maps.Marker({
+                  map,
+                  position: RESTAURANT_ADDRESS,
+                  title: "Restaurant",
+                  icon: {
+                    path: google.maps.SymbolPath.CIRCLE,
+                    scale: 14,
+                    fillColor: "#ef4444",
+                    fillOpacity: 1,
+                    strokeColor: "white",
+                    strokeWeight: 2,
+                  },
+                });
+                
+                // Recreate all order markers from geocoded locations
+                Object.entries(geocodedLocations).forEach(([orderId, location]) => {
+                  const order = orders.find((o: any) => o.id === parseInt(orderId));
+                  if (order) {
+                    const svgMarker = `<svg width="48" height="56" viewBox="0 0 48 56" xmlns="http://www.w3.org/2000/svg"><defs><filter id="shadow" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.3"/></filter><linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#60a5fa;stop-opacity:1" /><stop offset="100%" style="stop-color:#3b82f6;stop-opacity:1" /></linearGradient></defs><path d="M24 0C13.507 0 5 8.507 5 19c0 8 19 37 19 37s19-29 19-37c0-10.493-8.507-19-19-19z" fill="url(#grad)" stroke="white" stroke-width="2" filter="url(#shadow)"/><circle cx="24" cy="18" r="10" fill="white" opacity="0.95"/><text x="24" y="22" text-anchor="middle" font-size="10" font-weight="bold" fill="#3b82f6">#${order.orderNumber}</text></svg>`;
+                    
+                    const marker = new google.maps.Marker({
+                      map,
+                      position: location,
+                      title: `Order #${order.orderNumber}`,
+                      icon: {
+                        url: `data:image/svg+xml;base64,${btoa(svgMarker)}`,
+                        scaledSize: new google.maps.Size(48, 56),
+                        anchor: new google.maps.Point(24, 56),
+                      },
+                    });
+                    
+                    marker.addListener('click', () => {
+                      setSelectedOrderId(order.id);
+                    });
+                    
+                    markersRef.current.push(marker);
+                  }
+                });
               }}
             />
           </div>
