@@ -931,3 +931,14 @@ These features are documented for future enhancement but are not required for th
 - [x] Ensure area values match database enum
 - [x] TypeScript compilation: 0 errors
 - [x] Dev server: Running successfully
+
+
+## Phase 82: Fix Area Options in Order Editing Form
+- [x] Found area dropdown in Orders.tsx edit form
+- [x] Updated OrderFormData interface to use new area values
+- [x] Updated area select options to show Downtown, Central Park, Both
+- [x] Fixed default area value from 'DT' to 'Downtown'
+- [x] Removed old area values from display
+- [x] Maintained form functionality and appearance
+- [x] TypeScript compilation: 0 errors
+- [x] Dev server: Running successfully

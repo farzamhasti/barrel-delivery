@@ -32,7 +32,7 @@ interface OrderFormData {
   customerPhone: string;
   customerAddress: string;
   status: "Pending" | "Ready" | "On the Way" | "Delivered";
-  area: "DT" | "CP" | "B";
+  area: "Downtown" | "Central Park" | "Both";
   deliveryTime: string;
   hasDeliveryTime?: boolean;
   receiptImage?: string;
@@ -58,7 +58,7 @@ export function Orders() {
     customerPhone: "",
     customerAddress: "",
     status: "Pending",
-    area: "DT",
+    area: "Downtown",
     deliveryTime: "",
   });
 
@@ -129,7 +129,7 @@ export function Orders() {
 
   const handleEditOrder = async (order: any) => {
     setEditingOrderId(order.id);
-    const areaValue = (order.area || "DT") as "DT" | "CP" | "B";
+    const areaValue = (order.area || "Downtown") as "Downtown" | "Central Park" | "Both";
     setFormData({
       orderNumber: order.orderNumber || "",
       customerPhone: order.customerPhone || "",
@@ -373,14 +373,14 @@ export function Orders() {
 
             <div>
               <Label>Area</Label>
-              <Select value={formData.area} onValueChange={(value) => setFormData({ ...formData, area: value as "DT" | "CP" | "B" })}>
+              <Select value={formData.area} onValueChange={(value) => setFormData({ ...formData, area: value as "Downtown" | "Central Park" | "Both" })}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="DT">DT</SelectItem>
-                  <SelectItem value="CP">CP</SelectItem>
-                  <SelectItem value="B">B</SelectItem>
+                  <SelectItem value="Downtown">Downtown</SelectItem>
+                  <SelectItem value="Central Park">Central Park</SelectItem>
+                  <SelectItem value="Both">Both</SelectItem>
                 </SelectContent>
               </Select>
             </div>
