@@ -112,26 +112,23 @@ export default function OrderTrackingWithMap() {
 
             // Add marker to map if map is ready
             if (mapRef.current && markersRef.current) {
+              const svgMarker = `<svg width="48" height="56" viewBox="0 0 48 56" xmlns="http://www.w3.org/2000/svg"><defs><filter id="shadow" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.3"/></filter><linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#60a5fa;stop-opacity:1" /><stop offset="100%" style="stop-color:#3b82f6;stop-opacity:1" /></linearGradient></defs><path d="M24 0C13.507 0 5 8.507 5 19c0 8 19 37 19 37s19-29 19-37c0-10.493-8.507-19-19-19z" fill="url(#grad)" stroke="white" stroke-width="2" filter="url(#shadow)"/><circle cx="24" cy="18" r="10" fill="white" opacity="0.95"/><text x="24" y="22" text-anchor="middle" font-size="10" font-weight="bold" fill="#3b82f6">#${order.orderNumber}</text></svg>`;
+              
               const marker = new google.maps.Marker({
                 map: mapRef.current,
                 position: { lat: result.lat, lng: result.lng },
                 title: `Order #${order.orderNumber}`,
-                label: {
-                  text: `#${order.orderNumber}`,
-                  fontSize: "12px",
-                  fontWeight: "bold",
-                  color: "white",
-                  className: "order-marker-label",
-                },
                 icon: {
-                  path: google.maps.SymbolPath.CIRCLE,
-                  scale: 12,
-                  fillColor: "#3b82f6",
-                  fillOpacity: 1,
-                  strokeColor: "white",
-                  strokeWeight: 3,
+                  url: `data:image/svg+xml;base64,${btoa(svgMarker)}`,
+                  scaledSize: new google.maps.Size(48, 56),
+                  anchor: new google.maps.Point(24, 56),
                 },
               });
+              
+              marker.addListener('click', () => {
+                setSelectedOrderId(order.id);
+              });
+              
               markersRef.current.push(marker);
             }
           } else {
