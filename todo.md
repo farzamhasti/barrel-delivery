@@ -780,13 +780,13 @@ These features are documented for future enhancement but are not required for th
 - [x] Dev server: Running successfully
 
 
-## Phase 69: Change Order Status to "En route" When Sent to Driver
-- [x] Update orders.sendToDriver procedure to set status to "En route" instead of "On the Way"
+## Phase 69: Verify Order Status "On the Way" When Sent to Driver
+- [x] Verify orders.sendToDriver procedure sets status to "On the Way"
 - [x] Verify order status changes in database when sent to driver
-- [x] Ensure orders appear in En route tab after being sent
-- [x] Test order movement from Pending to En route
-- [x] Verify Order Tracking tab shows En route orders correctly
-- [x] Verify Orders tab shows En route orders correctly
+- [x] Ensure orders appear in On the Way tab after being sent
+- [x] Test order movement from Pending to On the Way
+- [x] Verify Order Tracking tab shows On the Way orders correctly
+- [x] Verify Orders tab shows On the Way orders correctly
 - [x] Ensure all existing logic and functionality remains unchanged
 - [x] TypeScript compilation: 0 errors
 - [x] Dev server: Running successfully

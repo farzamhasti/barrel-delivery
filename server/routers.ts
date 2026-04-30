@@ -140,10 +140,10 @@ export const appRouter = router({
         driverId: z.number(),
       }))
       .mutation(async ({ input }) => {
-        // Update order with driver assignment and change status to "En route"
+        // Update order with driver assignment and change status to "On the Way"
         return db.updateOrder(input.orderId, {
           driverId: input.driverId,
-          status: 'En route',
+          status: 'On the Way',
         });
       }),
 
