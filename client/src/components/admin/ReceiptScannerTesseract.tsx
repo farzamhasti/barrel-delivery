@@ -258,16 +258,22 @@ export function ReceiptScannerTesseract() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Area</label>
-              <select
-                value={formData.area}
-                onChange={(e) => setFormData({ ...formData, area: e.target.value as "Downtown" | "Central Park" | "Both" })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="Downtown">Downtown</option>
-                <option value="Central Park">Central Park</option>
-                <option value="Both">Both</option>
-              </select>
+              <label className="block text-sm font-medium mb-3">Area</label>
+              <div className="flex flex-wrap gap-4">
+                {(['Downtown', 'Central Park', 'Both'] as const).map((areaOption) => (
+                  <label key={areaOption} className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="area"
+                      value={areaOption}
+                      checked={formData.area === areaOption}
+                      onChange={(e) => setFormData({ ...formData, area: e.target.value as "Downtown" | "Central Park" | "Both" })}
+                      className="w-4 h-4 text-blue-600 cursor-pointer"
+                    />
+                    <span className="text-sm">{areaOption}</span>
+                  </label>
+                ))}
+              </div>
             </div>
 
             <div className="flex items-center gap-2">
