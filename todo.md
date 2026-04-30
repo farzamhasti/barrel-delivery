@@ -815,3 +815,14 @@ These features are documented for future enhancement but are not required for th
 - [x] Restore drivers table auto-update functionality
 - [x] TypeScript compilation: 0 errors
 - [x] Dev server: Running successfully
+
+
+## Phase 72: Add Online/Offline Toggle to Driver Management
+- [x] Add setStatus mutation to DriverManagement component
+- [x] Add Online/Offline toggle button in driver table
+- [x] Toggle button should change driver status between online/offline
+- [x] Button styling should reflect current status
+- [x] Verify drivers appear in Active Drivers table when set to online
+- [x] Test toggling multiple drivers online/offline
+- [x] TypeScript compilation: 0 errors
+- [x] Dev server: Running successfully

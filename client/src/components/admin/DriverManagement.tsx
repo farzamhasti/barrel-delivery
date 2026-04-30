@@ -25,6 +25,11 @@ export default function DriverManagement() {
       utils.drivers.list.invalidate();
     },
   });
+  const setStatusMutation = trpc.drivers.setStatus.useMutation({
+    onSuccess: () => {
+      utils.drivers.list.invalidate();
+    },
+  });
   
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -226,9 +231,15 @@ export default function DriverManagement() {
                     <td className="py-3 px-4">{driver.licenseNumber || "—"}</td>
                     <td className="py-3 px-4">{driver.vehicleType || "—"}</td>
                     <td className="py-3 px-4 text-center">
-                      <div className={driver.isActive ? "badge-available" : "badge-off-duty"}>
-                        {driver.isActive ? "Available" : "Off-duty"}
-                      </div>
+                      <Button
+                        size="sm"
+                        variant={driver.status === "online" ? "default" : "outline"}
+                        onClick={() => setStatusMutation.mutate({ id: driver.id, status: driver.status === "online" ? "offline" : "online" })}
+                        disabled={setStatusMutation.isPending}
+                        className="text-xs"
+                      >
+                        {driver.status === "online" ? "Online" : "Offline"}
+                      </Button>
                     </td>
                     <td className="py-3 px-4">
                       <div className="flex gap-2 justify-center">
