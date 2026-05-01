@@ -429,17 +429,21 @@ export const appRouter = router({
   reservations: router({
     create: publicProcedure
       .input(z.object({
-        eventType: z.string(),
-        numberOfPeople: z.number().int().positive(),
-        dateTime: z.date(),
-        description: z.string().optional(),
+        customerName: z.string(),
+        customerPhone: z.string(),
+        customerEmail: z.string().optional(),
+        reservationDate: z.date(),
+        partySize: z.number().int().positive(),
+        specialRequests: z.string().optional(),
       }))
       .mutation(async ({ input }) => {
         const reservation = await db.createReservation({
-          eventType: input.eventType,
-          numberOfPeople: input.numberOfPeople,
-          dateTime: input.dateTime,
-          description: input.description,
+          customerName: input.customerName,
+          customerPhone: input.customerPhone,
+          customerEmail: input.customerEmail,
+          reservationDate: input.reservationDate,
+          partySize: input.partySize,
+          specialRequests: input.specialRequests,
           status: 'Pending',
         });
         return reservation;
@@ -459,7 +463,7 @@ export const appRouter = router({
     updateStatus: publicProcedure
       .input(z.object({
         id: z.number(),
-        status: z.enum(['Pending', 'Confirmed', 'Completed', 'Cancelled']),
+        status: z.enum(['Pending', 'Confirmed', 'Cancelled']),
       }))
       .mutation(async ({ input }) => {
         return await db.updateReservationStatus(input.id, input.status);
@@ -468,7 +472,7 @@ export const appRouter = router({
     markDone: publicProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => {
-        return await db.updateReservationStatus(input.id, 'Done');
+        return await db.updateReservationStatus(input.id, 'Confirmed');
       }),
   }),
 

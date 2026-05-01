@@ -1354,7 +1354,7 @@ export async function updateReservation(id: number, data: Partial<Omit<InsertRes
   return result;
 }
 
-export async function updateReservationStatus(id: number, status: "Pending" | "Done") {
+export async function updateReservationStatus(id: number, status: "Pending" | "Confirmed" | "Cancelled") {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
