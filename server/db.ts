@@ -1470,12 +1470,10 @@ export async function createReservation(data: any) {
   if (!db) throw new Error("Database not available");
 
   const insertData: any = {
-    customerName: data.customerName || 'N/A',
-    customerPhone: data.customerPhone || 'N/A',
-    customerEmail: data.customerEmail || '',
-    reservationDate: data.reservationDate,
-    partySize: data.partySize || 0,
-    specialRequests: data.specialRequests || '',
+    eventType: data.eventType,
+    numberOfPeople: data.numberOfPeople,
+    dateTime: data.dateTime,
+    description: data.description || '',
     status: data.status || 'Pending',
   };
 
@@ -1527,10 +1525,10 @@ export async function updateReservation(id: number, data: Partial<Omit<InsertRes
   if (!db) throw new Error("Database not available");
 
   const updateData: any = {};
-  if ((data as any).eventType !== undefined) updateData.customerName = (data as any).eventType;
-  if ((data as any).numberOfPeople !== undefined) updateData.partySize = (data as any).numberOfPeople;
-  if ((data as any).dateTime !== undefined) updateData.reservationDate = (data as any).dateTime;
-  if ((data as any).description !== undefined) updateData.specialRequests = (data as any).description;
+  if ((data as any).eventType !== undefined) updateData.eventType = (data as any).eventType;
+  if ((data as any).numberOfPeople !== undefined) updateData.numberOfPeople = (data as any).numberOfPeople;
+  if ((data as any).dateTime !== undefined) updateData.dateTime = (data as any).dateTime;
+  if ((data as any).description !== undefined) updateData.description = (data as any).description;
 
   const result = await db.update(reservations)
     .set(updateData)
@@ -1539,7 +1537,7 @@ export async function updateReservation(id: number, data: Partial<Omit<InsertRes
   return result;
 }
 
-export async function updateReservationStatus(id: number, status: "Pending" | "Confirmed" | "Cancelled") {
+export async function updateReservationStatus(id: number, status: "Pending" | "Done") {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 

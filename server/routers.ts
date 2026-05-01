@@ -485,7 +485,7 @@ export const appRouter = router({
     updateStatus: publicProcedure
       .input(z.object({
         id: z.number(),
-        status: z.enum(['Pending', 'Confirmed', 'Cancelled']),
+        status: z.enum(['Pending', 'Done']),
       }))
       .mutation(async ({ input }) => {
         return await db.updateReservationStatus(input.id, input.status);
@@ -494,7 +494,7 @@ export const appRouter = router({
     markDone: publicProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => {
-        return await db.updateReservationStatus(input.id, 'Confirmed');
+        return await db.updateReservationStatus(input.id, 'Done');
       }),
   }),
 

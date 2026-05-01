@@ -105,13 +105,11 @@ export const returnTimeHistory = mysqlTable("return_time_history", {
 // Reservations
 export const reservations = mysqlTable("reservations", {
   id: int("id").autoincrement().primaryKey(),
-  customerName: varchar("customer_name", { length: 255 }).notNull(),
-  customerPhone: varchar("customer_phone", { length: 20 }).notNull(),
-  customerEmail: varchar("customer_email", { length: 255 }),
-  reservationDate: timestamp("reservation_date").notNull(),
-  partySize: int("party_size").notNull(),
-  specialRequests: text("special_requests"),
-  status: mysqlEnum("status", ["Pending", "Confirmed", "Cancelled"]).default("Pending").notNull(),
+  eventType: varchar("event_type", { length: 255 }).notNull(),
+  numberOfPeople: int("number_of_people").notNull(),
+  dateTime: timestamp("date_time").notNull(),
+  description: text("description"),
+  status: mysqlEnum("status", ["Pending", "Done"]).default("Pending").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
