@@ -1384,3 +1384,8 @@ These features are documented for future enhancement but are not required for th
 - [x] Reorganize layout to display Delivery Statistics and Your Status side by side
 - [x] Ensure responsive design for smaller screens (grid-cols-1 lg:grid-cols-2)
 - [x] Verify no changes to other sections' appearance and functionality
+
+## Phase 124: Fix Reservations Query ORDER BY Error (COMPLETED)
+- [x] Fix the SQL query with empty ORDER BY clause in reservations query
+- [x] Ensure reservations page loads without errors
+- [x] Verify all reservation data displays correctly

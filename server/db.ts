@@ -1493,7 +1493,7 @@ export async function getReservations() {
 
   const results = await db.select()
     .from(reservations)
-    .orderBy(desc(reservations.dateTime));
+    .orderBy(desc(reservations.reservationDate));
 
   return results;
 }
