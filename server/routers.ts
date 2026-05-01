@@ -502,6 +502,19 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         return await db.deleteReservation(input.id);
       }),
+
+    update: publicProcedure
+      .input(z.object({
+        id: z.number(),
+        eventType: z.string().optional(),
+        numberOfPeople: z.number().optional(),
+        dateTime: z.date().optional(),
+        description: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { id, ...updateData } = input;
+        return await db.updateReservation(id, updateData);
+      }),
   }),
 
   maps: router({
