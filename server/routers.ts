@@ -1,4 +1,4 @@
-import { publicProcedure, router } from './_core/trpc';
+import { publicProcedure, protectedProcedure, router } from './_core/trpc';
 import { z } from 'zod';
 import path from 'path';
 import fs from 'fs';
@@ -112,21 +112,16 @@ export const appRouter = router({
         return await db.assignOrderToDriver(input.orderId, input.driverId);
       }),
 
-    sendToDriver: publicProcedure
+    sendToDriver: protectedProcedure
       .input(z.object({
         orderId: z.number(),
-        driverId: z.number(),
+        driverName: z.string(),
       }))
       .mutation(async ({ input }) => {
-        // Validate driver ID
+        // Use driver name for assignment to avoid ID serialization issues
         console.log('[sendToDriver] Received input:', JSON.stringify(input));
-        console.log('[sendToDriver] input.driverId:', input.driverId, 'type:', typeof input.driverId);
-        const driverId = Number(input.driverId);
-        console.log('[sendToDriver] Converted driverId:', driverId);
-        if (isNaN(driverId) || driverId <= 0) {
-          throw new Error(`Invalid driver ID: ${input.driverId} (type: ${typeof input.driverId})`);
-        }
-        return await db.assignOrderToDriver(input.orderId, driverId);
+        console.log('[sendToDriver] Assigning order', input.orderId, 'to driver:', input.driverName);
+        return await db.assignOrderToDriverByName(input.orderId, input.driverName);
       }),
 
     getByStatus: publicProcedure

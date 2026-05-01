@@ -545,6 +545,42 @@ export async function assignOrderToDriver(orderId: number, driverId: number) {
   }
 }
 
+export async function assignOrderToDriverByName(orderId: number, driverName: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  if (!driverName || driverName.trim() === '') {
+    throw new Error("Driver name is required");
+  }
+  
+  try {
+    // Look up driver by name
+    const driver = await getDriverByName(driverName);
+    if (!driver) {
+      throw new Error(`Driver "${driverName}" not found or is inactive`);
+    }
+    
+    // Validate order exists
+    const order = await db.select().from(orders).where(eq(orders.id, orderId));
+    if (!order || order.length === 0) {
+      throw new Error(`Order with ID ${orderId} does not exist`);
+    }
+    
+    // Update order with driver assignment using the looked-up driver ID
+    const result = await db.update(orders).set({
+      status: "on_the_way",
+      driverId: driver.id,
+      pickedUpAt: new Date(),
+    }).where(eq(orders.id, orderId));
+    
+    console.log(`[assignOrderToDriverByName] Successfully assigned order ${orderId} to driver ${driverName} (ID: ${driver.id})`);
+    return result;
+  } catch (error) {
+    console.error('[assignOrderToDriverByName] Error:', error);
+    throw error;
+  }
+}
+
 export async function createOrderItem(data: InsertOrderItem) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");

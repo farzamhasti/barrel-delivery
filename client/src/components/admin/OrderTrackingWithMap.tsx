@@ -172,11 +172,9 @@ export default function OrderTrackingWithMap() {
     if (!orderToAssign || !selectedDriver) return;
     try {
       const order = allOrders.find(o => o.id === orderToAssign);
-      // Ensure driverId is a plain number, not a Decimal or other type
-      const driverId = Number(selectedDriver.id);
-      console.log('[DEBUG] selectedDriver:', selectedDriver);
-      console.log('[DEBUG] driverId:', driverId, 'type:', typeof driverId);
-      await assignDriverMutation.mutateAsync({ orderId: orderToAssign, driverId });
+      // Pass driver name instead of ID to avoid serialization issues
+      console.log('[DEBUG] Assigning order to driver:', selectedDriver.name);
+      await assignDriverMutation.mutateAsync({ orderId: orderToAssign, driverName: selectedDriver.name });
       await utils.orders.getTodayWithItems.invalidate();
       toast.success(`Order #${order?.orderNumber} has been sent to the driver ${selectedDriver.name}`);
       setShowDriverModal(false);

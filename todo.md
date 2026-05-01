@@ -1296,3 +1296,16 @@ These features are documented for future enhancement but are not required for th
 - [x] Create order with Pending status (COMPLETED)
 - [x] Verify create order page loads without errors (COMPLETED)
 - [x] Test order creation workflow (COMPLETED)
+
+
+## Phase 26: Fix Driver Assignment Error (CURRENT)
+- [x] Create getDriverByName() function to look up drivers by name
+- [x] Create assignOrderToDriverByName() function to assign orders using driver name
+- [x] Update sendToDriver tRPC procedure to accept driverName instead of driverId
+- [x] Update OrderTrackingWithMap component to pass driver name to mutation
+- [x] Change sendToDriver to protectedProcedure for security
+- [x] Add import for protectedProcedure in routers.ts
+- [ ] Test driver assignment through admin UI (pending - need valid credentials)
+- [ ] Verify order status updates to "on_the_way" upon assignment
+- [ ] Verify driver dashboard shows only assigned orders
+- [ ] Create unit tests for driver assignment by name
