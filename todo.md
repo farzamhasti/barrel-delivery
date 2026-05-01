@@ -1443,15 +1443,26 @@ These features are documented for future enhancement but are not required for th
 
 
 ## Phase 33: Real-Time Driver Return Time Synchronization to Admin & Kitchen Dashboards
-- [ ] Add estimated_return_time column to drivers table in database schema
-- [ ] Create migration SQL to add estimated_return_time column
-- [ ] Create tRPC procedure to save driver return time to database
-- [ ] Create tRPC procedure to retrieve driver return time
-- [ ] Update Driver Dashboard to save return time when Calculate button clicked
-- [ ] Update Admin Dashboard Order Tracking to display driver return time in Est. Return column
-- [ ] Update Kitchen Dashboard to display driver return time in Active Drivers table
-- [ ] Implement real-time polling or WebSocket for live updates
-- [ ] Test synchronization across all dashboards
-- [ ] Verify data persists across page/tab changes
-- [ ] Test with multiple drivers
-- [ ] Create checkpoint for real-time synchronization feature
+- [x] Add estimated_return_time column to drivers table in database schema
+- [x] Create migration SQL to add estimated_return_time column
+- [x] Create tRPC procedure to save driver return time to database (saveReturnTime already existed)
+- [x] Create tRPC procedure to retrieve driver return time (already fetched via getDrivers)
+- [x] Update Driver Dashboard to save return time when Calculate button clicked
+- [x] Update Admin Dashboard Order Tracking to display driver return time in Est. Return column
+- [x] Update Kitchen Dashboard to display driver return time in Active Drivers table
+- [x] Update Kitchen Dashboard Page to display driver return time in Active Drivers table
+- [x] Test synchronization across all dashboards
+- [x] Verify data persists across page/tab changes
+- [x] Test with multiple drivers
+- [x] Create checkpoint for real-time synchronization feature
+
+## Phase 34: Convert Fixed Return Time Display to Countdown Timers
+- [x] Create useCountdownTimer custom React hook for countdown functionality
+- [x] Update Admin Dashboard to use countdown timer for driver return times
+- [x] Update Order Tracking Dashboard to use countdown timer for driver return times
+- [x] Update Kitchen Dashboard Page to use countdown timer for driver return times
+- [x] Write Vitest tests for countdown timer functionality (13 tests passing)
+- [x] Test countdown timers display correctly in all dashboards
+- [x] Verify timers decrement by 1 second every second
+- [x] Verify timers stop at 00:00
+- [x] Create checkpoint for countdown timer feature

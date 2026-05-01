@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc";
 import { useDriverReturnTime } from "@/contexts/DriverReturnTimeContext";
+import { useCountdownTimer } from "@/hooks/useCountdownTimer";
 
 // Helper function to format return time from seconds to MM:SS format
 function formatReturnTime(seconds: number | null | undefined): string {
@@ -10,6 +11,23 @@ function formatReturnTime(seconds: number | null | undefined): string {
   const minutes = Math.floor(seconds / 60);
   const secs = seconds % 60;
   return `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+}
+
+// Component to display a single driver with countdown timer
+function DriverRow({ driver }: { driver: any }) {
+  const { displayTime } = useCountdownTimer(driver.estimatedReturnTime);
+  
+  return (
+    <tr className="border-b border-border hover:bg-muted/30">
+      <td className="py-2 px-3">{driver.name}</td>
+      <td className="py-2 px-3">
+        <Badge className="bg-green-100 text-green-800 text-xs">Online</Badge>
+      </td>
+      <td className="py-2 px-3 text-muted-foreground font-mono">
+        {driver.estimatedReturnTime ? displayTime : "00:00"}
+      </td>
+    </tr>
+  );
 }
 
 export default function Dashboard() {
@@ -99,15 +117,7 @@ export default function Dashboard() {
                   </thead>
                   <tbody>
                     {activeDrivers.map((driver: any) => (
-                      <tr key={driver.id} className="border-b border-border hover:bg-muted/30">
-                        <td className="py-2 px-3">{driver.name}</td>
-                        <td className="py-2 px-3">
-                          <Badge className="bg-green-100 text-green-800 text-xs">Online</Badge>
-                        </td>
-                        <td className="py-2 px-3 text-muted-foreground font-mono">
-                          {driver.estimatedReturnTime ? formatReturnTime(driver.estimatedReturnTime) : "00:00"}
-                        </td>
-                      </tr>
+                      <DriverRow key={driver.id} driver={driver} />
                     ))}
                   </tbody>
                 </table>

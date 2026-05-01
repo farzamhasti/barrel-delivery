@@ -12,6 +12,7 @@ import { useDriverReturnTime } from "@/contexts/DriverReturnTimeContext";
 import { Clock, CheckCircle2, Truck, Package, Maximize2 } from "lucide-react";
 import { toast } from "sonner";
 import { FullscreenMapModal } from "@/components/FullscreenMapModal";
+import { useCountdownTimer } from "@/hooks/useCountdownTimer";
 
 const FORT_ERIE_CENTER = { lat: 42.905191, lng: -78.9225479 };
 const RESTAURANT_ADDRESS = { lat: 42.905191, lng: -78.9225479 }; // 224 Garrison Rd, Fort Erie, ON L2A 1M7
@@ -22,6 +23,23 @@ function formatReturnTime(seconds: number | null | undefined): string {
   const minutes = Math.floor(seconds / 60);
   const secs = seconds % 60;
   return `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+}
+
+// Component to display a single driver with countdown timer
+function DriverRowWithTimer({ driver }: { driver: any }) {
+  const { displayTime } = useCountdownTimer(driver.estimatedReturnTime);
+  
+  return (
+    <tr className="border-b border-border hover:bg-muted/30">
+      <td className="py-2 px-3">{driver.name}</td>
+      <td className="py-2 px-3">
+        <Badge className="bg-green-100 text-green-800 text-xs">Online</Badge>
+      </td>
+      <td className="py-2 px-3 text-muted-foreground font-mono">
+        {driver.estimatedReturnTime ? displayTime : "00:00"}
+      </td>
+    </tr>
+  );
 }
 
 // Color scheme for order statuses
@@ -306,15 +324,7 @@ export default function OrderTrackingWithMap() {
                   </thead>
                   <tbody>
                     {activeDrivers.map((driver: any) => (
-                      <tr key={driver.id} className="border-b border-border hover:bg-muted/30">
-                        <td className="py-2 px-3">{driver.name}</td>
-                        <td className="py-2 px-3">
-                          <Badge className="bg-green-100 text-green-800 text-xs">Online</Badge>
-                        </td>
-                        <td className="py-2 px-3 text-muted-foreground font-mono">
-                          {driver.estimatedReturnTime ? formatReturnTime(driver.estimatedReturnTime) : "00:00"}
-                        </td>
-                      </tr>
+                      <DriverRowWithTimer key={driver.id} driver={driver} />
                     ))}
                   </tbody>
                 </table>
