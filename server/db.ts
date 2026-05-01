@@ -109,12 +109,21 @@ export async function createDriver(data: InsertDriver) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const result = await db.insert(drivers).values(data);
-  // Extract insertId from the result
-  const insertId = (result as any)[0]?.insertId;
-  if (insertId) {
-    return db.select().from(drivers).where(eq(drivers.id, insertId)).then(rows => rows[0] || null);
+  // Extract insertId from the result - handle both array and object formats
+  let insertId: number | undefined;
+  if (Array.isArray(result)) {
+    insertId = (result as any)[0]?.insertId;
+  } else if (typeof result === 'object' && result !== null) {
+    insertId = (result as any).insertId;
   }
-  return result;
+  
+  if (!insertId || insertId <= 0) {
+    throw new Error("Failed to get insertId from createDriver result");
+  }
+  
+  // Always return the actual driver row from the database
+  const driver = await db.select().from(drivers).where(eq(drivers.id, insertId));
+  return driver[0] || null;
 }
 
 export async function updateDriver(id: number, data: Partial<InsertDriver>) {
@@ -889,7 +898,20 @@ export async function createSystemCredentials(username: string, password: string
     role,
   });
   
-  return result;
+  // Extract insertId and return the actual credential row
+  let insertId: number | undefined;
+  if (Array.isArray(result)) {
+    insertId = (result as any)[0]?.insertId;
+  } else if (typeof result === 'object' && result !== null) {
+    insertId = (result as any).insertId;
+  }
+  
+  if (insertId) {
+    const credential = await db.select().from(systemCredentials).where(eq(systemCredentials.id, insertId));
+    return credential[0] || null;
+  }
+  
+  return null;
 }
 
 
@@ -1382,7 +1404,21 @@ export async function createReservation(data: InsertReservation) {
   if (!db) throw new Error("Database not available");
 
   const result = await db.insert(reservations).values(data);
-  return result;
+  
+  // Extract insertId and return the actual reservation row
+  let insertId: number | undefined;
+  if (Array.isArray(result)) {
+    insertId = (result as any)[0]?.insertId;
+  } else if (typeof result === 'object' && result !== null) {
+    insertId = (result as any).insertId;
+  }
+  
+  if (insertId) {
+    const reservation = await db.select().from(reservations).where(eq(reservations.id, insertId));
+    return reservation[0] || null;
+  }
+  
+  return null;
 }
 
 export async function getReservations() {
