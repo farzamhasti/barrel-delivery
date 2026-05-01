@@ -1427,3 +1427,16 @@ These features are documented for future enhancement but are not required for th
 - [x] Verify optimal delivery sequence generation
 - [x] Test with real traffic conditions
 - [x] Create checkpoint for accurate return time system
+
+
+## Phase 32: Countdown Timer for Return Time Calculation
+- [x] Add state management for countdown timer (returnTimeSeconds, isTimerRunning)
+- [x] Implement useEffect hook to handle countdown logic
+- [x] Update timer every 1 second when active
+- [x] Stop timer when it reaches zero
+- [x] Display countdown timer in Estimated Return Time section
+- [x] Show formatted time (minutes:seconds format)
+- [x] Allow driver to restart timer by clicking Calculate Return Time again
+- [x] Test countdown timer functionality
+- [x] Verify timer stops at zero
+- [x] Create checkpoint for countdown timer feature

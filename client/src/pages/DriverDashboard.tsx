@@ -31,6 +31,8 @@ export default function DriverDashboard() {
     new Date().toISOString().split('T')[0]
   );
   const [deliveredCount, setDeliveredCount] = useState<number>(0);
+  const [returnTimeSeconds, setReturnTimeSeconds] = useState<number>(0);
+  const [isTimerRunning, setIsTimerRunning] = useState<boolean>(false);
   
   // Get stored session token from localStorage on mount
   useEffect(() => {
@@ -105,19 +107,43 @@ export default function DriverDashboard() {
     onSuccess: (result: any) => {
       if (result.orderCount === 0) {
         alert('No active deliveries to calculate');
+        setIsTimerRunning(false);
       } else {
-        const pickupMin = Math.round(result.breakdown.pickupTime / 60);
-        const deliveryMin = Math.round(result.breakdown.deliveryHandlingTime / 60);
-        const travelMin = Math.round(result.breakdown.travelTime / 60);
-        const breakdown = `\nBreakdown:\n- Pickup: ${pickupMin}s\n- Delivery handling: ${deliveryMin}s\n- Travel time: ${travelMin}s\n- Orders: ${result.orderCount}`;
-        alert(`Estimated return time: ${result.formattedTime}${breakdown}`);
+        // Start the countdown timer with the calculated return time in seconds
+        setReturnTimeSeconds(result.totalReturnTime);
+        setIsTimerRunning(true);
+        console.log(`Timer started: ${result.totalReturnTime} seconds (${result.formattedTime})`);
       }
     },
     onError: (error: any) => {
       console.error('Error calculating return time:', error);
       alert(`Error: ${error instanceof Error ? error.message : 'Failed to calculate return time'}`);
+      setIsTimerRunning(false);
     },
   });
+
+  // Countdown timer effect
+  useEffect(() => {
+    if (!isTimerRunning || returnTimeSeconds <= 0) {
+      if (returnTimeSeconds <= 0 && isTimerRunning) {
+        setIsTimerRunning(false);
+      }
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setReturnTimeSeconds((prev) => {
+        const newValue = prev - 1;
+        if (newValue <= 0) {
+          setIsTimerRunning(false);
+          return 0;
+        }
+        return newValue;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isTimerRunning, returnTimeSeconds]);
 
   // Update delivered count when data changes
   useEffect(() => {
@@ -355,6 +381,24 @@ export default function DriverDashboard() {
                 <div className="flex flex-col justify-between">
                   <div>
                     <h3 className="text-lg font-semibold mb-4">Estimated Return Time</h3>
+                    
+                    {/* Countdown Timer Display */}
+                    {isTimerRunning && returnTimeSeconds > 0 && (
+                      <div className="bg-orange-50 border-2 border-orange-300 rounded-lg p-4 mb-6">
+                        <p className="text-sm text-gray-600 mb-2">Time Remaining:</p>
+                        <p className="text-4xl font-bold text-orange-600">
+                          {Math.floor(returnTimeSeconds / 60)}:{String(returnTimeSeconds % 60).padStart(2, '0')}
+                        </p>
+                      </div>
+                    )}
+                    
+                    {returnTimeSeconds === 0 && !isTimerRunning && (
+                      <div className="bg-green-50 border-2 border-green-300 rounded-lg p-4 mb-6">
+                        <p className="text-sm text-gray-600 mb-2">Status:</p>
+                        <p className="text-2xl font-bold text-green-600">Returned!</p>
+                      </div>
+                    )}
+                    
                     <p className="text-sm text-gray-600 mb-4">Based on:</p>
                     <ul className="text-sm text-gray-700 mb-6 space-y-2">
                       <li>• 1 minute for pickup</li>
