@@ -204,7 +204,7 @@ export function Reservations() {
             <thead className="bg-muted border-b border-border">
               <tr>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Event Type</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">People</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Number of People</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Date & Time</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Description</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Status</th>
