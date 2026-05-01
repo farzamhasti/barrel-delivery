@@ -9,6 +9,7 @@ import { DeveloperCredit } from "@/components/DeveloperCredit";
 
 const DRIVER_SESSION_KEY = "driver_session_token";
 const DRIVER_ID_KEY = "driver_id";
+const DRIVER_NAME_KEY = "driver_name";
 
 export default function DriverLogin() {
   const [, setLocation] = useLocation();
@@ -24,6 +25,7 @@ export default function DriverLogin() {
     onSuccess: (data: any) => {
       localStorage.setItem(DRIVER_SESSION_KEY, data.sessionToken);
       localStorage.setItem(DRIVER_ID_KEY, data.driverId.toString());
+      localStorage.setItem(DRIVER_NAME_KEY, data.driverName);
       setDriverName("");
       setLicenseNumber("");
       // Redirect to driver dashboard

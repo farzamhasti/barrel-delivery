@@ -145,10 +145,17 @@ export const appRouter = router({
       }),
 
     getTodayWithItems: publicProcedure
-      .query(async () => {
+      .input(z.object({ driverId: z.number().optional() }).optional())
+      .query(async ({ input }) => {
         // Get all orders for today
         const allOrders = await db.getOrders();
-        // Return orders with items
+        // If driverId is provided, filter by driver ID and "Out for Delivery" status
+        if (input?.driverId) {
+          return allOrders.filter((order: any) => 
+            order.driverId === input.driverId && order.status === "Out for Delivery"
+          );
+        }
+        // Return all orders with items
         return allOrders;
       }),
 
