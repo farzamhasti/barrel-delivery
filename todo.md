@@ -1309,3 +1309,13 @@ These features are documented for future enhancement but are not required for th
 - [x] Verify order status updates to "on_the_way" upon assignment (status field set in assignOrderToDriverByName)
 - [x] Verify driver dashboard shows only assigned orders (getOrdersByDriver filters by driverId + status)
 - [x] Create unit tests for driver assignment by name (driver-assignment.test.ts created)
+
+
+## Phase 115: Fix Driver Dashboard Order Transfer (COMPLETED)
+- [x] Fix getTodayWithItems procedure to filter by correct status "On the Way"
+- [x] Verify orders appear on driver dashboard when assigned
+- [x] Test order transfer from admin to driver dashboard
+- [x] Ensure driver sees assigned orders with "On the Way" status
+- [x] Verify no changes to existing appearance and functionality
+- [x] TypeScript compilation: Pre-existing errors only (not related to this fix)
+- [x] Dev server: Running successfully

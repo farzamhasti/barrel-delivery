@@ -157,10 +157,10 @@ export const appRouter = router({
       .query(async ({ input }) => {
         // Get all orders for today
         const allOrders = await db.getTodayOrdersWithItems(undefined);
-        // If driverId is provided, filter by driver ID and "Out for Delivery" status
+        // If driverId is provided, filter by driver ID and "On the Way" status
         if (input?.driverId) {
           return allOrders.filter((order: any) => 
-            order.driverId === input.driverId && order.status === "Out for Delivery"
+            order.driverId === input.driverId && order.status === "On the Way"
           );
         }
         // Return all orders with items
