@@ -1493,7 +1493,7 @@ export async function getReservations() {
 
   const results = await db.select()
     .from(reservations)
-    .orderBy(desc(reservations.reservationDate));
+    .orderBy(desc(reservations.createdAt));
 
   return results;
 }
@@ -1559,7 +1559,7 @@ export async function getOrdersByDriver(driverId: number) {
       eq(orders.driverId, driverId),
       inArray(orders.status, ["Out for Delivery", "on_the_way"])
     ))
-    .orderBy(desc(orders.deliveryTime));
+    .orderBy(desc(orders.createdAt));
 
   return results;
 }
