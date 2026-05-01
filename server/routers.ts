@@ -447,7 +447,7 @@ export const appRouter = router({
 
     getAll: publicProcedure
       .query(async () => {
-        return await db.getAllReservations();
+        return await db.getReservations();
       }),
 
     getById: publicProcedure
