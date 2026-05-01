@@ -3,31 +3,34 @@ import { useTimerStartTime } from '@/contexts/TimerStartTimeContext';
 
 /**
  * Custom hook for countdown timer with persistent elapsed time tracking
- * @param initialSeconds - Initial time in seconds
+ * @param initialSeconds - Initial time in seconds (only used on first mount)
  * @param driverId - Driver ID to store/retrieve timer data
  * @returns Object with current time in MM:SS format and remaining seconds
  */
 export function useCountdownTimer(initialSeconds: number | null | undefined, driverId: number) {
-  const { setTimerStartTime, getRemainingSeconds } = useTimerStartTime();
+  const { timerData, setTimerStartTime, getRemainingSeconds } = useTimerStartTime();
   const [remainingSeconds, setRemainingSeconds] = useState<number>(0);
-  const isInitializedRef = useRef(false);
+  const initializationRef = useRef<Set<number>>(new Set());
 
-  // Initialize timer start time on first mount
+  // Initialize timer start time ONLY once per driver (on first mount)
   useEffect(() => {
-    if (!isInitializedRef.current && initialSeconds && initialSeconds > 0) {
+    const isInitialized = initializationRef.current.has(driverId);
+    
+    if (!isInitialized && initialSeconds && initialSeconds > 0) {
       setTimerStartTime(driverId, initialSeconds);
-      isInitializedRef.current = true;
+      initializationRef.current.add(driverId);
     }
-  }, [driverId, initialSeconds, setTimerStartTime]);
+  }, [driverId]); // Only depend on driverId, NOT on initialSeconds
 
-  // Update remaining seconds from context every second
+  // Update remaining seconds every second from context
   useEffect(() => {
-    if (!initialSeconds || initialSeconds <= 0) {
+    // Check if timer data exists for this driver
+    if (!timerData[driverId]) {
       setRemainingSeconds(0);
       return;
     }
 
-    // Set initial value from context
+    // Set initial value
     const remaining = getRemainingSeconds(driverId);
     setRemainingSeconds(remaining);
 
@@ -43,7 +46,7 @@ export function useCountdownTimer(initialSeconds: number | null | undefined, dri
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [driverId, initialSeconds, getRemainingSeconds]);
+  }, [driverId, timerData, getRemainingSeconds]);
 
   // Format seconds to MM:SS
   const formatTime = (seconds: number): string => {
