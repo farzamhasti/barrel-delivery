@@ -1347,3 +1347,12 @@ These features are documented for future enhancement but are not required for th
 - [x] Verify modal styling matches admin dashboard order card style
 - [x] Ensure no changes to other sections' appearance and functionality
 - [x] Test modal displays correctly on driver dashboard
+
+
+## Phase 119: Fix Order Details Modal - Remove Black Background and Fix Click Behavior (COMPLETED)
+- [x] Remove black background overlay from modal (changed from bg-black bg-opacity-50 to no background)
+- [x] Make modal smaller and simpler (changed from w-full max-w-2xl to w-96 fixed positioning)
+- [x] Open details when clicking on the order card itself (already working - Card onClick handler)
+- [x] Keep "Mark as Delivered" button functionality separate from details opening (added e.stopPropagation())
+- [x] Ensure modal displays as a simple popup without dark background (fixed positioning centered on screen)
+- [x] Verify no changes to other sections' appearance and functionality (only modal styling changed)

@@ -338,7 +338,10 @@ export default function DriverDashboard() {
                           </div>
                           <Button
                             className="w-full bg-green-600 hover:bg-green-700 text-white"
-                            onClick={() => handleMarkDelivered(order.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleMarkDelivered(order.id);
+                            }}
                             disabled={updateOrderStatusMutation.isPending}
                           >
                             Mark as Delivered
@@ -395,8 +398,8 @@ export default function DriverDashboard() {
 
       {/* Order Details Modal */}
       {showOrderDetails && selectedOrder && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <Card className="w-full max-w-2xl mx-4 bg-white">
+        <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50">
+          <Card className="w-96 bg-white shadow-lg rounded-lg">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 border-b">
               <div>
                 <CardTitle>Order #{selectedOrder.orderNumber || selectedOrder.checkNumber || selectedOrder.id}</CardTitle>
