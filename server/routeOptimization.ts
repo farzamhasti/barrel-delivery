@@ -49,6 +49,14 @@ async function getTravelTime(
   apiKey: string
 ): Promise<RouteLeg> {
   try {
+    console.log(`[getTravelTime] Fetching route from "${origin}" to "${destination}"`);
+    const url = `https://maps.googleapis.com/maps/api/directions/json?` +
+      `origin=${encodeURIComponent(origin)}&` +
+      `destination=${encodeURIComponent(destination)}&` +
+      `key=${apiKey.substring(0, 10)}...&` +
+      `traffic_model=best_guess`;
+    console.log(`[getTravelTime] URL: ${url}`);
+    
     const response = await fetch(
       `https://maps.googleapis.com/maps/api/directions/json?` +
       `origin=${encodeURIComponent(origin)}&` +
@@ -57,14 +65,16 @@ async function getTravelTime(
       `traffic_model=best_guess`
     );
 
+    console.log(`[getTravelTime] Response status: ${response.status}`);
     if (!response.ok) {
       throw new Error(`Google Directions API error: ${response.statusText}`);
     }
 
     const data = await response.json();
+    console.log(`[getTravelTime] API response status: ${data.status}`);
 
     if (data.status !== 'OK' || !data.routes || data.routes.length === 0) {
-      console.error('Google Directions API response:', data);
+      console.error('[getTravelTime] Google Directions API response:', data);
       throw new Error(`No route found: ${data.status}`);
     }
 
@@ -77,6 +87,7 @@ async function getTravelTime(
     for (const leg of route.legs) {
       totalDistance += leg.distance.value;
       totalDuration += leg.duration.value;
+      console.log(`[getTravelTime] Leg: ${leg.distance.text}, ${leg.duration.text}`);
       // Use duration_in_traffic if available, otherwise use regular duration
       totalDurationInTraffic += leg.duration_in_traffic?.value || leg.duration.value;
     }

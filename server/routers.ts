@@ -398,16 +398,20 @@ export const appRouter = router({
             };
           }
 
-          const apiKey = process.env.VITE_FRONTEND_FORGE_API_KEY;
+          // Use the server-side Forge API key for Google Maps Directions API
+          const apiKey = process.env.BUILT_IN_FORGE_API_KEY || process.env.VITE_GOOGLE_MAPS_API_KEY;
           if (!apiKey) {
-            throw new Error('Google Maps API key not configured');
+            throw new Error('Google Maps API key not configured. Please check BUILT_IN_FORGE_API_KEY or VITE_GOOGLE_MAPS_API_KEY environment variables.');
           }
+          console.log('[drivers.calculateReturnTime] Using API key, orders found:', onTheWayOrders.length);
 
+          console.log('[drivers.calculateReturnTime] Calculating route for', onTheWayOrders.length, 'orders');
           const result = await calculateReturnTime(
             input.restaurantAddress,
             onTheWayOrders,
             apiKey
           );
+          console.log('[drivers.calculateReturnTime] Route calculation complete. Total time:', result.totalReturnTime, 'seconds');
 
           return {
             totalReturnTime: result.totalReturnTime,
@@ -418,6 +422,7 @@ export const appRouter = router({
           };
         } catch (error) {
           console.error('[drivers.calculateReturnTime] Error:', error);
+          console.error('[drivers.calculateReturnTime] Full error details:', JSON.stringify(error, null, 2));
           throw new Error(`Failed to calculate return time: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
       }),
