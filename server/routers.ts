@@ -113,7 +113,7 @@ export const appRouter = router({
         driverId: z.number(),
       }))
       .mutation(async ({ input }) => {
-        return await db.assignDriverToOrder(input.orderId, input.driverId);
+        return await db.assignOrderToDriver(input.orderId, input.driverId);
       }),
 
     sendToDriver: publicProcedure
@@ -122,7 +122,7 @@ export const appRouter = router({
         driverId: z.number(),
       }))
       .mutation(async ({ input }) => {
-        return await db.assignDriverToOrder(input.orderId, input.driverId);
+        return await db.assignOrderToDriver(input.orderId, input.driverId);
       }),
 
     getByStatus: publicProcedure
