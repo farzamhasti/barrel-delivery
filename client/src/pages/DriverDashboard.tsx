@@ -324,28 +324,31 @@ export default function DriverDashboard() {
             </CardContent>
           </Card>
 
-          {/* Calculate Return Time Section */}
-          <Card className="border-2">
+          {/* Delivery Management Card - Return Time & Map */}
+          <Card className="border-2 lg:col-span-2">
             <CardHeader>
-              <CardTitle className="text-2xl">Calculate Return Time</CardTitle>
-              <CardDescription>Estimate your return time to restaurant</CardDescription>
+              <CardTitle className="text-2xl">Delivery Management</CardTitle>
+              <CardDescription>Calculate return time and view your delivery route</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-col items-center justify-center py-8">
-                <div className="text-center">
-                  <p className="text-sm text-gray-600 mb-4">Calculate estimated return time based on:</p>
-                  <ul className="text-sm text-gray-700 mb-6 space-y-2 text-left inline-block">
-                    <li>• 1 minute for pickup</li>
-                    <li>• 2 minutes per delivery</li>
-                    <li>• Optimal travel time</li>
-                  </ul>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Return Time Section */}
+                <div className="flex flex-col justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4">Estimated Return Time</h3>
+                    <p className="text-sm text-gray-600 mb-4">Based on:</p>
+                    <ul className="text-sm text-gray-700 mb-6 space-y-2">
+                      <li>• 1 minute for pickup</li>
+                      <li>• 2 minutes per delivery ({assignedOrders.length} orders)</li>
+                      <li>• Optimal travel time</li>
+                    </ul>
+                  </div>
                   <Button
                     size="lg"
                     className="bg-orange-600 hover:bg-orange-700 text-white w-full"
                     onClick={() => {
-                      // Calculate return time based on assigned orders
-                      const pickupTime = 1; // 1 minute
-                      const deliveryTime = assignedOrders.length * 2; // 2 minutes per order
+                      const pickupTime = 1;
+                      const deliveryTime = assignedOrders.length * 2;
                       const estimatedReturnTime = pickupTime + deliveryTime;
                       alert(`Estimated return time: ${estimatedReturnTime} minutes`);
                     }}
@@ -353,22 +356,40 @@ export default function DriverDashboard() {
                     Calculate Return Time
                   </Button>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
 
-          {/* Delivery with Map Section */}
-          <Card className="border-2">
-            <CardHeader>
-              <CardTitle className="text-2xl">Delivery with Map</CardTitle>
-              <CardDescription>View your delivery route on map</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col items-center justify-center py-8">
-                <div className="text-center">
-                  <p className="text-sm text-gray-600 mb-4">Route visualization for all deliveries</p>
-                  <div className="bg-gray-100 rounded-lg p-8 mb-4 w-full">
-                    <p className="text-gray-500 text-sm">Map will display your delivery route</p>
+                {/* Delivery Map Section */}
+                <div className="flex flex-col justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4">Delivery Route</h3>
+                    <p className="text-sm text-gray-600 mb-4">View and navigate your delivery route</p>
+                    <div className="bg-gray-100 rounded-lg p-8 mb-4 w-full text-center cursor-pointer hover:bg-gray-200 transition-colors" onClick={() => {
+                      if (assignedOrders.length === 0) {
+                        alert('No active deliveries to show on map');
+                        return;
+                      }
+
+                      // Build waypoints from delivery addresses
+                      const waypoints = assignedOrders
+                        .filter((order: any) => order.customerAddress)
+                        .map((order: any) => encodeURIComponent(order.customerAddress))
+                        .join('|');
+
+                      if (!waypoints) {
+                        alert('No delivery addresses available');
+                        return;
+                      }
+
+                      // Restaurant location (origin and destination)
+                      const restaurantLocation = encodeURIComponent('The Barrel Restaurant, Toronto, ON');
+
+                      // Build Google Maps URL with navigation mode
+                      const mapsUrl = `https://www.google.com/maps/dir/${restaurantLocation}/${waypoints}/${restaurantLocation}?travelmode=driving`;
+
+                      // Open in new window/tab or native app on mobile
+                      window.open(mapsUrl, '_blank');
+                    }}>
+                      <p className="text-gray-500 text-sm">Tap to open in Google Maps</p>
+                    </div>
                   </div>
                   <Button
                     size="lg"
@@ -376,12 +397,31 @@ export default function DriverDashboard() {
                     onClick={() => {
                       if (assignedOrders.length === 0) {
                         alert('No active deliveries to show on map');
-                      } else {
-                        alert(`Showing route for ${assignedOrders.length} delivery order(s)`);
+                        return;
                       }
+
+                      // Build waypoints from delivery addresses
+                      const waypoints = assignedOrders
+                        .filter((order: any) => order.customerAddress)
+                        .map((order: any) => encodeURIComponent(order.customerAddress))
+                        .join('|');
+
+                      if (!waypoints) {
+                        alert('No delivery addresses available');
+                        return;
+                      }
+
+                      // Restaurant location (origin and destination)
+                      const restaurantLocation = encodeURIComponent('The Barrel Restaurant, Toronto, ON');
+
+                      // Build Google Maps URL with navigation mode
+                      const mapsUrl = `https://www.google.com/maps/dir/${restaurantLocation}/${waypoints}/${restaurantLocation}?travelmode=driving`;
+
+                      // Open in new window/tab or native app on mobile
+                      window.open(mapsUrl, '_blank');
                     }}
                   >
-                    View Delivery Route
+                    Open in Google Maps
                   </Button>
                 </div>
               </div>

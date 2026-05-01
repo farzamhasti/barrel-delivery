@@ -1401,3 +1401,13 @@ These features are documented for future enhancement but are not required for th
 - [x] Test both features in browser
 - [x] Verify responsive grid layout on different screen sizes
 - [x] Create checkpoint for new features
+
+
+## Phase 30: Driver Dashboard - Merge Cards and Google Maps Integration
+- [x] Merge "Calculate Return Time" and "Delivery with Map" into single combined card
+- [x] Integrate Google Maps API to open driver's delivery route
+- [x] Implement route calculation with all delivery addresses
+- [x] Add button to open route in Google Maps (driver's seat view)
+- [x] Test merged card layout and responsiveness
+- [x] Verify Google Maps opens with correct route
+- [x] Create checkpoint for merged card with Maps integration
