@@ -474,7 +474,7 @@ export async function assignOrderToDriver(orderId: number, driverId: number) {
   if (!db) throw new Error("Database not available");
   return db.update(orders).set({ 
     driverId,
-    status: "On the Way",
+    status: "Out for Delivery",
     pickedUpAt: new Date()
   }).where(eq(orders.id, orderId));
 }
