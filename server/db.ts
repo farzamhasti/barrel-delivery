@@ -1491,10 +1491,14 @@ export async function getReservations() {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  const results = await db.select()
-    .from(reservations);
-
-  return results;
+  try {
+    const results = await db.select()
+      .from(reservations);
+    return results;
+  } catch (error) {
+    console.error("Error fetching reservations:", error);
+    return [];
+  }
 }
 
 export async function getReservationById(id: number) {
