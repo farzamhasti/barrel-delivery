@@ -396,11 +396,10 @@ export default function DriverDashboard() {
       {/* Order Details Modal */}
       {showOrderDetails && selectedOrder && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <Card className="w-full max-w-md mx-4">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+          <Card className="w-full max-w-2xl mx-4 bg-white">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 border-b">
               <div>
-                <CardTitle>Order Details</CardTitle>
-                <CardDescription>Order #{selectedOrder.orderNumber || selectedOrder.checkNumber || selectedOrder.id}</CardDescription>
+                <CardTitle>Order #{selectedOrder.orderNumber || selectedOrder.checkNumber || selectedOrder.id}</CardTitle>
               </div>
               <Button
                 variant="ghost"
@@ -411,45 +410,62 @@ export default function DriverDashboard() {
                 ×
               </Button>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <p className="text-sm text-gray-600">Delivery Address</p>
-                <p className="font-medium">{selectedOrder.customerAddress || "N/A"}</p>
+            <CardContent className="pt-6">
+              {/* Main delivery address section */}
+              <div className="mb-6 pb-6 border-b">
+                <p className="font-bold text-lg">{selectedOrder.customerAddress || "N/A"}</p>
+                {selectedOrder.customerPhone && (
+                  <p className="text-sm text-gray-600 mt-1">{selectedOrder.customerPhone}</p>
+                )}
               </div>
 
-              {selectedOrder.customerPhone && (
-                <div>
-                  <p className="text-sm text-gray-600">Customer Phone</p>
-                  <p className="font-medium">{selectedOrder.customerPhone}</p>
-                </div>
-              )}
+              {/* Icon-based info grid */}
+              <div className="grid grid-cols-3 gap-4 mb-6 pb-6 border-b">
+                {/* Area */}
+                {selectedOrder.area && (
+                  <div className="flex flex-col items-center text-center">
+                    <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center mb-2">
+                      <span className="text-purple-600 text-lg">📍</span>
+                    </div>
+                    <p className="text-xs text-gray-600 mb-1">AREA</p>
+                    <p className="font-medium text-sm">{selectedOrder.area}</p>
+                  </div>
+                )}
 
-              {selectedOrder.area && (
-                <div>
-                  <p className="text-sm text-gray-600">Area</p>
-                  <p className="font-medium">{selectedOrder.area}</p>
-                </div>
-              )}
+                {/* Delivery Time */}
+                {selectedOrder.deliveryTime && (
+                  <div className="flex flex-col items-center text-center">
+                    <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center mb-2">
+                      <span className="text-orange-600 text-lg">🕐</span>
+                    </div>
+                    <p className="text-xs text-gray-600 mb-1">DELIVERY TIME</p>
+                    <p className="font-medium text-sm">{selectedOrder.deliveryTime}</p>
+                  </div>
+                )}
 
-              {selectedOrder.deliveryTime && (
-                <div>
-                  <p className="text-sm text-gray-600">Delivery Time</p>
-                  <p className="font-medium">{selectedOrder.deliveryTime}</p>
+                {/* Order Status */}
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mb-2">
+                    <span className="text-blue-600 text-lg">✓</span>
+                  </div>
+                  <p className="text-xs text-gray-600 mb-1">ORDER STATUS</p>
+                  <p className="font-medium text-sm text-orange-600">{selectedOrder.status}</p>
                 </div>
-              )}
+              </div>
 
+              {/* Scanned Receipt Section */}
               {(selectedOrder.formattedReceiptImage || selectedOrder.receiptImage) && (
                 <div>
-                  <p className="text-sm text-gray-600 mb-2">Scanned Receipt</p>
+                  <h3 className="font-semibold text-base mb-3">Scanned Receipt</h3>
                   <img 
                     src={selectedOrder.formattedReceiptImage || selectedOrder.receiptImage} 
                     alt="Receipt" 
-                    className="w-full border border-gray-300 rounded-lg max-h-64 object-contain"
+                    className="w-full border border-gray-300 rounded-lg max-h-96 object-contain"
                   />
                 </div>
               )}
               {!selectedOrder.formattedReceiptImage && !selectedOrder.receiptImage && (
-                <div>
+                <div className="text-center py-8">
                   <p className="text-sm text-gray-600">No receipt image available</p>
                 </div>
               )}

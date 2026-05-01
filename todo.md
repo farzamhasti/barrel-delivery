@@ -1337,3 +1337,13 @@ These features are documented for future enhancement but are not required for th
 - [x] Update DriverDashboard modal to display receipt image correctly (added fallback to receiptImage field)
 - [x] Test receipt displays in order details modal (verified receiptImage URL is available)
 - [x] Verify no changes to other functionality (modal structure unchanged)
+
+
+## Phase 118: Redesign Order Details Modal to Match Admin Dashboard Style (COMPLETED)
+- [x] Change modal background from dark to light (white/light gray)
+- [x] Add icon-based layout for delivery time, order status, assigned driver
+- [x] Display delivery address as main content
+- [x] Show scanned receipt in modal
+- [x] Verify modal styling matches admin dashboard order card style
+- [x] Ensure no changes to other sections' appearance and functionality
+- [x] Test modal displays correctly on driver dashboard
