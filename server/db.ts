@@ -1563,3 +1563,30 @@ export async function getOrdersByDriver(driverId: number) {
 
   return results;
 }
+
+
+// Get delivered orders count for a driver on a specific date
+export async function getDeliveredOrdersCountByDate(driverId: number, date: Date) {
+  const db = await getDb();
+  if (!db) return 0;
+  
+  // Create start and end of day in UTC
+  const startOfDay = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), 0, 0, 0, 0));
+  const endOfDay = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() + 1, 0, 0, 0, 0));
+  
+  try {
+    const result = await db.select()
+      .from(orders)
+      .where(and(
+        eq(orders.driverId, driverId),
+        eq(orders.status, "Delivered"),
+        gte(orders.updatedAt, startOfDay),
+        lt(orders.updatedAt, endOfDay)
+      ));
+    
+    return result.length;
+  } catch (error) {
+    console.error("[Database] Error fetching delivered orders count:", error);
+    return 0;
+  }
+}

@@ -27,6 +27,10 @@ export default function DriverDashboard() {
   const [deliveredOrders, setDeliveredOrders] = useState<Set<number>>(new Set());
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [showOrderDetails, setShowOrderDetails] = useState(false);
+  const [selectedStatisticsDate, setSelectedStatisticsDate] = useState<string>(
+    new Date().toISOString().split('T')[0]
+  );
+  const [deliveredCount, setDeliveredCount] = useState<number>(0);
   
   // Get stored session token from localStorage on mount
   useEffect(() => {
@@ -87,6 +91,21 @@ export default function DriverDashboard() {
     { enabled: !!sessionToken && !!currentDriverId }
   );
   const assignedOrders = (assignedOrdersRaw as any) || [];
+
+  // Get delivered orders count for selected date
+  const { data: deliveredCountData } = trpc.drivers.getDeliveredOrdersCountByDate.useQuery(
+    currentDriverId && selectedStatisticsDate
+      ? { driverId: currentDriverId, date: selectedStatisticsDate }
+      : undefined,
+    { enabled: !!currentDriverId && !!selectedStatisticsDate }
+  );
+
+  // Update delivered count when data changes
+  useEffect(() => {
+    if (deliveredCountData?.count !== undefined) {
+      setDeliveredCount(deliveredCountData.count);
+    }
+  }, [deliveredCountData]);
 
   // Separate orders into "On the way" and "Delivered"
   const onTheWayOrders = assignedOrders.filter((order: any) => !deliveredOrders.has(order.id));
@@ -271,6 +290,33 @@ export default function DriverDashboard() {
                 >
                   Go Offline
                 </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Delivery Statistics Section */}
+        <Card className="mb-8 border-2">
+          <CardHeader>
+            <CardTitle className="text-2xl">Delivery Statistics</CardTitle>
+            <CardDescription>View orders delivered on a specific date</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-4">
+              <div className="flex-1">
+                <Label htmlFor="statistics-date" className="mb-2 block">Select Date</Label>
+                <Input
+                  id="statistics-date"
+                  type="date"
+                  value={selectedStatisticsDate}
+                  onChange={(e) => setSelectedStatisticsDate(e.target.value)}
+                  className="w-full"
+                />
+              </div>
+              <div className="flex flex-col items-center justify-center bg-blue-50 rounded-lg p-6 min-w-[150px]">
+                <p className="text-sm text-gray-600 mb-2">Orders Delivered</p>
+                <p className="text-4xl font-bold text-blue-600">{deliveredCount}</p>
+                <p className="text-xs text-gray-500 mt-2">{selectedStatisticsDate}</p>
               </div>
             </div>
           </CardContent>

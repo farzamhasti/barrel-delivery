@@ -359,6 +359,17 @@ export const appRouter = router({
       .mutation(async () => {
         return { success: true };
       }),
+
+    getDeliveredOrdersCountByDate: publicProcedure
+      .input(z.object({
+        driverId: z.number(),
+        date: z.string(), // ISO date string (YYYY-MM-DD)
+      }))
+      .query(async ({ input }) => {
+        const date = new Date(input.date);
+        const count = await db.getDeliveredOrdersCountByDate(input.driverId, date);
+        return { count, date: input.date };
+      }),
   }),
 
   system: router({
