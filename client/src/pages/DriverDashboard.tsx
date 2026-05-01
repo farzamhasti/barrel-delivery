@@ -254,8 +254,10 @@ export default function DriverDashboard() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-8 flex-1">
-        {/* Status Section */}
-        <Card className="mb-8 border-2">
+        {/* Status and Statistics Section - Side by Side */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          {/* Status Section */}
+          <Card className="border-2">
           <CardHeader>
             <CardTitle className="text-2xl">Your Status</CardTitle>
             <CardDescription>Update your availability for deliveries</CardDescription>
@@ -295,32 +297,33 @@ export default function DriverDashboard() {
           </CardContent>
         </Card>
 
-        {/* Delivery Statistics Section */}
-        <Card className="mb-8 border-2">
-          <CardHeader>
-            <CardTitle className="text-2xl">Delivery Statistics</CardTitle>
-            <CardDescription>View orders delivered on a specific date</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-4">
-              <div className="flex-1">
-                <Label htmlFor="statistics-date" className="mb-2 block">Select Date</Label>
-                <Input
-                  id="statistics-date"
-                  type="date"
-                  value={selectedStatisticsDate}
-                  onChange={(e) => setSelectedStatisticsDate(e.target.value)}
-                  className="w-full"
-                />
+          {/* Delivery Statistics Section */}
+          <Card className="border-2">
+            <CardHeader>
+              <CardTitle className="text-2xl">Delivery Statistics</CardTitle>
+              <CardDescription>View orders delivered on a specific date</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-4">
+                <div className="flex-1">
+                  <Label htmlFor="statistics-date" className="mb-2 block">Select Date</Label>
+                  <Input
+                    id="statistics-date"
+                    type="date"
+                    value={selectedStatisticsDate}
+                    onChange={(e) => setSelectedStatisticsDate(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
+                <div className="flex flex-col items-center justify-center bg-blue-50 rounded-lg p-6 min-w-[150px]">
+                  <p className="text-sm text-gray-600 mb-2">Orders Delivered</p>
+                  <p className="text-4xl font-bold text-blue-600">{deliveredCount}</p>
+                  <p className="text-xs text-gray-500 mt-2">{selectedStatisticsDate}</p>
+                </div>
               </div>
-              <div className="flex flex-col items-center justify-center bg-blue-50 rounded-lg p-6 min-w-[150px]">
-                <p className="text-sm text-gray-600 mb-2">Orders Delivered</p>
-                <p className="text-4xl font-bold text-blue-600">{deliveredCount}</p>
-                <p className="text-xs text-gray-500 mt-2">{selectedStatisticsDate}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Orders Section with Tabs */}
         <Card>

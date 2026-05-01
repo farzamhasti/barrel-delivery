@@ -1379,3 +1379,8 @@ These features are documented for future enhancement but are not required for th
 - [x] Display number of orders delivered for current day
 - [x] Add date picker to view orders delivered on specific date
 - [x] Verify no changes to other sections' appearance and functionality
+
+## Phase 123: Move Delivery Statistics Next to Your Status (COMPLETED)
+- [x] Reorganize layout to display Delivery Statistics and Your Status side by side
+- [x] Ensure responsive design for smaller screens (grid-cols-1 lg:grid-cols-2)
+- [x] Verify no changes to other sections' appearance and functionality
