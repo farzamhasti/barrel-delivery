@@ -142,7 +142,7 @@ export default function DriverDashboard() {
   // Handle mark as delivered
   const handleMarkDelivered = (orderId: number) => {
     setDeliveredOrders(new Set([...deliveredOrders, orderId]));
-    updateOrderStatusMutation.mutate({ id: orderId, status: "Delivered" });
+    updateOrderStatusMutation.mutate({ orderId: orderId, status: "Delivered" });
   };
 
   // Show login form if not logged in
