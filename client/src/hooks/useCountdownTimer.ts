@@ -17,7 +17,9 @@ export function useCountdownTimer(initialSeconds: number | null | undefined, dri
     const isInitialized = initializationRef.current.has(driverId);
     
     if (!isInitialized && initialSeconds && initialSeconds > 0) {
-      setTimerStartTime(driverId, initialSeconds);
+      // Use current time as the database timestamp (when driver calculated)
+      // This ensures all dashboards calculate from the same reference point
+      setTimerStartTime(driverId, initialSeconds, Date.now());
       initializationRef.current.add(driverId);
     }
   }, [driverId]); // Only depend on driverId, NOT on initialSeconds
