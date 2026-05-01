@@ -77,40 +77,40 @@ export function KitchenReservations() {
             {pendingReservations.map((reservation: any) => (
               <Card key={reservation.id} className="p-6 border-l-4 border-l-orange-500 hover:shadow-lg transition-shadow">
                 <div className="space-y-4">
-                  {/* Customer Name */}
+                  {/* Event Type */}
                   <div>
-                    <h3 className="text-lg font-bold text-foreground">{reservation.customerName}</h3>
+                    <h3 className="text-lg font-bold text-foreground">{reservation.eventType}</h3>
                   </div>
 
                   {/* Details Grid */}
                   <div className="space-y-3">
-                    {/* Party Size */}
+                    {/* Number of People */}
                     <div className="flex items-center gap-3">
                       <Users className="h-5 w-5 text-blue-600" />
                       <div>
-                        <p className="text-xs text-muted-foreground">Party Size</p>
-                        <p className="text-sm font-semibold text-foreground">{reservation.partySize} people</p>
+                        <p className="text-xs text-muted-foreground">Number of People</p>
+                        <p className="text-sm font-semibold text-foreground">{reservation.numberOfPeople} people</p>
                       </div>
                     </div>
 
-                    {/* Reservation Date */}
+                    {/* Date & Time */}
                     <div className="flex items-center gap-3">
                       <Calendar className="h-5 w-5 text-purple-600" />
                       <div>
-                        <p className="text-xs text-muted-foreground">Reservation Date</p>
+                        <p className="text-xs text-muted-foreground">Date & Time</p>
                         <p className="text-sm font-semibold text-foreground">
-                          {new Date(reservation.reservationDate).toLocaleString()}
+                          {new Date(reservation.dateTime).toLocaleString()}
                         </p>
                       </div>
                     </div>
 
-                    {/* Special Requests */}
-                    {reservation.specialRequests && (
+                    {/* Description */}
+                    {reservation.description && (
                       <div className="flex items-start gap-3">
                         <FileText className="h-5 w-5 text-green-600 mt-0.5" />
                         <div>
-                          <p className="text-xs text-muted-foreground">Special Requests</p>
-                          <p className="text-sm text-foreground">{reservation.specialRequests}</p>
+                          <p className="text-xs text-muted-foreground">Description</p>
+                          <p className="text-sm text-foreground">{reservation.description}</p>
                         </div>
                       </div>
                     )}
@@ -157,40 +157,40 @@ export function KitchenReservations() {
             {doneReservations.map((reservation: any) => (
               <Card key={reservation.id} className="p-6 border-l-4 border-l-green-500 opacity-75">
                 <div className="space-y-4">
-                  {/* Customer Name */}
+                  {/* Event Type */}
                   <div>
-                    <h3 className="text-lg font-bold text-foreground">{reservation.customerName}</h3>
+                    <h3 className="text-lg font-bold text-foreground">{reservation.eventType}</h3>
                   </div>
 
                   {/* Details Grid */}
                   <div className="space-y-3">
-                    {/* Party Size */}
+                    {/* Number of People */}
                     <div className="flex items-center gap-3">
                       <Users className="h-5 w-5 text-blue-600" />
                       <div>
-                        <p className="text-xs text-muted-foreground">Party Size</p>
-                        <p className="text-sm font-semibold text-foreground">{reservation.partySize} people</p>
+                        <p className="text-xs text-muted-foreground">Number of People</p>
+                        <p className="text-sm font-semibold text-foreground">{reservation.numberOfPeople} people</p>
                       </div>
                     </div>
 
-                    {/* Reservation Date */}
+                    {/* Date & Time */}
                     <div className="flex items-center gap-3">
                       <Calendar className="h-5 w-5 text-purple-600" />
                       <div>
-                        <p className="text-xs text-muted-foreground">Reservation Date</p>
+                        <p className="text-xs text-muted-foreground">Date & Time</p>
                         <p className="text-sm font-semibold text-foreground">
-                          {new Date(reservation.reservationDate).toLocaleString()}
+                          {new Date(reservation.dateTime).toLocaleString()}
                         </p>
                       </div>
                     </div>
 
-                    {/* Special Requests */}
-                    {reservation.specialRequests && (
+                    {/* Description */}
+                    {reservation.description && (
                       <div className="flex items-start gap-3">
                         <FileText className="h-5 w-5 text-green-600 mt-0.5" />
                         <div>
-                          <p className="text-xs text-muted-foreground">Special Requests</p>
-                          <p className="text-sm text-foreground">{reservation.specialRequests}</p>
+                          <p className="text-xs text-muted-foreground">Description</p>
+                          <p className="text-sm text-foreground">{reservation.description}</p>
                         </div>
                       </div>
                     )}
