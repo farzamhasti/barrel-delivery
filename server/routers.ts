@@ -453,6 +453,28 @@ export const appRouter = router({
         }
       }),
 
+    clearReturnTime: publicProcedure
+      .input(z.object({ driverId: z.number() }))
+      .mutation(async ({ input }) => {
+        try {
+          const database = await getDb();
+          const { drivers } = await import('../drizzle/schema');
+          if (!database) throw new Error('Database connection failed');
+          const result = await database
+            .update(drivers)
+            .set({
+              estimatedReturnTime: null,
+              estimatedReturnTimeUpdatedAt: new Date(),
+            })
+            .where(eq(drivers.id, input.driverId))
+            .execute();
+          return { success: true };
+        } catch (error) {
+          console.error('[drivers.clearReturnTime] Error:', error);
+          throw new Error(`Failed to clear return time: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+      }),
+
     getReturnTime: publicProcedure
       .input(z.object({ driverId: z.number() }))
       .query(async ({ input }) => {

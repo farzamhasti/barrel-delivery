@@ -14,8 +14,11 @@ function formatReturnTime(seconds: number | null | undefined): string {
 }
 
 // Component to display a single driver with countdown timer
-function DriverRow({ driver }: { driver: any }) {
+function DriverRow({ driver, hasOnTheWayOrders }: { driver: any; hasOnTheWayOrders: boolean }) {
   const { displayTime } = useCountdownTimer(driver.estimatedReturnTime, driver.id);
+  
+  // Only show timer if driver has on_the_way orders AND has set estimated return time
+  const shouldShowTimer = hasOnTheWayOrders && driver.estimatedReturnTime && driver.estimatedReturnTime > 0;
   
   return (
     <tr className="border-b border-border hover:bg-muted/30">
@@ -24,7 +27,7 @@ function DriverRow({ driver }: { driver: any }) {
         <Badge className="bg-green-100 text-green-800 text-xs">Online</Badge>
       </td>
       <td className="py-2 px-3 text-muted-foreground font-mono">
-        {driver.estimatedReturnTime ? displayTime : "00:00"}
+        {shouldShowTimer ? displayTime : "00:00"}
       </td>
     </tr>
   );
@@ -38,6 +41,13 @@ export default function Dashboard() {
   // Filter drivers by online status
   const activeDrivers = drivers.filter((d: any) => d.status === "online" && d.isActive);
   const activeDriverCount = activeDrivers.length;
+
+  // Get drivers with on_the_way orders
+  const driversWithOnTheWayOrders = new Set(
+    todayOrders
+      .filter((order: any) => order.status === 'on_the_way')
+      .map((order: any) => order.driverId)
+  );
 
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
@@ -117,7 +127,11 @@ export default function Dashboard() {
                   </thead>
                   <tbody>
                     {activeDrivers.map((driver: any) => (
-                      <DriverRow key={driver.id} driver={driver} />
+                      <DriverRow 
+                        key={driver.id} 
+                        driver={driver}
+                        hasOnTheWayOrders={driversWithOnTheWayOrders.has(driver.id)}
+                      />
                     ))}
                   </tbody>
                 </table>

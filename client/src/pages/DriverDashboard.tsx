@@ -109,6 +109,13 @@ export default function DriverDashboard() {
     },
   });
 
+  // Clear return time mutation
+  const clearReturnTimeMutation = trpc.drivers.clearReturnTime.useMutation({
+    onError: (error: any) => {
+      console.error('Error clearing return time:', error);
+    },
+  });
+
   // Calculate return time mutation
   const calculateReturnTimeMutation = trpc.drivers.calculateReturnTime.useMutation({
     onSuccess: (result: any) => {
@@ -445,7 +452,12 @@ export default function DriverDashboard() {
                       disabled={!isTimerRunning}
                       onClick={() => {
                         setIsTimerRunning(false);
-                        console.log('Timer stopped');
+                        setReturnTimeSeconds(0);
+                        // Clear the return time from database
+                        if (currentDriverId) {
+                          clearReturnTimeMutation.mutate({ driverId: currentDriverId });
+                        }
+                        console.log('Timer stopped and cleared');
                       }}
                     >
                       Stop

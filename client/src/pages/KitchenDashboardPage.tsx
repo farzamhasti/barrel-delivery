@@ -24,8 +24,11 @@ function formatReturnTime(seconds: number | null | undefined): string {
 }
 
 // Component to display a single driver with countdown timer
-function DriverRowWithTimer({ driver }: { driver: any }) {
+function DriverRowWithTimer({ driver, hasOnTheWayOrders }: { driver: any; hasOnTheWayOrders: boolean }) {
   const { displayTime } = useCountdownTimer(driver.estimatedReturnTime, driver.id);
+  
+  // Only show timer if driver has on_the_way orders AND has set estimated return time
+  const shouldShowTimer = hasOnTheWayOrders && driver.estimatedReturnTime && driver.estimatedReturnTime > 0;
   
   return (
     <tr className="border-b border-border hover:bg-muted/30">
@@ -34,7 +37,7 @@ function DriverRowWithTimer({ driver }: { driver: any }) {
         <Badge className="bg-green-100 text-green-800 text-xs">Online</Badge>
       </td>
       <td className="py-2 px-3 text-muted-foreground font-mono">
-        {driver.estimatedReturnTime ? displayTime : "00:00"}
+        {shouldShowTimer ? displayTime : "00:00"}
       </td>
     </tr>
   );
@@ -77,6 +80,12 @@ export default function KitchenDashboardPage() {
 
   // Filter to ready orders only
   const readyOrders = allOrders.filter((o: any) => o.status === "Ready");
+
+  // Get drivers with on_the_way orders
+  const onTheWayOrders = allOrders.filter((o: any) => o.status === "On the Way");
+  const driversWithOnTheWayOrders = new Set(
+    onTheWayOrders.map((order: any) => order.driverId)
+  );
 
   // Sort by delivery time (priority)
   const sortByDeliveryTime = (orders: any[]) => {
@@ -301,7 +310,11 @@ export default function KitchenDashboardPage() {
                   </thead>
                   <tbody>
                     {activeDrivers.map((driver: any) => (
-                      <DriverRowWithTimer key={driver.id} driver={driver} />
+                      <DriverRowWithTimer 
+                        key={driver.id} 
+                        driver={driver}
+                        hasOnTheWayOrders={driversWithOnTheWayOrders.has(driver.id)}
+                      />
                     ))}
                   </tbody>
                 </table>
