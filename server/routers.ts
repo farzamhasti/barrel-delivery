@@ -205,6 +205,8 @@ export const appRouter = router({
           area: input.area,
           deliveryTime: input.deliveryTime,
           receiptImage: receiptImageUrl,
+          customerLatitude: input.customerLatitude as any,
+          customerLongitude: input.customerLongitude as any,
           status: 'Pending',
         });
         return order;

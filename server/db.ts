@@ -387,6 +387,8 @@ export async function getTodayOrdersWithItems(dateStr?: string) {
       receiptImage: orders.receiptImage,
       formattedReceiptImage: orders.formattedReceiptImage,
       customerAddress: orders.customerAddress,
+      customerLatitude: orders.customerLatitude,
+      customerLongitude: orders.customerLongitude,
       driverName: drivers.name,
     })
     .from(orders)
@@ -705,6 +707,8 @@ export async function createOrder(data: InsertOrder) {
   if (data.driverId) orderData.driverId = data.driverId;
   if (data.receiptImage) orderData.receiptImage = data.receiptImage;
   if (data.formattedReceiptImage) orderData.formattedReceiptImage = data.formattedReceiptImage;
+  if (data.customerLatitude !== undefined && data.customerLatitude !== null) orderData.customerLatitude = String(data.customerLatitude);
+  if (data.customerLongitude !== undefined && data.customerLongitude !== null) orderData.customerLongitude = String(data.customerLongitude);
   
   let result;
   try {
