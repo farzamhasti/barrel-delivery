@@ -335,6 +335,12 @@ export default function DriverDashboard() {
                                 <p className="text-md font-medium">{order.customerPhone}</p>
                               </div>
                             )}
+                            {order.deliveryTime && (
+                              <div className="col-span-2">
+                                <p className="text-sm text-gray-600">Delivery Time</p>
+                                <p className="text-md font-medium">{new Date(order.deliveryTime).toLocaleString('en-US', { timeZone: 'America/Toronto' })}</p>
+                              </div>
+                            )}
                           </div>
                           <Button
                             className="w-full bg-green-600 hover:bg-green-700 text-white"
@@ -382,6 +388,12 @@ export default function DriverDashboard() {
                               <div className="col-span-2">
                                 <p className="text-sm text-gray-600">Customer Phone</p>
                                 <p className="text-md font-medium">{order.customerPhone}</p>
+                              </div>
+                            )}
+                            {order.deliveryTime && (
+                              <div className="col-span-2">
+                                <p className="text-sm text-gray-600">Delivery Time</p>
+                                <p className="text-md font-medium">{new Date(order.deliveryTime).toLocaleString('en-US', { timeZone: 'America/Toronto' })}</p>
                               </div>
                             )}
                           </div>

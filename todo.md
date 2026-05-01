@@ -1364,3 +1364,11 @@ These features are documented for future enhancement but are not required for th
 - [x] Format time according to Ontario timezone (America/Toronto)
 - [x] Ensure time format is consistent across both dashboards
 - [x] Verify no changes to other sections' appearance and functionality
+
+## Phase 121: Add Delivery Time to Order Cards in Main List View (COMPLETED)
+- [x] Add delivery time display to order cards in "On the way" tab
+- [x] Add delivery time display to order cards in "Delivered" tab
+- [x] Format delivery time using Ontario timezone (America/Toronto)
+- [x] Ensure delivery time only shows if available (conditional rendering)
+- [x] Match formatting with modal display (e.g., "5/1/2026, 7:45:00 PM")
+- [x] Verify no changes to other sections' appearance and functionality
