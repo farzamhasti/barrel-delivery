@@ -346,28 +346,30 @@ export default function DriverDashboard() {
                   <Button
                     size="lg"
                     className="bg-orange-600 hover:bg-orange-700 text-white w-full"
-                    onClick={async () => {
+                    onClick={() => {
                       if (!currentDriverId) {
                         alert('Driver not logged in');
                         return;
                       }
                       
-                      try {
-                        const result = await trpc.drivers.calculateReturnTime.query({
-                          driverId: currentDriverId,
-                          restaurantAddress: 'The Barrel Restaurant, Toronto, ON',
-                        });
-                        
+                      // Manually call the query using the client
+                      trpc.drivers.calculateReturnTime.query({
+                        driverId: currentDriverId,
+                        restaurantAddress: 'The Barrel Restaurant, Toronto, ON',
+                      }).then((result) => {
                         if (result.orderCount === 0) {
                           alert('No active deliveries to calculate');
                         } else {
-                          const breakdown = `\nBreakdown:\n- Pickup: ${Math.round(result.breakdown.pickupTime / 60)}s\n- Delivery handling: ${Math.round(result.breakdown.deliveryHandlingTime / 60)}s\n- Travel time: ${Math.round(result.breakdown.travelTime / 60)}s\n- Orders: ${result.orderCount}`;
+                          const pickupMin = Math.round(result.breakdown.pickupTime / 60);
+                          const deliveryMin = Math.round(result.breakdown.deliveryHandlingTime / 60);
+                          const travelMin = Math.round(result.breakdown.travelTime / 60);
+                          const breakdown = `\nBreakdown:\n- Pickup: ${pickupMin}s\n- Delivery handling: ${deliveryMin}s\n- Travel time: ${travelMin}s\n- Orders: ${result.orderCount}`;
                           alert(`Estimated return time: ${result.formattedTime}${breakdown}`);
                         }
-                      } catch (error) {
+                      }).catch((error) => {
                         console.error('Error calculating return time:', error);
                         alert(`Error: ${error instanceof Error ? error.message : 'Failed to calculate return time'}`);
-                      }
+                      });
                     }}
                   >
                     Calculate Return Time
