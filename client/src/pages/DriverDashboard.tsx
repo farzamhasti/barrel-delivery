@@ -100,6 +100,25 @@ export default function DriverDashboard() {
     { enabled: !!currentDriverId && !!selectedStatisticsDate }
   );
 
+  // Calculate return time mutation
+  const calculateReturnTimeMutation = trpc.drivers.calculateReturnTime.useMutation({
+    onSuccess: (result: any) => {
+      if (result.orderCount === 0) {
+        alert('No active deliveries to calculate');
+      } else {
+        const pickupMin = Math.round(result.breakdown.pickupTime / 60);
+        const deliveryMin = Math.round(result.breakdown.deliveryHandlingTime / 60);
+        const travelMin = Math.round(result.breakdown.travelTime / 60);
+        const breakdown = `\nBreakdown:\n- Pickup: ${pickupMin}s\n- Delivery handling: ${deliveryMin}s\n- Travel time: ${travelMin}s\n- Orders: ${result.orderCount}`;
+        alert(`Estimated return time: ${result.formattedTime}${breakdown}`);
+      }
+    },
+    onError: (error: any) => {
+      console.error('Error calculating return time:', error);
+      alert(`Error: ${error instanceof Error ? error.message : 'Failed to calculate return time'}`);
+    },
+  });
+
   // Update delivered count when data changes
   useEffect(() => {
     if (deliveredCountData?.count !== undefined) {
@@ -352,23 +371,9 @@ export default function DriverDashboard() {
                         return;
                       }
                       
-                      // Manually call the query using the client
-                      trpc.drivers.calculateReturnTime.query({
+                      calculateReturnTimeMutation.mutate({
                         driverId: currentDriverId,
                         restaurantAddress: 'The Barrel Restaurant, Toronto, ON',
-                      }).then((result) => {
-                        if (result.orderCount === 0) {
-                          alert('No active deliveries to calculate');
-                        } else {
-                          const pickupMin = Math.round(result.breakdown.pickupTime / 60);
-                          const deliveryMin = Math.round(result.breakdown.deliveryHandlingTime / 60);
-                          const travelMin = Math.round(result.breakdown.travelTime / 60);
-                          const breakdown = `\nBreakdown:\n- Pickup: ${pickupMin}s\n- Delivery handling: ${deliveryMin}s\n- Travel time: ${travelMin}s\n- Orders: ${result.orderCount}`;
-                          alert(`Estimated return time: ${result.formattedTime}${breakdown}`);
-                        }
-                      }).catch((error) => {
-                        console.error('Error calculating return time:', error);
-                        alert(`Error: ${error instanceof Error ? error.message : 'Failed to calculate return time'}`);
                       });
                     }}
                   >
