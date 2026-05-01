@@ -1492,8 +1492,7 @@ export async function getReservations() {
   if (!db) throw new Error("Database not available");
 
   const results = await db.select()
-    .from(reservations)
-    .orderBy(desc(reservations.createdAt));
+    .from(reservations);
 
   return results;
 }
