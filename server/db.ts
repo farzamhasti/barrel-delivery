@@ -1469,14 +1469,15 @@ export async function createReservation(data: any) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  const insertData: any = {};
-  if (data.customerName !== undefined) insertData.customerName = data.customerName;
-  if (data.customerPhone !== undefined) insertData.customerPhone = data.customerPhone;
-  if (data.customerEmail !== undefined) insertData.customerEmail = data.customerEmail;
-  if (data.reservationDate !== undefined) insertData.reservationDate = data.reservationDate;
-  if (data.partySize !== undefined) insertData.partySize = data.partySize;
-  if (data.specialRequests !== undefined) insertData.specialRequests = data.specialRequests;
-  if (data.status !== undefined) insertData.status = data.status;
+  const insertData: any = {
+    customerName: data.customerName || 'N/A',
+    customerPhone: data.customerPhone || 'N/A',
+    customerEmail: data.customerEmail || '',
+    reservationDate: data.reservationDate,
+    partySize: data.partySize || 0,
+    specialRequests: data.specialRequests || '',
+    status: data.status || 'Pending',
+  };
 
   const result = await db.insert(reservations).values(insertData);
   
