@@ -464,6 +464,12 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         return await db.updateReservationStatus(input.id, input.status);
       }),
+
+    markDone: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        return await db.updateReservationStatus(input.id, 'Done');
+      }),
   }),
 
   maps: router({
