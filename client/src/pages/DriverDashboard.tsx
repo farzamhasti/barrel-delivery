@@ -362,34 +362,6 @@ export default function DriverDashboard() {
                   <div>
                     <h3 className="text-lg font-semibold mb-4">Delivery Route</h3>
                     <p className="text-sm text-gray-600 mb-4">View and navigate your delivery route</p>
-                    <div className="bg-gray-100 rounded-lg p-8 mb-4 w-full text-center cursor-pointer hover:bg-gray-200 transition-colors" onClick={() => {
-                      if (assignedOrders.length === 0) {
-                        alert('No active deliveries to show on map');
-                        return;
-                      }
-
-                      // Build waypoints from delivery addresses
-                      const waypoints = assignedOrders
-                        .filter((order: any) => order.customerAddress)
-                        .map((order: any) => encodeURIComponent(order.customerAddress))
-                        .join('|');
-
-                      if (!waypoints) {
-                        alert('No delivery addresses available');
-                        return;
-                      }
-
-                      // Restaurant location (origin and destination)
-                      const restaurantLocation = encodeURIComponent('The Barrel Restaurant, Toronto, ON');
-
-                      // Build Google Maps URL with navigation mode
-                      const mapsUrl = `https://www.google.com/maps/dir/${restaurantLocation}/${waypoints}/${restaurantLocation}?travelmode=driving`;
-
-                      // Open in new window/tab or native app on mobile
-                      window.open(mapsUrl, '_blank');
-                    }}>
-                      <p className="text-gray-500 text-sm">Tap to open in Google Maps</p>
-                    </div>
                   </div>
                   <Button
                     size="lg"
