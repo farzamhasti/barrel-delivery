@@ -1,18 +1,37 @@
 import { useState, useEffect } from 'react';
+import { useTimerStartTime } from '@/contexts/TimerStartTimeContext';
 
 /**
- * Custom hook for countdown timer
+ * Custom hook for countdown timer with persistent start time
  * @param initialSeconds - Initial time in seconds
+ * @param driverId - Driver ID to store/retrieve start time
  * @returns Object with current time in MM:SS format and remaining seconds
  */
-export function useCountdownTimer(initialSeconds: number | null | undefined) {
+export function useCountdownTimer(initialSeconds: number | null | undefined, driverId: number) {
+  const { timerStartTimes, setTimerStartTime } = useTimerStartTime();
   const [remainingSeconds, setRemainingSeconds] = useState<number>(initialSeconds || 0);
 
-  useEffect(() => {
-    // Reset timer when initialSeconds changes
-    setRemainingSeconds(initialSeconds || 0);
-  }, [initialSeconds]);
+  // Get stored start time for this driver
+  const storedStartTime = timerStartTimes[driverId];
 
+  // Initialize or update stored start time when initialSeconds changes
+  useEffect(() => {
+    if (initialSeconds && initialSeconds > 0) {
+      // If no stored start time, create one
+      if (storedStartTime === undefined) {
+        setTimerStartTime(driverId, initialSeconds);
+        setRemainingSeconds(initialSeconds);
+      } else {
+        // Start time already exists, calculate remaining time from it
+        setRemainingSeconds(storedStartTime);
+      }
+    } else {
+      // Reset if no initial seconds
+      setRemainingSeconds(0);
+    }
+  }, [initialSeconds, driverId, storedStartTime, setTimerStartTime]);
+
+  // Countdown effect - decrements every second
   useEffect(() => {
     // Don't start timer if no time or time is 0
     if (!remainingSeconds || remainingSeconds <= 0) {

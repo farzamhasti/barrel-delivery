@@ -15,7 +15,7 @@ function formatReturnTime(seconds: number | null | undefined): string {
 
 // Component to display a single driver with countdown timer
 function DriverRow({ driver }: { driver: any }) {
-  const { displayTime } = useCountdownTimer(driver.estimatedReturnTime);
+  const { displayTime } = useCountdownTimer(driver.estimatedReturnTime, driver.id);
   
   return (
     <tr className="border-b border-border hover:bg-muted/30">
