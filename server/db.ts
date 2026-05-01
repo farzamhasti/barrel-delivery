@@ -759,6 +759,35 @@ export async function getOrdersByStatus(statuses?: string[]) {
 
 
 // Driver Authentication
+export async function getDriverByName(name: string) {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db
+    .select({
+      id: drivers.id,
+      name: drivers.name,
+      phone: drivers.phone,
+      licenseNumber: drivers.licenseNumber,
+      status: drivers.status,
+      isActive: drivers.isActive,
+    })
+    .from(drivers)
+    .where(and(
+      eq(drivers.name, name),
+      eq(drivers.isActive, true)
+    ));
+  
+  const driver = result[0];
+  if (!driver) return null;
+  
+  // Normalize driver ID
+  return {
+    ...driver,
+    id: typeof driver.id === 'number' ? driver.id : parseInt(String(driver.id), 10),
+  };
+}
+
 export async function getDriverByNameAndLicense(name: string, licenseNumber: string) {
   const db = await getDb();
   if (!db) return null;
