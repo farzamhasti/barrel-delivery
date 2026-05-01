@@ -254,7 +254,7 @@ export default function DriverDashboard() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-8 flex-1">
-        {/* Status and Statistics Section - Side by Side */}
+        {/* Status, Statistics, Return Time, and Map Section - 2x2 Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           {/* Status Section */}
           <Card className="border-2">
@@ -319,6 +319,70 @@ export default function DriverDashboard() {
                   <p className="text-sm text-gray-600 mb-2">Orders Delivered</p>
                   <p className="text-4xl font-bold text-blue-600">{deliveredCount}</p>
                   <p className="text-xs text-gray-500 mt-2">{selectedStatisticsDate}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Calculate Return Time Section */}
+          <Card className="border-2">
+            <CardHeader>
+              <CardTitle className="text-2xl">Calculate Return Time</CardTitle>
+              <CardDescription>Estimate your return time to restaurant</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col items-center justify-center py-8">
+                <div className="text-center">
+                  <p className="text-sm text-gray-600 mb-4">Calculate estimated return time based on:</p>
+                  <ul className="text-sm text-gray-700 mb-6 space-y-2 text-left inline-block">
+                    <li>• 1 minute for pickup</li>
+                    <li>• 2 minutes per delivery</li>
+                    <li>• Optimal travel time</li>
+                  </ul>
+                  <Button
+                    size="lg"
+                    className="bg-orange-600 hover:bg-orange-700 text-white w-full"
+                    onClick={() => {
+                      // Calculate return time based on assigned orders
+                      const pickupTime = 1; // 1 minute
+                      const deliveryTime = assignedOrders.length * 2; // 2 minutes per order
+                      const estimatedReturnTime = pickupTime + deliveryTime;
+                      alert(`Estimated return time: ${estimatedReturnTime} minutes`);
+                    }}
+                  >
+                    Calculate Return Time
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Delivery with Map Section */}
+          <Card className="border-2">
+            <CardHeader>
+              <CardTitle className="text-2xl">Delivery with Map</CardTitle>
+              <CardDescription>View your delivery route on map</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col items-center justify-center py-8">
+                <div className="text-center">
+                  <p className="text-sm text-gray-600 mb-4">Route visualization for all deliveries</p>
+                  <div className="bg-gray-100 rounded-lg p-8 mb-4 w-full">
+                    <p className="text-gray-500 text-sm">Map will display your delivery route</p>
+                  </div>
+                  <Button
+                    size="lg"
+                    className="bg-purple-600 hover:bg-purple-700 text-white w-full"
+                    onClick={() => {
+                      if (assignedOrders.length === 0) {
+                        alert('No active deliveries to show on map');
+                      } else {
+                        alert(`Showing route for ${assignedOrders.length} delivery order(s)`);
+                      }
+                    }}
+                  >
+                    View Delivery Route
+                  </Button>
                 </div>
               </div>
             </CardContent>

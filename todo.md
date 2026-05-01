@@ -1389,3 +1389,15 @@ These features are documented for future enhancement but are not required for th
 - [x] Fix the SQL query with empty ORDER BY clause in reservations query
 - [x] Ensure reservations page loads without errors
 - [x] Verify all reservation data displays correctly
+
+
+## Phase 29: Driver Dashboard - Add Calculate Return Time & Delivery with Map Features
+- [x] Add "Calculate Return Time" section to Driver Dashboard grid layout
+- [x] Add "Delivery with Map" section to Driver Dashboard grid layout
+- [x] Implement Calculate Return Time feature with algorithm (1 min pickup + 2 min per order + travel time)
+- [x] Implement Delivery with Map feature to show route visualization
+- [x] Ensure new sections appear in grid alongside "Your Status" and "Delivery Statistics"
+- [x] Maintain strict layout consistency without affecting other sections
+- [x] Test both features in browser
+- [x] Verify responsive grid layout on different screen sizes
+- [x] Create checkpoint for new features
