@@ -75,13 +75,9 @@ export const appRouter = router({
       }))
       .mutation(async ({ input }) => {
         const order = await db.createOrder({
-          customerName: input.customerName,
+          orderNumber: `ORD-${Date.now()}`,
           customerPhone: input.customerPhone,
-          address: input.address,
-          items: input.items,
-          specialInstructions: input.specialInstructions,
-          customerLatitude: input.customerLatitude,
-          customerLongitude: input.customerLongitude,
+          customerAddress: input.address,
           status: 'Pending',
         });
         return order;
@@ -128,7 +124,7 @@ export const appRouter = router({
     getByStatus: publicProcedure
       .input(z.object({ status: z.string() }))
       .query(async ({ input }) => {
-        return await db.getOrdersByStatus(input.status);
+        return await db.getOrdersByStatus([input.status]);
       }),
 
     getByDriver: publicProcedure
@@ -137,27 +133,27 @@ export const appRouter = router({
         return await db.getOrdersByDriver(input.driverId);
       }),
 
-    calculateReturnTime: publicProcedure
-      .input(z.object({
-        driverId: z.number(),
-        restaurantAddress: z.string(),
-      }))
-      .mutation(async ({ input }) => {
-        const orders = await db.getOrdersByDriver(input.driverId);
-        const { calculateTravelTime } = await import('./googleMapsRouting');
-        const travelTime = await calculateTravelTime(
-          input.restaurantAddress,
-          orders,
-          input.driverId
-        );
-        return { travelTime, orders };
-      }),
+    // calculateReturnTime: publicProcedure
+    //   .input(z.object({
+    //     driverId: z.number(),
+    //     restaurantAddress: z.string(),
+    //   }))
+    //   .mutation(async ({ input }) => {
+    //     const orders = await db.getOrdersByDriver(input.driverId);
+    //     const { calculateTravelTime } = await import('./googleMapsRouting');
+    //     const travelTime = await calculateTravelTime(
+    //       input.restaurantAddress,
+    //       orders,
+    //       input.driverId
+    //     );
+    //     return { travelTime, orders };
+    //   }),
 
     getTodayWithItems: publicProcedure
       .input(z.object({ driverId: z.number().optional() }).optional())
       .query(async ({ input }) => {
         // Get all orders for today
-        const allOrders = await db.getOrders();
+        const allOrders = await db.getTodayOrdersWithItems(undefined);
         // If driverId is provided, filter by driver ID and "Out for Delivery" status
         if (input?.driverId) {
           return allOrders.filter((order: any) => 
@@ -205,8 +201,6 @@ export const appRouter = router({
           area: input.area,
           deliveryTime: input.deliveryTime,
           receiptImage: receiptImageUrl,
-          customerLatitude: input.customerLatitude,
-          customerLongitude: input.customerLongitude,
           status: 'Pending',
         });
         return order;

@@ -85,7 +85,21 @@ export async function getDrivers() {
   const db = await getDb();
   if (!db) return [];
   // Only return active drivers (soft delete support)
-  return db.select().from(drivers).where(eq(drivers.isActive, true)).orderBy(drivers.createdAt);
+  // Explicitly select only the fields we need to avoid serialization issues
+  const result = await db.select({
+    id: drivers.id,
+    name: drivers.name,
+    phone: drivers.phone,
+    licenseNumber: drivers.licenseNumber,
+    status: drivers.status,
+    isActive: drivers.isActive,
+  }).from(drivers).where(eq(drivers.isActive, true)).orderBy(drivers.createdAt);
+  
+  // Ensure id is a plain number
+  return result.map(driver => ({
+    ...driver,
+    id: Number(driver.id),
+  }));
 }
 
 export async function createDriver(data: InsertDriver) {
