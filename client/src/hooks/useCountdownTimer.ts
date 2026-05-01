@@ -8,21 +8,41 @@ import { useTimerStartTime } from '@/contexts/TimerStartTimeContext';
  * @returns Object with current time in MM:SS format and remaining seconds
  */
 export function useCountdownTimer(initialSeconds: number | null | undefined, driverId: number) {
-  const { timerData, setTimerStartTime, getRemainingSeconds } = useTimerStartTime();
+  const { timerData, setTimerStartTime, getRemainingSeconds, clearTimerStartTime } = useTimerStartTime();
   const [remainingSeconds, setRemainingSeconds] = useState<number>(0);
   const initializationRef = useRef<Set<number>>(new Set());
+  const previousSecondsRef = useRef<number | null | undefined>(initialSeconds);
 
   // Initialize timer start time ONLY once per driver (on first mount)
+  // Also reinitialize if initialSeconds changes (driver clicked Calculate again after Stop)
   useEffect(() => {
     const isInitialized = initializationRef.current.has(driverId);
+    const secondsChanged = previousSecondsRef.current !== initialSeconds;
     
-    if (!isInitialized && initialSeconds && initialSeconds > 0) {
-      // Use current time as the database timestamp (when driver calculated)
-      // This ensures all dashboards calculate from the same reference point
-      setTimerStartTime(driverId, initialSeconds, Date.now());
-      initializationRef.current.add(driverId);
+    if (initialSeconds && initialSeconds > 0) {
+      // If timer was reset (initialSeconds went to 0 and back), reinitialize
+      if (secondsChanged && isInitialized) {
+        // Clear old timer data and reinitialize
+        clearTimerStartTime(driverId);
+        initializationRef.current.delete(driverId);
+      }
+      
+      if (!initializationRef.current.has(driverId)) {
+        // Use current time as the database timestamp (when driver calculated)
+        // This ensures all dashboards calculate from the same reference point
+        setTimerStartTime(driverId, initialSeconds, Date.now());
+        initializationRef.current.add(driverId);
+      }
+    } else if (initialSeconds === 0 || initialSeconds === null) {
+      // Timer was cleared (Stop button clicked)
+      if (isInitialized) {
+        clearTimerStartTime(driverId);
+        initializationRef.current.delete(driverId);
+      }
     }
-  }, [driverId]); // Only depend on driverId, NOT on initialSeconds
+    
+    previousSecondsRef.current = initialSeconds;
+  }, [driverId, initialSeconds, setTimerStartTime, clearTimerStartTime]);
 
   // Update remaining seconds every second from context
   useEffect(() => {
