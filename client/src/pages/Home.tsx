@@ -106,16 +106,16 @@ export default function Home() {
             <p className="text-xs text-muted-foreground text-center mb-6">Key Features</p>
             <div className="grid grid-cols-2 gap-4">
               <div className="text-center">
-                <div className="text-2xl mb-2">👨‍💼</div>
-                <p className="text-xs text-muted-foreground">Admin Dashboard</p>
+                <div className="text-2xl mb-2">🗺️</div>
+                <p className="text-xs text-muted-foreground">Spatial Tracking</p>
               </div>
               <div className="text-center">
                 <div className="text-2xl mb-2">🚗</div>
                 <p className="text-xs text-muted-foreground">Driver Tracking</p>
               </div>
               <div className="text-center">
-                <div className="text-2xl mb-2">👨‍🍳</div>
-                <p className="text-xs text-muted-foreground">Kitchen Dashboard</p>
+                <div className="text-2xl mb-2">📍</div>
+                <p className="text-xs text-muted-foreground">Route Optimization</p>
               </div>
               <div className="text-center">
                 <div className="text-2xl mb-2">📦</div>
