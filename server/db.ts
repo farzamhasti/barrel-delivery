@@ -1374,3 +1374,20 @@ export async function deleteReservation(id: number) {
 
   return result;
 }
+
+
+// Get orders assigned to a specific driver with "Out for Delivery" status
+export async function getOrdersByDriver(driverId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const results = await db.select()
+    .from(orders)
+    .where(and(
+      eq(orders.driverId, driverId),
+      eq(orders.status, "Out for Delivery")
+    ))
+    .orderBy(desc(orders.deliveryTime));
+
+  return results;
+}

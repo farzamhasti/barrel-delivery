@@ -8,13 +8,27 @@ import { trpc } from "@/lib/trpc";
 import { invalidateOrderCache } from "@/lib/invalidation";
 import { toast } from "sonner";
 
+const DRIVER_ID_KEY = "driver_id";
+
 export default function DriverPanel() {
   const utils = trpc.useUtils();
   const { logout } = useAuth();
   const [selectedOrder, setSelectedOrder] = useState<number | null>(null);
+  const [driverId, setDriverId] = useState<number | null>(null);
 
-  // Fetch today's orders
-  const { data: orders = [], isLoading, refetch } = trpc.orders.getTodayWithItems.useQuery();
+  // Get driver ID from localStorage on mount
+  useEffect(() => {
+    const storedDriverId = localStorage.getItem(DRIVER_ID_KEY);
+    if (storedDriverId) {
+      setDriverId(parseInt(storedDriverId, 10));
+    }
+  }, []);
+
+  // Fetch orders assigned to the current driver with "Out for Delivery" status
+  const { data: orders = [], isLoading, refetch } = trpc.orders.getByDriver.useQuery(
+    { driverId: driverId! },
+    { enabled: !!driverId }
+  );
   
   // Fetch selected order with items
   const { data: selectedOrderData } = trpc.orders.getWithItems.useQuery(
@@ -40,7 +54,7 @@ export default function DriverPanel() {
       refetch();
     }, 5000);
     return () => clearInterval(interval);
-  }, [refetch]);
+  }, [refetch, driverId]);
 
   const handleStatusUpdate = (orderId: number, newStatus: "Pending" | "Ready" | "On the Way" | "Delivered") => {
     updateStatusMutation.mutate({
@@ -120,8 +134,8 @@ export default function DriverPanel() {
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div>
-                        <h3 className="font-semibold text-foreground">Order #{order.id}</h3>
-                        <p className="text-sm text-muted-foreground">{order.customer?.name}</p>
+                        <h3 className="font-semibold text-foreground">Order #{order.orderNumber}</h3>
+                        <p className="text-sm text-muted-foreground">{order.customerName || 'N/A'}</p>
                       </div>
                       <Badge className={getStatusColor(order.status)}>
                         {order.status}
@@ -131,15 +145,15 @@ export default function DriverPanel() {
                     <div className="space-y-2 text-sm mb-4">
                       <div className="flex items-center gap-2 text-muted-foreground">
                         <Phone className="w-4 h-4" />
-                        {order.customer?.phone}
+                        {order.customerPhone}
                       </div>
                       <div className="flex items-center gap-2 text-muted-foreground">
                         <MapPin className="w-4 h-4" />
-                        {order.customer?.address}
+                        {order.customerAddress}
                       </div>
                       <div className="flex items-center gap-2 text-muted-foreground">
                         <Clock className="w-4 h-4" />
-                        {new Date(order.createdAt).toLocaleString()}
+                        {order.deliveryTime ? new Date(order.deliveryTime).toLocaleString() : 'N/A'}
                       </div>
                     </div>
 
@@ -194,7 +208,7 @@ export default function DriverPanel() {
                             className="flex-1 gap-2"
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleOpenMaps(order.customer?.address || "");
+                              handleOpenMaps(order.customerAddress || "");
                             }}
                           >
                             <Navigation className="w-4 h-4" />

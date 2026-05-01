@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { DeveloperCredit } from "@/components/DeveloperCredit";
 
 const DRIVER_SESSION_KEY = "driver_session_token";
+const DRIVER_ID_KEY = "driver_id";
 
 export default function DriverLogin() {
   const [, setLocation] = useLocation();
@@ -22,6 +23,7 @@ export default function DriverLogin() {
   const loginMutation = trpc.drivers.login.useMutation({
     onSuccess: (data: any) => {
       localStorage.setItem(DRIVER_SESSION_KEY, data.sessionToken);
+      localStorage.setItem(DRIVER_ID_KEY, data.driverId.toString());
       setDriverName("");
       setLicenseNumber("");
       // Redirect to driver dashboard
