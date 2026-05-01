@@ -207,6 +207,48 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         return await db.deleteOrder(input.id);
       }),
+
+    update: publicProcedure
+      .input(z.object({
+        orderId: z.number(),
+        customerAddress: z.string().optional(),
+        customerPhone: z.string().optional(),
+        status: z.enum(['Pending', 'Ready', 'On the Way', 'Delivered']).optional(),
+        area: z.enum(['Downtown', 'Central Park', 'Both']).optional(),
+        deliveryTime: z.string().optional().nullable(),
+        receiptImage: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        let receiptImageUrl: string | undefined = undefined;
+        
+        // Handle receipt image upload if provided
+        if (input.receiptImage && input.receiptImage.startsWith('data:')) {
+          try {
+            const { storagePut } = await import('./storage');
+            const base64Data = input.receiptImage.split(',')[1];
+            const buffer = Buffer.from(base64Data, 'base64');
+            const fileKey = `receipts/order-${input.orderId}-${Date.now()}.png`;
+            const result = await storagePut(fileKey, buffer, 'image/png');
+            receiptImageUrl = result.url;
+            console.log('[orders.update] Receipt image uploaded to S3:', receiptImageUrl);
+          } catch (error) {
+            console.error('[orders.update] Error storing receipt image:', error);
+            receiptImageUrl = undefined;
+          }
+        }
+        
+        const updateData: any = {};
+        if (input.customerAddress !== undefined) updateData.customerAddress = input.customerAddress;
+        if (input.customerPhone !== undefined) updateData.customerPhone = input.customerPhone;
+        if (input.status !== undefined) updateData.status = input.status;
+        if (input.area !== undefined) updateData.area = input.area;
+        if (input.deliveryTime !== undefined) {
+          updateData.deliveryTime = input.deliveryTime ? new Date(input.deliveryTime) : null;
+        }
+        if (receiptImageUrl !== undefined) updateData.receiptImage = receiptImageUrl;
+        
+        return await db.updateOrder(input.orderId, updateData);
+      }),
   }),
 
   drivers: router({
