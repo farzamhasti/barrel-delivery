@@ -13,10 +13,12 @@ export function Reservations() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [formData, setFormData] = useState({
-    eventType: '',
-    numberOfPeople: '',
-    dateTime: '',
-    description: '',
+    customerName: '',
+    customerPhone: '',
+    customerEmail: '',
+    reservationDate: '',
+    partySize: '',
+    specialRequests: '',
   });
 
   const { data: allReservations = [], refetch } = trpc.reservations.getAll.useQuery();
@@ -27,7 +29,7 @@ export function Reservations() {
   // Filter reservations by selected date
   const filteredReservations = selectedDate
     ? allReservations.filter((r: any) => {
-        const reservationDate = new Date(r.dateTime).toISOString().split('T')[0];
+        const reservationDate = new Date(r.reservationDate).toISOString().split('T')[0];
         return reservationDate === selectedDate;
       })
     : allReservations;
@@ -36,26 +38,30 @@ export function Reservations() {
     e.preventDefault();
     
     try {
-      const dateTime = new Date(formData.dateTime);
+      const reservationDate = new Date(formData.reservationDate);
       
       if (editingId) {
         await updateMutation.mutateAsync({
           id: editingId,
-          eventType: formData.eventType,
-          numberOfPeople: parseInt(formData.numberOfPeople),
-          dateTime,
-          description: formData.description,
+          customerName: formData.customerName,
+          customerPhone: formData.customerPhone,
+          customerEmail: formData.customerEmail,
+          reservationDate,
+          partySize: parseInt(formData.partySize),
+          specialRequests: formData.specialRequests,
         });
       } else {
         await createMutation.mutateAsync({
-          eventType: formData.eventType,
-          numberOfPeople: parseInt(formData.numberOfPeople),
-          dateTime,
-          description: formData.description,
+          customerName: formData.customerName,
+          customerPhone: formData.customerPhone,
+          customerEmail: formData.customerEmail,
+          reservationDate,
+          partySize: parseInt(formData.partySize),
+          specialRequests: formData.specialRequests,
         });
       }
       
-      setFormData({ eventType: '', numberOfPeople: '', dateTime: '', description: '' });
+      setFormData({ customerName: '', customerPhone: '', customerEmail: '', reservationDate: '', partySize: '', specialRequests: '' });
       setEditingId(null);
       setIsFormOpen(false);
       refetch();
@@ -68,10 +74,12 @@ export function Reservations() {
   const handleEdit = (reservation: any) => {
     setEditingId(reservation.id);
     setFormData({
-      eventType: reservation.eventType,
-      numberOfPeople: reservation.numberOfPeople.toString(),
-      dateTime: new Date(reservation.dateTime).toISOString().slice(0, 16),
-      description: reservation.description || '',
+      customerName: reservation.customerName,
+      customerPhone: reservation.customerPhone,
+      customerEmail: reservation.customerEmail || '',
+      reservationDate: new Date(reservation.reservationDate).toISOString().slice(0, 16),
+      partySize: reservation.partySize.toString(),
+      specialRequests: reservation.specialRequests || '',
     });
     setIsFormOpen(true);
   };
@@ -90,7 +98,7 @@ export function Reservations() {
   const handleCloseForm = () => {
     setIsFormOpen(false);
     setEditingId(null);
-    setFormData({ eventType: '', numberOfPeople: '', dateTime: '', description: '' });
+    setFormData({ customerName: '', customerPhone: '', customerEmail: '', reservationDate: '', partySize: '', specialRequests: '' });
   };
 
   return (
@@ -135,26 +143,25 @@ export function Reservations() {
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1">
                   <Tag className="h-4 w-4 inline mr-2" />
-                  Event Type
+                  Customer Name
                 </label>
                 <Input
                   type="text"
-                  placeholder="e.g., Birthday Party, Wedding"
-                  value={formData.eventType}
-                  onChange={(e) => setFormData({ ...formData, eventType: e.target.value })}
+                  placeholder="e.g., John Doe"
+                  value={formData.customerName}
+                  onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
                   required
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1">
                   <Users className="h-4 w-4 inline mr-2" />
-                  Number of People
+                  Customer Phone
                 </label>
                 <Input
-                  type="number"
-                  placeholder="e.g., 20"
-                  value={formData.numberOfPeople}
-                  onChange={(e) => setFormData({ ...formData, numberOfPeople: e.target.value })}
+                  type="number"                  placeholder="e.g., 555-1234"
+                  value={formData.customerPhone}
+                  onChange={(e) => setFormData({ ...formData, customerPhone: e.target.value })}
                   required
                   min="1"
                 />
@@ -162,24 +169,51 @@ export function Reservations() {
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1">
                   <Calendar className="h-4 w-4 inline mr-2" />
-                  Date & Time
+                  Customer Email
                 </label>
                 <Input
-                  type="datetime-local"
-                  value={formData.dateTime}
-                  onChange={(e) => setFormData({ ...formData, dateTime: e.target.value })}
+                  type="email"
+                  placeholder="e.g., john@example.com"
+                  value={formData.customerEmail}
+                  onChange={(e) => setFormData({ ...formData, customerEmail: e.target.value })}
                   required
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1">
+                  <Calendar className="h-4 w-4 inline mr-2" />
+                  Reservation Date & Time
+                </label>
+                <Input
+                  type="datetime-local"
+                  value={formData.reservationDate}
+                  onChange={(e) => setFormData({ ...formData, reservationDate: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">
+                  <Users className="h-4 w-4 inline mr-2" />
+                  Party Size
+                </label>
+                <Input
+                  type="number"
+                  placeholder="e.g., 20"
+                  value={formData.partySize}
+                  onChange={(e) => setFormData({ ...formData, partySize: e.target.value })}
+                  required
+                  min="1"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">
                   <FileText className="h-4 w-4 inline mr-2" />
-                  Description
+                  Special Requests
                 </label>
                 <textarea
                   placeholder="Special requests or notes"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  value={formData.specialRequests}
+                  onChange={(e) => setFormData({ ...formData, specialRequests: e.target.value })}
                   className="w-full px-3 py-2 border border-border rounded-md text-foreground bg-background"
                   rows={3}
                 />
