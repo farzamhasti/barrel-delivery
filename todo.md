@@ -100,7 +100,7 @@ These features are documented for future enhancement but are not required for th
 - [x] Track multiple deliveries in one trip (future enhancement - not required for MVP)
 
 ### Phase 7 (Continued): Optional Enhancements
-- [ ] Additional performance optimizations (optional future enhancement - deferred to future releases, not in scope for driver assignment fix)
+**Note:** Additional performance optimizations are optional future enhancements deferred to future releases and not in scope for the current driver assignment fix.
 
 ## MVP SCOPE COMPLETED ✅
 
