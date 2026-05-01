@@ -480,22 +480,29 @@ export default function DriverDashboard() {
                         return;
                       }
 
-                      // Build waypoints from delivery addresses
-                      const waypoints = assignedOrders
-                        .filter((order: any) => order.customerAddress)
-                        .map((order: any) => encodeURIComponent(order.customerAddress))
-                        .join('|');
+                      // Filter orders that have coordinates (explicitly check for null/undefined, not falsy)
+                      const ordersWithCoordinates = assignedOrders.filter(
+                        (order: any) => order.customerLatitude !== null && order.customerLatitude !== undefined && order.customerLongitude !== null && order.customerLongitude !== undefined
+                      );
 
-                      if (!waypoints) {
-                        alert('No delivery addresses available');
+                      if (ordersWithCoordinates.length === 0) {
+                        alert('No delivery coordinates available');
                         return;
                       }
 
-                      // Restaurant location (origin and destination)
-                      const restaurantLocation = encodeURIComponent('The Barrel Restaurant, Toronto, ON');
+                      // Restaurant coordinates (The Barrel Restaurant, Fort Erie, ON)
+                      const restaurantLat = 42.9149;
+                      const restaurantLng = -79.0402;
+                      const restaurantCoords = `${restaurantLat},${restaurantLng}`;
 
-                      // Build Google Maps URL with navigation mode
-                      const mapsUrl = `https://www.google.com/maps/dir/${restaurantLocation}/${waypoints}/${restaurantLocation}?travelmode=driving`;
+                      // Build waypoints from customer coordinates
+                      const waypoints = ordersWithCoordinates
+                        .map((order: any) => `${order.customerLatitude},${order.customerLongitude}`)
+                        .join('|');
+
+                      // Build Google Maps URL with optimization enabled
+                      // Format: https://www.google.com/maps/dir/?api=1&origin=START&destination=END&waypoints=WAYPOINTS&optimize=true
+                      const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${restaurantCoords}&destination=${restaurantCoords}&waypoints=${waypoints}&optimize=true&travelmode=driving`;
 
                       // Open in new window/tab or native app on mobile
                       window.open(mapsUrl, '_blank');
