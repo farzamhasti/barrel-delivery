@@ -116,6 +116,15 @@ export const appRouter = router({
         return await db.assignDriverToOrder(input.orderId, input.driverId);
       }),
 
+    sendToDriver: publicProcedure
+      .input(z.object({
+        orderId: z.number(),
+        driverId: z.number(),
+      }))
+      .mutation(async ({ input }) => {
+        return await db.assignDriverToOrder(input.orderId, input.driverId);
+      }),
+
     getByStatus: publicProcedure
       .input(z.object({ status: z.string() }))
       .query(async ({ input }) => {
