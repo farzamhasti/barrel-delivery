@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTimerStartTime } from '@/contexts/TimerStartTimeContext';
 
 /**
@@ -9,27 +9,39 @@ import { useTimerStartTime } from '@/contexts/TimerStartTimeContext';
  */
 export function useCountdownTimer(initialSeconds: number | null | undefined, driverId: number) {
   const { timerStartTimes, setTimerStartTime } = useTimerStartTime();
-  const [remainingSeconds, setRemainingSeconds] = useState<number>(initialSeconds || 0);
+  const [remainingSeconds, setRemainingSeconds] = useState<number>(0);
+  const isInitializedRef = useRef(false);
 
   // Get stored start time for this driver
   const storedStartTime = timerStartTimes[driverId];
 
-  // Initialize or update stored start time when initialSeconds changes
+  // Initialize stored start time only once per driver
   useEffect(() => {
-    if (initialSeconds && initialSeconds > 0) {
-      // If no stored start time, create one
+    // Only initialize if we haven't already and we have initial seconds
+    if (!isInitializedRef.current && initialSeconds && initialSeconds > 0) {
+      // Check if there's already a stored start time for this driver
       if (storedStartTime === undefined) {
+        // First time seeing this driver - store the initial seconds
         setTimerStartTime(driverId, initialSeconds);
         setRemainingSeconds(initialSeconds);
       } else {
-        // Start time already exists, calculate remaining time from it
+        // We already have a stored start time - use it
         setRemainingSeconds(storedStartTime);
       }
-    } else {
+      isInitializedRef.current = true;
+    } else if (!initialSeconds || initialSeconds <= 0) {
       // Reset if no initial seconds
       setRemainingSeconds(0);
+      isInitializedRef.current = false;
     }
-  }, [initialSeconds, driverId, storedStartTime, setTimerStartTime]);
+  }, [driverId]); // Only depend on driverId, not initialSeconds
+
+  // Update remaining seconds from stored start time when it changes
+  useEffect(() => {
+    if (storedStartTime !== undefined && storedStartTime > 0) {
+      setRemainingSeconds(storedStartTime);
+    }
+  }, [storedStartTime]);
 
   // Countdown effect - decrements every second
   useEffect(() => {
