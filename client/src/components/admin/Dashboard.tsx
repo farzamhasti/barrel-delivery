@@ -4,6 +4,14 @@ import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc";
 import { useDriverReturnTime } from "@/contexts/DriverReturnTimeContext";
 
+// Helper function to format return time from seconds to MM:SS format
+function formatReturnTime(seconds: number | null | undefined): string {
+  if (!seconds || seconds <= 0) return "00:00";
+  const minutes = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+}
+
 export default function Dashboard() {
   const { data: drivers = [] } = trpc.drivers.list.useQuery();
   const { data: todayOrders = [] } = trpc.orders.getTodayWithItems.useQuery();
@@ -97,7 +105,7 @@ export default function Dashboard() {
                           <Badge className="bg-green-100 text-green-800 text-xs">Online</Badge>
                         </td>
                         <td className="py-2 px-3 text-muted-foreground font-mono">
-                          {driverReturnTimes[driver.id] || "00:00"}
+                          {driver.estimatedReturnTime ? formatReturnTime(driver.estimatedReturnTime) : "00:00"}
                         </td>
                       </tr>
                     ))}

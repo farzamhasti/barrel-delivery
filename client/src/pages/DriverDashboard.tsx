@@ -102,6 +102,13 @@ export default function DriverDashboard() {
     { enabled: !!currentDriverId && !!selectedStatisticsDate }
   );
 
+  // Save return time mutation
+  const saveReturnTimeMutation = trpc.drivers.saveReturnTime.useMutation({
+    onError: (error: any) => {
+      console.error('Error saving return time:', error);
+    },
+  });
+
   // Calculate return time mutation
   const calculateReturnTimeMutation = trpc.drivers.calculateReturnTime.useMutation({
     onSuccess: (result: any) => {
@@ -113,6 +120,14 @@ export default function DriverDashboard() {
         setReturnTimeSeconds(result.totalReturnTime);
         setIsTimerRunning(true);
         console.log(`Timer started: ${result.totalReturnTime} seconds (${result.formattedTime})`);
+        
+        // Save the return time to the database so it appears in admin/kitchen dashboards
+        if (currentDriverId) {
+          saveReturnTimeMutation.mutate({
+            driverId: currentDriverId,
+            returnTimeSeconds: result.totalReturnTime,
+          });
+        }
       }
     },
     onError: (error: any) => {
