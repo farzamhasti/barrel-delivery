@@ -438,14 +438,19 @@ export default function DriverDashboard() {
                 </div>
               )}
 
-              {selectedOrder.formattedReceiptImage && (
+              {(selectedOrder.formattedReceiptImage || selectedOrder.receiptImage) && (
                 <div>
                   <p className="text-sm text-gray-600 mb-2">Scanned Receipt</p>
                   <img 
-                    src={selectedOrder.formattedReceiptImage} 
+                    src={selectedOrder.formattedReceiptImage || selectedOrder.receiptImage} 
                     alt="Receipt" 
                     className="w-full border border-gray-300 rounded-lg max-h-64 object-contain"
                   />
+                </div>
+              )}
+              {!selectedOrder.formattedReceiptImage && !selectedOrder.receiptImage && (
+                <div>
+                  <p className="text-sm text-gray-600">No receipt image available</p>
                 </div>
               )}
             </CardContent>

@@ -1329,3 +1329,11 @@ These features are documented for future enhancement but are not required for th
 - [x] Test all three fixes work correctly
 - [x] TypeScript compilation: Pre-existing errors only (not related to this fix)
 - [x] Dev server: Running successfully
+
+
+## Phase 117: Fix Scanned Receipt Display in Driver Dashboard (COMPLETED)
+- [x] Check what receipt fields are available in the order data (receiptImage field contains CloudFront URL)
+- [x] Update getTodayWithItems query to include receipt image field (already included in db.ts line 385)
+- [x] Update DriverDashboard modal to display receipt image correctly (added fallback to receiptImage field)
+- [x] Test receipt displays in order details modal (verified receiptImage URL is available)
+- [x] Verify no changes to other functionality (modal structure unchanged)
