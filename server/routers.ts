@@ -164,20 +164,48 @@ export const appRouter = router({
         customerLongitude: z.number().optional(),
       }))
       .mutation(async ({ input }) => {
+        let receiptImageUrl: string | undefined = undefined;
+        
+        if (input.receiptImage && input.receiptImage.startsWith('data:')) {
+          try {
+            const { storagePut } = await import('./storage');
+            const base64Data = input.receiptImage.split(',')[1];
+            const buffer = Buffer.from(base64Data, 'base64');
+            const fileKey = `receipts/${input.orderNumber}-${Date.now()}.png`;
+            const result = await storagePut(fileKey, buffer, 'image/png');
+            receiptImageUrl = result.url;
+            console.log('[createFromReceipt] Receipt image uploaded to S3:', receiptImageUrl);
+          } catch (error) {
+            console.error('[createFromReceipt] Error storing receipt image:', error);
+            // Don't pass the base64 data to the database if upload fails
+            receiptImageUrl = undefined;
+          }
+        }
+        
         const order = await db.createOrder({
-          customerName: 'From Receipt',
+          orderNumber: input.orderNumber,
+          customerAddress: input.customerAddress,
           customerPhone: input.customerPhone || '',
-          address: input.customerAddress,
-          items: [],
-          checkNumber: input.orderNumber,
           area: input.area,
           deliveryTime: input.deliveryTime,
-          receiptImage: input.receiptImage,
+          receiptImage: receiptImageUrl,
           customerLatitude: input.customerLatitude,
           customerLongitude: input.customerLongitude,
           status: 'Pending',
         });
         return order;
+      }),
+
+    getWithItems: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getOrderWithItems(input.id);
+      }),
+
+    delete: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        return await db.deleteOrder(input.id);
       }),
   }),
 

@@ -301,7 +301,7 @@ export function ReceiptScannerTesseract() {
               />
             </div>
 
-            <div>
+            <div className="relative">
               <label className="block text-sm font-medium mb-1">Address</label>
               <Input
                 ref={addressInputRef}

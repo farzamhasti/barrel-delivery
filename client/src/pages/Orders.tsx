@@ -79,7 +79,7 @@ export function Orders() {
   const updateOrderMutation = trpc.orders.update.useMutation();
 
   const { data: selectedOrderDetails } = trpc.orders.getWithItems.useQuery(
-    { orderId: selectedOrderId || 0 },
+    { id: selectedOrderId || 0 },
     { enabled: !!selectedOrderId }
   );
 
@@ -123,7 +123,7 @@ export function Orders() {
       await invalidateOrderCache(utils);
       // Refetch the selected order details to show updated data in the modal
       if (selectedOrderId === editingOrderId) {
-        await utils.orders.getWithItems.refetch({ orderId: editingOrderId });
+        await utils.orders.getWithItems.refetch({ id: editingOrderId });
       }
       setEditingOrderId(null);
       setEditReceiptPreview(null);
@@ -158,7 +158,7 @@ export function Orders() {
   const handleConfirmDelete = async () => {
     if (deleteConfirmOrderId) {
       try {
-        await deleteOrderMutation.mutateAsync({ orderId: deleteConfirmOrderId });
+        await deleteOrderMutation.mutateAsync({ id: deleteConfirmOrderId });
         toast.success("Order deleted successfully");
         await invalidateOrderCache(utils);
       } catch (error) {
