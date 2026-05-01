@@ -436,15 +436,15 @@ export default function DriverDashboard() {
                 )}
 
                 {/* Delivery Time */}
-                {selectedOrder.deliveryTime && (
-                  <div className="flex flex-col items-center text-center">
-                    <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center mb-2">
-                      <span className="text-orange-600 text-lg">🕐</span>
-                    </div>
-                    <p className="text-xs text-gray-600 mb-1">DELIVERY TIME</p>
-                    <p className="font-medium text-sm">{selectedOrder.deliveryTime}</p>
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center mb-2">
+                    <span className="text-orange-600 text-lg">🕐</span>
                   </div>
-                )}
+                  <p className="text-xs text-gray-600 mb-1">DELIVERY TIME</p>
+                  <p className="font-medium text-sm">
+                    {selectedOrder.deliveryTime ? new Date(selectedOrder.deliveryTime).toLocaleString('en-US', { timeZone: 'America/Toronto' }) : 'N/A'}
+                  </p>
+                </div>
 
                 {/* Order Status */}
                 <div className="flex flex-col items-center text-center">

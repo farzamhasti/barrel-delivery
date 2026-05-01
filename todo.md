@@ -1356,3 +1356,11 @@ These features are documented for future enhancement but are not required for th
 - [x] Keep "Mark as Delivered" button functionality separate from details opening (added e.stopPropagation())
 - [x] Ensure modal displays as a simple popup without dark background (fixed positioning centered on screen)
 - [x] Verify no changes to other sections' appearance and functionality (only modal styling changed)
+
+
+## Phase 120: Fix Delivery Time Display in Driver Dashboard Modal (COMPLETED)
+- [x] Add delivery time display to order details modal
+- [x] Format delivery time to match admin dashboard (e.g., "5/1/2026, 7:45:00 PM")
+- [x] Format time according to Ontario timezone (America/Toronto)
+- [x] Ensure time format is consistent across both dashboards
+- [x] Verify no changes to other sections' appearance and functionality
