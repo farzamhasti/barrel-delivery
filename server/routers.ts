@@ -376,7 +376,7 @@ export const appRouter = router({
         driverId: z.number(),
         restaurantAddress: z.string(),
       }))
-      .query(async ({ input }) => {
+      .mutation(async ({ input }) => {
         try {
           const { calculateReturnTime, formatReturnTimeMinutes } = await import('./routeOptimization');
           
