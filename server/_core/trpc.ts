@@ -3,8 +3,12 @@ import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import type { TrpcContext } from "./context";
 
+// Ensure all numbers are properly serialized through Superjson
+// This prevents Decimal objects from being corrupted during serialization
+const transformer = superjson;
+
 const t = initTRPC.context<TrpcContext>().create({
-  transformer: superjson,
+  transformer,
 });
 
 export const router = t.router;

@@ -172,7 +172,9 @@ export default function OrderTrackingWithMap() {
     if (!orderToAssign || !selectedDriver) return;
     try {
       const order = allOrders.find(o => o.id === orderToAssign);
-      await assignDriverMutation.mutateAsync({ orderId: orderToAssign, driverId: selectedDriver.id });
+      // Ensure driverId is a plain number, not a Decimal or other type
+      const driverId = Number(selectedDriver.id);
+      await assignDriverMutation.mutateAsync({ orderId: orderToAssign, driverId });
       await utils.orders.getTodayWithItems.invalidate();
       toast.success(`Order #${order?.orderNumber} has been sent to the driver ${selectedDriver.name}`);
       setShowDriverModal(false);
@@ -570,7 +572,8 @@ export default function OrderTrackingWithMap() {
                 variant={selectedDriver?.id === driver.id ? "default" : "outline"}
                 className="w-full justify-start"
                 onClick={() => {
-                  setSelectedDriver({ id: driver.id, name: driver.name });
+                  // Ensure driver ID is converted to a plain number
+                  setSelectedDriver({ id: Number(driver.id), name: driver.name });
                 }}
               >
                 {driver.name}

@@ -118,7 +118,12 @@ export const appRouter = router({
         driverId: z.number(),
       }))
       .mutation(async ({ input }) => {
-        return await db.assignOrderToDriver(input.orderId, input.driverId);
+        // Validate driver ID
+        const driverId = Number(input.driverId);
+        if (isNaN(driverId) || driverId <= 0) {
+          throw new Error(`Invalid driver ID: ${input.driverId} (type: ${typeof input.driverId})`);
+        }
+        return await db.assignOrderToDriver(input.orderId, driverId);
       }),
 
     getByStatus: publicProcedure

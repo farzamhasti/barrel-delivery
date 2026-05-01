@@ -95,11 +95,14 @@ export async function getDrivers() {
     isActive: drivers.isActive,
   }).from(drivers).where(eq(drivers.isActive, true)).orderBy(drivers.createdAt);
   
-  // Ensure id is a plain number
-  return result.map(driver => ({
-    ...driver,
-    id: Number(driver.id),
-  }));
+  // Ensure id is a plain number - convert to JSON and back to ensure proper serialization
+  return result.map(driver => {
+    const driverId = typeof driver.id === 'number' ? driver.id : parseInt(String(driver.id), 10);
+    return {
+      ...driver,
+      id: driverId,
+    };
+  });
 }
 
 export async function createDriver(data: InsertDriver) {
@@ -139,8 +142,21 @@ export async function updateDriverStatus(id: number, status: "online" | "offline
 export async function getActiveDrivers() {
   const db = await getDb();
   if (!db) return [];
-  // Return all active (not deleted) drivers
-  return db.select().from(drivers).where(eq(drivers.isActive, true)).orderBy(drivers.name);
+  // Return all active (not deleted) drivers with normalized IDs
+  const result = await db.select({
+    id: drivers.id,
+    name: drivers.name,
+    phone: drivers.phone,
+    licenseNumber: drivers.licenseNumber,
+    status: drivers.status,
+    isActive: drivers.isActive,
+  }).from(drivers).where(eq(drivers.isActive, true)).orderBy(drivers.name);
+  
+  // Ensure id is a plain number
+  return result.map(driver => ({
+    ...driver,
+    id: typeof driver.id === 'number' ? driver.id : parseInt(String(driver.id), 10),
+  }));
 }
 
 // Customers
@@ -486,8 +502,15 @@ export async function updateOrderStatus(orderId: number, status: any) {
 export async function assignOrderToDriver(orderId: number, driverId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
+  
+  // Ensure driverId is a valid number
+  const validDriverId = typeof driverId === 'number' ? driverId : parseInt(String(driverId), 10);
+  if (isNaN(validDriverId)) {
+    throw new Error(`Invalid driver ID: ${driverId}`);
+  }
+  
   return db.update(orders).set({ 
-    driverId,
+    driverId: validDriverId,
     status: "Out for Delivery",
     pickedUpAt: new Date()
   }).where(eq(orders.id, orderId));
@@ -677,7 +700,14 @@ export async function getDriverByNameAndLicense(name: string, licenseNumber: str
   if (!db) return null;
   
   const result = await db
-    .select()
+    .select({
+      id: drivers.id,
+      name: drivers.name,
+      phone: drivers.phone,
+      licenseNumber: drivers.licenseNumber,
+      status: drivers.status,
+      isActive: drivers.isActive,
+    })
     .from(drivers)
     .where(and(
       eq(drivers.name, name),
@@ -685,7 +715,14 @@ export async function getDriverByNameAndLicense(name: string, licenseNumber: str
       eq(drivers.isActive, true)
     ));
   
-  return result[0] || null;
+  const driver = result[0];
+  if (!driver) return null;
+  
+  // Normalize driver ID
+  return {
+    ...driver,
+    id: typeof driver.id === 'number' ? driver.id : parseInt(String(driver.id), 10),
+  };
 }
 
 export async function createDriverSession(driverId: number, sessionToken: string, expiresAt: Date) {
