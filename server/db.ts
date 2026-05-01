@@ -1465,19 +1465,18 @@ export async function getReturnTimeHistory(driverId: number, limit: number = 10)
 
 
 // Reservation Functions
-export async function createReservation(data: InsertReservation) {
+export async function createReservation(data: any) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  const insertData = {
-    customerName: data.customerName || '',
-    customerPhone: data.customerPhone || '',
-    customerEmail: data.customerEmail || '',
-    reservationDate: data.reservationDate,
-    partySize: data.partySize,
-    specialRequests: data.specialRequests || '',
-    status: data.status || 'Pending',
-  };
+  const insertData: any = {};
+  if (data.customerName) insertData.customerName = data.customerName;
+  if (data.customerPhone) insertData.customerPhone = data.customerPhone;
+  if (data.customerEmail) insertData.customerEmail = data.customerEmail;
+  if (data.reservationDate) insertData.reservationDate = data.reservationDate;
+  if (data.partySize) insertData.partySize = data.partySize;
+  if (data.specialRequests) insertData.specialRequests = data.specialRequests;
+  if (data.status) insertData.status = data.status;
 
   const result = await db.insert(reservations).values(insertData);
   

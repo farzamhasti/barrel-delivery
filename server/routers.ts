@@ -460,10 +460,12 @@ export const appRouter = router({
       }))
       .mutation(async ({ input }) => {
         const reservation = await db.createReservation({
-          eventType: input.eventType,
-          numberOfPeople: input.numberOfPeople,
-          dateTime: input.dateTime,
-          description: input.description,
+          customerName: input.eventType,
+          customerPhone: '',
+          customerEmail: '',
+          reservationDate: input.dateTime,
+          partySize: input.numberOfPeople,
+          specialRequests: input.description,
           status: 'Pending',
         });
         return reservation;
