@@ -1,4 +1,5 @@
-import { drizzle } from "drizzle-orm/mysql2";
+import { drizzle } from 'drizzle-orm/mysql2';
+import { sql } from 'drizzle-orm';
 import { InsertUser, users, drivers, InsertDriver, orders, InsertOrder, orderItems, InsertOrderItem, systemCredentials, systemSessions, orderStatusHistory, InsertOrderStatusHistory, returnTimeHistory, reservations, InsertReservation, Reservation } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { eq, and, desc, gte, lt, inArray, gt, isNull, lte } from "drizzle-orm";
@@ -566,9 +567,9 @@ export async function assignOrderToDriverByName(orderId: number, driverName: str
       throw new Error(`Order with ID ${orderId} does not exist`);
     }
     
-    // Update order with driver assignment using the looked-up driver ID
+    // Update order with driver assignment
     const result = await db.update(orders).set({
-      status: "on_the_way",
+      status: "On the Way",
       driverId: driver.id,
       pickedUpAt: new Date(),
     }).where(eq(orders.id, orderId));
