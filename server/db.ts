@@ -1469,7 +1469,17 @@ export async function createReservation(data: InsertReservation) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  const result = await db.insert(reservations).values(data);
+  const insertData = {
+    customerName: data.customerName || '',
+    customerPhone: data.customerPhone || '',
+    customerEmail: data.customerEmail || '',
+    reservationDate: data.reservationDate,
+    partySize: data.partySize,
+    specialRequests: data.specialRequests || '',
+    status: data.status || 'Pending',
+  };
+
+  const result = await db.insert(reservations).values(insertData);
   
   // Extract insertId and return the actual reservation row
   let insertId: number | undefined;
