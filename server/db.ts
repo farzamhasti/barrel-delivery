@@ -1470,9 +1470,9 @@ export async function createReservation(data: any) {
   if (!db) throw new Error("Database not available");
 
   const insertData: any = {
-    eventType: data.eventType,
-    numberOfPeople: data.numberOfPeople,
-    dateTime: data.dateTime,
+    eventType: data.eventType || 'General Event',
+    numberOfPeople: data.numberOfPeople || 1,
+    dateTime: data.dateTime || new Date(),
     description: data.description || '',
     status: data.status || 'Pending',
   };
