@@ -25,6 +25,8 @@ export default function DriverDashboard() {
   const [currentDriverId, setCurrentDriverId] = useState<number | null>(null);
   const [driverStatus, setDriverStatus] = useState<"online" | "offline">("offline");
   const [deliveredOrders, setDeliveredOrders] = useState<Set<number>>(new Set());
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [showOrderDetails, setShowOrderDetails] = useState(false);
   
   // Get stored session token from localStorage on mount
   useEffect(() => {
@@ -305,16 +307,23 @@ export default function DriverDashboard() {
                 ) : (
                   <div className="space-y-4">
                     {onTheWayOrders.map((order: any) => (
-                      <Card key={order.id} className="border-l-4 border-l-blue-500">
+                      <Card 
+                        key={order.id} 
+                        className="border-l-4 border-l-blue-500 cursor-pointer hover:shadow-lg transition-shadow"
+                        onClick={() => {
+                          setSelectedOrder(order);
+                          setShowOrderDetails(true);
+                        }}
+                      >
                         <CardContent className="pt-6">
                           <div className="grid grid-cols-2 gap-4 mb-4">
                             <div>
                               <p className="text-sm text-gray-600">Order #</p>
-                              <p className="text-lg font-semibold">{order.checkNumber || order.id}</p>
+                              <p className="text-lg font-semibold">{order.orderNumber || order.checkNumber || order.id}</p>
                             </div>
                             <div>
                               <p className="text-sm text-gray-600">Status</p>
-                              <Badge className="bg-blue-600">In Transit</Badge>
+                              <Badge className="bg-blue-600">On the way</Badge>
                             </div>
                             <div className="col-span-2">
                               <p className="text-sm text-gray-600">Delivery Address</p>
@@ -356,7 +365,7 @@ export default function DriverDashboard() {
                           <div className="grid grid-cols-2 gap-4">
                             <div>
                               <p className="text-sm text-gray-600">Order #</p>
-                              <p className="text-lg font-semibold">{order.checkNumber || order.id}</p>
+                              <p className="text-lg font-semibold">{order.orderNumber || order.checkNumber || order.id}</p>
                             </div>
                             <div>
                               <p className="text-sm text-gray-600">Status</p>
@@ -383,6 +392,66 @@ export default function DriverDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Order Details Modal */}
+      {showOrderDetails && selectedOrder && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <Card className="w-full max-w-md mx-4">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+              <div>
+                <CardTitle>Order Details</CardTitle>
+                <CardDescription>Order #{selectedOrder.orderNumber || selectedOrder.checkNumber || selectedOrder.id}</CardDescription>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowOrderDetails(false)}
+                className="h-6 w-6 p-0"
+              >
+                ×
+              </Button>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <p className="text-sm text-gray-600">Delivery Address</p>
+                <p className="font-medium">{selectedOrder.customerAddress || "N/A"}</p>
+              </div>
+
+              {selectedOrder.customerPhone && (
+                <div>
+                  <p className="text-sm text-gray-600">Customer Phone</p>
+                  <p className="font-medium">{selectedOrder.customerPhone}</p>
+                </div>
+              )}
+
+              {selectedOrder.area && (
+                <div>
+                  <p className="text-sm text-gray-600">Area</p>
+                  <p className="font-medium">{selectedOrder.area}</p>
+                </div>
+              )}
+
+              {selectedOrder.deliveryTime && (
+                <div>
+                  <p className="text-sm text-gray-600">Delivery Time</p>
+                  <p className="font-medium">{selectedOrder.deliveryTime}</p>
+                </div>
+              )}
+
+              {selectedOrder.formattedReceiptImage && (
+                <div>
+                  <p className="text-sm text-gray-600 mb-2">Scanned Receipt</p>
+                  <img 
+                    src={selectedOrder.formattedReceiptImage} 
+                    alt="Receipt" 
+                    className="w-full border border-gray-300 rounded-lg max-h-64 object-contain"
+                  />
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
