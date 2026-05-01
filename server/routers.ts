@@ -370,6 +370,57 @@ export const appRouter = router({
         const count = await db.getDeliveredOrdersCountByDate(input.driverId, date);
         return { count, date: input.date };
       }),
+
+    calculateReturnTime: publicProcedure
+      .input(z.object({
+        driverId: z.number(),
+        restaurantAddress: z.string(),
+      }))
+      .query(async ({ input }) => {
+        try {
+          const { calculateReturnTime, formatReturnTimeMinutes } = await import('./routeOptimization');
+          
+          // Get all orders assigned to this driver with "on_the_way" status
+          const orders = await db.getOrders(input.driverId);
+          const onTheWayOrders = orders.filter((order: any) => order.status === 'on_the_way');
+
+          if (onTheWayOrders.length === 0) {
+            return {
+              totalReturnTime: 0,
+              formattedTime: '0 minutes',
+              deliverySequence: [],
+              breakdown: {
+                pickupTime: 0,
+                deliveryHandlingTime: 0,
+                travelTime: 0,
+              },
+              message: 'No active deliveries',
+            };
+          }
+
+          const apiKey = process.env.VITE_FRONTEND_FORGE_API_KEY;
+          if (!apiKey) {
+            throw new Error('Google Maps API key not configured');
+          }
+
+          const result = await calculateReturnTime(
+            input.restaurantAddress,
+            onTheWayOrders,
+            apiKey
+          );
+
+          return {
+            totalReturnTime: result.totalReturnTime,
+            formattedTime: formatReturnTimeMinutes(result.totalReturnTime),
+            deliverySequence: result.deliverySequence,
+            breakdown: result.breakdown,
+            orderCount: onTheWayOrders.length,
+          };
+        } catch (error) {
+          console.error('[drivers.calculateReturnTime] Error:', error);
+          throw new Error(`Failed to calculate return time: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+      }),
   }),
 
   system: router({

@@ -1411,3 +1411,19 @@ These features are documented for future enhancement but are not required for th
 - [x] Test merged card layout and responsiveness
 - [x] Verify Google Maps opens with correct route
 - [x] Create checkpoint for merged card with Maps integration
+
+
+## Phase 31: Accurate Return Time Calculation with Google Maps Routing
+- [x] Create server-side route optimization service using Google Maps Directions API
+- [x] Implement TSP-like algorithm for optimal delivery sequencing
+- [x] Add fixed time components: 30s pickup + 90s per delivery
+- [x] Integrate real-time traffic data from Google Maps
+- [x] Create tRPC procedure for calculating return time with routing
+- [x] Filter orders by status "on_the_way" and current driver
+- [x] Implement single-order and multi-order calculation logic
+- [x] Add recalculation trigger for new order assignments
+- [x] Update Calculate Return Time button to call new procedure
+- [x] Test calculation accuracy with multiple orders
+- [x] Verify optimal delivery sequence generation
+- [x] Test with real traffic conditions
+- [x] Create checkpoint for accurate return time system
