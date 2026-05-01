@@ -100,11 +100,11 @@ export const appRouter = router({
 
     updateStatus: publicProcedure
       .input(z.object({
-        id: z.number(),
+        orderId: z.number(),
         status: z.enum(['Pending', 'Confirmed', 'Preparing', 'Ready', 'Out for Delivery', 'Delivered', 'Cancelled']),
       }))
       .mutation(async ({ input }) => {
-        return await db.updateOrderStatus(input.id, input.status);
+        return await db.updateOrderStatus(input.orderId, input.status);
       }),
 
     assignDriver: publicProcedure
