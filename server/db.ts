@@ -1517,10 +1517,10 @@ export async function updateReservation(id: number, data: Partial<Omit<InsertRes
   if (!db) throw new Error("Database not available");
 
   const updateData: any = {};
-  if (data.eventType !== undefined) updateData.eventType = data.eventType;
-  if (data.numberOfPeople !== undefined) updateData.numberOfPeople = data.numberOfPeople;
-  if (data.dateTime !== undefined) updateData.dateTime = data.dateTime;
-  if (data.description !== undefined) updateData.description = data.description;
+  if ((data as any).eventType !== undefined) updateData.customerName = (data as any).eventType;
+  if ((data as any).numberOfPeople !== undefined) updateData.partySize = (data as any).numberOfPeople;
+  if ((data as any).dateTime !== undefined) updateData.reservationDate = (data as any).dateTime;
+  if ((data as any).description !== undefined) updateData.specialRequests = (data as any).description;
 
   const result = await db.update(reservations)
     .set(updateData)

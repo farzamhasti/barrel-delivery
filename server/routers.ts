@@ -453,21 +453,17 @@ export const appRouter = router({
   reservations: router({
     create: publicProcedure
       .input(z.object({
-        customerName: z.string(),
-        customerPhone: z.string(),
-        customerEmail: z.string().optional(),
-        reservationDate: z.date(),
-        partySize: z.number().int().positive(),
-        specialRequests: z.string().optional(),
+        eventType: z.string(),
+        numberOfPeople: z.number().int().positive(),
+        dateTime: z.date(),
+        description: z.string().optional(),
       }))
       .mutation(async ({ input }) => {
         const reservation = await db.createReservation({
-          customerName: input.customerName,
-          customerPhone: input.customerPhone,
-          customerEmail: input.customerEmail,
-          reservationDate: input.reservationDate,
-          partySize: input.partySize,
-          specialRequests: input.specialRequests,
+          eventType: input.eventType,
+          numberOfPeople: input.numberOfPeople,
+          dateTime: input.dateTime,
+          description: input.description,
           status: 'Pending',
         });
         return reservation;
