@@ -503,20 +503,39 @@ export async function assignOrderToDriver(orderId: number, driverId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
-  // Ensure driverId is a valid number
-  const validDriverId = typeof driverId === 'number' ? driverId : parseInt(String(driverId), 10);
-  if (isNaN(validDriverId)) {
+  // Validate inputs
+  const validatedDriverId = typeof driverId === 'number' ? driverId : parseInt(String(driverId), 10);
+  if (isNaN(validatedDriverId)) {
     throw new Error(`Invalid driver ID: ${driverId}`);
   }
   
-  return db.update(orders).set({ 
-    driverId: validDriverId,
-    status: "Out for Delivery",
-    pickedUpAt: new Date()
-  }).where(eq(orders.id, orderId));
+  try {
+    // Validate driver exists
+    const driver = await db.select().from(drivers).where(eq(drivers.id, validatedDriverId));
+    if (!driver || driver.length === 0) {
+      throw new Error(`Driver with ID ${validatedDriverId} does not exist`);
+    }
+    
+    // Validate order exists
+    const order = await db.select().from(orders).where(eq(orders.id, orderId));
+    if (!order || order.length === 0) {
+      throw new Error(`Order with ID ${orderId} does not exist`);
+    }
+    
+    // Update order with driver assignment
+    const result = await db.update(orders).set({
+      status: "on_the_way",
+      driverId: validatedDriverId,
+      pickedUpAt: new Date(),
+    }).where(eq(orders.id, orderId));
+    
+    return result;
+  } catch (error) {
+    console.error('[assignOrderToDriver] Error:', error);
+    throw error;
+  }
 }
 
-// Order Items
 export async function createOrderItem(data: InsertOrderItem) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -1436,7 +1455,7 @@ export async function getOrdersByDriver(driverId: number) {
     .from(orders)
     .where(and(
       eq(orders.driverId, driverId),
-      eq(orders.status, "Out for Delivery")
+      inArray(orders.status, ["Out for Delivery", "on_the_way"])
     ))
     .orderBy(desc(orders.deliveryTime));
 

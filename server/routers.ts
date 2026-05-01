@@ -119,7 +119,10 @@ export const appRouter = router({
       }))
       .mutation(async ({ input }) => {
         // Validate driver ID
+        console.log('[sendToDriver] Received input:', JSON.stringify(input));
+        console.log('[sendToDriver] input.driverId:', input.driverId, 'type:', typeof input.driverId);
         const driverId = Number(input.driverId);
+        console.log('[sendToDriver] Converted driverId:', driverId);
         if (isNaN(driverId) || driverId <= 0) {
           throw new Error(`Invalid driver ID: ${input.driverId} (type: ${typeof input.driverId})`);
         }

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState, useRef } from 'react';
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { useIsMobile } from "@/hooks/useMobile";
@@ -174,6 +174,8 @@ export default function OrderTrackingWithMap() {
       const order = allOrders.find(o => o.id === orderToAssign);
       // Ensure driverId is a plain number, not a Decimal or other type
       const driverId = Number(selectedDriver.id);
+      console.log('[DEBUG] selectedDriver:', selectedDriver);
+      console.log('[DEBUG] driverId:', driverId, 'type:', typeof driverId);
       await assignDriverMutation.mutateAsync({ orderId: orderToAssign, driverId });
       await utils.orders.getTodayWithItems.invalidate();
       toast.success(`Order #${order?.orderNumber} has been sent to the driver ${selectedDriver.name}`);
@@ -572,8 +574,9 @@ export default function OrderTrackingWithMap() {
                 variant={selectedDriver?.id === driver.id ? "default" : "outline"}
                 className="w-full justify-start"
                 onClick={() => {
-                  // Ensure driver ID is converted to a plain number
-                  setSelectedDriver({ id: Number(driver.id), name: driver.name });
+                  // Extract driver ID - let backend validate
+                  const driverId = Number(driver.id);
+                  setSelectedDriver({ id: driverId, name: driver.name });
                 }}
               >
                 {driver.name}
