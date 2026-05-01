@@ -26,6 +26,8 @@ export const drivers = mysqlTable("drivers", {
   licenseNumber: varchar("license_number", { length: 50 }).unique(),
   status: varchar("status", { length: 20 }).default("offline").notNull(),
   isActive: boolean("is_active").default(true),
+  estimatedReturnTime: int("estimated_return_time"),
+  estimatedReturnTimeUpdatedAt: timestamp("estimated_return_time_updated_at"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

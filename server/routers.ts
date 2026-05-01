@@ -2,6 +2,7 @@ import { publicProcedure, protectedProcedure, router } from './_core/trpc';
 import { z } from 'zod';
 import path from 'path';
 import fs from 'fs';
+import { eq } from 'drizzle-orm';
 import { convertOntarioTimeToUTC } from './timezoneHelper';
 import * as db from './db';
 import { getDb } from './db';
@@ -380,9 +381,9 @@ export const appRouter = router({
         try {
           const { calculateReturnTime, formatReturnTimeMinutes } = await import('./routeOptimization');
           
-          // Get all orders assigned to this driver with "on_the_way" status
+          // Get all orders assigned to this driver with "On the Way" status
           const orders = await db.getOrders(input.driverId);
-          const onTheWayOrders = orders.filter((order: any) => order.status === 'on_the_way');
+          const onTheWayOrders = orders.filter((order: any) => order.status === 'On the Way');
 
           if (onTheWayOrders.length === 0) {
             return {
@@ -424,6 +425,53 @@ export const appRouter = router({
           console.error('[drivers.calculateReturnTime] Error:', error);
           console.error('[drivers.calculateReturnTime] Full error details:', JSON.stringify(error, null, 2));
           throw new Error(`Failed to calculate return time: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+      }),
+
+    saveReturnTime: publicProcedure
+      .input(z.object({
+        driverId: z.number(),
+        returnTimeSeconds: z.number(),
+      }))
+      .mutation(async ({ input }) => {
+        try {
+          const database = await getDb();
+          const { drivers } = await import('../drizzle/schema');
+          if (!database) throw new Error('Database connection failed');
+          const result = await database
+            .update(drivers)
+            .set({
+              estimatedReturnTime: input.returnTimeSeconds,
+              estimatedReturnTimeUpdatedAt: new Date(),
+            })
+            .where(eq(drivers.id, input.driverId))
+            .execute();
+          return { success: true };
+        } catch (error) {
+          console.error('[drivers.saveReturnTime] Error:', error);
+          throw new Error(`Failed to save return time: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+      }),
+
+    getReturnTime: publicProcedure
+      .input(z.object({ driverId: z.number() }))
+      .query(async ({ input }) => {
+        try {
+          const database = await getDb();
+          const { drivers } = await import('../drizzle/schema');
+          if (!database) throw new Error('Database connection failed');
+          const result = await database
+            .select({
+              estimatedReturnTime: drivers.estimatedReturnTime,
+              estimatedReturnTimeUpdatedAt: drivers.estimatedReturnTimeUpdatedAt,
+            })
+            .from(drivers)
+            .where(eq(drivers.id, input.driverId))
+            .execute();
+          return result[0] || { estimatedReturnTime: null, estimatedReturnTimeUpdatedAt: null };
+        } catch (error) {
+          console.error('[drivers.getReturnTime] Error:', error);
+          throw new Error(`Failed to get return time: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
       }),
   }),

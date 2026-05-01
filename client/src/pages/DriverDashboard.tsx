@@ -298,13 +298,13 @@ export default function DriverDashboard() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 py-8 flex-1">
+      <div className="max-w-7xl mx-auto px-4 py-8 flex-1 overflow-y-auto">
         {/* Status, Statistics, Return Time, and Map Section - 2x2 Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Status Section */}
-          <Card className="border-2">
+          <Card className="border-2 h-fit">
           <CardHeader>
-            <CardTitle className="text-2xl">Your Status</CardTitle>
+            <CardTitle className="text-xl">Your Status</CardTitle>
             <CardDescription>Update your availability for deliveries</CardDescription>
           </CardHeader>
           <CardContent>
@@ -343,9 +343,9 @@ export default function DriverDashboard() {
         </Card>
 
           {/* Delivery Statistics Section */}
-          <Card className="border-2">
+          <Card className="border-2 h-fit">
             <CardHeader>
-              <CardTitle className="text-2xl">Delivery Statistics</CardTitle>
+              <CardTitle className="text-xl">Delivery Statistics</CardTitle>
               <CardDescription>View orders delivered on a specific date</CardDescription>
             </CardHeader>
             <CardContent>
@@ -370,13 +370,13 @@ export default function DriverDashboard() {
           </Card>
 
           {/* Delivery Management Card - Return Time & Map */}
-          <Card className="border-2 lg:col-span-2">
+          <Card className="border-2 lg:col-span-2 h-fit">
             <CardHeader>
-              <CardTitle className="text-2xl">Delivery Management</CardTitle>
+              <CardTitle className="text-xl">Delivery Management</CardTitle>
               <CardDescription>Calculate return time and view your delivery route</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Return Time Section */}
                 <div className="flex flex-col justify-between">
                   <div>
@@ -401,28 +401,41 @@ export default function DriverDashboard() {
                     
                     <p className="text-sm text-gray-600 mb-4">Based on:</p>
                     <ul className="text-sm text-gray-700 mb-6 space-y-2">
-                      <li>• 1 minute for pickup</li>
-                      <li>• 2 minutes per delivery ({assignedOrders.length} orders)</li>
+                      <li>• 30 seconds for pickup</li>
+                      <li>• 1 minute 30 seconds per delivery ({assignedOrders.length} orders)</li>
                       <li>• Optimal travel time</li>
                     </ul>
                   </div>
-                  <Button
-                    size="lg"
-                    className="bg-orange-600 hover:bg-orange-700 text-white w-full"
-                    onClick={() => {
-                      if (!currentDriverId) {
-                        alert('Driver not logged in');
-                        return;
-                      }
-                      
-                      calculateReturnTimeMutation.mutate({
-                        driverId: currentDriverId,
-                        restaurantAddress: 'The Barrel Restaurant, Toronto, ON',
-                      });
-                    }}
-                  >
-                    Calculate Return Time
-                  </Button>
+                  <div className="flex gap-2 w-full">
+                    <button
+                      className="flex-1 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded font-semibold text-lg"
+                      disabled={calculateReturnTimeMutation.isPending}
+                      onClick={() => {
+                        console.log('Button clicked, currentDriverId:', currentDriverId);
+                        if (!currentDriverId) {
+                          alert('Driver not logged in');
+                          return;
+                        }
+                        calculateReturnTimeMutation.mutate({
+                          driverId: currentDriverId,
+                          restaurantAddress: 'The Barrel Restaurant, 224 Garrison Rd, Fort Erie, ON L2A 1M7',
+                        });
+                        console.log('Mutate called');
+                      }}
+                    >
+                      {calculateReturnTimeMutation.isPending ? 'Calculating...' : 'Calculate Return Time'}
+                    </button>
+                    <button
+                      className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded font-semibold text-lg disabled:bg-gray-400 disabled:cursor-not-allowed whitespace-nowrap"
+                      disabled={!isTimerRunning}
+                      onClick={() => {
+                        setIsTimerRunning(false);
+                        console.log('Timer stopped');
+                      }}
+                    >
+                      Stop
+                    </button>
+                  </div>
                 </div>
 
                 {/* Delivery Map Section */}

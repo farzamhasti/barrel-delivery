@@ -5,6 +5,7 @@
  */
 
 import { z } from 'zod';
+import { makeRequest, DirectionsResult } from './_core/map';
 
 interface DeliveryOrder {
   id: number;
@@ -38,10 +39,10 @@ interface RouteResult {
 
 // Fixed time constants (in seconds)
 const PICKUP_TIME = 30; // 30 seconds for pickup from restaurant
-const DELIVERY_HANDLING_TIME = 90; // 90 seconds per delivery
+const DELIVERY_HANDLING_TIME = 90; // 90 seconds (1 minute 30 seconds) per delivery at customer
 
 /**
- * Fetch travel time between two locations using Google Maps Directions API
+ * Fetch travel time between two locations using Google Maps Directions API via Manus proxy
  */
 async function getTravelTime(
   origin: string,
@@ -50,27 +51,17 @@ async function getTravelTime(
 ): Promise<RouteLeg> {
   try {
     console.log(`[getTravelTime] Fetching route from "${origin}" to "${destination}"`);
-    const url = `https://maps.googleapis.com/maps/api/directions/json?` +
-      `origin=${encodeURIComponent(origin)}&` +
-      `destination=${encodeURIComponent(destination)}&` +
-      `key=${apiKey.substring(0, 10)}...&` +
-      `traffic_model=best_guess`;
-    console.log(`[getTravelTime] URL: ${url}`);
     
-    const response = await fetch(
-      `https://maps.googleapis.com/maps/api/directions/json?` +
-      `origin=${encodeURIComponent(origin)}&` +
-      `destination=${encodeURIComponent(destination)}&` +
-      `key=${apiKey}&` +
-      `traffic_model=best_guess`
+    const data = await makeRequest<DirectionsResult>(
+      '/maps/api/directions/json',
+      {
+        origin,
+        destination,
+        departure_time: Math.floor(Date.now() / 1000), // Current time in seconds since epoch
+        traffic_model: 'best_guess'
+      }
     );
 
-    console.log(`[getTravelTime] Response status: ${response.status}`);
-    if (!response.ok) {
-      throw new Error(`Google Directions API error: ${response.statusText}`);
-    }
-
-    const data = await response.json();
     console.log(`[getTravelTime] API response status: ${data.status}`);
 
     if (data.status !== 'OK' || !data.routes || data.routes.length === 0) {
@@ -89,7 +80,7 @@ async function getTravelTime(
       totalDuration += leg.duration.value;
       console.log(`[getTravelTime] Leg: ${leg.distance.text}, ${leg.duration.text}`);
       // Use duration_in_traffic if available, otherwise use regular duration
-      totalDurationInTraffic += leg.duration_in_traffic?.value || leg.duration.value;
+      totalDurationInTraffic += (leg as any).duration_in_traffic?.value || leg.duration.value;
     }
 
     return {
@@ -144,9 +135,9 @@ export async function calculateReturnTime(
   deliveryOrders: DeliveryOrder[],
   apiKey: string
 ): Promise<RouteResult> {
-  // Filter orders: only include "on_the_way" status and valid addresses
+  // Filter orders: only include "On the Way" status and valid addresses
   const validOrders = deliveryOrders.filter(
-    order => order.status === 'on_the_way' && order.customerAddress
+    order => order.status === 'On the Way' && order.customerAddress
   );
 
   if (validOrders.length === 0) {

@@ -1440,3 +1440,18 @@ These features are documented for future enhancement but are not required for th
 - [x] Test countdown timer functionality
 - [x] Verify timer stops at zero
 - [x] Create checkpoint for countdown timer feature
+
+
+## Phase 33: Real-Time Driver Return Time Synchronization to Admin & Kitchen Dashboards
+- [ ] Add estimated_return_time column to drivers table in database schema
+- [ ] Create migration SQL to add estimated_return_time column
+- [ ] Create tRPC procedure to save driver return time to database
+- [ ] Create tRPC procedure to retrieve driver return time
+- [ ] Update Driver Dashboard to save return time when Calculate button clicked
+- [ ] Update Admin Dashboard Order Tracking to display driver return time in Est. Return column
+- [ ] Update Kitchen Dashboard to display driver return time in Active Drivers table
+- [ ] Implement real-time polling or WebSocket for live updates
+- [ ] Test synchronization across all dashboards
+- [ ] Verify data persists across page/tab changes
+- [ ] Test with multiple drivers
+- [ ] Create checkpoint for real-time synchronization feature
