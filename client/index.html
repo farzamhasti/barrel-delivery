@@ -17,6 +17,16 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <!-- Global CSS for Google Places autocomplete dropdown -->
+    <style>
+      .pac-container {
+        z-index: 9999 !important;
+        pointer-events: all !important;
+      }
+      .pac-item {
+        cursor: pointer;
+      }
+    </style>
     <script
       defer
       src="%VITE_ANALYTICS_ENDPOINT%/umami"

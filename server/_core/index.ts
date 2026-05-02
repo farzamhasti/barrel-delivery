@@ -1,12 +1,17 @@
 import "dotenv/config";
 import express from "express";
+import cookieParser from "cookie-parser";
 import { createServer } from "http";
 import net from "net";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "./oauth";
+import { registerStorageProxy } from "./storageProxy";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
+import { initializeDatabase } from "./initDb";
+import { seedSampleData } from "./seedData";
+import extractReceiptRouter from "../api/extract-receipt";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -28,13 +33,36 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 }
 
 async function startServer() {
+  // Initialize database tables
+  await initializeDatabase();
+  // Seed sample data
+  await seedSampleData();
+  
   const app = express();
   const server = createServer(app);
+
+  // Add security headers for camera access
+  app.use((req, res, next) => {
+    // Allow camera access via Permissions-Policy
+    res.setHeader('Permissions-Policy', 'camera=*, microphone=*, geolocation=*');
+    // CORS headers for camera access
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    next();
+  });
+
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
+  // Parse cookies
+  app.use(cookieParser());
+  // Storage proxy for /manus-storage/* paths
+  registerStorageProxy(app);
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
+  // Receipt extraction API
+  app.use("/api", extractReceiptRouter);
   // tRPC API
   app.use(
     "/api/trpc",

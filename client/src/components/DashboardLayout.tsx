@@ -47,6 +47,10 @@ export default function DashboardLayout({
     return saved ? parseInt(saved, 10) : DEFAULT_WIDTH;
   });
   const { loading, user } = useAuth();
+  const isMobile = useIsMobile();
+
+  // On mobile, use collapsed width
+  const effectiveSidebarWidth = isMobile ? 0 : sidebarWidth;
 
   useEffect(() => {
     localStorage.setItem(SIDEBAR_WIDTH_KEY, sidebarWidth.toString());
@@ -86,11 +90,11 @@ export default function DashboardLayout({
     <SidebarProvider
       style={
         {
-          "--sidebar-width": `${sidebarWidth}px`,
+          "--sidebar-width": `${effectiveSidebarWidth}px`,
         } as CSSProperties
       }
     >
-      <DashboardLayoutContent setSidebarWidth={setSidebarWidth}>
+      <DashboardLayoutContent setSidebarWidth={setSidebarWidth} isMobile={isMobile}>
         {children}
       </DashboardLayoutContent>
     </SidebarProvider>
@@ -100,11 +104,13 @@ export default function DashboardLayout({
 type DashboardLayoutContentProps = {
   children: React.ReactNode;
   setSidebarWidth: (width: number) => void;
+  isMobile?: boolean;
 };
 
 function DashboardLayoutContent({
   children,
   setSidebarWidth,
+  isMobile: isMobileProp,
 }: DashboardLayoutContentProps) {
   const { user, logout } = useAuth();
   const [location, setLocation] = useLocation();
@@ -113,13 +119,14 @@ function DashboardLayoutContent({
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const activeMenuItem = menuItems.find(item => item.path === location);
-  const isMobile = useIsMobile();
+  const isMobile = isMobileProp ?? useIsMobile();
 
+  // On mobile, sidebar should start collapsed
   useEffect(() => {
-    if (isCollapsed) {
-      setIsResizing(false);
+    if (isMobile && state !== "collapsed") {
+      toggleSidebar();
     }
-  }, [isCollapsed]);
+  }, [isMobile, state, toggleSidebar]);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -156,7 +163,7 @@ function DashboardLayoutContent({
       <div className="relative" ref={sidebarRef}>
         <Sidebar
           collapsible="icon"
-          className="border-r-0"
+          className={`border-r-0 ${isMobile ? "fixed left-0 top-0 h-screen z-50" : ""}`}
           disableTransition={isResizing}
         >
           <SidebarHeader className="h-16 justify-center">
@@ -170,8 +177,13 @@ function DashboardLayoutContent({
               </button>
               {!isCollapsed ? (
                 <div className="flex items-center gap-2 min-w-0">
+                  <img 
+                    src="/barrel-logo.png" 
+                    alt="The Barrel Restaurant (Pizza & Pasta)" 
+                    className="h-6 w-auto shrink-0"
+                  />
                   <span className="font-semibold tracking-tight truncate">
-                    Navigation
+                    Barrel
                   </span>
                 </div>
               ) : null}
@@ -207,15 +219,15 @@ function DashboardLayoutContent({
                 <button className="flex items-center gap-3 rounded-lg px-1 py-1 hover:bg-accent/50 transition-colors w-full text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                   <Avatar className="h-9 w-9 border shrink-0">
                     <AvatarFallback className="text-xs font-medium">
-                      {user?.name?.charAt(0).toUpperCase()}
+                      {(user as any)?.name?.charAt(0).toUpperCase() || 'U'}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0 group-data-[collapsible=icon]:hidden">
                     <p className="text-sm font-medium truncate leading-none">
-                      {user?.name || "-"}
+                      {(user as any)?.name || "-"}
                     </p>
                     <p className="text-xs text-muted-foreground truncate mt-1.5">
-                      {user?.email || "-"}
+                      {(user as any)?.email || "-"}
                     </p>
                   </div>
                 </button>
@@ -232,32 +244,39 @@ function DashboardLayoutContent({
             </DropdownMenu>
           </SidebarFooter>
         </Sidebar>
-        <div
-          className={`absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-primary/20 transition-colors ${isCollapsed ? "hidden" : ""}`}
-          onMouseDown={() => {
-            if (isCollapsed) return;
-            setIsResizing(true);
-          }}
-          style={{ zIndex: 50 }}
-        />
+        {!isMobile && (
+          <div
+            className={`absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-primary/20 transition-colors ${isCollapsed ? "hidden" : ""}`}
+            onMouseDown={() => {
+              if (isCollapsed) return;
+              setIsResizing(true);
+            }}
+            style={{ zIndex: 50 }}
+          />
+        )}
       </div>
 
-      <SidebarInset>
+      <SidebarInset className={isMobile ? "w-full" : ""}>
         {isMobile && (
-          <div className="flex border-b h-14 items-center justify-between bg-background/95 px-2 backdrop-blur supports-[backdrop-filter]:backdrop-blur sticky top-0 z-40">
-            <div className="flex items-center gap-2">
-              <SidebarTrigger className="h-9 w-9 rounded-lg bg-background" />
-              <div className="flex items-center gap-3">
-                <div className="flex flex-col gap-1">
-                  <span className="tracking-tight text-foreground">
-                    {activeMenuItem?.label ?? "Menu"}
-                  </span>
+          <>
+            <div className="flex border-b h-14 items-center justify-between bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:backdrop-blur sticky top-0 z-40">
+              <div className="flex items-center gap-2 flex-1">
+                <SidebarTrigger className="h-9 w-9 rounded-lg bg-background" />
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div className="flex flex-col gap-1 min-w-0">
+                    <span className="tracking-tight text-foreground text-sm truncate">
+                      {activeMenuItem?.label ?? "Menu"}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+            {!isCollapsed && (
+              <div className="fixed inset-0 bg-black/50 z-40" onClick={toggleSidebar} />
+            )}
+          </>
         )}
-        <main className="flex-1 p-4">{children}</main>
+        <main className="flex-1 p-4 overflow-auto w-full">{children}</main>
       </SidebarInset>
     </>
   );
