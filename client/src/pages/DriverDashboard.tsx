@@ -440,7 +440,7 @@ export default function DriverDashboard() {
                         }
                         calculateReturnTimeMutation.mutate({
                           driverId: currentDriverId,
-                          restaurantAddress: 'The Barrel Restaurant, 224 Garrison Rd, Fort Erie, ON L2A 1M7',
+                          restaurantAddress: '224 Garrison Rd, Fort Erie, ON L2A 1M7',
                         });
                         console.log('Mutate called');
                       }}
@@ -474,7 +474,7 @@ export default function DriverDashboard() {
                   <Button
                     size="lg"
                     className="bg-purple-600 hover:bg-purple-700 text-white w-full"
-                    onClick={() => {
+                    onClick={async () => {
                       try {
                         console.log('[Delivery with Map] Button clicked');
                         console.log('[Delivery with Map] assignedOrders:', assignedOrders);
@@ -496,9 +496,28 @@ export default function DriverDashboard() {
                           return;
                         }
 
-                        // Restaurant coordinates (The Barrel Restaurant, Fort Erie, ON)
-                        const restaurantLat = 42.9149;
-                        const restaurantLng = -79.0402;
+                        // Restaurant address: 224 Garrison Rd, Fort Erie, ON L2A 1M7
+                        const restaurantAddress = '224 Garrison Rd, Fort Erie, ON L2A 1M7';
+                        let restaurantLat = 42.9149;
+                        let restaurantLng = -79.0402;
+                        
+                        // Try to geocode the restaurant address to get accurate coordinates
+                        try {
+                          const geocodeResponse = await fetch(
+                            `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(restaurantAddress)}&key=${process.env.VITE_FRONTEND_FORGE_API_KEY}`
+                          );
+                          const geocodeData = await geocodeResponse.json();
+                          
+                          if (geocodeData.results && geocodeData.results.length > 0) {
+                            const location = geocodeData.results[0].geometry.location;
+                            restaurantLat = location.lat;
+                            restaurantLng = location.lng;
+                            console.log('[Delivery with Map] Geocoded restaurant coordinates:', { restaurantLat, restaurantLng });
+                          }
+                        } catch (geocodeError) {
+                          console.error('[Delivery with Map] Geocoding error:', geocodeError);
+                        }
+                        
                         const restaurantCoords = `${restaurantLat},${restaurantLng}`;
 
                         // Build waypoints from customer coordinates
