@@ -28,6 +28,9 @@ export const drivers = mysqlTable("drivers", {
   isActive: boolean("is_active").default(true),
   estimatedReturnTime: int("estimated_return_time"),
   estimatedReturnTimeUpdatedAt: timestamp("estimated_return_time_updated_at"),
+  latitude: decimal("latitude", { precision: 10, scale: 6 }),
+  longitude: decimal("longitude", { precision: 10, scale: 6 }),
+  locationUpdatedAt: timestamp("location_updated_at"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
