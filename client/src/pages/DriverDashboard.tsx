@@ -504,11 +504,18 @@ export default function DriverDashboard() {
                       // Format: https://www.google.com/maps/dir/?api=1&origin=START&destination=END&waypoints=WAYPOINTS&optimize=true
                       const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${restaurantCoords}&destination=${restaurantCoords}&waypoints=${waypoints}&optimize=true&travelmode=driving`;
 
-                      // Open in new window/tab or native app on mobile
-                      window.open(mapsUrl, '_blank');
+                      // On mobile, use direct link; on desktop, open in new tab
+                      const isMobile = /iPhone|iPad|iPod|Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                      if (isMobile) {
+                        // Direct navigation on mobile opens native Google Maps app
+                        window.location.href = mapsUrl;
+                      } else {
+                        // Open in new tab on desktop
+                        window.open(mapsUrl, '_blank');
+                      }
                     }}
                   >
-                    Open in Google Maps
+                    Delivery with Map
                   </Button>
                 </div>
               </div>
