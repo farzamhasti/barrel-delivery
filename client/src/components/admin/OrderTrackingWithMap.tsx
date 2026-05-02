@@ -27,10 +27,15 @@ function formatReturnTime(seconds: number | null | undefined): string {
 
 // Component to display a single driver with countdown timer
 function DriverRowWithTimer({ driver, hasOnTheWayOrders }: { driver: any; hasOnTheWayOrders: boolean }) {
-  const { displayTime } = useCountdownTimer(driver.estimatedReturnTime, driver.id);
+  // Convert timestamp to Date if it's a string (from JSON serialization)
+  const estimatedReturnTime = driver.estimatedReturnTime 
+    ? (driver.estimatedReturnTime instanceof Date ? driver.estimatedReturnTime : new Date(driver.estimatedReturnTime))
+    : null;
   
-  // Only show timer if driver has on_the_way orders AND has set estimated return time (absolute timestamp)
-  const shouldShowTimer = hasOnTheWayOrders && driver.estimatedReturnTime && driver.estimatedReturnTime instanceof Date && driver.estimatedReturnTime.getTime() > Date.now();
+  const { displayTime } = useCountdownTimer(estimatedReturnTime, driver.id);
+  
+  // Only show timer if driver has on_the_way orders AND has set estimated return time (absolute timestamp in the future)
+  const shouldShowTimer = hasOnTheWayOrders && estimatedReturnTime && estimatedReturnTime.getTime() > Date.now();
   
   return (
     <tr className="border-b border-border hover:bg-muted/30">
