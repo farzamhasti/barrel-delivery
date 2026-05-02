@@ -9,6 +9,7 @@ import { Menu, Package2, Truck, LogOut, Settings, Plus, Map, X, Calendar, Gift }
 
 import { Orders } from "@/pages/Orders";
 import DriverManagement from "@/components/admin/DriverManagement";
+import { HeaderDriversTable } from "@/components/admin/HeaderDriversTable";
 
 import { ReceiptScannerTesseract } from "@/components/admin/ReceiptScannerTesseract";
 import OrderTrackingWithMap from "@/components/admin/OrderTrackingWithMap";
@@ -177,18 +178,28 @@ export default function AdminDashboard() {
           {/* Desktop Header */}
           {!isMobile && (
             <header className="border-b border-border/40 backdrop-blur-sm bg-white/95 shadow-sm px-4 md:px-6 py-3 md:py-4 flex items-center justify-between flex-shrink-0">
-              <div className="flex items-center gap-3">
-                <img 
-                  src="/barrel-logo.png" 
-                  alt="The Barrel Restaurant (Pizza & Pasta)" 
-                  className="h-10 w-auto object-contain"
-                />
-                <div>
-                  <h1 className="text-lg md:text-xl font-bold text-foreground">
-                    Admin Dashboard
-                  </h1>
-                  <p className="text-xs text-muted-foreground">The Barrel Restaurant</p>
+              <div className="flex items-center gap-6 flex-1">
+                <div className="flex items-center gap-3">
+                  <img 
+                    src="/barrel-logo.png" 
+                    alt="The Barrel Restaurant (Pizza & Pasta)" 
+                    className="h-10 w-auto object-contain"
+                  />
+                  <div>
+                    <h1 className="text-lg md:text-xl font-bold text-foreground">
+                      Admin Dashboard
+                    </h1>
+                    <p className="text-xs text-muted-foreground">The Barrel Restaurant</p>
+                  </div>
                 </div>
+                
+                {/* Active Drivers Table in Header - Only show on Order Tracking tab */}
+                {currentTab === "order-tracking" && (
+                  <div className="flex-1 border-l border-border/40 pl-6">
+                    <div className="text-xs font-semibold text-muted-foreground mb-2">ACTIVE DRIVERS</div>
+                    <HeaderDriversTable />
+                  </div>
+                )}
               </div>
               <Button
                 variant="outline"
