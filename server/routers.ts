@@ -6,6 +6,7 @@ import { eq } from 'drizzle-orm';
 import { convertOntarioTimeToUTC } from './timezoneHelper';
 import * as db from './db';
 import { getDb } from './db';
+import { createNotification } from './notifications';
 
 export const appRouter = router({
   places: router({
@@ -264,6 +265,15 @@ export const appRouter = router({
           customerLongitude: input.customerLongitude as any,
           status: 'Pending',
         });
+        
+        // Send notification to kitchen
+        createNotification({
+          recipientRole: 'kitchen',
+          type: 'order_created',
+          message: `Order ${order.orderNumber} has received`,
+          orderId: order.id,
+        });
+        
         return order;
       }),
 
