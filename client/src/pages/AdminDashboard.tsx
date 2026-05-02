@@ -193,13 +193,11 @@ export default function AdminDashboard() {
                   </div>
                 </div>
                 
-                {/* Active Drivers Table in Header - Only show on Order Tracking tab */}
-                {currentTab === "order-tracking" && (
-                  <div className="flex-1 border-l border-border/40 pl-6">
-                    <div className="text-xs font-semibold text-muted-foreground mb-2">ACTIVE DRIVERS</div>
-                    <HeaderDriversTable />
-                  </div>
-                )}
+                {/* Active Drivers Table in Header - Always visible */}
+                <div className="flex-1 border-l border-border/40 pl-6">
+                  <div className="text-xs font-semibold text-muted-foreground mb-2">ACTIVE DRIVERS</div>
+                  <HeaderDriversTable />
+                </div>
               </div>
               <Button
                 variant="outline"
