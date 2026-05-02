@@ -96,6 +96,7 @@ export async function getDrivers() {
     isActive: drivers.isActive,
     estimatedReturnTime: drivers.estimatedReturnTime,
     estimatedReturnTimeUpdatedAt: drivers.estimatedReturnTimeUpdatedAt,
+    timerStartTime: drivers.timerStartTime,
   }).from(drivers).where(eq(drivers.isActive, true)).orderBy(drivers.createdAt);
   
   // Ensure id is a plain number - convert to JSON and back to ensure proper serialization

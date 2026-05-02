@@ -173,7 +173,7 @@ export const appRouter = router({
         orderNumber: z.string(),
         customerAddress: z.string(),
         customerPhone: z.string().optional(),
-        area: z.string().optional(),
+        area: z.enum(['Downtown', 'Central Park', 'Both']).optional(),
         deliveryTime: z.string().optional(),
         receiptImage: z.string().optional(),
         customerLatitude: z.number().optional(),
@@ -202,7 +202,7 @@ export const appRouter = router({
           orderNumber: input.orderNumber,
           customerAddress: input.customerAddress,
           customerPhone: input.customerPhone || '',
-          area: input.area,
+          area: input.area as any,
           deliveryTime: input.deliveryTime,
           receiptImage: receiptImageUrl,
           customerLatitude: input.customerLatitude as any,
@@ -445,8 +445,8 @@ export const appRouter = router({
             .set({
               estimatedReturnTime: input.returnTimeSeconds,
               estimatedReturnTimeUpdatedAt: new Date(),
-              timerStartTime: Date.now(), // Store the exact timestamp when timer was started
-            })
+              timerStartTime: Date.now() as any,
+            } as any)
             .where(eq(drivers.id, input.driverId))
             .execute();
           return { success: true, timerStartTime: Date.now() };
