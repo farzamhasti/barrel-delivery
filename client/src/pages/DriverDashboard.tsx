@@ -438,8 +438,8 @@ export default function DriverDashboard() {
                           alert('Driver not logged in');
                           return;
                         }
-                        // Check if driver has active orders
-                        const activeOrders = assignedOrders.filter((order: any) => order.status === 'On the way');
+                        // Check if driver has active orders (case-insensitive comparison)
+                        const activeOrders = assignedOrders.filter((order: any) => order.status?.toLowerCase() === 'on the way');
                         if (activeOrders.length === 0) {
                           alert('No active deliveries. Please add orders first.');
                           return;
