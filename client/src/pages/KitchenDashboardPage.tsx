@@ -51,11 +51,23 @@ export default function KitchenDashboardPage() {
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [zoomImageUrl, setZoomImageUrl] = useState<string | null>(null);
 
-  // Fetch today's orders with items
-  const { data: allOrders = [], isLoading, refetch } = trpc.orders.getTodayWithItems.useQuery();
+  // Fetch today's orders with items with polling (2-second interval) for real-time updates
+  const { data: allOrders = [], isLoading, refetch } = trpc.orders.getTodayWithItems.useQuery(undefined, {
+    staleTime: 0, // Always consider data stale
+    gcTime: 0, // Don't cache in garbage collector
+    refetchInterval: 2000, // Poll every 2 seconds for real-time order updates
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+  });
 
-  // Fetch active drivers
-  const { data: drivers = [] } = trpc.drivers.list.useQuery();
+  // Fetch active drivers with real-time polling (3-second interval)
+  const { data: drivers = [] } = trpc.drivers.list.useQuery(undefined, {
+    staleTime: 0, // Always consider data stale
+    gcTime: 0, // Don't cache
+    refetchInterval: 3000, // Poll every 3 seconds for real-time updates
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+  });
   const activeDrivers = drivers.filter((d: any) => d.status === "online" && d.isActive);
 
   // Fetch pending reservations count
@@ -99,13 +111,7 @@ export default function KitchenDashboardPage() {
   const sortedPendingOrders = sortByDeliveryTime(pendingOrders);
   const sortedReadyOrders = sortByDeliveryTime(readyOrders);
 
-  // Auto-refetch every 3 seconds for real-time updates
-  useEffect(() => {
-    const interval = setInterval(() => {
-      refetch();
-    }, 3000);
-    return () => clearInterval(interval);
-  }, [refetch]);
+  // Note: Polling is handled by refetchInterval in query configuration
 
   // Calculate urgency level based on delivery time
   const getUrgencyLevel = (deliveryTime: string | null) => {
