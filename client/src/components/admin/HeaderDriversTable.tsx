@@ -23,8 +23,12 @@ function DriverRowWithTimer({ driver, hasOnTheWayOrders }: { driver: any; hasOnT
 }
 
 export function HeaderDriversTable() {
-  const { data: drivers = [] } = trpc.drivers.list.useQuery();
-  const { data: orders = [] } = trpc.orders.getAll.useQuery();
+  const { data: drivers = [] } = trpc.drivers.list.useQuery(undefined, {
+    refetchInterval: 1000, // Refetch every 1 second to catch status changes and timer updates
+  });
+  const { data: orders = [] } = trpc.orders.getAll.useQuery(undefined, {
+    refetchInterval: 2000, // Refetch orders every 2 seconds
+  });
 
   // Memoize computed values to prevent infinite loops
   const { activeDrivers, driversWithOnTheWayOrders } = useMemo(() => {
