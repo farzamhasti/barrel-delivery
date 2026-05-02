@@ -1,7 +1,7 @@
 import { useCountdownTimer } from "@/hooks/useCountdownTimer";
 import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc";
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 
 function DriverRowWithTimer({ driver, hasOnTheWayOrders }: { driver: any; hasOnTheWayOrders: boolean }) {
   const { displayTime } = useCountdownTimer(driver.estimatedReturnTime, driver.id);
@@ -25,23 +25,26 @@ function DriverRowWithTimer({ driver, hasOnTheWayOrders }: { driver: any; hasOnT
 export function HeaderDriversTable() {
   const { data: drivers = [] } = trpc.drivers.list.useQuery();
   const { data: orders = [] } = trpc.orders.list.useQuery();
-  const [activeDrivers, setActiveDrivers] = useState<any[]>([]);
-  const [driversWithOnTheWayOrders, setDriversWithOnTheWayOrders] = useState<Set<number>>(new Set());
 
-  useEffect(() => {
-    if (drivers && drivers.length > 0) {
-      const active = drivers.filter((d: any) => d.status === "online" && d.isActive);
-      setActiveDrivers(active);
+  // Memoize computed values to prevent infinite loops
+  const { activeDrivers, driversWithOnTheWayOrders } = useMemo(() => {
+    if (!drivers || drivers.length === 0) {
+      return { activeDrivers: [], driversWithOnTheWayOrders: new Set<number>() };
+    }
 
-      // Find drivers with on-the-way orders
-      const driversWithOrders = new Set<number>();
+    const active = drivers.filter((d: any) => d.status === "online" && d.isActive);
+
+    // Find drivers with on-the-way orders
+    const driversWithOrders = new Set<number>();
+    if (orders && orders.length > 0) {
       orders.forEach((order: any) => {
         if (order.status === "On the Way" && order.driverId) {
           driversWithOrders.add(order.driverId);
         }
       });
-      setDriversWithOnTheWayOrders(driversWithOrders);
     }
+
+    return { activeDrivers: active, driversWithOnTheWayOrders: driversWithOrders };
   }, [drivers, orders]);
 
   if (activeDrivers.length === 0) {
