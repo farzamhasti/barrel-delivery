@@ -62,17 +62,14 @@ export function HeaderDriversTable() {
   }
 
   return (
-    <div className="space-y-2">
-      <div className="text-xs font-semibold text-muted-foreground">ACTIVE DRIVERS</div>
-      <div className="grid grid-cols-2 gap-2">
-        {activeDrivers.map((driver: any) => (
-          <DriverCard 
-            key={driver.id} 
-            driver={driver}
-            hasOnTheWayOrders={driversWithOnTheWayOrders.has(driver.id)}
-          />
-        ))}
-      </div>
+    <div className="grid grid-cols-2 gap-2">
+      {activeDrivers.map((driver: any) => (
+        <DriverCard 
+          key={driver.id} 
+          driver={driver}
+          hasOnTheWayOrders={driversWithOnTheWayOrders.has(driver.id)}
+        />
+      ))}
     </div>
   );
 }
