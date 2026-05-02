@@ -31,10 +31,13 @@ export default function KitchenDashboard() {
     setLocation("/");
   };
 
-  // Fetch today's orders with items with stale time 0 to always fetch fresh data
+  // Fetch today's orders with items with polling (2-second interval) for real-time updates
   const { data: allOrders = [], isLoading, refetch } = trpc.orders.getTodayWithItems.useQuery(undefined, {
     staleTime: 0, // Always consider data stale
     gcTime: 0, // Don't cache in garbage collector
+    refetchInterval: 2000, // Poll every 2 seconds for real-time order updates
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
   });
 
   // Fetch active drivers with real-time polling (3-second interval) - matching OrderTrackingWithMap
@@ -105,14 +108,7 @@ export default function KitchenDashboard() {
     }
   }, []);
 
-  // Note: Orders are already configured with staleTime: 0 and gcTime: 0 above for real-time updates
-  
-  // Get drivers with on_the_way orders
-  const driversWithOnTheWayOrders = new Set(
-    allOrders
-      .filter((order: any) => order.status === 'On the Way')
-      .map((order: any) => order.driverId)
-  );
+  // Note: Orders and drivers are already configured with polling for real-time updates
   
   // Component to display a single driver with countdown timer
   const DriverRow = ({ driver, hasOnTheWayOrders }: { driver: any; hasOnTheWayOrders: boolean }) => {
@@ -134,10 +130,7 @@ export default function KitchenDashboard() {
     );
   };
 
-  // Force refetch on component mount
-  useEffect(() => {
-    refetch();
-  }, []);
+  // Note: Polling is handled by refetchInterval in query configuration
 
   const memoizedOrder = useMemo(() => selectedOrder, [selectedOrder]);
 
