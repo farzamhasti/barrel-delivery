@@ -37,17 +37,12 @@ export default function KitchenDashboard() {
     gcTime: 0, // Don't cache in garbage collector
   });
 
-  // Fetch active drivers with real-time polling
-  const { data: drivers = [], refetch: refetchDrivers } = trpc.drivers.list.useQuery();
+  // Fetch active drivers with real-time polling using refetchInterval
+  const { data: drivers = [] } = trpc.drivers.list.useQuery(undefined, {
+    refetchInterval: 2000, // Refetch every 2 seconds
+    refetchIntervalInBackground: true, // Continue polling even when tab is not focused
+  });
   const activeDrivers = drivers.filter((d: any) => d.status === "online" && d.isActive);
-  
-  // Auto-refetch drivers every 2 seconds for real-time status updates
-  useEffect(() => {
-    const interval = setInterval(() => {
-      refetchDrivers();
-    }, 2000);
-    return () => clearInterval(interval);
-  }, [refetchDrivers]);
 
   // Mutation to update order status to ready
   const updateStatusMutation = trpc.orders.updateStatus.useMutation({
@@ -100,13 +95,7 @@ export default function KitchenDashboard() {
     }
   }, []);
 
-  // Refetch orders periodically to ensure real-time updates
-  useEffect(() => {
-    const interval = setInterval(() => {
-      refetch();
-    }, 3000); // Refetch every 3 seconds for faster updates
-    return () => clearInterval(interval);
-  }, [refetch]);
+  // Note: Orders are already configured with staleTime: 0 and gcTime: 0 above for real-time updates
   
   // Get drivers with on_the_way orders
   const driversWithOnTheWayOrders = new Set(
