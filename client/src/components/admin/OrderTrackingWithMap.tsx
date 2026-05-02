@@ -85,20 +85,20 @@ export default function OrderTrackingWithMap() {
   // Geocoding mutation
   const geocodeMutation = (trpc as any).maps.geocode.useMutation();
 
-  // Fetch today's orders with items for complete data
+  // Fetch today's orders with items for complete data with faster polling (1-second interval)
   const { data: allOrders = [], isLoading, refetch } = trpc.orders.getTodayWithItems.useQuery(undefined, { 
     staleTime: 0, // Always consider data stale
     gcTime: 0, // Don't cache
-    refetchInterval: 3000, // Poll every 3 seconds for real-time updates
+    refetchInterval: 1000, // Poll every 1 second for near-instant updates
     refetchOnWindowFocus: true,
     refetchOnMount: true,
   });
   
-  // Fetch drivers for Active Drivers section with real-time polling (3-second interval)
+  // Fetch drivers for Active Drivers section with faster real-time polling (1-second interval)
   const { data: drivers = [], isLoading: driversLoading } = trpc.drivers.list.useQuery(undefined, { 
     staleTime: 0, // Always consider data stale
     gcTime: 0, // Don't cache
-    refetchInterval: 3000, // Poll every 3 seconds for real-time updates
+    refetchInterval: 1000, // Poll every 1 second for near-instant updates
     refetchOnWindowFocus: true,
     refetchOnMount: true,
   });
