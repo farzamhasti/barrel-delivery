@@ -221,33 +221,70 @@ export default function OrderTrackingWithMap() {
   };
 
   return (
-    <div className="flex flex-col h-full gap-4 p-4">
-      {/* Map Controls */}
-      <div className="flex justify-between items-center">
-        <div>
-          {!isMobile && (
-            <Button
-              onClick={() => setShowMap(!showMap)}
-              variant={showMap ? "default" : "outline"}
-              size="sm"
-              className="gap-2"
-            >
-              {showMap ? "Hide Map" : "Show Map"}
-            </Button>
-          )}
+    <div className="flex flex-col h-full gap-0 p-0">
+      {/* Fixed Header with Active Drivers Table */}
+      {!isMobile && (
+        <div className="border-b border-border bg-background sticky top-0 z-40 p-4">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-foreground mb-2">Active Drivers ({activeDrivers.length})</h3>
+              {activeDrivers.length === 0 ? (
+                <p className="text-muted-foreground text-sm">No active drivers</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="border-b border-border bg-muted/50">
+                        <th className="text-left py-2 px-3 font-semibold">Name</th>
+                        <th className="text-left py-2 px-3 font-semibold">Status</th>
+                        <th className="text-left py-2 px-3 font-semibold">Est. Return</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {activeDrivers.map((driver: any) => (
+                        <DriverRowWithTimer 
+                          key={driver.id} 
+                          driver={driver}
+                          hasOnTheWayOrders={driversWithOnTheWayOrders.has(driver.id)}
+                        />
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-        <Button
-          onClick={() => setShowFullscreenMap(true)}
-          variant="outline"
-          size="sm"
-          className="gap-2"
-        >
-          <Maximize2 className="w-4 h-4" />
-          Better Map View
-        </Button>
-      </div>
+      )}
 
-      <div className="flex gap-4 flex-1">
+      {/* Main Content Area */}
+      <div className="flex flex-col h-full gap-4 p-4 overflow-hidden">
+        {/* Map Controls */}
+        <div className="flex justify-between items-center">
+          <div>
+            {!isMobile && (
+              <Button
+                onClick={() => setShowMap(!showMap)}
+                variant={showMap ? "default" : "outline"}
+                size="sm"
+                className="gap-2"
+              >
+                {showMap ? "Hide Map" : "Show Map"}
+              </Button>
+            )}
+          </div>
+          <Button
+            onClick={() => setShowFullscreenMap(true)}
+            variant="outline"
+            size="sm"
+            className="gap-2"
+          >
+            <Maximize2 className="w-4 h-4" />
+            Better Map View
+          </Button>
+        </div>
+
+        <div className="flex gap-4 flex-1">
         {/* Map Section - Hidden on Mobile */}
         {showMap && !isMobile && (
           <div className="flex-1 rounded-lg overflow-hidden border border-border">
@@ -308,47 +345,11 @@ export default function OrderTrackingWithMap() {
           </div>
         )}
 
-        {/* Active Drivers Section - Right Side - Hidden on Mobile */}
-        {!isMobile && (
-        <div className="w-80 flex flex-col overflow-hidden">
-          <Card className="overflow-hidden flex-1 flex flex-col">
-            <div className="p-4 border-b border-border flex-shrink-0">
-              <h3 className="text-lg font-semibold text-foreground">Active Drivers ({activeDrivers.length})</h3>
-            </div>
-            
-            {activeDrivers.length === 0 ? (
-              <div className="p-6 text-center flex-1 flex items-center justify-center">
-                <p className="text-muted-foreground">No active drivers</p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto flex-1">
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="border-b border-border bg-muted/50">
-                      <th className="text-left py-2 px-3 font-semibold">Name</th>
-                      <th className="text-left py-2 px-3 font-semibold">Status</th>
-                      <th className="text-left py-2 px-3 font-semibold">Est. Return</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {activeDrivers.map((driver: any) => (
-                      <DriverRowWithTimer 
-                        key={driver.id} 
-                        driver={driver}
-                        hasOnTheWayOrders={driversWithOnTheWayOrders.has(driver.id)}
-                      />
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </Card>
-        </div>
-        )}
+
       </div>
 
-      {/* Orders Section */}
-      <div className="flex-1 overflow-hidden">
+        {/* Orders Section */}
+        <div className="flex-1 overflow-hidden">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
           <TabsList className="grid w-full grid-cols-4 mb-4">
             <TabsTrigger value="pending" className="flex items-center gap-2">
@@ -462,6 +463,7 @@ export default function OrderTrackingWithMap() {
             </TabsContent>
           </div>
         </Tabs>
+        </div>
       </div>
 
       {/* Order Details Modal (from Map Click) */}
