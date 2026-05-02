@@ -3,22 +3,24 @@ import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc";
 import { useMemo } from "react";
 
-function DriverRowWithTimer({ driver, hasOnTheWayOrders }: { driver: any; hasOnTheWayOrders: boolean }) {
+function DriverCard({ driver, hasOnTheWayOrders }: { driver: any; hasOnTheWayOrders: boolean }) {
   const { displayTime } = useCountdownTimer(driver.estimatedReturnTime, driver.id);
   
   // Only show timer if driver has on_the_way orders AND has set estimated return time
   const shouldShowTimer = hasOnTheWayOrders && driver.estimatedReturnTime && driver.estimatedReturnTime > 0;
   
   return (
-    <tr className="border-b border-border/40 hover:bg-muted/20">
-      <td className="py-1 px-2 text-xs">{driver.name}</td>
-      <td className="py-1 px-2">
-        <Badge className="bg-green-100 text-green-800 text-xs h-5">Online</Badge>
-      </td>
-      <td className="py-1 px-2 text-xs text-muted-foreground font-mono">
-        {shouldShowTimer ? displayTime : "00:00"}
-      </td>
-    </tr>
+    <div className="flex items-center justify-between px-3 py-2 bg-muted/30 rounded border border-border/40 text-xs">
+      <div className="flex-1 min-w-0">
+        <div className="font-medium truncate">{driver.name}</div>
+        <Badge className="bg-green-100 text-green-800 text-xs h-4 mt-1">Online</Badge>
+      </div>
+      <div className="text-right ml-2">
+        <div className="font-mono text-muted-foreground">
+          {shouldShowTimer ? displayTime : "00:00"}
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -60,25 +62,17 @@ export function HeaderDriversTable() {
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="text-xs whitespace-nowrap">
-        <thead>
-          <tr className="border-b border-border/40">
-            <th className="text-left py-1 px-2 font-semibold text-muted-foreground">Name</th>
-            <th className="text-left py-1 px-2 font-semibold text-muted-foreground">Status</th>
-            <th className="text-left py-1 px-2 font-semibold text-muted-foreground">Est. Return</th>
-          </tr>
-        </thead>
-        <tbody>
-          {activeDrivers.map((driver: any) => (
-            <DriverRowWithTimer 
-              key={driver.id} 
-              driver={driver}
-              hasOnTheWayOrders={driversWithOnTheWayOrders.has(driver.id)}
-            />
-          ))}
-        </tbody>
-      </table>
+    <div className="space-y-2">
+      <div className="text-xs font-semibold text-muted-foreground">ACTIVE DRIVERS</div>
+      <div className="grid grid-cols-2 gap-2">
+        {activeDrivers.map((driver: any) => (
+          <DriverCard 
+            key={driver.id} 
+            driver={driver}
+            hasOnTheWayOrders={driversWithOnTheWayOrders.has(driver.id)}
+          />
+        ))}
+      </div>
     </div>
   );
 }
