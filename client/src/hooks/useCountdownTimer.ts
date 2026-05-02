@@ -5,10 +5,9 @@ import { useTimerStartTime } from '@/contexts/TimerStartTimeContext';
  * Custom hook for countdown timer with persistent elapsed time tracking
  * @param initialSeconds - Initial time in seconds (only used on first mount)
  * @param driverId - Driver ID to store/retrieve timer data
- * @param timerStartTime - Server-stored timestamp when timer was started (for syncing across tabs)
  * @returns Object with current time in MM:SS format and remaining seconds
  */
-export function useCountdownTimer(initialSeconds: number | null | undefined, driverId: number, timerStartTime?: number | null) {
+export function useCountdownTimer(initialSeconds: number | null | undefined, driverId: number) {
   const { timerData, setTimerStartTime, getRemainingSeconds, clearTimerStartTime } = useTimerStartTime();
   const [remainingSeconds, setRemainingSeconds] = useState<number>(0);
   const initializationRef = useRef<Set<number>>(new Set());
@@ -29,10 +28,9 @@ export function useCountdownTimer(initialSeconds: number | null | undefined, dri
       }
       
       if (!initializationRef.current.has(driverId)) {
-        // Use server's timerStartTime if available (for syncing across tabs)
-        // Otherwise use current time as the database timestamp (when driver calculated)
-        const dbTimestamp = timerStartTime || Date.now();
-        setTimerStartTime(driverId, initialSeconds, dbTimestamp);
+        // Use current time as the database timestamp (when driver calculated)
+        // This ensures all dashboards calculate from the same reference point
+        setTimerStartTime(driverId, initialSeconds, Date.now());
         initializationRef.current.add(driverId);
       }
     } else if (initialSeconds === 0 || initialSeconds === null) {

@@ -1,4 +1,4 @@
-import { mysqlTable, int, varchar, text, timestamp, decimal, mysqlEnum, boolean, unique, foreignKey, bigint } from "drizzle-orm/mysql-core";
+import { mysqlTable, int, varchar, text, timestamp, decimal, mysqlEnum, boolean, unique, foreignKey } from "drizzle-orm/mysql-core";
 
 // Users table (for admin/kitchen/driver login)
 export const users = mysqlTable("users", {
@@ -28,7 +28,6 @@ export const drivers = mysqlTable("drivers", {
   isActive: boolean("is_active").default(true),
   estimatedReturnTime: int("estimated_return_time"),
   estimatedReturnTimeUpdatedAt: timestamp("estimated_return_time_updated_at"),
-  timerStartTime: bigint("timer_start_time", { mode: 'number' }), // Milliseconds since epoch when timer was started
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

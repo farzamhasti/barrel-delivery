@@ -445,7 +445,6 @@ export const appRouter = router({
             .set({
               estimatedReturnTime: input.returnTimeSeconds,
               estimatedReturnTimeUpdatedAt: new Date(),
-              timerStartTime: Date.now(), // Store the current timestamp when timer is started
             })
             .where(eq(drivers.id, input.driverId))
             .execute();

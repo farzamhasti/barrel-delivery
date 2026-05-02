@@ -117,7 +117,7 @@ export default function KitchenDashboard() {
   
   // Component to display a single driver with countdown timer
   const DriverRow = ({ driver, hasOnTheWayOrders }: { driver: any; hasOnTheWayOrders: boolean }) => {
-    const { displayTime } = useCountdownTimer(driver.estimatedReturnTime, driver.id, driver.timerStartTime);
+    const { displayTime } = useCountdownTimer(driver.estimatedReturnTime, driver.id);
     
     // Only show timer if driver has on_the_way orders AND has set estimated return time
     const shouldShowTimer = hasOnTheWayOrders && driver.estimatedReturnTime && driver.estimatedReturnTime > 0;
