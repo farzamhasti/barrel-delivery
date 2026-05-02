@@ -60,8 +60,10 @@ export default function KitchenDashboardPage() {
   });
   const activeDrivers = drivers.filter((d: any) => d.status === "online" && d.isActive);
 
-  // Fetch pending reservations count
-  const { data: allReservations = [] } = trpc.reservations.getAll.useQuery();
+  // Fetch pending reservations count with real-time refetching
+  const { data: allReservations = [] } = trpc.reservations.getAll.useQuery(undefined, {
+    refetchInterval: 1000, // Refetch every 1 second to catch new reservations
+  });
   const pendingReservationsCount = allReservations.filter((r: any) => r.status === "Pending").length;
 
   // Mutation to update order status to ready

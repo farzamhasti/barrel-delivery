@@ -19,7 +19,9 @@ export function Reservations() {
     description: '',
   });
 
-  const { data: allReservations = [], refetch } = trpc.reservations.getAll.useQuery();
+  const { data: allReservations = [], refetch } = trpc.reservations.getAll.useQuery(undefined, {
+    refetchInterval: 1000, // Refetch every 1 second to catch updates from kitchen dashboard
+  });
   const createMutation = trpc.reservations.create.useMutation();
   const updateMutation = trpc.reservations.update.useMutation();
   const deleteMutation = trpc.reservations.delete.useMutation();
