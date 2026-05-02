@@ -1477,12 +1477,17 @@ export async function createReservation(data: any) {
   if (!db) throw new Error("Database not available");
 
   const insertData: any = {
-    eventType: data.eventType || 'General Event',
-    numberOfPeople: data.numberOfPeople || 1,
-    dateTime: data.dateTime || new Date(),
+    eventType: data.eventType,
+    numberOfPeople: data.numberOfPeople,
+    dateTime: data.dateTime,
     description: data.description || '',
     status: data.status || 'Pending',
   };
+  
+  // Validate required fields
+  if (!insertData.eventType || !insertData.numberOfPeople || !insertData.dateTime) {
+    throw new Error('Missing required fields: eventType, numberOfPeople, and dateTime are required');
+  }
 
   const result = await db.insert(reservations).values(insertData);
   

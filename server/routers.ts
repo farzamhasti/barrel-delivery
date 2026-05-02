@@ -589,12 +589,10 @@ export const appRouter = router({
       }))
       .mutation(async ({ input }) => {
         const reservation = await db.createReservation({
-          customerName: input.eventType,
-          customerPhone: '',
-          customerEmail: '',
-          reservationDate: input.dateTime,
-          partySize: input.numberOfPeople,
-          specialRequests: input.description,
+          eventType: input.eventType,
+          numberOfPeople: input.numberOfPeople,
+          dateTime: input.dateTime,
+          description: input.description || '',
           status: 'Pending',
         });
         return reservation;
@@ -642,7 +640,11 @@ export const appRouter = router({
       }))
       .mutation(async ({ input }) => {
         const { id, ...updateData } = input;
-        return await db.updateReservation(id, updateData);
+        // Only include fields that are actually provided (not undefined)
+        const cleanUpdateData = Object.fromEntries(
+          Object.entries(updateData).filter(([, v]) => v !== undefined)
+        );
+        return await db.updateReservation(id, cleanUpdateData);
       }),
   }),
 

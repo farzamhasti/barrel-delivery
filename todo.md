@@ -1492,3 +1492,15 @@ These features are documented for future enhancement but are not required for th
 - [x] No changes to appearance or other functionality
 - [x] TypeScript compilation: 2 minor warnings (vite/client - non-critical)
 - [x] Dev server: Running successfully
+
+
+## Phase 37: Fix Reservation Creation to Save User Data Instead of Defaults
+- [x] Fixed router create procedure to pass correct field names (eventType, numberOfPeople, dateTime)
+- [x] Removed default fallback values from createReservation function
+- [x] Added validation to ensure required fields are provided
+- [x] Fixed update procedure to only update provided fields (not send undefined values)
+- [x] Tested reservation creation with user data (Corporate Meeting, 50 people, custom description)
+- [x] Verified data is saved correctly to database (not "General Event" and "1")
+- [x] All reservation data now saves exactly as entered by user
+- [x] TypeScript compilation: 2 minor warnings (vite/client - non-critical)
+- [x] Dev server: Running successfully
