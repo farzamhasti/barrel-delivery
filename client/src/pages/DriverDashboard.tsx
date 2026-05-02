@@ -475,51 +475,55 @@ export default function DriverDashboard() {
                     size="lg"
                     className="bg-purple-600 hover:bg-purple-700 text-white w-full"
                     onClick={() => {
-                      if (assignedOrders.length === 0) {
-                        alert('No active deliveries to show on map');
-                        return;
-                      }
+                      try {
+                        console.log('[Delivery with Map] Button clicked');
+                        console.log('[Delivery with Map] assignedOrders:', assignedOrders);
+                        
+                        if (assignedOrders.length === 0) {
+                          alert('No active deliveries to show on map');
+                          return;
+                        }
 
-                      // Filter orders that have coordinates (explicitly check for null/undefined, not falsy)
-                      const ordersWithCoordinates = assignedOrders.filter(
-                        (order: any) => order.customerLatitude !== null && order.customerLatitude !== undefined && order.customerLongitude !== null && order.customerLongitude !== undefined
-                      );
+                        // Filter orders that have coordinates (explicitly check for null/undefined, not falsy)
+                        const ordersWithCoordinates = assignedOrders.filter(
+                          (order: any) => order.customerLatitude !== null && order.customerLatitude !== undefined && order.customerLongitude !== null && order.customerLongitude !== undefined
+                        );
 
-                      if (ordersWithCoordinates.length === 0) {
-                        alert('No delivery coordinates available');
-                        return;
-                      }
+                        console.log('[Delivery with Map] ordersWithCoordinates:', ordersWithCoordinates);
 
-                      // Restaurant coordinates (The Barrel Restaurant, Fort Erie, ON)
-                      const restaurantLat = 42.9149;
-                      const restaurantLng = -79.0402;
-                      const restaurantCoords = `${restaurantLat},${restaurantLng}`;
+                        if (ordersWithCoordinates.length === 0) {
+                          alert('No delivery coordinates available');
+                          return;
+                        }
 
-                      // Build waypoints from customer coordinates
-                      const waypoints = ordersWithCoordinates
-                        .map((order: any) => `${order.customerLatitude},${order.customerLongitude}`)
-                        .join('|');
+                        // Restaurant coordinates (The Barrel Restaurant, Fort Erie, ON)
+                        const restaurantLat = 42.9149;
+                        const restaurantLng = -79.0402;
+                        const restaurantCoords = `${restaurantLat},${restaurantLng}`;
 
-                      // Build Google Maps URL with optimization enabled
-                      // Format: https://www.google.com/maps/dir/?api=1&origin=START&destination=END&waypoints=WAYPOINTS&optimize=true
-                      const isMobileDevice = /iPhone|iPad|iPod|Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-                      const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${restaurantCoords}&destination=${restaurantCoords}&waypoints=${waypoints}&optimize=true&travelmode=driving${isMobileDevice ? '&comclient=mobileapp' : ''}`;
+                        // Build waypoints from customer coordinates
+                        const waypoints = ordersWithCoordinates
+                          .map((order: any) => `${order.customerLatitude},${order.customerLongitude}`)
+                          .join('|');
 
-                      // Try to open in native Google Maps app on all devices
-                      if (isMobileDevice) {
-                        // Create a temporary link and click it to trigger native app
-                        const link = document.createElement('a');
-                        link.href = mapsUrl;
-                        link.style.display = 'none';
-                        document.body.appendChild(link);
-                        link.click();
-                        // Clean up after a short delay
-                        setTimeout(() => {
-                          document.body.removeChild(link);
-                        }, 100);
-                      } else {
-                        // Open in new tab on desktop
-                        window.open(mapsUrl, '_blank');
+                        // Build Google Maps URL with optimization enabled
+                        const isMobileDevice = /iPhone|iPad|iPod|Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                        const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${restaurantCoords}&destination=${restaurantCoords}&waypoints=${waypoints}&optimize=true&travelmode=driving${isMobileDevice ? '&comclient=mobileapp' : ''}`;
+
+                        console.log('[Delivery with Map] Generated URL:', mapsUrl);
+                        console.log('[Delivery with Map] isMobileDevice:', isMobileDevice);
+
+                        // Open Google Maps URL
+                        if (isMobileDevice) {
+                          // On mobile, use location.href for direct navigation
+                          window.location.href = mapsUrl;
+                        } else {
+                          // On desktop, open in new tab
+                          window.open(mapsUrl, '_blank');
+                        }
+                      } catch (error) {
+                        console.error('[Delivery with Map] Error:', error);
+                        alert('Error opening map: ' + (error instanceof Error ? error.message : String(error)));
                       }
                     }}
                   >
