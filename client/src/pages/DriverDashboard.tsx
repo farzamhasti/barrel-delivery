@@ -87,10 +87,14 @@ export default function DriverDashboard() {
     },
   });
   
-  // Get assigned orders for today
+  // Get assigned orders for today with real-time polling
   const { data: assignedOrdersRaw = [] } = trpc.orders.getTodayWithItems.useQuery(
     currentDriverId ? { driverId: currentDriverId } : undefined,
-    { enabled: !!sessionToken && !!currentDriverId }
+    { 
+      enabled: !!sessionToken && !!currentDriverId,
+      refetchInterval: 3000, // Refetch every 3 seconds for real-time updates
+      refetchIntervalInBackground: true // Continue refetching even when tab is not focused
+    }
   );
   const assignedOrders = (assignedOrdersRaw as any) || [];
 
