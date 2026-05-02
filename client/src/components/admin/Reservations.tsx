@@ -130,7 +130,11 @@ export function Reservations() {
         </div>
         <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
           <DialogTrigger asChild>
-            <Button onClick={() => setIsFormOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white">
+            <Button onClick={() => {
+              setEditingId(null);
+              setFormData({ eventType: '', numberOfPeople: '', dateTime: '', description: '' });
+              setIsFormOpen(true);
+            }} className="bg-blue-600 hover:bg-blue-700 text-white">
               <Plus className="h-4 w-4 mr-2" />
               New Reservation
             </Button>

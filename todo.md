@@ -1480,3 +1480,15 @@ These features are documented for future enhancement but are not required for th
 - [x] TypeScript compilation: 2 minor warnings (vite/client types - non-critical)
 - [x] Dev server: Running successfully on port 3000
 - [x] All core features verified working in browser
+
+
+## Phase 36: Fix Reservation Edit Form Pre-fill Issue
+- [x] Fixed form not clearing when creating new reservation
+- [x] Form now pre-fills with saved data when editing existing reservation
+- [x] "New Reservation" button now properly resets form state
+- [x] Edit button correctly loads reservation data into form fields
+- [x] Dialog title shows "Create New Reservation" vs "Edit Reservation" correctly
+- [x] Tested both create and edit workflows
+- [x] No changes to appearance or other functionality
+- [x] TypeScript compilation: 2 minor warnings (vite/client - non-critical)
+- [x] Dev server: Running successfully
