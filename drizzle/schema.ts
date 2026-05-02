@@ -26,7 +26,7 @@ export const drivers = mysqlTable("drivers", {
   licenseNumber: varchar("license_number", { length: 50 }).unique(),
   status: varchar("status", { length: 20 }).default("offline").notNull(),
   isActive: boolean("is_active").default(true),
-  estimatedReturnTime: int("estimated_return_time"),
+  estimatedReturnTime: timestamp("estimated_return_time"), // Absolute future timestamp (UTC) when driver will return
   estimatedReturnTimeUpdatedAt: timestamp("estimated_return_time_updated_at"),
   latitude: decimal("latitude", { precision: 10, scale: 6 }),
   longitude: decimal("longitude", { precision: 10, scale: 6 }),
@@ -37,6 +37,14 @@ export const drivers = mysqlTable("drivers", {
 
 export type Driver = typeof drivers.$inferSelect;
 export type InsertDriver = typeof drivers.$inferInsert;
+
+// Helper to calculate remaining seconds from absolute timestamp
+export function getRemainingSeconds(estimatedReturnTime: Date | null | undefined): number {
+  if (!estimatedReturnTime) return 0;
+  const now = new Date();
+  const remaining = Math.max(0, Math.floor((estimatedReturnTime.getTime() - now.getTime()) / 1000));
+  return remaining;
+}
 
 // Orders table - simplified for scanned receipts
 export const orders = mysqlTable("orders", {

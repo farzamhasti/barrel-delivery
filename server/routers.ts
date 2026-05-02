@@ -440,10 +440,15 @@ export const appRouter = router({
           const database = await getDb();
           const { drivers } = await import('../drizzle/schema');
           if (!database) throw new Error('Database connection failed');
+          
+          // Calculate absolute future timestamp (now + returnTimeSeconds)
+          const now = new Date();
+          const estimatedReturnTime = new Date(now.getTime() + input.returnTimeSeconds * 1000);
+          
           const result = await database
             .update(drivers)
             .set({
-              estimatedReturnTime: input.returnTimeSeconds,
+              estimatedReturnTime: estimatedReturnTime,
               estimatedReturnTimeUpdatedAt: new Date(),
             })
             .where(eq(drivers.id, input.driverId))
