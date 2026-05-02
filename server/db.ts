@@ -539,7 +539,7 @@ export async function assignOrderToDriver(orderId: number, driverId: number) {
     
     // Update order with driver assignment
     const result = await db.update(orders).set({
-      status: "on_the_way",
+      status: "On the Way",
       driverId: validatedDriverId,
       pickedUpAt: new Date(),
     }).where(eq(orders.id, orderId));

@@ -71,7 +71,7 @@ describe("Driver Assignment by Name", () => {
     const updatedOrder = await db.getOrder(testOrderId);
     expect(updatedOrder).toBeDefined();
     expect(updatedOrder?.driverId).toBe(testDriverId);
-    expect(updatedOrder?.status).toBe("on_the_way");
+    expect(updatedOrder?.status).toBe("On the Way");
   });
 
   it("should throw error for non-existent driver during assignment", async () => {

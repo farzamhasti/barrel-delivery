@@ -156,29 +156,39 @@ export const appRouter = router({
     sendToDriver: protectedProcedure
       .input(z.object({
         orderId: z.number(),
-        driverName: z.string(),
+        driverId: z.number(),
       }))
       .mutation(async ({ input }) => {
-        // Use driver name for assignment to avoid ID serialization issues
+        // Assign order to driver by ID and send notification
         console.log('[sendToDriver] Received input:', JSON.stringify(input));
-        console.log('[sendToDriver] Assigning order', input.orderId, 'to driver:', input.driverName);
-        const result = await db.assignOrderToDriverByName(input.orderId, input.driverName);
+        console.log('[sendToDriver] Assigning order', input.orderId, 'to driver:', input.driverId);
         
-        // Send notification to the specific driver
-        if (result && result.driverId) {
-          const { createNotification } = await import('./notifications');
+        try {
+          const result = await db.assignOrderToDriver(input.orderId, input.driverId);
+          console.log('[sendToDriver] Assignment result:', result);
+          
+          // Send notification to the specific driver
           const order = await db.getOrderById(input.orderId);
-          createNotification({
-            recipientRole: 'driver',
-            recipientId: result.driverId,
-            type: 'driver_assignment',
-            message: `Order ${order?.orderNumber || input.orderId} has been sent to you`,
-            orderId: input.orderId,
-            driverId: result.driverId,
-          });
+          console.log('[sendToDriver] Order fetched:', order);
+          
+          if (order) {
+            const { createNotification } = await import('./notifications');
+            createNotification({
+              recipientRole: 'driver',
+              recipientId: input.driverId,
+              type: 'driver_assignment',
+              message: `Order ${order.orderNumber} has been sent to you`,
+              orderId: input.orderId,
+              driverId: input.driverId,
+            });
+            console.log('[sendToDriver] Notification created for driver', input.driverId);
+          }
+          
+          return { success: true, orderId: input.orderId, driverId: input.driverId };
+        } catch (error) {
+          console.error('[sendToDriver] Error:', error);
+          throw error;
         }
-        
-        return result;
       }),
 
     getByStatus: publicProcedure
