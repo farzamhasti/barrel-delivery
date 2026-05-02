@@ -502,13 +502,21 @@ export default function DriverDashboard() {
 
                       // Build Google Maps URL with optimization enabled
                       // Format: https://www.google.com/maps/dir/?api=1&origin=START&destination=END&waypoints=WAYPOINTS&optimize=true
-                      const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${restaurantCoords}&destination=${restaurantCoords}&waypoints=${waypoints}&optimize=true&travelmode=driving`;
+                      const isMobileDevice = /iPhone|iPad|iPod|Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                      const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${restaurantCoords}&destination=${restaurantCoords}&waypoints=${waypoints}&optimize=true&travelmode=driving${isMobileDevice ? '&comclient=mobileapp' : ''}`;
 
-                      // On mobile, use direct link; on desktop, open in new tab
-                      const isMobile = /iPhone|iPad|iPod|Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-                      if (isMobile) {
-                        // Direct navigation on mobile opens native Google Maps app
-                        window.location.href = mapsUrl;
+                      // Try to open in native Google Maps app on all devices
+                      if (isMobileDevice) {
+                        // Create a temporary link and click it to trigger native app
+                        const link = document.createElement('a');
+                        link.href = mapsUrl;
+                        link.style.display = 'none';
+                        document.body.appendChild(link);
+                        link.click();
+                        // Clean up after a short delay
+                        setTimeout(() => {
+                          document.body.removeChild(link);
+                        }, 100);
                       } else {
                         // Open in new tab on desktop
                         window.open(mapsUrl, '_blank');
