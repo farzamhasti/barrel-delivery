@@ -54,8 +54,10 @@ export default function KitchenDashboardPage() {
   // Fetch today's orders with items
   const { data: allOrders = [], isLoading, refetch } = trpc.orders.getTodayWithItems.useQuery();
 
-  // Fetch active drivers
-  const { data: drivers = [] } = trpc.drivers.list.useQuery();
+  // Fetch active drivers with real-time refetching
+  const { data: drivers = [] } = trpc.drivers.list.useQuery(undefined, {
+    refetchInterval: 1000, // Refetch every 1 second to catch driver status changes
+  });
   const activeDrivers = drivers.filter((d: any) => d.status === "online" && d.isActive);
 
   // Fetch pending reservations count
