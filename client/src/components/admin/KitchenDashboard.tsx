@@ -1,6 +1,5 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose, DialogDescription } from "@/components/ui/dialog";
@@ -12,6 +11,7 @@ import { DeveloperCredit } from "@/components/DeveloperCredit";
 import { useDriverReturnTime } from "@/contexts/DriverReturnTimeContext";
 import { ImageZoomModal } from "@/components/ImageZoomModal";
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { useCountdownTimer } from "@/hooks/useCountdownTimer";
 
 export default function KitchenDashboard() {
   const [, setLocation] = useLocation();
@@ -37,9 +37,17 @@ export default function KitchenDashboard() {
     gcTime: 0, // Don't cache in garbage collector
   });
 
-  // Fetch active drivers
-  const { data: drivers = [] } = trpc.drivers.list.useQuery();
+  // Fetch active drivers with real-time polling
+  const { data: drivers = [], refetch: refetchDrivers } = trpc.drivers.list.useQuery();
   const activeDrivers = drivers.filter((d: any) => d.status === "online" && d.isActive);
+  
+  // Auto-refetch drivers every 2 seconds for real-time status updates
+  useEffect(() => {
+    const interval = setInterval(() => {
+      refetchDrivers();
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [refetchDrivers]);
 
   // Mutation to update order status to ready
   const updateStatusMutation = trpc.orders.updateStatus.useMutation({
@@ -65,6 +73,8 @@ export default function KitchenDashboard() {
       }
     }
   }, [allOrders]);
+  
+
 
   // Filter to pending orders only (for active view)
   const pendingOrders = allOrders.filter((o: any) => o.status === "Pending");
@@ -96,7 +106,34 @@ export default function KitchenDashboard() {
       refetch();
     }, 3000); // Refetch every 3 seconds for faster updates
     return () => clearInterval(interval);
-  }, [refetch])
+  }, [refetch]);
+  
+  // Get drivers with on_the_way orders
+  const driversWithOnTheWayOrders = new Set(
+    allOrders
+      .filter((order: any) => order.status === 'On the Way')
+      .map((order: any) => order.driverId)
+  );
+  
+  // Component to display a single driver with countdown timer
+  const DriverRow = ({ driver, hasOnTheWayOrders }: { driver: any; hasOnTheWayOrders: boolean }) => {
+    const { displayTime } = useCountdownTimer(driver.estimatedReturnTime, driver.id);
+    
+    // Only show timer if driver has on_the_way orders AND has set estimated return time
+    const shouldShowTimer = hasOnTheWayOrders && driver.estimatedReturnTime && driver.estimatedReturnTime > 0;
+    
+    return (
+      <tr className="border-b border-border hover:bg-muted/30">
+        <td className="py-2 px-3">{driver.name}</td>
+        <td className="py-2 px-3">
+          <Badge className="bg-green-100 text-green-800 text-xs">Online</Badge>
+        </td>
+        <td className="py-2 px-3 text-muted-foreground font-mono">
+          {shouldShowTimer ? displayTime : "00:00"}
+        </td>
+      </tr>
+    );
+  };
 
   // Force refetch on component mount
   useEffect(() => {
@@ -280,6 +317,39 @@ export default function KitchenDashboard() {
             </div>
           </TabsContent>
         </Tabs>
+        <Card className="mt-6 bg-white">
+          <div className="p-4 border-b border-border">
+            <h3 className="text-lg font-semibold text-foreground">Active Drivers ({activeDrivers.length})</h3>
+          </div>
+          
+          {activeDrivers.length === 0 ? (
+            <div className="p-6 text-center">
+              <p className="text-muted-foreground">No active drivers</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-border bg-muted/50">
+                    <th className="text-left py-2 px-3 font-semibold">Name</th>
+                    <th className="text-left py-2 px-3 font-semibold">Status</th>
+                    <th className="text-left py-2 px-3 font-semibold">Est. Return</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {activeDrivers.map((driver: any) => (
+                    <DriverRow 
+                      key={driver.id} 
+                      driver={driver}
+                      hasOnTheWayOrders={driversWithOnTheWayOrders.has(driver.id)}
+                    />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Card>
+      </div>
 
       {/* Order Detail Modal */}
       {memoizedOrder && <OrderDetailModal order={memoizedOrder} />}
@@ -293,9 +363,8 @@ export default function KitchenDashboard() {
           onClose={() => setZoomImageUrl(null)}
         />
       )}
-      </div>
 
-    <DeveloperCredit />
+      <DeveloperCredit />
     </div>
   );
 }
