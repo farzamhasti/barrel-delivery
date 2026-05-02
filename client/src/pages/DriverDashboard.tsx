@@ -88,15 +88,27 @@ export default function DriverDashboard() {
   });
   
   // Get assigned orders for today with real-time polling
-  const { data: assignedOrdersRaw = [] } = trpc.orders.getTodayWithItems.useQuery(
+  const { data: assignedOrdersRaw = [], refetch: refetchOrders } = trpc.orders.getTodayWithItems.useQuery(
     currentDriverId ? { driverId: currentDriverId } : undefined,
     { 
       enabled: !!sessionToken && !!currentDriverId,
-      refetchInterval: 3000, // Refetch every 3 seconds for real-time updates
+      refetchInterval: 1000, // Refetch every 1 second for real-time updates
       refetchIntervalInBackground: true // Continue refetching even when tab is not focused
     }
   );
+  
+  // Log polling activity
+  useEffect(() => {
+    if (currentDriverId) {
+      console.log('[DriverDashboard] Polling started for driver:', currentDriverId);
+    }
+  }, [currentDriverId]);
   const assignedOrders = (assignedOrdersRaw as any) || [];
+  
+  // Log when orders change
+  useEffect(() => {
+    console.log('[DriverDashboard] Orders updated:', assignedOrders.length, 'orders');
+  }, [assignedOrders]);
 
   // Get delivered orders count for selected date
   const { data: deliveredCountData } = trpc.drivers.getDeliveredOrdersCountByDate.useQuery(

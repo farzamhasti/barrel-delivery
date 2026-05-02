@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Trash2, Edit2, Save, X, Loader2, Upload, Camera, Clock, CheckCircle2, Truck, Package } from "lucide-react";
 import { toast } from "sonner";
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { ImageZoomModal } from "@/components/ImageZoomModal";
 import {
   AlertDialog,
@@ -63,9 +63,17 @@ export function Orders() {
     deliveryTime: "",
   });
 
-  const { data: allOrders = [], isLoading: isLoadingOrders } = trpc.orders.getTodayWithItems.useQuery({
+  const { data: allOrders = [], isLoading: isLoadingOrders, refetch: refetchOrders } = trpc.orders.getTodayWithItems.useQuery({
     date: selectedDate.toISOString().split('T')[0],
   });
+  
+  // Auto-refetch every 2 seconds for real-time order status updates
+  useEffect(() => {
+    const interval = setInterval(() => {
+      refetchOrders();
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [refetchOrders]);
   
   const orders = useMemo(() => {
     return allOrders.filter((order: any) => order.status === statusFilter);
@@ -78,10 +86,19 @@ export function Orders() {
   const deleteOrderMutation = trpc.orders.delete.useMutation();
   const updateOrderMutation = trpc.orders.update.useMutation();
 
-  const { data: selectedOrderDetails } = trpc.orders.getWithItems.useQuery(
+  const { data: selectedOrderDetails, refetch: refetchSelectedOrder } = trpc.orders.getWithItems.useQuery(
     { id: selectedOrderId || 0 },
     { enabled: !!selectedOrderId }
   );
+  
+  // Auto-refetch selected order details every 2 seconds
+  useEffect(() => {
+    if (!selectedOrderId) return;
+    const interval = setInterval(() => {
+      refetchSelectedOrder();
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [selectedOrderId, refetchSelectedOrder]);
 
   const isDeleting = deleteOrderMutation.isPending;
   const isSaving = updateOrderMutation.isPending;
