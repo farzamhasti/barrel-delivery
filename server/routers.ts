@@ -445,10 +445,11 @@ export const appRouter = router({
             .set({
               estimatedReturnTime: input.returnTimeSeconds,
               estimatedReturnTimeUpdatedAt: new Date(),
+              timerStartTime: Date.now(), // Store the exact timestamp when timer was started
             })
             .where(eq(drivers.id, input.driverId))
             .execute();
-          return { success: true };
+          return { success: true, timerStartTime: Date.now() };
         } catch (error) {
           console.error('[drivers.saveReturnTime] Error:', error);
           throw new Error(`Failed to save return time: ${error instanceof Error ? error.message : 'Unknown error'}`);
