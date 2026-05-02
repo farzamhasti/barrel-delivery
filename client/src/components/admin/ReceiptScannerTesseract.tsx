@@ -165,6 +165,31 @@ export function ReceiptScannerTesseract() {
     setError(null);
 
     try {
+      let finalCoordinates = placeCoordinates;
+      
+      // If coordinates are not set, try to geocode the address
+      if (!finalCoordinates && formData.address) {
+        console.log('[ReceiptScanner] Geocoding address:', formData.address);
+        try {
+          const response = await fetch(
+            `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(formData.address)}&key=${process.env.VITE_FRONTEND_FORGE_API_KEY}`
+          );
+          const data = await response.json();
+          
+          if (data.results && data.results.length > 0) {
+            const location = data.results[0].geometry.location;
+            finalCoordinates = {
+              lat: location.lat,
+              lng: location.lng
+            };
+            console.log('[ReceiptScanner] Geocoded coordinates:', finalCoordinates);
+          }
+        } catch (geocodeError) {
+          console.error('[ReceiptScanner] Geocoding error:', geocodeError);
+          // Continue without coordinates if geocoding fails
+        }
+      }
+      
       await createOrderMutation.mutateAsync({
         orderNumber: formData.checkNumber,
         customerAddress: formData.address,
@@ -172,8 +197,8 @@ export function ReceiptScannerTesseract() {
         deliveryTime: formData.enableDeliveryTime ? formData.deliveryTime : undefined,
         area: formData.area,
         receiptImage: formData.receiptImage,
-        customerLatitude: placeCoordinates?.lat,
-        customerLongitude: placeCoordinates?.lng,
+        customerLatitude: finalCoordinates?.lat,
+        customerLongitude: finalCoordinates?.lng,
       });
 
       setSubmitSuccess(true);
