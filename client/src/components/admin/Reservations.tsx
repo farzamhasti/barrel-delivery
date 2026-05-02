@@ -37,6 +37,12 @@ export function Reservations() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Validate that all required fields are filled
+    if (!formData.eventType.trim() || !formData.numberOfPeople || !formData.dateTime) {
+      alert('Please fill in all required fields');
+      return;
+    }
+    
     try {
       const dateTime = new Date(formData.dateTime);
       
@@ -190,7 +196,11 @@ export function Reservations() {
                 <Button type="button" variant="outline" onClick={handleCloseForm} className="flex-1">
                   Cancel
                 </Button>
-                <Button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700 text-white">
+                <Button 
+                  type="submit" 
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={!formData.eventType.trim() || !formData.numberOfPeople || !formData.dateTime}
+                >
                   {editingId ? 'Update' : 'Create'}
                 </Button>
               </div>
