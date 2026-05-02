@@ -8,6 +8,7 @@ import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 import { DeveloperCredit } from "@/components/DeveloperCredit";
+import { NotificationIcon } from "@/components/NotificationIcon";
 import { useDriverReturnTime } from "@/contexts/DriverReturnTimeContext";
 import { ImageZoomModal } from "@/components/ImageZoomModal";
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
@@ -198,14 +199,17 @@ export default function KitchenDashboard() {
               <p className="text-sm text-gray-500">The Barrel Restaurant (Pizza & Pasta)</p>
             </div>
           </div>
-          <Button
-            onClick={handleLogout}
-            variant="outline"
-            className="flex items-center gap-2"
-          >
-            <LogOut className="w-4 h-4" />
-            Logout
-          </Button>
+          <div className="flex items-center gap-3">
+            <NotificationIcon role="kitchen" />
+            <Button
+              onClick={handleLogout}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <LogOut className="w-4 h-4" />
+              Logout
+            </Button>
+          </div>
         </div>
       </div>
 

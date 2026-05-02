@@ -1504,3 +1504,39 @@ These features are documented for future enhancement but are not required for th
 - [x] All reservation data now saves exactly as entered by user
 - [x] TypeScript compilation: 2 minor warnings (vite/client - non-critical)
 - [x] Dev server: Running successfully
+
+
+## Phase 38: Implement Real-Time Notification System Across All Dashboards
+
+### Backend Infrastructure
+- [x] Create in-memory notification service (server/notifications.ts with Map-based storage)
+- [x] Add notification procedures to tRPC router (getNotifications, clearNotifications)
+- [x] Implement notification creation and retrieval functions
+- [x] Add notification event system for order, reservation, and driver actions
+
+### Notification Triggers
+- [x] Order created: Send notification to kitchen with "Order {orderNumber} has been saved"
+- [x] Order edited: Send notification to kitchen with "Order {orderNumber} has been edited"
+- [x] Reservation created: Send notification to kitchen with "Reservation {eventType} for {numberOfPeople} people has been created"
+- [x] Reservation edited: Send notification to kitchen with "Reservation {eventType} has been edited"
+- [x] Driver assigned: Send notification to specific driver with "Order {orderNumber} has been sent to you"
+- [x] Kitchen marks ready: Send notification to admin with "Order {orderNumber} is ready"
+- [x] Kitchen marks reservation done: Send notification to admin with "Reservation {eventType} is Done"
+- [x] Driver marks delivered: Send notification to admin with "Order {orderNumber} has been delivered"
+
+### UI Components
+- [x] Create NotificationIcon component with unread count badge (NotificationIcon.tsx)
+- [x] Add notification icon to Admin Dashboard header (top right, next to Logout)
+- [x] Add notification icon to Kitchen Dashboard header (top right, next to Logout)
+- [x] Add notification icon to Driver Dashboard header (top right, next to Logout)
+- [x] Create notification dropdown/modal to display notifications
+- [x] Implement notification polling every 2 seconds for real-time updates
+- [x] Add notification clear functionality
+
+### Testing
+- [x] Test notification icon appears on all three dashboards
+- [x] Test notification panel opens and displays correctly
+- [x] Test notification system doesn't change app appearance or functionality
+- [x] Verify notification infrastructure is production-ready
+- [x] All TypeScript compilation: 2 minor warnings (vite/client - non-critical)
+- [x] Dev server: Running successfully

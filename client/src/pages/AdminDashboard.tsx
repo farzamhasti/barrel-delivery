@@ -10,6 +10,7 @@ import { Menu, Package2, Truck, LogOut, Settings, Plus, Map, X, Calendar, Gift }
 import { Orders } from "@/pages/Orders";
 import DriverManagement from "@/components/admin/DriverManagement";
 import { HeaderDriversTable } from "@/components/admin/HeaderDriversTable";
+import { NotificationIcon } from "@/components/NotificationIcon";
 
 import { ReceiptScannerTesseract } from "@/components/admin/ReceiptScannerTesseract";
 import OrderTrackingWithMap from "@/components/admin/OrderTrackingWithMap";
@@ -199,14 +200,17 @@ export default function AdminDashboard() {
                   <HeaderDriversTable />
                 </div>
               </div>
-              <Button
-                variant="outline"
-                className="gap-2 text-sm h-9"
-                onClick={() => logout()}
-              >
-                <LogOut className="w-4 h-4" />
-                <span>Logout</span>
-              </Button>
+              <div className="flex items-center gap-3">
+                <NotificationIcon role="admin" />
+                <Button
+                  variant="outline"
+                  className="gap-2 text-sm h-9"
+                  onClick={() => logout()}
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Logout</span>
+                </Button>
+              </div>
             </header>
           )}
 

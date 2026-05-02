@@ -138,3 +138,30 @@ export const systemSessions = mysqlTable("system_sessions", {
   expiresAt: timestamp("expires_at").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
+
+// Notifications table
+export const notifications = mysqlTable("notifications", {
+  id: int("id").autoincrement().primaryKey(),
+  recipientRole: mysqlEnum("recipient_role", ["admin", "kitchen", "driver"]).notNull(), // Who should receive this notification
+  recipientId: int("recipient_id"), // For driver notifications, this is the driver ID
+  type: mysqlEnum("type", [
+    "order_created",
+    "order_edited",
+    "order_ready",
+    "order_delivered",
+    "reservation_created",
+    "reservation_edited",
+    "reservation_done",
+    "driver_assignment"
+  ]).notNull(),
+  message: text("message").notNull(),
+  orderId: int("order_id"),
+  reservationId: int("reservation_id"),
+  driverId: int("driver_id"),
+  isRead: boolean("is_read").default(false).notNull(),
+  readAt: timestamp("read_at"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = typeof notifications.$inferInsert;

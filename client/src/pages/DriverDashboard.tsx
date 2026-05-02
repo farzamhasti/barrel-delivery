@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useLocation } from "wouter";
 import { Badge } from "@/components/ui/badge";
 import { DeveloperCredit } from "@/components/DeveloperCredit";
+import { NotificationIcon } from "@/components/NotificationIcon";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const DRIVER_SESSION_KEY = "driver_session_token";
@@ -329,9 +330,12 @@ export default function DriverDashboard() {
               <p className="text-gray-600 mt-1">Your Personal Delivery Dashboard</p>
             </div>
           </div>
-          <Button variant="outline" onClick={handleLogout}>
-            Logout
-          </Button>
+          <div className="flex items-center gap-3">
+            <NotificationIcon role="driver" driverId={currentDriverId || undefined} />
+            <Button variant="outline" onClick={handleLogout}>
+              Logout
+            </Button>
+          </div>
         </div>
       </div>
 

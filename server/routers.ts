@@ -81,6 +81,18 @@ export const appRouter = router({
           customerAddress: input.address,
           status: 'Pending',
         });
+        
+        // Send notification to kitchen
+        if (order) {
+          const { createNotification } = await import('./notifications');
+          createNotification({
+            recipientRole: 'kitchen',
+            type: 'order_created',
+            message: `Order ${order.orderNumber} has been saved`,
+            orderId: order.id,
+          });
+        }
+        
         return order;
       }),
 
@@ -101,7 +113,34 @@ export const appRouter = router({
         status: z.enum(['Pending', 'Confirmed', 'Preparing', 'Ready', 'Out for Delivery', 'Delivered', 'Cancelled']),
       }))
       .mutation(async ({ input }) => {
-        return await db.updateOrderStatus(input.orderId, input.status);
+        const updatedOrder = await db.updateOrderStatus(input.orderId, input.status);
+        
+        // Send notifications based on status changes
+        if (updatedOrder) {
+          const { createNotification } = await import('./notifications');
+          
+          // Notify admin when order is ready (kitchen marked it ready)
+          if (input.status === 'Ready') {
+            createNotification({
+              recipientRole: 'admin',
+              type: 'order_ready',
+              message: `Order ${updatedOrder.orderNumber} is ready`,
+              orderId: updatedOrder.id,
+            });
+          }
+          
+          // Notify admin when order is delivered (driver marked it delivered)
+          if (input.status === 'Delivered') {
+            createNotification({
+              recipientRole: 'admin',
+              type: 'order_delivered',
+              message: `Order ${updatedOrder.orderNumber} has been delivered`,
+              orderId: updatedOrder.id,
+            });
+          }
+        }
+        
+        return updatedOrder;
       }),
 
     assignDriver: publicProcedure
@@ -122,7 +161,23 @@ export const appRouter = router({
         // Use driver name for assignment to avoid ID serialization issues
         console.log('[sendToDriver] Received input:', JSON.stringify(input));
         console.log('[sendToDriver] Assigning order', input.orderId, 'to driver:', input.driverName);
-        return await db.assignOrderToDriverByName(input.orderId, input.driverName);
+        const result = await db.assignOrderToDriverByName(input.orderId, input.driverName);
+        
+        // Send notification to the specific driver
+        if (result && result.driverId) {
+          const { createNotification } = await import('./notifications');
+          const order = await db.getOrderById(input.orderId);
+          createNotification({
+            recipientRole: 'driver',
+            recipientId: result.driverId,
+            type: 'driver_assignment',
+            message: `Order ${order?.orderNumber || input.orderId} has been sent to you`,
+            orderId: input.orderId,
+            driverId: result.driverId,
+          });
+        }
+        
+        return result;
       }),
 
     getByStatus: publicProcedure
@@ -263,7 +318,20 @@ export const appRouter = router({
         }
         if (receiptImageUrl !== undefined) updateData.receiptImage = receiptImageUrl;
         
-        return await db.updateOrder(input.orderId, updateData);
+        const updatedOrder = await db.updateOrder(input.orderId, updateData);
+        
+        // Send notification to kitchen that order was edited
+        if (updatedOrder) {
+          const { createNotification } = await import('./notifications');
+          createNotification({
+            recipientRole: 'kitchen',
+            type: 'order_edited',
+            message: `Order ${updatedOrder.orderNumber} has been edited`,
+            orderId: updatedOrder.id,
+          });
+        }
+        
+        return updatedOrder;
       }),
   }),
 
@@ -595,6 +663,18 @@ export const appRouter = router({
           description: input.description || '',
           status: 'Pending',
         });
+        
+        // Send notification to kitchen
+        if (reservation) {
+          const { createNotification } = await import('./notifications');
+          createNotification({
+            recipientRole: 'kitchen',
+            type: 'reservation_created',
+            message: `New reservation: ${input.eventType} for ${input.numberOfPeople} people`,
+            reservationId: reservation.id,
+          });
+        }
+        
         return reservation;
       }),
 
@@ -621,7 +701,20 @@ export const appRouter = router({
     markDone: publicProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => {
-        return await db.updateReservationStatus(input.id, 'Done');
+        const updatedReservation = await db.updateReservationStatus(input.id, 'Done');
+        
+        // Send notification to admin that reservation is done
+        if (updatedReservation) {
+          const { createNotification } = await import('./notifications');
+          createNotification({
+            recipientRole: 'admin',
+            type: 'reservation_done',
+            message: `Reservation ${updatedReservation.eventType} has been completed`,
+            reservationId: updatedReservation.id,
+          });
+        }
+        
+        return updatedReservation;
       }),
 
     delete: publicProcedure
@@ -644,7 +737,20 @@ export const appRouter = router({
         const cleanUpdateData = Object.fromEntries(
           Object.entries(updateData).filter(([, v]) => v !== undefined)
         );
-        return await db.updateReservation(id, cleanUpdateData);
+        const updatedReservation = await db.updateReservation(id, cleanUpdateData);
+        
+        // Send notification to kitchen that reservation was edited
+        if (updatedReservation) {
+          const { createNotification } = await import('./notifications');
+          createNotification({
+            recipientRole: 'kitchen',
+            type: 'reservation_edited',
+            message: `Reservation ${updatedReservation.eventType} has been edited`,
+            reservationId: updatedReservation.id,
+          });
+        }
+        
+        return updatedReservation;
       }),
   }),
 
@@ -686,6 +792,58 @@ export const appRouter = router({
       .mutation(async ({ ctx }) => {
         // Logout logic
         return { success: true };
+      }),
+  }),
+
+  notifications: router({
+    getUnread: publicProcedure
+      .input(z.object({
+        role: z.enum(['admin', 'kitchen', 'driver']),
+        driverId: z.number().optional(),
+      }))
+      .query(async ({ input }) => {
+        const { getUnreadNotifications } = await import('./notifications');
+        return getUnreadNotifications(input.role, input.driverId);
+      }),
+
+    getAll: publicProcedure
+      .input(z.object({
+        role: z.enum(['admin', 'kitchen', 'driver']),
+        driverId: z.number().optional(),
+      }))
+      .query(async ({ input }) => {
+        const { getNotifications } = await import('./notifications');
+        return getNotifications(input.role, input.driverId);
+      }),
+
+    getUnreadCount: publicProcedure
+      .input(z.object({
+        role: z.enum(['admin', 'kitchen', 'driver']),
+        driverId: z.number().optional(),
+      }))
+      .query(async ({ input }) => {
+        const { getUnreadCount } = await import('./notifications');
+        return getUnreadCount(input.role, input.driverId);
+      }),
+
+    markAsRead: publicProcedure
+      .input(z.object({
+        notificationId: z.string(),
+      }))
+      .mutation(async ({ input }) => {
+        const { markNotificationAsRead } = await import('./notifications');
+        return markNotificationAsRead(input.notificationId);
+      }),
+
+    markAllAsRead: publicProcedure
+      .input(z.object({
+        role: z.enum(['admin', 'kitchen', 'driver']),
+        driverId: z.number().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { markAllNotificationsAsRead } = await import('./notifications');
+        const count = markAllNotificationsAsRead(input.role, input.driverId);
+        return { markedCount: count };
       }),
   }),
 });
