@@ -504,7 +504,7 @@ export default function DriverDashboard() {
                         // Try to geocode the restaurant address to get accurate coordinates
                         try {
                           const geocodeResponse = await fetch(
-                            `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(restaurantAddress)}&key=${process.env.VITE_FRONTEND_FORGE_API_KEY}`
+                            `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(restaurantAddress)}&key=${import.meta.env.VITE_FRONTEND_FORGE_API_KEY}`
                           );
                           const geocodeData = await geocodeResponse.json();
                           
