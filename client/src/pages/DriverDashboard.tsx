@@ -438,6 +438,12 @@ export default function DriverDashboard() {
                           alert('Driver not logged in');
                           return;
                         }
+                        // Check if driver has active orders
+                        const activeOrders = assignedOrders.filter((order: any) => order.status === 'On the way');
+                        if (activeOrders.length === 0) {
+                          alert('No active deliveries. Please add orders first.');
+                          return;
+                        }
                         calculateReturnTimeMutation.mutate({
                           driverId: currentDriverId,
                           restaurantAddress: '224 Garrison Rd, Fort Erie, ON L2A 1M7',
