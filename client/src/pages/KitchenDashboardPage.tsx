@@ -14,6 +14,7 @@ import { useDriverReturnTime } from "@/contexts/DriverReturnTimeContext";
 import { KitchenReservations } from "@/pages/KitchenReservations";
 import { DeveloperCredit } from "@/components/DeveloperCredit";
 import { useCountdownTimer } from "@/hooks/useCountdownTimer";
+import { NotificationIcon } from "@/components/NotificationIcon";
 
 // Helper function to format return time from seconds to MM:SS format
 function formatReturnTime(seconds: number | null | undefined): string {
@@ -259,15 +260,18 @@ export default function KitchenDashboardPage() {
             <ChefHat className="w-8 h-8 text-orange-600" />
             <h1 className="text-3xl md:text-4xl font-bold text-foreground">Kitchen Dashboard</h1>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => logout()}
-            className="flex items-center gap-2"
-          >
-            <LogOut className="w-4 h-4" />
-            Logout
-          </Button>
+          <div className="flex items-center gap-3">
+            <NotificationIcon role="kitchen" />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => logout()}
+              className="flex items-center gap-2"
+            >
+              <LogOut className="w-4 h-4" />
+              Logout
+            </Button>
+          </div>
         </div>
 
         {/* Stats Bar */}
