@@ -496,29 +496,12 @@ export default function DriverDashboard() {
                           return;
                         }
 
-                        // Restaurant address: 224 Garrison Rd, Fort Erie, ON L2A 1M7
-                        const restaurantAddress = '224 Garrison Rd, Fort Erie, ON L2A 1M7';
-                        let restaurantLat = 42.9149;
-                        let restaurantLng = -79.0402;
-                        
-                        // Try to geocode the restaurant address to get accurate coordinates
-                        try {
-                          const geocodeResponse = await fetch(
-                            `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(restaurantAddress)}&key=${import.meta.env.VITE_FRONTEND_FORGE_API_KEY}`
-                          );
-                          const geocodeData = await geocodeResponse.json();
-                          
-                          if (geocodeData.results && geocodeData.results.length > 0) {
-                            const location = geocodeData.results[0].geometry.location;
-                            restaurantLat = location.lat;
-                            restaurantLng = location.lng;
-                            console.log('[Delivery with Map] Geocoded restaurant coordinates:', { restaurantLat, restaurantLng });
-                          }
-                        } catch (geocodeError) {
-                          console.error('[Delivery with Map] Geocoding error:', geocodeError);
-                        }
-                        
+                        // Restaurant coordinates: 224 Garrison Rd, Fort Erie, ON L2A 1M7
+                        // The Barrel Restaurant - verified coordinates
+                        const restaurantLat = 42.9052237;
+                        const restaurantLng = -78.9232797;
                         const restaurantCoords = `${restaurantLat},${restaurantLng}`;
+                        console.log('[Delivery with Map] Restaurant coordinates:', { restaurantLat, restaurantLng });
 
                         // Build waypoints from customer coordinates
                         const waypoints = ordersWithCoordinates
