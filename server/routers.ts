@@ -116,6 +116,25 @@ export const appRouter = router({
       }))
       .mutation(async ({ input }) => {
         const updatedOrder = await db.updateOrderStatus(input.orderId, input.status);
+        // Send push notifications for order status changes
+        if (updatedOrder && input.status === "Ready") {
+          await sendPushNotification(1, "admin", {
+            title: "Order Ready",
+            body: `Order #${updatedOrder.orderNumber} is ready for delivery`,
+            url: "/admin/order-tracking",
+            tag: `order-${updatedOrder.id}`,
+            data: { orderId: updatedOrder.id },
+          }).catch(err => console.error("[Push] Failed to send ready notification:", err));
+        }
+        if (updatedOrder && input.status === "Delivered") {
+          await sendPushNotification(1, "admin", {
+            title: "Order Delivered",
+            body: `Order #${updatedOrder.orderNumber} has been delivered`,
+            url: "/admin/order-tracking",
+            tag: `order-${updatedOrder.id}`,
+            data: { orderId: updatedOrder.id },
+          }).catch(err => console.error("[Push] Failed to send delivered notification:", err));
+        }
         
         // Send notifications based on status changes
         if (updatedOrder) {
@@ -183,6 +202,14 @@ export const appRouter = router({
               driverId: input.driverId,
             });
             console.log('[sendToDriver] Notification created for driver', input.driverId);
+            // Send push notification to driver
+            await sendPushNotification(input.driverId, "driver", {
+              title: "New Order Assigned",
+              body: `Order #${order.orderNumber} has been assigned to you`,
+              url: "/driver-dashboard",
+              tag: `order-${order.id}`,
+              data: { orderId: order.id },
+            }).catch(err => console.error("[Push] Failed to send driver assignment notification:", err));
           }
           
           return { success: true, orderId: input.orderId, driverId: input.driverId };
@@ -734,6 +761,14 @@ export const appRouter = router({
             reservationId: updatedReservation.id,
           });
         }
+        // Send push notification to admin
+            await sendPushNotification(1, "admin", {
+              title: "Reservation Completed",
+              body: `Reservation #${updatedReservation.id} (${updatedReservation.eventType}) has been completed`,
+              url: "/admin/reservations",
+              tag: `reservation-${updatedReservation.id}`,
+              data: { reservationId: updatedReservation.id },
+            }).catch(err => console.error("[Push] Failed to send reservation completion notification:", err));
         
         return updatedReservation;
       }),
