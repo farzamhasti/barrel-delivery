@@ -35,7 +35,7 @@ export function NotificationIcon({ role, driverId }: NotificationIconProps) {
     }
   }, [unreadNotifications]);
 
-  const handleMarkAsRead = (notificationId: string) => {
+  const handleMarkAsRead = (notificationId: number) => {
     markAsReadMutation.mutate({ notificationId });
   };
 

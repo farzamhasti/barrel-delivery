@@ -89,7 +89,7 @@ export const appRouter = router({
           createNotification({
             recipientRole: 'kitchen',
             type: 'order_created',
-            message: `Order ${order.orderNumber} has been saved`,
+            message: `Order #${order.orderNumber} has been saved`,
             orderId: order.id,
           });
         }
@@ -122,22 +122,22 @@ export const appRouter = router({
           
           // Notify admin when order is ready (kitchen marked it ready)
           if (input.status === 'Ready') {
-            createNotification({
-              recipientRole: 'admin',
-              type: 'order_ready',
-              message: `Order ${updatedOrder.orderNumber} is ready`,
-              orderId: updatedOrder.id,
-            });
+          createNotification({
+            recipientRole: 'admin',
+            type: 'order_ready',
+            message: `Order #${updatedOrder.orderNumber} is ready`,
+            orderId: updatedOrder.id,
+          });
           }
           
           // Notify admin when order is delivered (driver marked it delivered)
           if (input.status === 'Delivered') {
-            createNotification({
-              recipientRole: 'admin',
-              type: 'order_delivered',
-              message: `Order ${updatedOrder.orderNumber} has been delivered`,
-              orderId: updatedOrder.id,
-            });
+          createNotification({
+            recipientRole: 'admin',
+            type: 'order_delivered',
+            message: `Order #${updatedOrder.orderNumber} has been delivered`,
+            orderId: updatedOrder.id,
+          });
           }
         }
         
@@ -277,12 +277,20 @@ export const appRouter = router({
         });
         
         // Send notification to kitchen
-        createNotification({
-          recipientRole: 'kitchen',
-          type: 'order_created',
-          message: `Order ${order.orderNumber} has received`,
-          orderId: order.id,
-        });
+          createNotification({
+            recipientRole: 'kitchen',
+            type: 'order_created',
+            message: `Order #${order.orderNumber} has received`,
+            orderId: order.id,
+          });
+        
+        // Send notification to admin
+          createNotification({
+            recipientRole: 'admin',
+            type: 'order_created',
+            message: `Order #${order.orderNumber} has been created`,
+            orderId: order.id,
+          });
         
         return order;
       }),
@@ -346,7 +354,7 @@ export const appRouter = router({
           createNotification({
             recipientRole: 'kitchen',
             type: 'order_edited',
-            message: `Order ${updatedOrder.orderNumber} has been edited`,
+            message: `Order #${updatedOrder.orderNumber} has been edited`,
             orderId: updatedOrder.id,
           });
         }
@@ -729,7 +737,7 @@ export const appRouter = router({
           createNotification({
             recipientRole: 'admin',
             type: 'reservation_done',
-            message: `Reservation ${updatedReservation.eventType} has been completed`,
+            message: `Reservation #${updatedReservation.id} (${updatedReservation.eventType}) has been completed`,
             reservationId: updatedReservation.id,
           });
         }
@@ -765,7 +773,7 @@ export const appRouter = router({
           createNotification({
             recipientRole: 'kitchen',
             type: 'reservation_edited',
-            message: `Reservation ${updatedReservation.eventType} has been edited`,
+            message: `Reservation #${updatedReservation.id} (${updatedReservation.eventType}) has been edited`,
             reservationId: updatedReservation.id,
           });
         }
@@ -848,11 +856,11 @@ export const appRouter = router({
 
     markAsRead: publicProcedure
       .input(z.object({
-        notificationId: z.string(),
+        notificationId: z.number(),
       }))
       .mutation(async ({ input }) => {
         const { markNotificationAsRead } = await import('./notifications');
-        return markNotificationAsRead(input.notificationId);
+        return await markNotificationAsRead(input.notificationId);
       }),
 
     markAllAsRead: publicProcedure
@@ -862,7 +870,7 @@ export const appRouter = router({
       }))
       .mutation(async ({ input }) => {
         const { markAllNotificationsAsRead } = await import('./notifications');
-        const count = markAllNotificationsAsRead(input.role, input.driverId);
+        const count = await markAllNotificationsAsRead(input.role, input.driverId);
         return { markedCount: count };
       }),
   }),

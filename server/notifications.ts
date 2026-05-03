@@ -1,5 +1,41 @@
-// In-memory notification store
-// In production, this should be persisted to the database
+import { drizzle } from 'drizzle-orm/mysql2';
+import { notifications as notificationsTable, Notification as DBNotification } from '../drizzle/schema';
+import { eq, and } from 'drizzle-orm';
+import { ENV } from './_core/env';
+
+let _db: ReturnType<typeof drizzle> | null = null;
+
+// In-memory notification store (fallback when database table doesn't exist)
+const inMemoryNotifications: Notification[] = [];
+const MAX_IN_MEMORY_NOTIFICATIONS = 100;
+
+async function getDb() {
+  if (!_db && process.env.DATABASE_URL) {
+    try {
+      _db = drizzle(process.env.DATABASE_URL);
+    } catch (error) {
+      console.warn('[Notifications] Failed to connect to database:', error);
+      _db = null;
+    }
+  }
+  return _db;
+}
+
+function addToInMemoryStore(notification: Notification): void {
+  inMemoryNotifications.unshift(notification); // Add to front (newest first)
+  // Keep only the most recent notifications
+  if (inMemoryNotifications.length > MAX_IN_MEMORY_NOTIFICATIONS) {
+    inMemoryNotifications.pop();
+  }
+}
+
+function getFromInMemoryStore(recipientRole: RecipientRole, recipientId?: number): Notification[] {
+  return inMemoryNotifications.filter(n => {
+    if (n.recipientRole !== recipientRole) return false;
+    if (recipientRole === 'driver' && recipientId && n.recipientId !== recipientId) return false;
+    return true;
+  });
+}
 
 export type NotificationType = 
   | 'order_created'
@@ -14,7 +50,7 @@ export type NotificationType =
 export type RecipientRole = 'admin' | 'kitchen' | 'driver';
 
 export interface Notification {
-  id: string;
+  id: number;
   recipientRole: RecipientRole;
   recipientId?: number; // For driver-specific notifications
   type: NotificationType;
@@ -27,15 +63,7 @@ export interface Notification {
   createdAt: Date;
 }
 
-// In-memory store - notifications are cleared on server restart
-const notificationStore: Map<string, Notification> = new Map();
-let notificationIdCounter = 0;
-
-function generateNotificationId(): string {
-  return `notif_${++notificationIdCounter}_${Date.now()}`;
-}
-
-export function createNotification(data: {
+export async function createNotification(data: {
   recipientRole: RecipientRole;
   recipientId?: number;
   type: NotificationType;
@@ -43,9 +71,57 @@ export function createNotification(data: {
   orderId?: number;
   reservationId?: number;
   driverId?: number;
-}): Notification {
+}): Promise<Notification> {
+  const db = await getDb();
+  
+  if (!db) {
+    console.warn('[createNotification] Database not available');
+    return createMockNotification(data);
+  }
+  
+  try {
+    const result = await db.insert(notificationsTable).values({
+      recipientRole: data.recipientRole,
+      recipientId: data.recipientId,
+      type: data.type,
+      message: data.message,
+      orderId: data.orderId,
+      reservationId: data.reservationId,
+      driverId: data.driverId,
+      isRead: false,
+    });
+
+    const insertedId = result[0]?.insertId;
+    if (!insertedId) {
+      throw new Error('Failed to create notification');
+    }
+
+    const notification = await db
+      .select()
+      .from(notificationsTable)
+      .where(eq(notificationsTable.id, insertedId as number))
+      .then(rows => rows[0]);
+
+    console.log('[createNotification] Created notification:', { 
+      role: notification?.recipientRole, 
+      message: notification?.message, 
+      orderId: notification?.orderId, 
+      reservationId: notification?.reservationId 
+    });
+
+    return notification as Notification;
+  } catch (error: any) {
+    if (error.message?.includes("doesn't exist") || error.sqlMessage?.includes("doesn't exist")) {
+      console.warn('[createNotification] Notifications table does not exist. Using in-memory store.');
+      return createMockNotification(data);
+    }
+    throw error;
+  }
+}
+
+function createMockNotification(data: any): Notification {
   const notification: Notification = {
-    id: generateNotificationId(),
+    id: Math.floor(Math.random() * 1000000),
     recipientRole: data.recipientRole,
     recipientId: data.recipientId,
     type: data.type,
@@ -56,76 +132,137 @@ export function createNotification(data: {
     isRead: false,
     createdAt: new Date(),
   };
-
-  notificationStore.set(notification.id, notification);
+  // Store in memory for retrieval
+  addToInMemoryStore(notification);
   return notification;
 }
 
-export function getNotifications(recipientRole: RecipientRole, recipientId?: number): Notification[] {
-  const notifications = Array.from(notificationStore.values()).filter(notif => {
-    // Match by role
-    if (notif.recipientRole !== recipientRole) return false;
+export async function getNotifications(recipientRole: RecipientRole, recipientId?: number): Promise<Notification[]> {
+  const db = await getDb();
+  
+  if (!db) {
+    console.warn('[getNotifications] Database not available, using in-memory store');
+    return getFromInMemoryStore(recipientRole, recipientId);
+  }
+  
+  try {
+    let query = db
+      .select()
+      .from(notificationsTable)
+      .where(eq(notificationsTable.recipientRole, recipientRole));
 
     // For driver notifications, also match by recipientId
-    if (recipientRole === 'driver' && notif.recipientId && notif.recipientId !== recipientId) {
-      return false;
+    if (recipientRole === 'driver' && recipientId) {
+      query = db
+        .select()
+        .from(notificationsTable)
+        .where(
+          and(
+            eq(notificationsTable.recipientRole, recipientRole),
+            eq(notificationsTable.recipientId, recipientId)
+          )
+        );
     }
 
-    return true;
-  });
+    const notifications = await query;
+    
+    console.log(`[getNotifications] Querying for role=${recipientRole}, driverId=${recipientId}, found ${notifications.length} notifications`);
 
-  // Sort by creation date (newest first)
-  return notifications.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-}
-
-export function getUnreadNotifications(recipientRole: RecipientRole, recipientId?: number): Notification[] {
-  return getNotifications(recipientRole, recipientId).filter(n => !n.isRead);
-}
-
-export function markNotificationAsRead(notificationId: string): Notification | null {
-  const notification = notificationStore.get(notificationId);
-  if (!notification) return null;
-
-  notification.isRead = true;
-  notification.readAt = new Date();
-  notificationStore.set(notificationId, notification);
-  return notification;
-}
-
-export function markAllNotificationsAsRead(recipientRole: RecipientRole, recipientId?: number): number {
-  const notifications = getNotifications(recipientRole, recipientId);
-  let count = 0;
-
-  notifications.forEach(notif => {
-    if (!notif.isRead) {
-      notif.isRead = true;
-      notif.readAt = new Date();
-      notificationStore.set(notif.id, notif);
-      count++;
+    // Sort by creation date (newest first)
+    return (notifications as DBNotification[])
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .map(n => ({
+        ...n,
+        createdAt: new Date(n.createdAt),
+        readAt: n.readAt ? new Date(n.readAt) : undefined,
+      }));
+  } catch (error: any) {
+    if (error.message?.includes("doesn't exist") || error.sqlMessage?.includes("doesn't exist")) {
+      console.warn('[getNotifications] Notifications table does not exist. Using in-memory store.');
+      return getFromInMemoryStore(recipientRole, recipientId);
     }
-  });
-
-  return count;
-}
-
-export function getUnreadCount(recipientRole: RecipientRole, recipientId?: number): number {
-  return getUnreadNotifications(recipientRole, recipientId).length;
-}
-
-export function deleteNotification(notificationId: string): boolean {
-  return notificationStore.delete(notificationId);
-}
-
-export function clearOldNotifications(hoursOld: number = 24): number {
-  const cutoffTime = Date.now() - (hoursOld * 60 * 60 * 1000);
-  let count = 0;
-
-  for (const [id, notification] of notificationStore.entries()) {
-    if (notification.createdAt.getTime() < cutoffTime) {
-      notificationStore.delete(id);
-      count++;
-    }
+    throw error;
   }
+}
 
-  return count;
+export async function getUnreadNotifications(recipientRole: RecipientRole, recipientId?: number): Promise<Notification[]> {
+  const notifications = await getNotifications(recipientRole, recipientId);
+  return notifications.filter(n => !n.isRead);
+}
+
+export async function markNotificationAsRead(notificationId: number): Promise<Notification | null> {
+  const db = await getDb();
+  
+  if (!db) {
+    console.warn('[markNotificationAsRead] Database not available');
+    return null;
+  }
+  
+  try {
+    await db
+      .update(notificationsTable)
+      .set({ isRead: true, readAt: new Date() })
+      .where(eq(notificationsTable.id, notificationId));
+
+    const notification = await db
+      .select()
+      .from(notificationsTable)
+      .where(eq(notificationsTable.id, notificationId))
+      .then(rows => rows[0]);
+
+    return notification ? ({
+      ...notification,
+      createdAt: new Date(notification.createdAt),
+      readAt: notification.readAt ? new Date(notification.readAt) : undefined,
+    } as Notification) : null;
+  } catch (error: any) {
+    if (error.message?.includes("doesn't exist") || error.sqlMessage?.includes("doesn't exist")) {
+      console.warn('[markNotificationAsRead] Notifications table does not exist.');
+      return null;
+    }
+    throw error;
+  }
+}
+
+export async function markAllNotificationsAsRead(recipientRole: RecipientRole, recipientId?: number): Promise<number> {
+  const db = await getDb();
+  
+  if (!db) {
+    console.warn('[markAllNotificationsAsRead] Database not available');
+    return 0;
+  }
+  
+  try {
+    let query = db
+      .update(notificationsTable)
+      .set({ isRead: true, readAt: new Date() })
+      .where(eq(notificationsTable.recipientRole, recipientRole));
+
+    // For driver notifications, also match by recipientId
+    if (recipientRole === 'driver' && recipientId) {
+      query = db
+        .update(notificationsTable)
+        .set({ isRead: true, readAt: new Date() })
+        .where(
+          and(
+            eq(notificationsTable.recipientRole, recipientRole),
+            eq(notificationsTable.recipientId, recipientId)
+          )
+        );
+    }
+
+    const result = await query;
+    return result.rowsAffected || 0;
+  } catch (error: any) {
+    if (error.message?.includes("doesn't exist") || error.sqlMessage?.includes("doesn't exist")) {
+      console.warn('[markAllNotificationsAsRead] Notifications table does not exist.');
+      return 0;
+    }
+    throw error;
+  }
+}
+
+export async function getUnreadCount(recipientRole: RecipientRole, recipientId?: number): Promise<number> {
+  const unread = await getUnreadNotifications(recipientRole, recipientId);
+  return unread.length;
 }
