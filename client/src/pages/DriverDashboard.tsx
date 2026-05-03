@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { DeveloperCredit } from "@/components/DeveloperCredit";
 import { NotificationIcon } from "@/components/NotificationIcon";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PushNotificationBannerFixed } from "@/components/PushNotificationBannerFixed";
 
 const DRIVER_SESSION_KEY = "driver_session_token";
 
@@ -314,6 +315,9 @@ export default function DriverDashboard() {
   // Driver Dashboard - Show after login
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* Push Notification Banner */}
+      {currentDriverId && <PushNotificationBannerFixed role="driver" userId={currentDriverId} />}
+      
       <DeveloperCredit />
       
       {/* Header */}

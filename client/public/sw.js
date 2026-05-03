@@ -55,18 +55,22 @@ self.addEventListener('notificationclick', (event) => {
 
   const notificationData = event.notification.data || {};
   const targetUrl = notificationData.url || '/';
+  const fullUrl = targetUrl.startsWith('http') ? targetUrl : self.location.origin + targetUrl;
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-      // Check if there's already a window/tab open with the target URL
+      // Check if there's already a window/tab open for this app
       for (const client of clientList) {
-        if (client.url === targetUrl && 'focus' in client) {
+        // Check if the client is on the same origin
+        if (client.url.startsWith(self.location.origin)) {
+          // Navigate to the target URL
+          client.navigate(fullUrl);
           return client.focus();
         }
       }
       // If not, open a new window/tab
       if (clients.openWindow) {
-        return clients.openWindow(targetUrl);
+        return clients.openWindow(fullUrl);
       }
     })
   );

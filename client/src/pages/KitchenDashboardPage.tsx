@@ -252,6 +252,9 @@ export default function KitchenDashboardPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100 p-4 md:p-6">
+      {/* Push Notification Banner */}
+      <PushNotificationBannerFixed role="kitchen" />
+      
       <DeveloperCredit />
       {/* Header */}
       <div className="max-w-7xl mx-auto mb-6">

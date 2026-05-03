@@ -16,6 +16,8 @@ import { ReceiptScannerTesseract } from "@/components/admin/ReceiptScannerTesser
 import OrderTrackingWithMap from "@/components/admin/OrderTrackingWithMap";
 import { DeliveryReportTab } from "@/components/DeliveryReportTab";
 import { Reservations } from "@/components/admin/Reservations";
+import { PushNotificationBannerFixed } from "@/components/PushNotificationBannerFixed";
+import { TestPushButton } from "@/components/TestPushButton";
 
 
 // Color scheme for order statuses
@@ -47,6 +49,18 @@ export default function AdminDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const isMobile = useIsMobile();
   const width = useWindowWidth();
+  
+  // Get stable admin ID for test push button
+  const getAdminUserId = (): number => {
+    const username = localStorage.getItem('systemUsername') || 'admin';
+    let hash = 0;
+    for (let i = 0; i < username.length; i++) {
+      const char = username.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash;
+    }
+    return 1000 + (Math.abs(hash) % 9000);
+  };
   
   const isTablet = width >= 768 && width < 1024;
   const isDesktop = width >= 1024;
@@ -82,6 +96,9 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      {/* Push Notification Banner */}
+      <PushNotificationBannerFixed role="admin" />
+      
       {/* Developer Credit */}
       <DeveloperCredit />
       
@@ -98,6 +115,9 @@ export default function AdminDashboard() {
                 <h1 className="text-sm font-bold text-foreground truncate">Barrel Delivery</h1>
                 <p className="text-xs text-muted-foreground truncate">Admin Dashboard</p>
               </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <TestPushButton role="admin" userId={getAdminUserId()} />
             </div>
             <div className="flex items-center gap-2">
               <Button
