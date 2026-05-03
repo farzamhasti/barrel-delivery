@@ -7,7 +7,24 @@ import superjson from "superjson";
 import App from "./App";
 import { getLoginUrl } from "./const";
 import { TimerStartTimeProvider } from "./contexts/TimerStartTimeContext";
+import { registerServiceWorker } from "./lib/push-notifications";
 import "./index.css";
+
+// Register Service Worker for push notifications
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', async () => {
+    try {
+      await registerServiceWorker();
+    } catch (error) {
+      console.error('[Service Worker] Registration failed:', error);
+    }
+  });
+}
+
+// Make VAPID public key available globally for push notifications
+if (!window.__VAPID_PUBLIC_KEY__) {
+  (window as any).__VAPID_PUBLIC_KEY__ = import.meta.env.VITE_FRONTEND_VAPID_PUBLIC_KEY || '';
+}
 
 const queryClient = new QueryClient();
 

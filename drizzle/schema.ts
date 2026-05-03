@@ -165,3 +165,21 @@ export const notifications = mysqlTable("notifications", {
 
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = typeof notifications.$inferInsert;
+
+
+// Push Subscriptions table for Web Push Notifications
+export const pushSubscriptions = mysqlTable("push_subscriptions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("user_id").notNull(),
+  role: mysqlEnum("role", ["admin", "kitchen", "driver"]).notNull(),
+  endpoint: varchar("endpoint", { length: 500 }).notNull().unique(),
+  auth: varchar("auth", { length: 100 }).notNull(),
+  p256dh: varchar("p256dh", { length: 100 }).notNull(),
+  userAgent: varchar("user_agent", { length: 500 }),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type PushSubscription = typeof pushSubscriptions.$inferSelect;
+export type InsertPushSubscription = typeof pushSubscriptions.$inferInsert;

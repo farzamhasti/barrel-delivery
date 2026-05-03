@@ -1540,3 +1540,24 @@ These features are documented for future enhancement but are not required for th
 - [x] Verify notification infrastructure is production-ready
 - [x] All TypeScript compilation: 2 minor warnings (vite/client - non-critical)
 - [x] Dev server: Running successfully
+
+
+## Phase 20: Web Push Notifications Implementation
+- [x] Generate VAPID keys for Web Push API
+- [x] Store VAPID keys in environment variables (VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT)
+- [x] Create Service Worker file (public/sw.js) - handles push events and notifications
+- [x] Register Service Worker in main.tsx - auto-registers on page load
+- [x] Create push subscription database table (push_subscriptions)
+- [x] Implement push subscription storage in database (storePushSubscription function)
+- [x] Create subtle permission banner component (PushNotificationBanner.tsx - non-blocking)
+- [x] Add permission request logic to app initialization (banner shows on first load)
+- [x] Implement backend push notification sending procedure (sendPushNotification function)
+- [ ] Integrate push notifications with order status changes
+- [ ] Integrate push notifications with reservation events
+- [ ] Integrate push notifications with driver assignment
+- [ ] Test push notifications on mobile devices
+- [ ] Test push notifications on desktop browsers
+- [ ] Test push notifications with app closed
+- [ ] Verify notification opens correct dashboard
+- [ ] Test iOS Safari compatibility
+- [ ] Test Android Chrome compatibility

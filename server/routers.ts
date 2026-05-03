@@ -7,6 +7,7 @@ import { convertOntarioTimeToUTC } from './timezoneHelper';
 import * as db from './db';
 import { getDb } from './db';
 import { createNotification } from './notifications';
+import { storePushSubscription, removePushSubscription, sendPushNotification } from './push-service';
 
 export const appRouter = router({
   places: router({
@@ -864,6 +865,53 @@ export const appRouter = router({
         const { markAllNotificationsAsRead } = await import('./notifications');
         const count = await markAllNotificationsAsRead(input.role, input.driverId);
         return { markedCount: count };
+      }),
+  }),
+  push: router({
+    subscribe: publicProcedure
+      .input(z.object({
+        userId: z.number(),
+        role: z.enum(['admin', 'kitchen', 'driver']),
+        endpoint: z.string(),
+        auth: z.string(),
+        p256dh: z.string(),
+        userAgent: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const success = await storePushSubscription(
+          input.userId,
+          input.role,
+          input.endpoint,
+          input.auth,
+          input.p256dh,
+          input.userAgent
+        );
+        return { success };
+      }),
+    unsubscribe: publicProcedure
+      .input(z.object({
+        endpoint: z.string(),
+      }))
+      .mutation(async ({ input }) => {
+        const success = await removePushSubscription(input.endpoint);
+        return { success };
+      }),
+    sendTest: publicProcedure
+      .input(z.object({
+        userId: z.number(),
+        role: z.enum(['admin', 'kitchen', 'driver']),
+      }))
+      .mutation(async ({ input }) => {
+        const count = await sendPushNotification(
+          input.userId,
+          input.role,
+          {
+            title: 'Test Notification',
+            body: 'This is a test push notification from Barrel Delivery',
+            url: '/',
+          }
+        );
+        return { sent: count };
       }),
   }),
 });
