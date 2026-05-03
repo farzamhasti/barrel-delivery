@@ -10,6 +10,13 @@ interface NotificationIconProps {
 export function NotificationIcon({ role, driverId }: NotificationIconProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const utils = trpc.useUtils();
+
+  // Invalidate cache on component mount to ensure fresh data
+  useEffect(() => {
+    utils.notifications.getUnread.invalidate();
+    utils.notifications.getAll.invalidate();
+  }, [role, driverId, utils]);
 
   // Poll for unread notifications every 2 seconds
   const { data: unreadNotifications = [] } = trpc.notifications.getUnread.useQuery(
@@ -34,6 +41,11 @@ export function NotificationIcon({ role, driverId }: NotificationIconProps) {
       setUnreadCount(0);
     }
   }, [unreadNotifications]);
+
+  // Filter out notifications with undefined order/reservation numbers
+  const filteredNotifications = Array.isArray(allNotifications) 
+    ? allNotifications.filter(n => !n.message?.includes('undefined'))
+    : [];
 
   const handleMarkAsRead = (notificationId: number) => {
     markAsReadMutation.mutate({ notificationId });
@@ -76,9 +88,9 @@ export function NotificationIcon({ role, driverId }: NotificationIconProps) {
 
           {/* Notifications List */}
           <div className="divide-y">
-            {Array.isArray(allNotifications) && allNotifications.length > 0 ? (
+            {filteredNotifications.length > 0 ? (
               <>
-                {allNotifications.map((notification) => (
+                {filteredNotifications.map((notification) => (
                   <div
                     key={notification.id}
                     className={`p-4 hover:bg-gray-50 cursor-pointer transition ${

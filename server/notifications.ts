@@ -6,8 +6,15 @@ import { ENV } from './_core/env';
 let _db: ReturnType<typeof drizzle> | null = null;
 
 // In-memory notification store (fallback when database table doesn't exist)
-const inMemoryNotifications: Notification[] = [];
+let inMemoryNotifications: Notification[] = [];
 const MAX_IN_MEMORY_NOTIFICATIONS = 100;
+let serverStartTime = Date.now();
+
+// Clear old notifications on startup
+setTimeout(() => {
+  serverStartTime = Date.now();
+  inMemoryNotifications = [];
+}, 100);
 
 async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
@@ -33,6 +40,10 @@ function getFromInMemoryStore(recipientRole: RecipientRole, recipientId?: number
   return inMemoryNotifications.filter(n => {
     if (n.recipientRole !== recipientRole) return false;
     if (recipientRole === 'driver' && recipientId && n.recipientId !== recipientId) return false;
+    // Filter out notifications with undefined order/reservation numbers
+    if (n.message && n.message.includes('undefined')) return false;
+    // Only return notifications created after server startup
+    if (n.createdAt.getTime() < serverStartTime) return false;
     return true;
   });
 }

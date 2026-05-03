@@ -511,7 +511,11 @@ export async function updateOrderStatus(orderId: number, status: any) {
     updateData.deliveredAt = new Date();
   }
   
-  return db.update(orders).set(updateData).where(eq(orders.id, orderId));
+  await db.update(orders).set(updateData).where(eq(orders.id, orderId));
+  
+  // Return the updated order
+  const updatedOrder = await db.select().from(orders).where(eq(orders.id, orderId)).then(rows => rows[0]);
+  return updatedOrder;
 }
 
 export async function assignOrderToDriver(orderId: number, driverId: number) {
@@ -1553,11 +1557,13 @@ export async function updateReservationStatus(id: number, status: "Pending" | "D
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  const result = await db.update(reservations)
+  await db.update(reservations)
     .set({ status })
     .where(eq(reservations.id, id));
 
-  return result;
+  // Return the updated reservation
+  const updatedReservation = await db.select().from(reservations).where(eq(reservations.id, id)).then(rows => rows[0]);
+  return updatedReservation;
 }
 
 export async function deleteReservation(id: number) {

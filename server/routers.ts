@@ -284,14 +284,6 @@ export const appRouter = router({
             orderId: order.id,
           });
         
-        // Send notification to admin
-          createNotification({
-            recipientRole: 'admin',
-            type: 'order_created',
-            message: `Order #${order.orderNumber} has been created`,
-            orderId: order.id,
-          });
-        
         return order;
       }),
 
