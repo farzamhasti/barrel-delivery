@@ -15,6 +15,7 @@ import { KitchenReservations } from "@/pages/KitchenReservations";
 import { DeveloperCredit } from "@/components/DeveloperCredit";
 import { useCountdownTimer } from "@/hooks/useCountdownTimer";
 import { NotificationIcon } from "@/components/NotificationIcon";
+import { PushNotificationBannerFixed } from "@/components/PushNotificationBannerFixed";
 
 // Helper function to format return time from seconds to MM:SS format
 function formatReturnTime(seconds: number | null | undefined): string {

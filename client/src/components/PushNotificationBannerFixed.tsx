@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { registerServiceWorker, requestPushPermission, subscribeToPush } from '@/lib/push-notifications';
 import { trpc } from '@/lib/trpc';
