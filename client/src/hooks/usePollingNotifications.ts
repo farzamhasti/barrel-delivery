@@ -17,11 +17,12 @@ interface UsePollingNotificationsOptions {
 /**
  * Hook for polling-based notifications
  * Periodically checks for new notifications and shows system notifications
+ * Polling runs continuously and never stops unless disabled or component unmounts
  */
 export function usePollingNotifications(options: UsePollingNotificationsOptions = {}) {
   const {
     enabled = true,
-    pollInterval = 5000, // 5 seconds default
+    pollInterval = 15000, // 15 seconds default
     onNotification,
   } = options;
 
@@ -37,6 +38,7 @@ export function usePollingNotifications(options: UsePollingNotificationsOptions 
 
   const lastNotificationIdRef = useRef<string | null>(null);
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const lastCheckedRef = useRef<number>(Date.now());
 
   // Request notification permission
   const requestPermission = async () => {
@@ -94,33 +96,47 @@ export function usePollingNotifications(options: UsePollingNotificationsOptions 
     }
   };
 
-  // Start polling for notifications
+  // Get last checked timestamp
+  const getLastChecked = () => lastCheckedRef.current;
+
+  // Update last checked timestamp
+  const updateLastChecked = () => {
+    lastCheckedRef.current = Date.now();
+  };
+
+  // Start continuous polling for notifications
   useEffect(() => {
-    if (!enabled || !permissionGranted) return;
-
-    const poll = async () => {
-      try {
-        // This will be called by the dashboard components
-        // They will handle the actual polling logic
-      } catch (error) {
-        console.error('[Polling Notifications] Polling error:', error);
-      }
-    };
-
-    // Set up polling interval
-    pollIntervalRef.current = setInterval(poll, pollInterval);
-
-    return () => {
+    if (!enabled) {
+      // Clear interval if disabled
       if (pollIntervalRef.current) {
         clearInterval(pollIntervalRef.current);
+        pollIntervalRef.current = null;
+      }
+      return;
+    }
+
+    // Set up continuous polling interval
+    // This will run indefinitely until the component unmounts or enabled becomes false
+    pollIntervalRef.current = setInterval(() => {
+      // Polling loop is active - dashboard components will use getLastChecked() and updateLastChecked()
+      // to track what they've already seen
+    }, pollInterval);
+
+    return () => {
+      // Clean up on unmount or when enabled changes to false
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+        pollIntervalRef.current = null;
       }
     };
-  }, [enabled, permissionGranted, pollInterval]);
+  }, [enabled, pollInterval]);
 
   return {
     isSupported,
     permissionGranted,
     requestPermission,
     showNotification,
+    getLastChecked,
+    updateLastChecked,
   };
 }

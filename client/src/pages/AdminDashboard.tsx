@@ -69,41 +69,88 @@ export default function AdminDashboard() {
   // Polling notifications setup
   const { isSupported, permissionGranted, showNotification } = usePollingNotifications({
     enabled: true,
-    pollInterval: 5000, // 5 seconds
+    pollInterval: 15000, // 15 seconds continuous polling
   });
   
-  // Track previous order count to detect new orders
-  const previousOrderCountRef = useRef(0);
+  // Track last seen order and reservation IDs to avoid duplicate notifications
+  const lastSeenReadyOrderIdsRef = useRef<Set<number>>(new Set());
+  const lastSeenDeliveredOrderIdsRef = useRef<Set<number>>(new Set());
+  const lastSeenDoneReservationIdsRef = useRef<Set<number>>(new Set());
   
-  // Fetch orders to detect new ones
-  const { data: allOrders = [] } = trpc.orders.getAll.useQuery();
+  // Fetch orders to detect status changes
+  const { data: allOrders = [] } = trpc.orders.getAll.useQuery(undefined, {
+    refetchInterval: 15000, // Refetch every 15 seconds
+  });
   
-  // Initialize ref on first render
+  // Fetch reservations for notifications
+  const { data: allReservations = [] } = trpc.reservations.getAll.useQuery(undefined, {
+    refetchInterval: 15000, // Refetch every 15 seconds
+  });
+  
+  // Initialize refs on first render
   useEffect(() => {
-    previousOrderCountRef.current = allOrders.length;
+    allOrders.forEach((order: any) => {
+      if (order.status === 'Ready') lastSeenReadyOrderIdsRef.current.add(order.id);
+      if (order.status === 'Delivered') lastSeenDeliveredOrderIdsRef.current.add(order.id);
+    });
+    allReservations.forEach((res: any) => {
+      if (res.status === 'Done') lastSeenDoneReservationIdsRef.current.add(res.id);
+    });
   }, []);
   
-  // Detect NEW orders and show admin-only notifications
+  // Detect orders marked as READY and show notifications
   useEffect(() => {
-    if (!permissionGranted || allOrders.length === 0) return;
+    if (!permissionGranted) return;
     
-    if (allOrders.length > previousOrderCountRef.current) {
-      const newOrderCount = allOrders.length - previousOrderCountRef.current;
-      const newOrders = allOrders.slice(0, newOrderCount);
-      
-      newOrders.forEach((order: any) => {
+    allOrders.forEach((order: any) => {
+      if (order.status === 'Ready' && !lastSeenReadyOrderIdsRef.current.has(order.id)) {
+        lastSeenReadyOrderIdsRef.current.add(order.id);
         showNotification({
-          id: `admin-order-${order.id}`,
-          title: '📦 New Order for Admin',
-          body: `Order #${order.orderNumber} - ${order.customerAddress || 'No address'}`,
+          id: `admin-ready-${order.id}`,
+          title: `Order #${order.orderNumber} is ready`,
+          body: `${order.customerAddress || 'No address'}`,
           timestamp: Date.now(),
           type: 'order',
         });
-      });
-      
-      previousOrderCountRef.current = allOrders.length;
-    }
-  }, [allOrders, permissionGranted, showNotification])
+      }
+    });
+  }, [allOrders, permissionGranted, showNotification]);
+  
+  // Detect orders marked as DELIVERED and show notifications
+  useEffect(() => {
+    if (!permissionGranted) return;
+    
+    allOrders.forEach((order: any) => {
+      if (order.status === 'Delivered' && !lastSeenDeliveredOrderIdsRef.current.has(order.id)) {
+        lastSeenDeliveredOrderIdsRef.current.add(order.id);
+        showNotification({
+          id: `admin-delivered-${order.id}`,
+          title: `Order #${order.orderNumber} has been delivered`,
+          body: `${order.customerAddress || 'No address'}`,
+          timestamp: Date.now(),
+          type: 'order',
+        });
+      }
+    });
+  }, [allOrders, permissionGranted, showNotification]);
+  
+  // Detect reservations marked as DONE and show notifications
+  useEffect(() => {
+    if (!permissionGranted) return;
+    
+    allReservations.forEach((reservation: any) => {
+      if (reservation.status === 'Done' && !lastSeenDoneReservationIdsRef.current.has(reservation.id)) {
+        lastSeenDoneReservationIdsRef.current.add(reservation.id);
+        showNotification({
+          id: `admin-done-${reservation.id}`,
+          title: `Reservation (${reservation.eventType}) is Done`,
+          body: `${new Date(reservation.date).toLocaleDateString()} at ${reservation.time}`,
+          timestamp: Date.now(),
+          type: 'alert',
+        });
+      }
+    });
+  }, [allReservations, permissionGranted, showNotification])
   
   // Redirect to create-order if accessing /admin or /admin/dashboard
   useEffect(() => {

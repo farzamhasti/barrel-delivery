@@ -108,19 +108,25 @@ export default function KitchenDashboardPage() {
   // Get kitchen username from system session
   const kitchenUsername = localStorage.getItem('systemUsername') || 'kitchen';
   
-  // Polling notifications setup - only for kitchen user
+  // Polling notifications setup - continuous polling for kitchen user
   const { isSupported, permissionGranted, showNotification } = usePollingNotifications({
     enabled: true,
-    pollInterval: 5000, // 5 seconds
+    pollInterval: 15000, // 15 seconds continuous polling
   });
 
-  // Track previous pending order count to detect NEW orders only
-  const previousPendingCountRef = useRef(0);
+  // Track last seen order and reservation IDs to avoid duplicate notifications
+  const lastSeenOrderIdsRef = useRef<Set<number>>(new Set());
+  const lastSeenReservationIdsRef = useRef<Set<number>>(new Set());
   
-  // Initialize ref on first render
+  // Initialize refs on first render
   useEffect(() => {
-    previousPendingCountRef.current = pendingOrders.length;
-  }, []);
+    pendingOrders.forEach((order: any) => {
+      lastSeenOrderIdsRef.current.add(order.id);
+    });
+    allReservations.forEach((res: any) => {
+      lastSeenReservationIdsRef.current.add(res.id);
+    });
+  }, [allReservations])
 
   // Auto-refetch every 3 seconds for real-time updates
   useEffect(() => {
@@ -130,30 +136,42 @@ export default function KitchenDashboardPage() {
     return () => clearInterval(interval);
   }, [refetch]);
 
-  // Detect NEW pending orders (only when count increases) and show notifications
+  // Detect NEW pending orders and show notifications
   useEffect(() => {
-    if (!permissionGranted || pendingOrders.length === 0) return;
+    if (!permissionGranted) return;
 
-    // Only notify on NEW orders (when count increases)
-    if (pendingOrders.length > previousPendingCountRef.current) {
-      const newOrderCount = pendingOrders.length - previousPendingCountRef.current;
-      
-      // Get the newly added orders (they should be at the beginning after sorting)
-      const newOrders = pendingOrders.slice(0, newOrderCount);
-      
-      newOrders.forEach((order: any) => {
+    pendingOrders.forEach((order: any) => {
+      if (!lastSeenOrderIdsRef.current.has(order.id)) {
+        lastSeenOrderIdsRef.current.add(order.id);
         showNotification({
           id: `kitchen-order-${order.id}`,
-          title: '🍕 New Order for Kitchen',
-          body: `Order #${order.orderNumber} - ${order.customerAddress || 'No address'}`,
+          title: `Order #${order.orderNumber} has arrived`,
+          body: `${order.customerAddress || 'No address'}`,
           timestamp: Date.now(),
           type: 'order',
         });
-      });
-      
-      previousPendingCountRef.current = pendingOrders.length;
-    }
-  }, [pendingOrders, permissionGranted, showNotification])
+      }
+    });
+  }, [pendingOrders, permissionGranted, showNotification]);
+  
+  // Detect NEW reservations and show notifications
+  useEffect(() => {
+    if (!permissionGranted) return;
+
+    allReservations.forEach((reservation: any) => {
+      if (!lastSeenReservationIdsRef.current.has(reservation.id) && reservation.status === 'Pending') {
+        lastSeenReservationIdsRef.current.add(reservation.id);
+        const reservationDate = new Date(reservation.date).toLocaleDateString();
+        showNotification({
+          id: `kitchen-reservation-${reservation.id}`,
+          title: `New Reservation: ${reservation.eventType} - ${reservationDate} - ${reservation.time} - ${reservation.numberOfPeople} people`,
+          body: `${reservation.description || 'No description'}`,
+          timestamp: Date.now(),
+          type: 'alert',
+        });
+      }
+    });
+  }, [allReservations, permissionGranted, showNotification])
 
   // Calculate urgency level based on delivery time
   const getUrgencyLevel = (deliveryTime: string | null) => {
