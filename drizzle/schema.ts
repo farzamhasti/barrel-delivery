@@ -171,6 +171,7 @@ export type InsertNotification = typeof notifications.$inferInsert;
 export const pushSubscriptions = mysqlTable("push_subscriptions", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("user_id"),
+  username: varchar("username", { length: 255 }), // Store the logged-in username
   role: mysqlEnum("role", ["admin", "kitchen", "driver"]),
   endpoint: varchar("endpoint", { length: 500 }).notNull().unique(),
   auth: varchar("auth", { length: 100 }).notNull(),

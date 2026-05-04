@@ -32,9 +32,11 @@ export interface PushNotificationPayload {
 }
 
 /**
- * Send push notification to all devices subscribed to a specific dashboard type
+ * Send push notification to the currently logged-in user's device
+ * Filters by username to ensure only the active user receives notifications
  */
 export async function sendPushNotification(
+  username: string,
   dashboardType: 'admin' | 'kitchen' | 'driver',
   driverId?: number,
   payload?: PushNotificationPayload
@@ -46,24 +48,26 @@ export async function sendPushNotification(
       return 0;
     }
 
-    // Build query based on dashboard type
+    // Build query to filter by username (currently logged-in user)
     let query = db
       .select()
       .from(pushSubscriptions)
       .where(
         and(
+          eq(pushSubscriptions.username, username),
           eq(pushSubscriptions.dashboardType, dashboardType),
           eq(pushSubscriptions.isActive, true)
         )
       );
 
-    // If it's a driver notification, filter by specific driver ID
+    // If it's a driver notification, also filter by specific driver ID
     if (dashboardType === 'driver' && driverId) {
       query = db
         .select()
         .from(pushSubscriptions)
         .where(
           and(
+            eq(pushSubscriptions.username, username),
             eq(pushSubscriptions.dashboardType, 'driver'),
             eq(pushSubscriptions.driverId, driverId),
             eq(pushSubscriptions.isActive, true)
@@ -191,11 +195,13 @@ export async function updateSubscriptionDashboard(
 
 /**
  * Store a push subscription in the database
+ * @param username - The currently logged-in username (barrel_admin, barrel_kitchen, driver_name, etc)
  */
 export async function storePushSubscription(
   endpoint: string,
   auth: string,
   p256dh: string,
+  username: string,
   dashboardType: 'admin' | 'kitchen' | 'driver' = 'admin',
   driverId?: number,
   userAgent?: string
@@ -218,6 +224,7 @@ export async function storePushSubscription(
       await db
         .update(pushSubscriptions)
         .set({
+          username,
           dashboardType,
           driverId: driverId || null,
           auth,
@@ -227,19 +234,20 @@ export async function storePushSubscription(
           updatedAt: new Date(),
         })
         .where(eq(pushSubscriptions.endpoint, endpoint));
-      console.log(`[Push Service] Updated existing subscription to ${dashboardType}`);
+      console.log(`[Push Service] Updated existing subscription for user ${username} to ${dashboardType}`);
     } else {
       // Create new subscription
       await db.insert(pushSubscriptions).values({
         endpoint,
         auth,
         p256dh,
+        username,
         dashboardType,
         driverId: driverId || null,
         userAgent,
         isActive: true,
       });
-      console.log(`[Push Service] New subscription stored for ${dashboardType}`);
+      console.log(`[Push Service] New subscription stored for user ${username} on ${dashboardType}`);
     }
 
     return true;

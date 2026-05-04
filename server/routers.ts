@@ -97,7 +97,7 @@ export const appRouter = router({
           });
           
           // Send push notification to kitchen dashboard
-          await sendPushNotification('kitchen', undefined, {
+          await sendPushNotification('barrel_kitchen', 'kitchen', undefined, {
             title: 'New Order',
             body: `Order #${(order as any).orderNumber} has been created`,
             url: '/kitchen-dashboard',
@@ -129,7 +129,7 @@ export const appRouter = router({
         const updatedOrder = await db.updateOrderStatus(input.orderId, input.status);
         // Send push notifications for order status changes
         if (updatedOrder && input.status === "Ready") {
-          await sendPushNotification("admin", undefined, {
+          await sendPushNotification("barrel_admin", "admin", undefined, {
             title: "Order Ready",
             body: `Order #${(updatedOrder as any).orderNumber} is ready for delivery`,
             url: "/admin/order-tracking",
@@ -138,7 +138,7 @@ export const appRouter = router({
           }).catch(err => console.error("[Push] Failed to send ready notification:", err));
         }
         if (updatedOrder && input.status === "Delivered") {
-          await sendPushNotification("admin", undefined, {
+          await sendPushNotification("barrel_admin", "admin", undefined, {
             title: "Order Delivered",
             body: `Order #${(updatedOrder as any).orderNumber} has been delivered`,
             url: "/admin/order-tracking",
@@ -214,7 +214,9 @@ export const appRouter = router({
             });
             console.log('[sendToDriver] Notification created for driver', input.driverId);
             // Send push notification to driver
-            await sendPushNotification("driver", input.driverId, {
+            // Get driver username from context or use a generic driver identifier
+            const driverUsername = `driver_${input.driverId}`;
+            await sendPushNotification(driverUsername, "driver", input.driverId, {
               title: "New Order Assigned",
               body: `Order #${(order as any).orderNumber} has been assigned to you`,
               url: "/driver-dashboard",
@@ -326,7 +328,7 @@ export const appRouter = router({
           });
           
           // Send push notification to kitchen dashboard
-          await sendPushNotification('kitchen', undefined, {
+          await sendPushNotification('barrel_kitchen', 'kitchen', undefined, {
             title: 'New Order from Receipt',
             body: `Order #${(order as any).orderNumber} has been registered`,
             url: '/kitchen-dashboard',
@@ -784,7 +786,7 @@ export const appRouter = router({
           });
         }
         // Send push notification to admin
-            await sendPushNotification("admin", undefined, {
+            await sendPushNotification("barrel_admin", "admin", undefined, {
               title: "Reservation Completed",
               body: `Reservation #${updatedReservation.id} (${(updatedReservation as any).eventType}) has been completed`,
               url: "/admin/reservations",
@@ -934,11 +936,19 @@ export const appRouter = router({
         driverId: z.number().optional(),
         userAgent: z.string().optional(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
+        // Get username from system session
+        const username = ctx.systemSession?.username;
+        if (!username) {
+          console.error('[Push] No system session found - cannot subscribe without username');
+          return { success: false };
+        }
+        
         const success = await storePushSubscription(
           input.endpoint,
           input.auth,
           input.p256dh,
+          username,
           input.dashboardType,
           input.driverId,
           input.userAgent
@@ -958,8 +968,15 @@ export const appRouter = router({
         dashboardType: z.enum(['admin', 'kitchen', 'driver']),
         driverId: z.number().optional(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
+        // Get username from system session
+        const username = ctx.systemSession?.username;
+        if (!username) {
+          return { sent: 0 };
+        }
+        
         const count = await sendPushNotification(
+          username,
           input.dashboardType,
           input.driverId,
           {
