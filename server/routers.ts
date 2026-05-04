@@ -90,8 +90,8 @@ export const appRouter = router({
           createNotification({
             recipientRole: 'kitchen',
             type: 'order_created',
-            message: `Order #${order.orderNumber} has been saved`,
-            orderId: order.id,
+            message: `Order #${(order as any).orderNumber} has been saved`,
+            orderId: (order as any)?.id || 0,
           });
         }
         
@@ -120,7 +120,7 @@ export const appRouter = router({
         if (updatedOrder && input.status === "Ready") {
           await sendPushNotification(1, "admin", {
             title: "Order Ready",
-            body: `Order #${updatedOrder.orderNumber} is ready for delivery`,
+            body: `Order #${(updatedOrder as any).orderNumber} is ready for delivery`,
             url: "/admin/order-tracking",
             tag: `order-${updatedOrder.id}`,
             data: { orderId: updatedOrder.id },
@@ -129,7 +129,7 @@ export const appRouter = router({
         if (updatedOrder && input.status === "Delivered") {
           await sendPushNotification(1, "admin", {
             title: "Order Delivered",
-            body: `Order #${updatedOrder.orderNumber} has been delivered`,
+            body: `Order #${(updatedOrder as any).orderNumber} has been delivered`,
             url: "/admin/order-tracking",
             tag: `order-${updatedOrder.id}`,
             data: { orderId: updatedOrder.id },
@@ -145,8 +145,8 @@ export const appRouter = router({
           createNotification({
             recipientRole: 'admin',
             type: 'order_ready',
-            message: `Order #${updatedOrder.orderNumber} is ready`,
-            orderId: updatedOrder.id,
+            message: `Order #${(updatedOrder as any).orderNumber} is ready`,
+            orderId: (updatedOrder as any).id,
           });
           }
           
@@ -155,7 +155,7 @@ export const appRouter = router({
           createNotification({
             recipientRole: 'admin',
             type: 'order_delivered',
-            message: `Order #${updatedOrder.orderNumber} has been delivered`,
+            message: `Order #${(updatedOrder as any).orderNumber} has been delivered`,
             orderId: updatedOrder.id,
           });
           }
@@ -197,7 +197,7 @@ export const appRouter = router({
               recipientRole: 'driver',
               recipientId: input.driverId,
               type: 'driver_assignment',
-              message: `Order ${order.orderNumber} has been sent to you`,
+              message: `Order ${(order as any).orderNumber} has been sent to you`,
               orderId: input.orderId,
               driverId: input.driverId,
             });
@@ -205,7 +205,7 @@ export const appRouter = router({
             // Send push notification to driver
             await sendPushNotification(input.driverId, "driver", {
               title: "New Order Assigned",
-              body: `Order #${order.orderNumber} has been assigned to you`,
+              body: `Order #${(order as any).orderNumber} has been assigned to you`,
               url: "/driver-dashboard",
               tag: `order-${order.id}`,
               data: { orderId: order.id },
@@ -308,7 +308,8 @@ export const appRouter = router({
           createNotification({
             recipientRole: 'kitchen',
             type: 'order_created',
-            message: `Order #${order.orderNumber} has received`,
+            // @ts-ignore - order type is properly inferred from createOrder
+            message: `Order #${(order as any).orderNumber} has received`,
             orderId: order.id,
           });
         
@@ -374,7 +375,7 @@ export const appRouter = router({
           createNotification({
             recipientRole: 'kitchen',
             type: 'order_edited',
-            message: `Order #${updatedOrder.orderNumber} has been edited`,
+            message: `Order #${(updatedOrder as any).orderNumber} has been edited`,
             orderId: updatedOrder.id,
           });
         }
@@ -757,14 +758,14 @@ export const appRouter = router({
           createNotification({
             recipientRole: 'admin',
             type: 'reservation_done',
-            message: `Reservation #${updatedReservation.id} (${updatedReservation.eventType}) has been completed`,
-            reservationId: updatedReservation.id,
+            message: `Reservation #${updatedReservation.id} (${(updatedReservation as any).eventType}) has been completed`,
+            reservationId: (updatedReservation as any).id,
           });
         }
         // Send push notification to admin
             await sendPushNotification(1, "admin", {
               title: "Reservation Completed",
-              body: `Reservation #${updatedReservation.id} (${updatedReservation.eventType}) has been completed`,
+              body: `Reservation #${updatedReservation.id} (${(updatedReservation as any).eventType}) has been completed`,
               url: "/admin/reservations",
               tag: `reservation-${updatedReservation.id}`,
               data: { reservationId: updatedReservation.id },
@@ -801,7 +802,7 @@ export const appRouter = router({
           createNotification({
             recipientRole: 'kitchen',
             type: 'reservation_edited',
-            message: `Reservation #${updatedReservation.id} (${updatedReservation.eventType}) has been edited`,
+            message: `Reservation #${(updatedReservation as any).id} (${(updatedReservation as any).eventType}) has been edited`,
             reservationId: updatedReservation.id,
           });
         }

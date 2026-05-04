@@ -7,7 +7,7 @@ import webpush from 'web-push';
 import { ENV } from './_core/env';
 import { getDb } from './db';
 import { pushSubscriptions } from '../drizzle/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, inArray } from 'drizzle-orm';
 
 // Configure web-push with VAPID keys
 if (ENV.vapidPublicKey && ENV.vapidPrivateKey && ENV.vapidSubject) {
@@ -108,7 +108,7 @@ export async function sendPushNotification(
       await db
         .update(pushSubscriptions)
         .set({ isActive: false })
-        .where((col) => failedSubscriptions.includes(col.id as any));
+        .where(inArray(pushSubscriptions.id, failedSubscriptions));
       console.log(`[Push Service] Marked ${failedSubscriptions.length} subscriptions as inactive`);
     }
 
@@ -190,7 +190,7 @@ export async function broadcastPushNotification(
       await db
         .update(pushSubscriptions)
         .set({ isActive: false })
-        .where((col) => failedSubscriptions.includes(col.id as any));
+        .where(inArray(pushSubscriptions.id, failedSubscriptions));
     }
 
     console.log(`[Push Service] Broadcast sent to ${successCount}/${subscriptions.length} subscriptions`);

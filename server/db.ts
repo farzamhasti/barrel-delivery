@@ -674,10 +674,16 @@ export async function updateOrder(id: number, data: { status?: string; totalPric
   
   // Only execute update if there are fields to update
   if (Object.keys(updateData).length === 0) {
-    return { changes: 0 }; // Return empty result if no fields to update
+    // Fetch and return the existing order
+    const existing = await db.select().from(orders).where(eq(orders.id, id));
+    return existing[0] || null;
   }
   
-  return db.update(orders).set(updateData).where(eq(orders.id, id));
+  await db.update(orders).set(updateData).where(eq(orders.id, id));
+  
+  // Fetch and return the updated order
+  const updated = await db.select().from(orders).where(eq(orders.id, id));
+  return updated[0] || null;
 }
 
 export async function deleteOrder(id: number) {
@@ -745,7 +751,7 @@ export async function createOrder(data: InsertOrder) {
       totalPrice: Number(order.totalPrice),
     };
   }
-  return { id: insertId, ...data }; // Return the created order or a fallback
+  throw new Error(`Failed to retrieve created order with ID ${insertId}`);
 }
 
 export async function getOrdersByStatus(statuses?: string[]) {
@@ -1546,11 +1552,13 @@ export async function updateReservation(id: number, data: Partial<Omit<InsertRes
   if ((data as any).dateTime !== undefined) updateData.dateTime = (data as any).dateTime;
   if ((data as any).description !== undefined) updateData.description = (data as any).description;
 
-  const result = await db.update(reservations)
+  await db.update(reservations)
     .set(updateData)
     .where(eq(reservations.id, id));
 
-  return result;
+  // Fetch and return the updated reservation
+  const updated = await db.select().from(reservations).where(eq(reservations.id, id));
+  return updated[0] || null;
 }
 
 export async function updateReservationStatus(id: number, status: "Pending" | "Done") {
