@@ -79,52 +79,52 @@ export default function DriverDashboard() {
     },
   });
   
-  // Polling notifications setup
+  // Polling notifications setup - continuous polling for driver
   const { isSupported, permissionGranted, showNotification } = usePollingNotifications({
     enabled: isLoggedIn,
-    pollInterval: 5000, // 5 seconds
+    pollInterval: 15000, // 15 seconds continuous polling
   });
   
-  // Track previous assigned orders to detect new assignments
-  const previousAssignedOrdersRef = useRef(0);
+  // Track last seen order IDs to avoid duplicate notifications
+  const lastSeenOrderIdsRef = useRef<Set<number>>(new Set());
   
   // Fetch driver's assigned orders
   const { data: driverOrders = [] } = trpc.orders.getByDriver.useQuery(
     { driverId: currentDriverId || 0 },
+    { enabled: !!currentDriverId, refetchInterval: 15000 } // Refetch every 15 seconds
+  );
+  
+  // Fetch driver info to get driver name
+  const { data: currentDriver } = trpc.drivers.getById.useQuery(
+    { id: currentDriverId || 0 },
     { enabled: !!currentDriverId }
   );
   
   // Initialize ref on first render
   useEffect(() => {
-    const assignedOrders = driverOrders.filter((o: any) => o.status !== 'Delivered');
-    previousAssignedOrdersRef.current = assignedOrders.length;
+    driverOrders.forEach((order: any) => {
+      lastSeenOrderIdsRef.current.add(order.id);
+    });
   }, []);
   
   // Detect NEW order assignments and show driver-specific notifications
   useEffect(() => {
-    if (!permissionGranted || !currentDriverId) return;
+    if (!permissionGranted || !currentDriverId || !currentDriver) return;
     
-    // Filter for orders that are assigned to this driver but not yet delivered
-    const assignedOrders = driverOrders.filter((o: any) => o.status !== 'Delivered');
-    
-    // Only notify on NEW assignments (when count increases)
-    if (assignedOrders.length > previousAssignedOrdersRef.current) {
-      const newOrderCount = assignedOrders.length - previousAssignedOrdersRef.current;
-      const newOrders = assignedOrders.slice(0, newOrderCount);
-      
-      newOrders.forEach((order: any) => {
+    // Check for new orders not yet seen
+    driverOrders.forEach((order: any) => {
+      if (!lastSeenOrderIdsRef.current.has(order.id)) {
+        lastSeenOrderIdsRef.current.add(order.id);
         showNotification({
           id: `driver-${currentDriverId}-order-${order.id}`,
-          title: '🚘 New Delivery for You',
-          body: `Order #${order.orderNumber} - ${order.customerAddress || 'No address'}`,
+          title: `Order #${order.orderNumber} has been sent to ${currentDriver.name}`,
+          body: `${order.customerAddress || 'No address'}`,
           timestamp: Date.now(),
           type: 'delivery',
         });
-      });
-      
-      previousAssignedOrdersRef.current = assignedOrders.length;
-    }
-  }, [driverOrders, permissionGranted, currentDriverId, showNotification])
+      }
+    });
+  }, [driverOrders, permissionGranted, currentDriverId, currentDriver, showNotification])
 
   // Update order status mutation
   const updateOrderStatusMutation = trpc.orders.updateStatus.useMutation({
