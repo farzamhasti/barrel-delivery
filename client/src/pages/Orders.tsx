@@ -67,13 +67,8 @@ export function Orders() {
     date: selectedDate.toISOString().split('T')[0],
   });
   
-  // Auto-refetch every 2 seconds for real-time order status updates
-  useEffect(() => {
-    const interval = setInterval(() => {
-      refetchOrders();
-    }, 2000);
-    return () => clearInterval(interval);
-  }, [refetchOrders]);
+  // Refetch orders only when necessary (after mutations or manual refresh)
+  // Removed auto-refetch to prevent flickering and UI resets
   
   const orders = useMemo(() => {
     return allOrders.filter((order: any) => order.status === statusFilter);
@@ -91,14 +86,8 @@ export function Orders() {
     { enabled: !!selectedOrderId }
   );
   
-  // Auto-refetch selected order details every 2 seconds
-  useEffect(() => {
-    if (!selectedOrderId) return;
-    const interval = setInterval(() => {
-      refetchSelectedOrder();
-    }, 2000);
-    return () => clearInterval(interval);
-  }, [selectedOrderId, refetchSelectedOrder]);
+  // Refetch selected order details only when necessary
+  // Removed auto-refetch to prevent flickering and interference with user interactions
 
   const isDeleting = deleteOrderMutation.isPending;
   const isSaving = updateOrderMutation.isPending;
