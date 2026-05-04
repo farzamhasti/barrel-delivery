@@ -22,7 +22,7 @@ interface UsePollingNotificationsOptions {
 export function usePollingNotifications(options: UsePollingNotificationsOptions = {}) {
   const {
     enabled = true,
-    pollInterval = 15000, // 15 seconds default
+    pollInterval = 1000, // 1 second default for real-time notifications
     onNotification,
   } = options;
 
@@ -38,7 +38,14 @@ export function usePollingNotifications(options: UsePollingNotificationsOptions 
 
   const lastNotificationIdRef = useRef<string | null>(null);
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const lastCheckedRef = useRef<number>(Date.now());
+  
+  // Load last checked time from localStorage
+  const getInitialLastChecked = () => {
+    const stored = localStorage.getItem('notification_last_checked');
+    return stored ? parseInt(stored, 10) : Date.now();
+  };
+  
+  const lastCheckedRef = useRef<number>(getInitialLastChecked());
 
   // Request notification permission
   const requestPermission = async () => {
@@ -99,9 +106,10 @@ export function usePollingNotifications(options: UsePollingNotificationsOptions 
   // Get last checked timestamp
   const getLastChecked = () => lastCheckedRef.current;
 
-  // Update last checked timestamp
+  // Update last checked timestamp and persist to localStorage
   const updateLastChecked = () => {
     lastCheckedRef.current = Date.now();
+    localStorage.setItem('notification_last_checked', lastCheckedRef.current.toString());
   };
 
   // Start continuous polling for notifications
@@ -131,6 +139,13 @@ export function usePollingNotifications(options: UsePollingNotificationsOptions 
     };
   }, [enabled, pollInterval]);
 
+  // Clear notification history (used on logout)
+  const clearNotificationHistory = () => {
+    lastCheckedRef.current = Date.now();
+    localStorage.setItem('notification_last_checked', lastCheckedRef.current.toString());
+    localStorage.removeItem('seen_notification_ids');
+  };
+
   return {
     isSupported,
     permissionGranted,
@@ -138,5 +153,6 @@ export function usePollingNotifications(options: UsePollingNotificationsOptions 
     showNotification,
     getLastChecked,
     updateLastChecked,
+    clearNotificationHistory,
   };
 }
