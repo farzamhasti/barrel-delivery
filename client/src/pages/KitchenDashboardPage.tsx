@@ -16,6 +16,8 @@ import { DeveloperCredit } from "@/components/DeveloperCredit";
 import { useCountdownTimer } from "@/hooks/useCountdownTimer";
 import { NotificationIcon } from "@/components/NotificationIcon";
 import { usePollingNotifications } from "@/hooks/usePollingNotifications";
+import { useWebPush } from "@/hooks/useWebPush";
+import { sendNotificationWithDedup } from "@/utils/notificationDedup";
 
 // Helper function to format return time from seconds to MM:SS format
 function formatReturnTime(seconds: number | null | undefined): string {
@@ -112,6 +114,13 @@ export default function KitchenDashboardPage() {
   const { isSupported, permissionGranted, showNotification } = usePollingNotifications({
     enabled: true,
     pollInterval: 15000, // 15 seconds continuous polling
+  });
+
+  // Web Push setup for background notifications
+  const { sendNotification: sendWebPush } = useWebPush({
+    enabled: permissionGranted,
+    username: kitchenUsername,
+    dashboardType: 'kitchen',
   });
 
   // Track last seen order and reservation IDs to avoid duplicate notifications
