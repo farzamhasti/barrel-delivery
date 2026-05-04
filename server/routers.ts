@@ -77,6 +77,7 @@ export const appRouter = router({
         customerLongitude: z.number().optional(),
       }))
       .mutation(async ({ input }) => {
+        console.log('[Orders.create] Creating new order...');
         const order = await db.createOrder({
           orderNumber: `ORD-${Date.now()}`,
           customerPhone: input.customerPhone,
@@ -84,6 +85,7 @@ export const appRouter = router({
           status: 'Pending',
         });
         
+        console.log('[Orders.create] Order created:', (order as any)?.orderNumber);
         // Send notification to kitchen
         if (order) {
           const { createNotification } = await import('./notifications');
@@ -93,6 +95,15 @@ export const appRouter = router({
             message: `Order #${(order as any).orderNumber} has been saved`,
             orderId: (order as any)?.id || 0,
           });
+          
+          // Send push notification to kitchen dashboard
+          await sendPushNotification('kitchen', undefined, {
+            title: 'New Order',
+            body: `Order #${(order as any).orderNumber} has been created`,
+            url: '/kitchen-dashboard',
+            tag: `order-${(order as any).id}`,
+            data: { orderId: (order as any).id },
+          }).catch(err => console.error('[Push] Failed to send kitchen notification:', err));
         }
         
         return order;
@@ -313,6 +324,15 @@ export const appRouter = router({
             message: `Order #${(order as any).orderNumber} has received`,
             orderId: order.id,
           });
+          
+          // Send push notification to kitchen dashboard
+          await sendPushNotification('kitchen', undefined, {
+            title: 'New Order from Receipt',
+            body: `Order #${(order as any).orderNumber} has been registered`,
+            url: '/kitchen-dashboard',
+            tag: `order-${(order as any).id}`,
+            data: { orderId: (order as any).id },
+          }).catch(err => console.error('[Push] Failed to send receipt order notification:', err));
         
         return order;
       }),
