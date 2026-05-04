@@ -17,8 +17,8 @@ export function TestPushButton({ role, userId }: TestPushButtonProps) {
     setIsLoading(true);
     try {
       const result = await sendTestMutation.mutateAsync({
-        userId,
-        role,
+        dashboardType: role,
+        driverId: role === 'driver' ? userId : undefined,
       });
 
       if (result.sent > 0) {

@@ -963,7 +963,7 @@ export const appRouter = router({
         const success = await removePushSubscription(input.endpoint);
         return { success };
       }),
-    sendTest: publicProcedure
+    sendTest: protectedProcedure
       .input(z.object({
         dashboardType: z.enum(['admin', 'kitchen', 'driver']),
         driverId: z.number().optional(),
@@ -972,8 +972,10 @@ export const appRouter = router({
         // Get username from system session
         const username = ctx.systemSession?.username;
         if (!username) {
+          console.error('[Push.sendTest] No system session found');
           return { sent: 0 };
         }
+        console.log('[Push.sendTest] Sending test push to username:', username);
         
         const count = await sendPushNotification(
           username,
