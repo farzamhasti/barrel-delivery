@@ -118,15 +118,20 @@ export default function KitchenDashboardPage() {
   const lastSeenOrderIdsRef = useRef<Set<number>>(new Set());
   const lastSeenReservationIdsRef = useRef<Set<number>>(new Set());
   
-  // Initialize refs on first render
+  // Update tracked IDs whenever data changes (track current state, not just on mount)
   useEffect(() => {
-    pendingOrders.forEach((order: any) => {
-      lastSeenOrderIdsRef.current.add(order.id);
-    });
-    allReservations.forEach((res: any) => {
-      lastSeenReservationIdsRef.current.add(res.id);
-    });
-  }, [allReservations])
+    const currentOrderIds = new Set(pendingOrders.map((o: any) => o.id));
+    lastSeenOrderIdsRef.current = currentOrderIds;
+  }, []);
+  
+  useEffect(() => {
+    const currentReservationIds = new Set(
+      allReservations
+        .filter((r: any) => r.status === 'Pending')
+        .map((r: any) => r.id)
+    );
+    lastSeenReservationIdsRef.current = currentReservationIds;
+  }, []);
 
   // Auto-refetch every 3 seconds for real-time updates
   useEffect(() => {
@@ -138,11 +143,13 @@ export default function KitchenDashboardPage() {
 
   // Detect NEW pending orders and show notifications
   useEffect(() => {
-    if (!permissionGranted) return;
+    if (!permissionGranted || pendingOrders.length === 0) return;
 
     pendingOrders.forEach((order: any) => {
+      // If this order ID is NOT in our tracking set, it's NEW
       if (!lastSeenOrderIdsRef.current.has(order.id)) {
         lastSeenOrderIdsRef.current.add(order.id);
+        console.log(`[Kitchen] New order detected: #${order.orderNumber}`);
         showNotification({
           id: `kitchen-order-${order.id}`,
           title: `Order #${order.orderNumber} has arrived`,
@@ -156,12 +163,14 @@ export default function KitchenDashboardPage() {
   
   // Detect NEW reservations and show notifications
   useEffect(() => {
-    if (!permissionGranted) return;
+    if (!permissionGranted || allReservations.length === 0) return;
 
     allReservations.forEach((reservation: any) => {
-      if (!lastSeenReservationIdsRef.current.has(reservation.id) && reservation.status === 'Pending') {
+      // Only notify if status is Pending AND this ID is NOT in our tracking set
+      if (reservation.status === 'Pending' && !lastSeenReservationIdsRef.current.has(reservation.id)) {
         lastSeenReservationIdsRef.current.add(reservation.id);
         const reservationDate = new Date(reservation.date).toLocaleDateString();
+        console.log(`[Kitchen] New reservation detected: ${reservation.eventType}`);
         showNotification({
           id: `kitchen-reservation-${reservation.id}`,
           title: `New Reservation: ${reservation.eventType} - ${reservationDate} - ${reservation.time} - ${reservation.numberOfPeople} people`,

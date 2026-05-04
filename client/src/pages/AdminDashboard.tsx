@@ -87,12 +87,15 @@ export default function AdminDashboard() {
     refetchInterval: 15000, // Refetch every 15 seconds
   });
   
-  // Initialize refs on first render
+  // Initialize refs on first render - only track current state
   useEffect(() => {
     allOrders.forEach((order: any) => {
       if (order.status === 'Ready') lastSeenReadyOrderIdsRef.current.add(order.id);
       if (order.status === 'Delivered') lastSeenDeliveredOrderIdsRef.current.add(order.id);
     });
+  }, []);
+  
+  useEffect(() => {
     allReservations.forEach((res: any) => {
       if (res.status === 'Done') lastSeenDoneReservationIdsRef.current.add(res.id);
     });
@@ -100,11 +103,12 @@ export default function AdminDashboard() {
   
   // Detect orders marked as READY and show notifications
   useEffect(() => {
-    if (!permissionGranted) return;
+    if (!permissionGranted || allOrders.length === 0) return;
     
     allOrders.forEach((order: any) => {
       if (order.status === 'Ready' && !lastSeenReadyOrderIdsRef.current.has(order.id)) {
         lastSeenReadyOrderIdsRef.current.add(order.id);
+        console.log(`[Admin] Order ready: #${order.orderNumber}`);
         showNotification({
           id: `admin-ready-${order.id}`,
           title: `Order #${order.orderNumber} is ready`,
@@ -118,11 +122,12 @@ export default function AdminDashboard() {
   
   // Detect orders marked as DELIVERED and show notifications
   useEffect(() => {
-    if (!permissionGranted) return;
+    if (!permissionGranted || allOrders.length === 0) return;
     
     allOrders.forEach((order: any) => {
       if (order.status === 'Delivered' && !lastSeenDeliveredOrderIdsRef.current.has(order.id)) {
         lastSeenDeliveredOrderIdsRef.current.add(order.id);
+        console.log(`[Admin] Order delivered: #${order.orderNumber}`);
         showNotification({
           id: `admin-delivered-${order.id}`,
           title: `Order #${order.orderNumber} has been delivered`,
@@ -136,11 +141,12 @@ export default function AdminDashboard() {
   
   // Detect reservations marked as DONE and show notifications
   useEffect(() => {
-    if (!permissionGranted) return;
+    if (!permissionGranted || allReservations.length === 0) return;
     
     allReservations.forEach((reservation: any) => {
       if (reservation.status === 'Done' && !lastSeenDoneReservationIdsRef.current.has(reservation.id)) {
         lastSeenDoneReservationIdsRef.current.add(reservation.id);
+        console.log(`[Admin] Reservation done: ${reservation.eventType}`);
         showNotification({
           id: `admin-done-${reservation.id}`,
           title: `Reservation (${reservation.eventType}) is Done`,
