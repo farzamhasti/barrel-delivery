@@ -17,12 +17,11 @@ interface UsePollingNotificationsOptions {
 /**
  * Hook for polling-based notifications
  * Periodically checks for new notifications and shows system notifications
- * Polling runs continuously and never stops unless disabled or component unmounts
  */
 export function usePollingNotifications(options: UsePollingNotificationsOptions = {}) {
   const {
     enabled = true,
-    pollInterval = 1000, // 1 second default for real-time notifications
+    pollInterval = 5000, // 5 seconds default
     onNotification,
   } = options;
 
@@ -38,14 +37,6 @@ export function usePollingNotifications(options: UsePollingNotificationsOptions 
 
   const lastNotificationIdRef = useRef<string | null>(null);
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  
-  // Load last checked time from localStorage
-  const getInitialLastChecked = () => {
-    const stored = localStorage.getItem('notification_last_checked');
-    return stored ? parseInt(stored, 10) : Date.now();
-  };
-  
-  const lastCheckedRef = useRef<number>(getInitialLastChecked());
 
   // Request notification permission
   const requestPermission = async () => {
@@ -103,56 +94,33 @@ export function usePollingNotifications(options: UsePollingNotificationsOptions 
     }
   };
 
-  // Get last checked timestamp
-  const getLastChecked = () => lastCheckedRef.current;
-
-  // Update last checked timestamp and persist to localStorage
-  const updateLastChecked = () => {
-    lastCheckedRef.current = Date.now();
-    localStorage.setItem('notification_last_checked', lastCheckedRef.current.toString());
-  };
-
-  // Start continuous polling for notifications
+  // Start polling for notifications
   useEffect(() => {
-    if (!enabled) {
-      // Clear interval if disabled
-      if (pollIntervalRef.current) {
-        clearInterval(pollIntervalRef.current);
-        pollIntervalRef.current = null;
-      }
-      return;
-    }
+    if (!enabled || !permissionGranted) return;
 
-    // Set up continuous polling interval
-    // This will run indefinitely until the component unmounts or enabled becomes false
-    pollIntervalRef.current = setInterval(() => {
-      // Polling loop is active - dashboard components will use getLastChecked() and updateLastChecked()
-      // to track what they've already seen
-    }, pollInterval);
-
-    return () => {
-      // Clean up on unmount or when enabled changes to false
-      if (pollIntervalRef.current) {
-        clearInterval(pollIntervalRef.current);
-        pollIntervalRef.current = null;
+    const poll = async () => {
+      try {
+        // This will be called by the dashboard components
+        // They will handle the actual polling logic
+      } catch (error) {
+        console.error('[Polling Notifications] Polling error:', error);
       }
     };
-  }, [enabled, pollInterval]);
 
-  // Clear notification history (used on logout)
-  const clearNotificationHistory = () => {
-    lastCheckedRef.current = Date.now();
-    localStorage.setItem('notification_last_checked', lastCheckedRef.current.toString());
-    localStorage.removeItem('seen_notification_ids');
-  };
+    // Set up polling interval
+    pollIntervalRef.current = setInterval(poll, pollInterval);
+
+    return () => {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+      }
+    };
+  }, [enabled, permissionGranted, pollInterval]);
 
   return {
     isSupported,
     permissionGranted,
     requestPermission,
     showNotification,
-    getLastChecked,
-    updateLastChecked,
-    clearNotificationHistory,
   };
 }
