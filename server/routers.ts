@@ -927,7 +927,7 @@ export const appRouter = router({
       }),
   }),
   push: router({
-    subscribe: publicProcedure
+    subscribe: protectedProcedure
       .input(z.object({
         endpoint: z.string(),
         auth: z.string(),
