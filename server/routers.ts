@@ -7,7 +7,6 @@ import { convertOntarioTimeToUTC } from './timezoneHelper';
 import * as db from './db';
 import { getDb } from './db';
 import { createNotification } from './notifications';
-import { storePushSubscription, removePushSubscription, sendPushNotification } from './push-service';
 
 export const appRouter = router({
   places: router({
@@ -96,14 +95,7 @@ export const appRouter = router({
             orderId: (order as any)?.id || 0,
           });
           
-          // Send push notification to kitchen dashboard
-          await sendPushNotification('barrel_kitchen', 'kitchen', undefined, {
-            title: 'New Order',
-            body: `Order #${(order as any).orderNumber} has been created`,
-            url: '/kitchen-dashboard',
-            tag: `order-${(order as any).id}`,
-            data: { orderId: (order as any).id },
-          }).catch(err => console.error('[Push] Failed to send kitchen notification:', err));
+
         }
         
         return order;
@@ -127,25 +119,7 @@ export const appRouter = router({
       }))
       .mutation(async ({ input }) => {
         const updatedOrder = await db.updateOrderStatus(input.orderId, input.status);
-        // Send push notifications for order status changes
-        if (updatedOrder && input.status === "Ready") {
-          await sendPushNotification("barrel_admin", "admin", undefined, {
-            title: "Order Ready",
-            body: `Order #${(updatedOrder as any).orderNumber} is ready for delivery`,
-            url: "/admin/order-tracking",
-            tag: `order-${updatedOrder.id}`,
-            data: { orderId: updatedOrder.id },
-          }).catch(err => console.error("[Push] Failed to send ready notification:", err));
-        }
-        if (updatedOrder && input.status === "Delivered") {
-          await sendPushNotification("barrel_admin", "admin", undefined, {
-            title: "Order Delivered",
-            body: `Order #${(updatedOrder as any).orderNumber} has been delivered`,
-            url: "/admin/order-tracking",
-            tag: `order-${updatedOrder.id}`,
-            data: { orderId: updatedOrder.id },
-          }).catch(err => console.error("[Push] Failed to send delivered notification:", err));
-        }
+
         
         // Send notifications based on status changes
         if (updatedOrder) {
@@ -213,16 +187,6 @@ export const appRouter = router({
               driverId: input.driverId,
             });
             console.log('[sendToDriver] Notification created for driver', input.driverId);
-            // Send push notification to driver
-            // Get driver username from context or use a generic driver identifier
-            const driverUsername = `driver_${input.driverId}`;
-            await sendPushNotification(driverUsername, "driver", input.driverId, {
-              title: "New Order Assigned",
-              body: `Order #${(order as any).orderNumber} has been assigned to you`,
-              url: "/driver-dashboard",
-              tag: `order-${order.id}`,
-              data: { orderId: order.id },
-            }).catch(err => console.error("[Push] Failed to send driver assignment notification:", err));
           }
           
           return { success: true, orderId: input.orderId, driverId: input.driverId };
@@ -327,14 +291,7 @@ export const appRouter = router({
             orderId: order.id,
           });
           
-          // Send push notification to kitchen dashboard
-          await sendPushNotification('barrel_kitchen', 'kitchen', undefined, {
-            title: 'New Order from Receipt',
-            body: `Order #${(order as any).orderNumber} has been registered`,
-            url: '/kitchen-dashboard',
-            tag: `order-${(order as any).id}`,
-            data: { orderId: (order as any).id },
-          }).catch(err => console.error('[Push] Failed to send receipt order notification:', err));
+
         
         return order;
       }),
@@ -785,14 +742,7 @@ export const appRouter = router({
             reservationId: (updatedReservation as any).id,
           });
         }
-        // Send push notification to admin
-            await sendPushNotification("barrel_admin", "admin", undefined, {
-              title: "Reservation Completed",
-              body: `Reservation #${updatedReservation.id} (${(updatedReservation as any).eventType}) has been completed`,
-              url: "/admin/reservations",
-              tag: `reservation-${updatedReservation.id}`,
-              data: { reservationId: updatedReservation.id },
-            }).catch(err => console.error("[Push] Failed to send reservation completion notification:", err));
+
         
         return updatedReservation;
       }),
@@ -926,68 +876,5 @@ export const appRouter = router({
         return { markedCount: count };
       }),
   }),
-  push: router({
-    subscribe: protectedProcedure
-      .input(z.object({
-        endpoint: z.string(),
-        auth: z.string(),
-        p256dh: z.string(),
-        dashboardType: z.enum(['admin', 'kitchen', 'driver']),
-        driverId: z.number().optional(),
-        userAgent: z.string().optional(),
-      }))
-      .mutation(async ({ input, ctx }) => {
-        // Get username from system session
-        const username = ctx.systemSession?.username;
-        if (!username) {
-          console.error('[Push] No system session found - cannot subscribe without username');
-          return { success: false };
-        }
-        
-        const success = await storePushSubscription(
-          input.endpoint,
-          input.auth,
-          input.p256dh,
-          username,
-          input.dashboardType,
-          input.driverId,
-          input.userAgent
-        );
-        return { success };
-      }),
-    unsubscribe: publicProcedure
-      .input(z.object({
-        endpoint: z.string(),
-      }))
-      .mutation(async ({ input }) => {
-        const success = await removePushSubscription(input.endpoint);
-        return { success };
-      }),
-    sendTest: protectedProcedure
-      .input(z.object({
-        dashboardType: z.enum(['admin', 'kitchen', 'driver']),
-        driverId: z.number().optional(),
-      }))
-      .mutation(async ({ input, ctx }) => {
-        // Get username from system session
-        const username = ctx.systemSession?.username;
-        if (!username) {
-          console.error('[Push.sendTest] No system session found');
-          return { sent: 0 };
-        }
-        console.log('[Push.sendTest] Sending test push to username:', username);
-        
-        const count = await sendPushNotification(
-          username,
-          input.dashboardType,
-          input.driverId,
-          {
-            title: 'Test Notification',
-            body: 'This is a test push notification from Barrel Delivery',
-            url: '/',
-          }
-        );
-        return { sent: count };
-      }),
-  }),
+
 });

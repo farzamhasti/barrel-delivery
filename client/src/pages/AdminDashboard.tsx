@@ -16,8 +16,6 @@ import { ReceiptScannerTesseract } from "@/components/admin/ReceiptScannerTesser
 import OrderTrackingWithMap from "@/components/admin/OrderTrackingWithMap";
 import { DeliveryReportTab } from "@/components/DeliveryReportTab";
 import { Reservations } from "@/components/admin/Reservations";
-import { PushNotificationBannerFixed } from "@/components/PushNotificationBannerFixed";
-import { TestPushButton } from "@/components/TestPushButton";
 
 
 // Color scheme for order statuses
@@ -96,9 +94,6 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Push Notification Banner */}
-      <PushNotificationBannerFixed role="admin" />
-      
       {/* Developer Credit */}
       <DeveloperCredit />
       
@@ -115,9 +110,6 @@ export default function AdminDashboard() {
                 <h1 className="text-sm font-bold text-foreground truncate">Barrel Delivery</h1>
                 <p className="text-xs text-muted-foreground truncate">Admin Dashboard</p>
               </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <TestPushButton role="admin" userId={getAdminUserId()} />
             </div>
             <div className="flex items-center gap-2">
               <Button

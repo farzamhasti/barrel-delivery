@@ -15,7 +15,6 @@ import { KitchenReservations } from "@/pages/KitchenReservations";
 import { DeveloperCredit } from "@/components/DeveloperCredit";
 import { useCountdownTimer } from "@/hooks/useCountdownTimer";
 import { NotificationIcon } from "@/components/NotificationIcon";
-import { PushNotificationBannerFixed } from "@/components/PushNotificationBannerFixed";
 
 // Helper function to format return time from seconds to MM:SS format
 function formatReturnTime(seconds: number | null | undefined): string {
@@ -253,9 +252,6 @@ export default function KitchenDashboardPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100 p-4 md:p-6">
-      {/* Push Notification Banner */}
-      <PushNotificationBannerFixed role="kitchen" />
-      
       <DeveloperCredit />
       {/* Header */}
       <div className="max-w-7xl mx-auto mb-6">

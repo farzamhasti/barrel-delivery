@@ -4,7 +4,7 @@ import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { DriverReturnTimeProvider } from "./contexts/DriverReturnTimeContext";
-import { PushDebugPanel } from "./components/PushDebugPanel";
+import { NotificationPermissionBanner } from "./components/NotificationPermissionBanner";
 import Home from "./pages/Home";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminLogin from "./pages/AdminLogin";
@@ -84,7 +84,7 @@ function App() {
           <TooltipProvider>
             <Toaster />
             <Router />
-            <PushDebugPanel />
+            <NotificationPermissionBanner />
           </TooltipProvider>
         </DriverReturnTimeProvider>
       </ThemeProvider>
