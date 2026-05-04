@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useSystemSession } from "@/_core/hooks/useSystemSession";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -15,7 +15,6 @@ import { KitchenReservations } from "@/pages/KitchenReservations";
 import { DeveloperCredit } from "@/components/DeveloperCredit";
 import { useCountdownTimer } from "@/hooks/useCountdownTimer";
 import { NotificationIcon } from "@/components/NotificationIcon";
-import { usePollingNotifications } from "@/hooks/usePollingNotifications";
 
 // Helper function to format return time from seconds to MM:SS format
 function formatReturnTime(seconds: number | null | undefined): string {
@@ -105,34 +104,6 @@ export default function KitchenDashboardPage() {
   const sortedPendingOrders = sortByDeliveryTime(pendingOrders);
   const sortedReadyOrders = sortByDeliveryTime(readyOrders);
 
-  // Get kitchen username from system session
-  const kitchenUsername = localStorage.getItem('systemUsername') || 'kitchen';
-  
-  // Polling notifications setup - continuous polling for kitchen user
-  const { isSupported, permissionGranted, showNotification } = usePollingNotifications({
-    enabled: true,
-    pollInterval: 15000, // 15 seconds continuous polling
-  });
-
-  // Track last seen order and reservation IDs to avoid duplicate notifications
-  const lastSeenOrderIdsRef = useRef<Set<number>>(new Set());
-  const lastSeenReservationIdsRef = useRef<Set<number>>(new Set());
-  
-  // Update tracked IDs whenever data changes (track current state, not just on mount)
-  useEffect(() => {
-    const currentOrderIds = new Set(pendingOrders.map((o: any) => o.id));
-    lastSeenOrderIdsRef.current = currentOrderIds;
-  }, []);
-  
-  useEffect(() => {
-    const currentReservationIds = new Set(
-      allReservations
-        .filter((r: any) => r.status === 'Pending')
-        .map((r: any) => r.id)
-    );
-    lastSeenReservationIdsRef.current = currentReservationIds;
-  }, []);
-
   // Auto-refetch every 3 seconds for real-time updates
   useEffect(() => {
     const interval = setInterval(() => {
@@ -140,47 +111,6 @@ export default function KitchenDashboardPage() {
     }, 3000);
     return () => clearInterval(interval);
   }, [refetch]);
-
-  // Detect NEW pending orders and show notifications
-  useEffect(() => {
-    if (!permissionGranted || pendingOrders.length === 0) return;
-
-    pendingOrders.forEach((order: any) => {
-      // If this order ID is NOT in our tracking set, it's NEW
-      if (!lastSeenOrderIdsRef.current.has(order.id)) {
-        lastSeenOrderIdsRef.current.add(order.id);
-        console.log(`[Kitchen] New order detected: #${order.orderNumber}`);
-        showNotification({
-          id: `kitchen-order-${order.id}`,
-          title: `Order #${order.orderNumber} has arrived`,
-          body: `${order.customerAddress || 'No address'}`,
-          timestamp: Date.now(),
-          type: 'order',
-        });
-      }
-    });
-  }, [pendingOrders, permissionGranted, showNotification]);
-  
-  // Detect NEW reservations and show notifications
-  useEffect(() => {
-    if (!permissionGranted || allReservations.length === 0) return;
-
-    allReservations.forEach((reservation: any) => {
-      // Only notify if status is Pending AND this ID is NOT in our tracking set
-      if (reservation.status === 'Pending' && !lastSeenReservationIdsRef.current.has(reservation.id)) {
-        lastSeenReservationIdsRef.current.add(reservation.id);
-        const reservationDate = new Date(reservation.date).toLocaleDateString();
-        console.log(`[Kitchen] New reservation detected: ${reservation.eventType}`);
-        showNotification({
-          id: `kitchen-reservation-${reservation.id}`,
-          title: `New Reservation: ${reservation.eventType} - ${reservationDate} - ${reservation.time} - ${reservation.numberOfPeople} people`,
-          body: `${reservation.description || 'No description'}`,
-          timestamp: Date.now(),
-          type: 'alert',
-        });
-      }
-    });
-  }, [allReservations, permissionGranted, showNotification])
 
   // Calculate urgency level based on delivery time
   const getUrgencyLevel = (deliveryTime: string | null) => {

@@ -1,11 +1,9 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useRoute, useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/useMobile";
 import { DeveloperCredit } from "@/components/DeveloperCredit";
-import { usePollingNotifications } from "@/hooks/usePollingNotifications";
-import { trpc } from "@/lib/trpc";
 
 import { Menu, Package2, Truck, LogOut, Settings, Plus, Map, X, Calendar, Gift } from "lucide-react";
 
@@ -50,113 +48,9 @@ export default function AdminDashboard() {
   const isMobile = useIsMobile();
   const width = useWindowWidth();
   
-  // Get stable admin ID for test push button
-  const getAdminUserId = (): number => {
-    const username = localStorage.getItem('systemUsername') || 'admin';
-    let hash = 0;
-    for (let i = 0; i < username.length; i++) {
-      const char = username.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash;
-    }
-    return 1000 + (Math.abs(hash) % 9000);
-  };
-  
   const isTablet = width >= 768 && width < 1024;
   const isDesktop = width >= 1024;
   const currentTab = (params as any)?.["*"] || "create-order";
-  
-  // Polling notifications setup
-  const { isSupported, permissionGranted, showNotification } = usePollingNotifications({
-    enabled: true,
-    pollInterval: 15000, // 15 seconds continuous polling
-  });
-  
-  // Track last seen order and reservation IDs to avoid duplicate notifications
-  const lastSeenReadyOrderIdsRef = useRef<Set<number>>(new Set());
-  const lastSeenDeliveredOrderIdsRef = useRef<Set<number>>(new Set());
-  const lastSeenDoneReservationIdsRef = useRef<Set<number>>(new Set());
-  
-  // Fetch orders to detect status changes
-  const { data: allOrders = [] } = trpc.orders.getAll.useQuery(undefined, {
-    refetchInterval: 15000, // Refetch every 15 seconds
-  });
-  
-  // Fetch reservations for notifications
-  const { data: allReservations = [] } = trpc.reservations.getAll.useQuery(undefined, {
-    refetchInterval: 15000, // Refetch every 15 seconds
-  });
-  
-  // Initialize refs on first render - only track current state
-  useEffect(() => {
-    allOrders.forEach((order: any) => {
-      if (order.status === 'Ready') lastSeenReadyOrderIdsRef.current.add(order.id);
-      if (order.status === 'Delivered') lastSeenDeliveredOrderIdsRef.current.add(order.id);
-    });
-  }, []);
-  
-  useEffect(() => {
-    allReservations.forEach((res: any) => {
-      if (res.status === 'Done') lastSeenDoneReservationIdsRef.current.add(res.id);
-    });
-  }, []);
-  
-  // Detect orders marked as READY and show notifications
-  useEffect(() => {
-    if (!permissionGranted || allOrders.length === 0) return;
-    
-    allOrders.forEach((order: any) => {
-      if (order.status === 'Ready' && !lastSeenReadyOrderIdsRef.current.has(order.id)) {
-        lastSeenReadyOrderIdsRef.current.add(order.id);
-        console.log(`[Admin] Order ready: #${order.orderNumber}`);
-        showNotification({
-          id: `admin-ready-${order.id}`,
-          title: `Order #${order.orderNumber} is ready`,
-          body: `${order.customerAddress || 'No address'}`,
-          timestamp: Date.now(),
-          type: 'order',
-        });
-      }
-    });
-  }, [allOrders, permissionGranted, showNotification]);
-  
-  // Detect orders marked as DELIVERED and show notifications
-  useEffect(() => {
-    if (!permissionGranted || allOrders.length === 0) return;
-    
-    allOrders.forEach((order: any) => {
-      if (order.status === 'Delivered' && !lastSeenDeliveredOrderIdsRef.current.has(order.id)) {
-        lastSeenDeliveredOrderIdsRef.current.add(order.id);
-        console.log(`[Admin] Order delivered: #${order.orderNumber}`);
-        showNotification({
-          id: `admin-delivered-${order.id}`,
-          title: `Order #${order.orderNumber} has been delivered`,
-          body: `${order.customerAddress || 'No address'}`,
-          timestamp: Date.now(),
-          type: 'order',
-        });
-      }
-    });
-  }, [allOrders, permissionGranted, showNotification]);
-  
-  // Detect reservations marked as DONE and show notifications
-  useEffect(() => {
-    if (!permissionGranted || allReservations.length === 0) return;
-    
-    allReservations.forEach((reservation: any) => {
-      if (reservation.status === 'Done' && !lastSeenDoneReservationIdsRef.current.has(reservation.id)) {
-        lastSeenDoneReservationIdsRef.current.add(reservation.id);
-        console.log(`[Admin] Reservation done: ${reservation.eventType}`);
-        showNotification({
-          id: `admin-done-${reservation.id}`,
-          title: `Reservation (${reservation.eventType}) is Done`,
-          body: `${new Date(reservation.date).toLocaleDateString()} at ${reservation.time}`,
-          timestamp: Date.now(),
-          type: 'alert',
-        });
-      }
-    });
-  }, [allReservations, permissionGranted, showNotification])
   
   // Redirect to create-order if accessing /admin or /admin/dashboard
   useEffect(() => {

@@ -674,16 +674,10 @@ export async function updateOrder(id: number, data: { status?: string; totalPric
   
   // Only execute update if there are fields to update
   if (Object.keys(updateData).length === 0) {
-    // Fetch and return the existing order
-    const existing = await db.select().from(orders).where(eq(orders.id, id));
-    return existing[0] || null;
+    return { changes: 0 }; // Return empty result if no fields to update
   }
   
-  await db.update(orders).set(updateData).where(eq(orders.id, id));
-  
-  // Fetch and return the updated order
-  const updated = await db.select().from(orders).where(eq(orders.id, id));
-  return updated[0] || null;
+  return db.update(orders).set(updateData).where(eq(orders.id, id));
 }
 
 export async function deleteOrder(id: number) {
@@ -751,7 +745,7 @@ export async function createOrder(data: InsertOrder) {
       totalPrice: Number(order.totalPrice),
     };
   }
-  throw new Error(`Failed to retrieve created order with ID ${insertId}`);
+  return { id: insertId, ...data }; // Return the created order or a fallback
 }
 
 export async function getOrdersByStatus(statuses?: string[]) {
@@ -1552,13 +1546,11 @@ export async function updateReservation(id: number, data: Partial<Omit<InsertRes
   if ((data as any).dateTime !== undefined) updateData.dateTime = (data as any).dateTime;
   if ((data as any).description !== undefined) updateData.description = (data as any).description;
 
-  await db.update(reservations)
+  const result = await db.update(reservations)
     .set(updateData)
     .where(eq(reservations.id, id));
 
-  // Fetch and return the updated reservation
-  const updated = await db.select().from(reservations).where(eq(reservations.id, id));
-  return updated[0] || null;
+  return result;
 }
 
 export async function updateReservationStatus(id: number, status: "Pending" | "Done") {
@@ -1625,48 +1617,5 @@ export async function getDeliveredOrdersCountByDate(driverId: number, date: Date
   } catch (error) {
     console.error("[Database] Error fetching delivered orders count:", error);
     return 0;
-  }
-}
-
-
-// Migration helper to add username column to push_subscriptions table
-export async function ensurePushSubscriptionsUsernameColumn() {
-  try {
-    const db = await getDb();
-    if (!db) {
-      console.warn("[Migration] Database not available");
-      return false;
-    }
-
-    // Check if column already exists by trying to query it
-    const result = await db.execute(sql`
-      SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
-      WHERE TABLE_NAME = 'push_subscriptions' AND COLUMN_NAME = 'username'
-    `);
-
-    if (!result || result.length === 0) {
-      console.log("[Migration] Adding username column to push_subscriptions...");
-      await db.execute(sql`
-        ALTER TABLE push_subscriptions ADD COLUMN username VARCHAR(255) AFTER user_id
-      `);
-      console.log("[Migration] ✓ Username column added");
-
-      // Add index
-      await db.execute(sql`
-        CREATE INDEX idx_push_subscriptions_username ON push_subscriptions(username)
-      `);
-      console.log("[Migration] ✓ Index created");
-      return true;
-    } else {
-      console.log("[Migration] ✓ Username column already exists");
-      return true;
-    }
-  } catch (error: any) {
-    if (error.code === 'ER_DUP_FIELDNAME' || error.code === 'ER_DUP_KEYNAME' || error.message?.includes('already exists')) {
-      console.log("[Migration] ✓ Column or index already exists");
-      return true;
-    }
-    console.error("[Migration] Error:", error);
-    return false;
   }
 }

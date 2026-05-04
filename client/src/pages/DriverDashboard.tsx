@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +9,6 @@ import { Badge } from "@/components/ui/badge";
 import { DeveloperCredit } from "@/components/DeveloperCredit";
 import { NotificationIcon } from "@/components/NotificationIcon";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { usePollingNotifications } from "@/hooks/usePollingNotifications";
 
 const DRIVER_SESSION_KEY = "driver_session_token";
 
@@ -78,54 +77,6 @@ export default function DriverDashboard() {
       console.error("Failed to update status:", error);
     },
   });
-  
-  // Polling notifications setup - continuous polling for driver
-  const { isSupported, permissionGranted, showNotification } = usePollingNotifications({
-    enabled: isLoggedIn,
-    pollInterval: 15000, // 15 seconds continuous polling
-  });
-  
-  // Track last seen order IDs to avoid duplicate notifications
-  const lastSeenOrderIdsRef = useRef<Set<number>>(new Set());
-  
-  // Fetch driver's assigned orders
-  const { data: driverOrders = [] } = trpc.orders.getByDriver.useQuery(
-    { driverId: currentDriverId || 0 },
-    { enabled: !!currentDriverId, refetchInterval: 15000 } // Refetch every 15 seconds
-  );
-  
-  // Fetch driver info to get driver name
-  const { data: currentDriver } = trpc.drivers.getById.useQuery(
-    { id: currentDriverId || 0 },
-    { enabled: !!currentDriverId }
-  );
-  
-  // Initialize ref on first render - only track current state
-  useEffect(() => {
-    driverOrders.forEach((order: any) => {
-      lastSeenOrderIdsRef.current.add(order.id);
-    });
-  }, [driverOrders]);
-  
-  // Detect NEW order assignments and show driver-specific notifications
-  useEffect(() => {
-    if (!permissionGranted || !currentDriverId || !currentDriver || driverOrders.length === 0) return;
-    
-    // Check for new orders not yet seen
-    driverOrders.forEach((order: any) => {
-      if (!lastSeenOrderIdsRef.current.has(order.id)) {
-        lastSeenOrderIdsRef.current.add(order.id);
-        console.log(`[Driver] New order: #${order.orderNumber} for ${currentDriver.name}`);
-        showNotification({
-          id: `driver-${currentDriverId}-order-${order.id}`,
-          title: `Order #${order.orderNumber} has been sent to ${currentDriver.name}`,
-          body: `${order.customerAddress || 'No address'}`,
-          timestamp: Date.now(),
-          type: 'delivery',
-        });
-      }
-    });
-  }, [driverOrders, permissionGranted, currentDriverId, currentDriver, showNotification])
 
   // Update order status mutation
   const updateOrderStatusMutation = trpc.orders.updateStatus.useMutation({

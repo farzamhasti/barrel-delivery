@@ -76,7 +76,6 @@ export const appRouter = router({
         customerLongitude: z.number().optional(),
       }))
       .mutation(async ({ input }) => {
-        console.log('[Orders.create] Creating new order...');
         const order = await db.createOrder({
           orderNumber: `ORD-${Date.now()}`,
           customerPhone: input.customerPhone,
@@ -84,18 +83,15 @@ export const appRouter = router({
           status: 'Pending',
         });
         
-        console.log('[Orders.create] Order created:', (order as any)?.orderNumber);
         // Send notification to kitchen
         if (order) {
           const { createNotification } = await import('./notifications');
           createNotification({
             recipientRole: 'kitchen',
             type: 'order_created',
-            message: `Order #${(order as any).orderNumber} has been saved`,
-            orderId: (order as any)?.id || 0,
+            message: `Order #${order.orderNumber} has been saved`,
+            orderId: order.id,
           });
-          
-
         }
         
         return order;
@@ -119,7 +115,6 @@ export const appRouter = router({
       }))
       .mutation(async ({ input }) => {
         const updatedOrder = await db.updateOrderStatus(input.orderId, input.status);
-
         
         // Send notifications based on status changes
         if (updatedOrder) {
@@ -130,8 +125,8 @@ export const appRouter = router({
           createNotification({
             recipientRole: 'admin',
             type: 'order_ready',
-            message: `Order #${(updatedOrder as any).orderNumber} is ready`,
-            orderId: (updatedOrder as any).id,
+            message: `Order #${updatedOrder.orderNumber} is ready`,
+            orderId: updatedOrder.id,
           });
           }
           
@@ -140,7 +135,7 @@ export const appRouter = router({
           createNotification({
             recipientRole: 'admin',
             type: 'order_delivered',
-            message: `Order #${(updatedOrder as any).orderNumber} has been delivered`,
+            message: `Order #${updatedOrder.orderNumber} has been delivered`,
             orderId: updatedOrder.id,
           });
           }
@@ -182,7 +177,7 @@ export const appRouter = router({
               recipientRole: 'driver',
               recipientId: input.driverId,
               type: 'driver_assignment',
-              message: `Order ${(order as any).orderNumber} has been sent to you`,
+              message: `Order ${order.orderNumber} has been sent to you`,
               orderId: input.orderId,
               driverId: input.driverId,
             });
@@ -285,13 +280,9 @@ export const appRouter = router({
           createNotification({
             recipientRole: 'kitchen',
             type: 'order_created',
-            // @ts-ignore - order type is properly inferred from createOrder
-      // @ts-ignore - order type properly inferred from createOrder
-            message: `Order #${(order as any).orderNumber} has received`,
+            message: `Order #${order.orderNumber} has received`,
             orderId: order.id,
           });
-          
-
         
         return order;
       }),
@@ -355,7 +346,7 @@ export const appRouter = router({
           createNotification({
             recipientRole: 'kitchen',
             type: 'order_edited',
-            message: `Order #${(updatedOrder as any).orderNumber} has been edited`,
+            message: `Order #${updatedOrder.orderNumber} has been edited`,
             orderId: updatedOrder.id,
           });
         }
@@ -738,11 +729,10 @@ export const appRouter = router({
           createNotification({
             recipientRole: 'admin',
             type: 'reservation_done',
-            message: `Reservation #${updatedReservation.id} (${(updatedReservation as any).eventType}) has been completed`,
-            reservationId: (updatedReservation as any).id,
+            message: `Reservation #${updatedReservation.id} (${updatedReservation.eventType}) has been completed`,
+            reservationId: updatedReservation.id,
           });
         }
-
         
         return updatedReservation;
       }),
@@ -775,7 +765,7 @@ export const appRouter = router({
           createNotification({
             recipientRole: 'kitchen',
             type: 'reservation_edited',
-            message: `Reservation #${(updatedReservation as any).id} (${(updatedReservation as any).eventType}) has been edited`,
+            message: `Reservation #${updatedReservation.id} (${updatedReservation.eventType}) has been edited`,
             reservationId: updatedReservation.id,
           });
         }
@@ -876,5 +866,4 @@ export const appRouter = router({
         return { markedCount: count };
       }),
   }),
-
 });

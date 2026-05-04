@@ -263,9 +263,7 @@ export async function markAllNotificationsAsRead(recipientRole: RecipientRole, r
     }
 
     const result = await query;
-      // @ts-ignore - result type from Drizzle ORM
-    return result?.rowsAffected || 0;
-      // @ts-ignore - result type is from Drizzle ORM
+    return result.rowsAffected || 0;
   } catch (error: any) {
     if (error.message?.includes("doesn't exist") || error.sqlMessage?.includes("doesn't exist")) {
       console.warn('[markAllNotificationsAsRead] Notifications table does not exist.');
