@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
+import { useSystemSession } from '@/_core/hooks/useSystemSession';
 import {
   pushDebugger,
   checkHTTPS,
@@ -26,30 +27,36 @@ export function PushNotificationBannerFixed({ role, userId }: PushNotificationBa
   const [isLoading, setIsLoading] = useState(false);
   const pushSubscribeMutation = trpc.push.subscribe.useMutation();
   const { data: authData, isLoading: authLoading } = trpc.auth.me.useQuery();
+  const { systemSession, isLoading: systemLoading } = useSystemSession();
 
   useEffect(() => {
-    // Only check notification permission after auth is loaded
-    if (authLoading) return;
+    // Wait for both auth systems to load
+    if (authLoading || systemLoading) return;
     
-    if ('Notification' in window && Notification.permission === 'default' && authData?.username) {
+    // Get username from either regular auth or system session (for kitchen/admin)
+    const username = authData?.username || systemSession?.username;
+    
+    if ('Notification' in window && Notification.permission === 'default' && username) {
       pushDebugger.log('Banner-Init', 'info', 'Auth loaded, showing banner', {
-        username: authData.username,
+        username,
         role,
+        source: authData?.username ? 'auth' : 'systemSession',
       });
       setShowBanner(true);
     }
-  }, [authLoading, authData?.username]);
+  }, [authLoading, systemLoading, authData?.username, systemSession?.username]);
 
   const handleEnable = async () => {
-    if (!authData?.username) {
-      pushDebugger.log('Banner-Enable', 'error', 'Username not available', authData);
+    const username = authData?.username || systemSession?.username;
+    if (!username) {
+      pushDebugger.log('Banner-Enable', 'error', 'Username not available', { authData, systemSession });
       alert('Error: Username not available');
       return;
     }
 
     setIsLoading(true);
     pushDebugger.log('Banner-Enable', 'info', 'Starting notification setup', {
-      username: authData.username,
+      username,
       role,
       userId,
     });
