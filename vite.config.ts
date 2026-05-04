@@ -180,6 +180,7 @@ export default defineConfig({
       "localhost",
       "127.0.0.1",
     ],
+    middlewareMode: true,
     fs: {
       strict: true,
       deny: ["**/..*"],

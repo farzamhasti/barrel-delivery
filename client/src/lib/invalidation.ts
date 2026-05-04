@@ -13,9 +13,6 @@ export function invalidateOrderCache(utils: ReturnType<typeof trpc.useUtils>) {
   // Invalidate today's orders queries
   utils.orders.getTodayWithItems.invalidate();
 
-  // Invalidate driver-specific order queries
-  utils.orders.getTodayWithItems.invalidate();
-
   // Invalidate individual order details (all possible IDs)
   // This is a catch-all that invalidates any getById query
   utils.orders.getWithItems.invalidate();
@@ -38,7 +35,6 @@ export function invalidateOrderById(
   // Also invalidate list queries as the order may appear in lists
   utils.orders.list.invalidate();
   utils.orders.getTodayWithItems.invalidate();
-  utils.orders.getTodayWithItems.invalidate();
 }
 
 /**
@@ -52,7 +48,6 @@ export function invalidateCustomerCache(
   // Invalidate all order queries as they may contain customer data
   utils.orders.list.invalidate();
   utils.orders.getTodayWithItems.invalidate();
-  utils.orders.getTodayWithItems.invalidate();
   utils.orders.getWithItems.invalidate();
 }
 
@@ -63,7 +58,6 @@ export function invalidateCustomerCache(
 export function invalidateMenuCache(utils: ReturnType<typeof trpc.useUtils>) {
   // Menu router removed - only invalidate order queries
   utils.orders.list.invalidate();
-  utils.orders.getTodayWithItems.invalidate();
   utils.orders.getTodayWithItems.invalidate();
   utils.orders.getWithItems.invalidate();
 }
@@ -77,7 +71,6 @@ export function invalidateDriverCache(utils: ReturnType<typeof trpc.useUtils>) {
 
   // Also invalidate order queries as they may contain driver assignments
   utils.orders.list.invalidate();
-  utils.orders.getTodayWithItems.invalidate();
   utils.orders.getTodayWithItems.invalidate();
   utils.orders.getWithItems.invalidate();
 }

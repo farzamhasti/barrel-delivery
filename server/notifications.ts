@@ -63,14 +63,14 @@ export type RecipientRole = 'admin' | 'kitchen' | 'driver';
 export interface Notification {
   id: number;
   recipientRole: RecipientRole;
-  recipientId?: number; // For driver-specific notifications
+  recipientId: number | null; // For driver-specific notifications (nullable from DB)
   type: NotificationType;
   message: string;
-  orderId?: number;
-  reservationId?: number;
-  driverId?: number;
+  orderId: number | null;
+  reservationId: number | null;
+  driverId: number | null;
   isRead: boolean;
-  readAt?: Date;
+  readAt: Date | null;
   createdAt: Date;
 }
 
@@ -134,13 +134,14 @@ function createMockNotification(data: any): Notification {
   const notification: Notification = {
     id: Math.floor(Math.random() * 1000000),
     recipientRole: data.recipientRole,
-    recipientId: data.recipientId,
+    recipientId: data.recipientId || null,
     type: data.type,
     message: data.message,
-    orderId: data.orderId,
-    reservationId: data.reservationId,
-    driverId: data.driverId,
+    orderId: data.orderId || null,
+    reservationId: data.reservationId || null,
+    driverId: data.driverId || null,
     isRead: false,
+    readAt: null,
     createdAt: new Date(),
   };
   // Store in memory for retrieval
@@ -185,8 +186,8 @@ export async function getNotifications(recipientRole: RecipientRole, recipientId
       .map(n => ({
         ...n,
         createdAt: new Date(n.createdAt),
-        readAt: n.readAt ? new Date(n.readAt) : undefined,
-      }));
+        readAt: n.readAt ? new Date(n.readAt) : null,
+      })) as Notification[];
   } catch (error: any) {
     if (error.message?.includes("doesn't exist") || error.sqlMessage?.includes("doesn't exist")) {
       console.warn('[getNotifications] Notifications table does not exist. Using in-memory store.');
@@ -263,7 +264,7 @@ export async function markAllNotificationsAsRead(recipientRole: RecipientRole, r
     }
 
     const result = await query;
-    return result.rowsAffected || 0;
+    return (result as any)?.rowsAffected || 0;
   } catch (error: any) {
     if (error.message?.includes("doesn't exist") || error.sqlMessage?.includes("doesn't exist")) {
       console.warn('[markAllNotificationsAsRead] Notifications table does not exist.');

@@ -674,10 +674,16 @@ export async function updateOrder(id: number, data: { status?: string; totalPric
   
   // Only execute update if there are fields to update
   if (Object.keys(updateData).length === 0) {
-    return { changes: 0 }; // Return empty result if no fields to update
+    // Return the existing order if no fields to update
+    const existingOrder = await db.select().from(orders).where(eq(orders.id, id)).then(rows => rows[0]);
+    return existingOrder || null;
   }
   
-  return db.update(orders).set(updateData).where(eq(orders.id, id));
+  await db.update(orders).set(updateData).where(eq(orders.id, id));
+  
+  // Return the updated order
+  const updatedOrder = await db.select().from(orders).where(eq(orders.id, id)).then(rows => rows[0]);
+  return updatedOrder || null;
 }
 
 export async function deleteOrder(id: number) {
@@ -729,23 +735,23 @@ export async function createOrder(data: InsertOrder) {
   
   if (!insertId) {
     console.error('[createOrder] Failed to extract insertId from result:', result);
-    return result; // Return raw result if we can't extract ID
+    throw new Error('Failed to create order: no insertId returned');
   }
   
   // Fetch and return the created order
   const createdOrder = await db.select().from(orders).where(eq(orders.id, insertId));
-  if (createdOrder[0]) {
-    // Convert Decimal values to numbers for the response
-    const order = createdOrder[0];
-
-    return {
-      ...order,
-      subtotal: Number(order.subtotal),
-      taxAmount: Number(order.taxAmount),
-      totalPrice: Number(order.totalPrice),
-    };
+  if (!createdOrder[0]) {
+    throw new Error('Failed to fetch created order');
   }
-  return { id: insertId, ...data }; // Return the created order or a fallback
+  
+  // Convert Decimal values to numbers for the response
+  const order = createdOrder[0];
+  return {
+    ...order,
+    subtotal: Number(order.subtotal),
+    taxAmount: Number(order.taxAmount),
+    totalPrice: Number(order.totalPrice),
+  };
 }
 
 export async function getOrdersByStatus(statuses?: string[]) {
@@ -1546,11 +1552,13 @@ export async function updateReservation(id: number, data: Partial<Omit<InsertRes
   if ((data as any).dateTime !== undefined) updateData.dateTime = (data as any).dateTime;
   if ((data as any).description !== undefined) updateData.description = (data as any).description;
 
-  const result = await db.update(reservations)
+  await db.update(reservations)
     .set(updateData)
     .where(eq(reservations.id, id));
 
-  return result;
+  // Return the updated reservation
+  const updatedReservation = await db.select().from(reservations).where(eq(reservations.id, id)).then(rows => rows[0]);
+  return updatedReservation;
 }
 
 export async function updateReservationStatus(id: number, status: "Pending" | "Done") {
