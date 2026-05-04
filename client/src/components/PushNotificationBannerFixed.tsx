@@ -13,26 +13,31 @@ export function PushNotificationBannerFixed({ role, userId }: PushNotificationBa
   const [showBanner, setShowBanner] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const pushSubscribeMutation = trpc.push.subscribe.useMutation();
-  const { data: authData } = trpc.auth.me.useQuery();
+  const { data: authData, isLoading: authLoading } = trpc.auth.me.useQuery();
 
   useEffect(() => {
-    // Check if notifications are supported and permission status
-    if ('Notification' in window && Notification.permission === 'default') {
+    // Only check notification permission after auth is loaded
+    if (authLoading) return;
+    
+    if ('Notification' in window && Notification.permission === 'default' && authData?.username) {
+      console.log('[Push Banner] Auth loaded, username:', authData.username);
       setShowBanner(true);
     }
-  }, []);
+  }, [authLoading, authData?.username]);
 
   const handleEnable = async () => {
     if (!authData?.username) {
-      alert('Not authenticated');
+      console.error('[Push Banner] Username not available:', authData);
       return;
     }
 
     setIsLoading(true);
+    console.log('[Push Banner] Starting enable with username:', authData.username);
 
     try {
       // Request notification permission
       const permission = await Notification.requestPermission();
+      console.log('[Push Banner] Permission result:', permission);
       
       if (permission !== 'granted') {
         setShowBanner(false);
@@ -45,6 +50,7 @@ export function PushNotificationBannerFixed({ role, userId }: PushNotificationBa
         const registration = await navigator.serviceWorker.register('/sw.js', {
           scope: '/',
         });
+        console.log('[Push Banner] Service worker registered');
 
         // Get or create push subscription
         let subscription = await registration.pushManager.getSubscription();
@@ -57,11 +63,13 @@ export function PushNotificationBannerFixed({ role, userId }: PushNotificationBa
             return;
           }
 
+          console.log('[Push Banner] Creating new subscription');
           subscription = await registration.pushManager.subscribe({
             userVisibleOnly: true,
             applicationServerKey: vapidPublicKey,
           });
         }
+        console.log('[Push Banner] Got subscription');
 
         // Extract subscription details
         const subscriptionJSON = subscription.toJSON();
@@ -74,21 +82,28 @@ export function PushNotificationBannerFixed({ role, userId }: PushNotificationBa
           return;
         }
 
-        // Send to server
-        await pushSubscribeMutation.mutateAsync({
-          endpoint: subscription.endpoint,
-          auth: auth,
-          p256dh: p256dh,
-          dashboardType: role,
-          driverId: userId,
-          userAgent: navigator.userAgent,
-        });
+        console.log('[Push Banner] Calling mutation with username:', authData.username, 'role:', role);
+        
+        try {
+          const result = await pushSubscribeMutation.mutateAsync({
+            endpoint: subscription.endpoint,
+            auth: auth,
+            p256dh: p256dh,
+            dashboardType: role,
+            driverId: userId,
+            userAgent: navigator.userAgent,
+          });
 
-        setShowBanner(false);
+          console.log('[Push Banner] Mutation result:', result);
+          setShowBanner(false);
+        } catch (mutationError) {
+          console.error('[Push Banner] Mutation error:', mutationError);
+          setShowBanner(false);
+        }
       }
     } catch (error) {
-      console.error('Error enabling notifications:', error);
-      alert('Failed to enable notifications: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      console.error('[Push Banner] Error enabling notifications:', error);
+      setShowBanner(false);
     } finally {
       setIsLoading(false);
     }
