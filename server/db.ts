@@ -1627,3 +1627,46 @@ export async function getDeliveredOrdersCountByDate(driverId: number, date: Date
     return 0;
   }
 }
+
+
+// Migration helper to add username column to push_subscriptions table
+export async function ensurePushSubscriptionsUsernameColumn() {
+  try {
+    const db = await getDb();
+    if (!db) {
+      console.warn("[Migration] Database not available");
+      return false;
+    }
+
+    // Check if column already exists by trying to query it
+    const result = await db.execute(sql`
+      SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
+      WHERE TABLE_NAME = 'push_subscriptions' AND COLUMN_NAME = 'username'
+    `);
+
+    if (!result || result.length === 0) {
+      console.log("[Migration] Adding username column to push_subscriptions...");
+      await db.execute(sql`
+        ALTER TABLE push_subscriptions ADD COLUMN username VARCHAR(255) AFTER user_id
+      `);
+      console.log("[Migration] ✓ Username column added");
+
+      // Add index
+      await db.execute(sql`
+        CREATE INDEX idx_push_subscriptions_username ON push_subscriptions(username)
+      `);
+      console.log("[Migration] ✓ Index created");
+      return true;
+    } else {
+      console.log("[Migration] ✓ Username column already exists");
+      return true;
+    }
+  } catch (error: any) {
+    if (error.code === 'ER_DUP_FIELDNAME' || error.code === 'ER_DUP_KEYNAME' || error.message?.includes('already exists')) {
+      console.log("[Migration] ✓ Column or index already exists");
+      return true;
+    }
+    console.error("[Migration] Error:", error);
+    return false;
+  }
+}
