@@ -28,6 +28,13 @@ const redirectToLoginIfUnauthorized = (error: unknown) => {
     return;
   }
 
+  // Don't redirect to OAuth if user is on login pages or home page
+  const currentPath = window.location.pathname;
+  if (currentPath === '/' || currentPath === '/admin-login' || currentPath === '/kitchen-login' || currentPath === '/driver-login') {
+    console.warn('[Auth] Not redirecting to OAuth from', currentPath);
+    return;
+  }
+
   console.warn('[Auth] Redirecting to login due to unauthorized error');
   window.location.href = getLoginUrl();
 };
