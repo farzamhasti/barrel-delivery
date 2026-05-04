@@ -281,6 +281,16 @@ export async function removePushSubscription(endpoint: string): Promise<boolean>
 }
 
 /**
+ * Get VAPID public key for client
+ */
+export function getVapidPublicKey(): string {
+  if (!ENV.vapidPublicKey) {
+    throw new Error('VAPID_PUBLIC_KEY not configured');
+  }
+  return ENV.vapidPublicKey;
+}
+
+/**
  * Get all active subscriptions for a dashboard type
  */
 export async function getSubscriptionsByDashboard(
