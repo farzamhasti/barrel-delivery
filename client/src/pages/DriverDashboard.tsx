@@ -100,21 +100,22 @@ export default function DriverDashboard() {
     { enabled: !!currentDriverId }
   );
   
-  // Initialize ref on first render
+  // Initialize ref on first render - only track current state
   useEffect(() => {
     driverOrders.forEach((order: any) => {
       lastSeenOrderIdsRef.current.add(order.id);
     });
-  }, []);
+  }, [driverOrders]);
   
   // Detect NEW order assignments and show driver-specific notifications
   useEffect(() => {
-    if (!permissionGranted || !currentDriverId || !currentDriver) return;
+    if (!permissionGranted || !currentDriverId || !currentDriver || driverOrders.length === 0) return;
     
     // Check for new orders not yet seen
     driverOrders.forEach((order: any) => {
       if (!lastSeenOrderIdsRef.current.has(order.id)) {
         lastSeenOrderIdsRef.current.add(order.id);
+        console.log(`[Driver] New order: #${order.orderNumber} for ${currentDriver.name}`);
         showNotification({
           id: `driver-${currentDriverId}-order-${order.id}`,
           title: `Order #${order.orderNumber} has been sent to ${currentDriver.name}`,
