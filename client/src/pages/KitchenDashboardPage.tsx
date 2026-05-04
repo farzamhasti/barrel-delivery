@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSystemSession } from "@/_core/hooks/useSystemSession";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -15,6 +15,7 @@ import { KitchenReservations } from "@/pages/KitchenReservations";
 import { DeveloperCredit } from "@/components/DeveloperCredit";
 import { useCountdownTimer } from "@/hooks/useCountdownTimer";
 import { NotificationIcon } from "@/components/NotificationIcon";
+import { usePollingNotifications } from "@/hooks/usePollingNotifications";
 
 // Helper function to format return time from seconds to MM:SS format
 function formatReturnTime(seconds: number | null | undefined): string {
@@ -104,6 +105,23 @@ export default function KitchenDashboardPage() {
   const sortedPendingOrders = sortByDeliveryTime(pendingOrders);
   const sortedReadyOrders = sortByDeliveryTime(readyOrders);
 
+  // Get kitchen username from system session
+  const kitchenUsername = localStorage.getItem('systemUsername') || 'kitchen';
+  
+  // Polling notifications setup - only for kitchen user
+  const { isSupported, permissionGranted, showNotification } = usePollingNotifications({
+    enabled: true,
+    pollInterval: 5000, // 5 seconds
+  });
+
+  // Track previous pending order count to detect NEW orders only
+  const previousPendingCountRef = useRef(0);
+  
+  // Initialize ref on first render
+  useEffect(() => {
+    previousPendingCountRef.current = pendingOrders.length;
+  }, []);
+
   // Auto-refetch every 3 seconds for real-time updates
   useEffect(() => {
     const interval = setInterval(() => {
@@ -111,6 +129,31 @@ export default function KitchenDashboardPage() {
     }, 3000);
     return () => clearInterval(interval);
   }, [refetch]);
+
+  // Detect NEW pending orders (only when count increases) and show notifications
+  useEffect(() => {
+    if (!permissionGranted || pendingOrders.length === 0) return;
+
+    // Only notify on NEW orders (when count increases)
+    if (pendingOrders.length > previousPendingCountRef.current) {
+      const newOrderCount = pendingOrders.length - previousPendingCountRef.current;
+      
+      // Get the newly added orders (they should be at the beginning after sorting)
+      const newOrders = pendingOrders.slice(0, newOrderCount);
+      
+      newOrders.forEach((order: any) => {
+        showNotification({
+          id: `kitchen-order-${order.id}`,
+          title: '🍕 New Order for Kitchen',
+          body: `Order #${order.orderNumber} - ${order.customerAddress || 'No address'}`,
+          timestamp: Date.now(),
+          type: 'order',
+        });
+      });
+      
+      previousPendingCountRef.current = pendingOrders.length;
+    }
+  }, [pendingOrders, permissionGranted, showNotification])
 
   // Calculate urgency level based on delivery time
   const getUrgencyLevel = (deliveryTime: string | null) => {

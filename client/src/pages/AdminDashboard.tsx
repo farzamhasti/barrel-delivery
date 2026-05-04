@@ -1,9 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRoute, useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/useMobile";
 import { DeveloperCredit } from "@/components/DeveloperCredit";
+import { usePollingNotifications } from "@/hooks/usePollingNotifications";
+import { trpc } from "@/lib/trpc";
 
 import { Menu, Package2, Truck, LogOut, Settings, Plus, Map, X, Calendar, Gift } from "lucide-react";
 
@@ -63,6 +65,45 @@ export default function AdminDashboard() {
   const isTablet = width >= 768 && width < 1024;
   const isDesktop = width >= 1024;
   const currentTab = (params as any)?.["*"] || "create-order";
+  
+  // Polling notifications setup
+  const { isSupported, permissionGranted, showNotification } = usePollingNotifications({
+    enabled: true,
+    pollInterval: 5000, // 5 seconds
+  });
+  
+  // Track previous order count to detect new orders
+  const previousOrderCountRef = useRef(0);
+  
+  // Fetch orders to detect new ones
+  const { data: allOrders = [] } = trpc.orders.getAll.useQuery();
+  
+  // Initialize ref on first render
+  useEffect(() => {
+    previousOrderCountRef.current = allOrders.length;
+  }, []);
+  
+  // Detect NEW orders and show admin-only notifications
+  useEffect(() => {
+    if (!permissionGranted || allOrders.length === 0) return;
+    
+    if (allOrders.length > previousOrderCountRef.current) {
+      const newOrderCount = allOrders.length - previousOrderCountRef.current;
+      const newOrders = allOrders.slice(0, newOrderCount);
+      
+      newOrders.forEach((order: any) => {
+        showNotification({
+          id: `admin-order-${order.id}`,
+          title: '📦 New Order for Admin',
+          body: `Order #${order.orderNumber} - ${order.customerAddress || 'No address'}`,
+          timestamp: Date.now(),
+          type: 'order',
+        });
+      });
+      
+      previousOrderCountRef.current = allOrders.length;
+    }
+  }, [allOrders, permissionGranted, showNotification])
   
   // Redirect to create-order if accessing /admin or /admin/dashboard
   useEffect(() => {
