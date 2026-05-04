@@ -1,122 +1,100 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
-import { registerServiceWorker, requestPushPermission, subscribeToPush } from '@/lib/push-notifications';
 import { trpc } from '@/lib/trpc';
 
 interface PushNotificationBannerProps {
   role: 'admin' | 'kitchen' | 'driver';
-  userId?: number;  // Optional - for driver dashboard
+  userId?: number;
 }
 
 export function PushNotificationBannerFixed({ role, userId }: PushNotificationBannerProps) {
-  const [isVisible, setIsVisible] = useState(false);
+  const [showBanner, setShowBanner] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [username, setUsername] = useState<string | null>(null);
-
   const pushSubscribeMutation = trpc.push.subscribe.useMutation();
   const { data: authData } = trpc.auth.me.useQuery();
 
   useEffect(() => {
-    // Check if push notifications are supported
-    const checkPushSupport = async () => {
-      if (!('serviceWorker' in navigator) || !('Notification' in window)) {
-        console.log('[Push Banner] Push notifications not supported');
-        return;
-      }
-
-      // Get the current username from auth data
-      if (authData?.username) {
-        setUsername(authData.username);
-        console.log('[Push Banner] Current user:', authData.username);
-      }
-
-      // Show banner if permission is not yet granted
-      if (Notification.permission === 'default') {
-        console.log('[Push Banner] Showing permission request banner');
-        setIsVisible(true);
-      } else if (Notification.permission === 'granted') {
-        // Already granted - check if subscription exists and update if needed
-        try {
-          const registration = await navigator.serviceWorker.ready;
-          const subscription = await registration.pushManager.getSubscription();
-          if (subscription && authData?.username) {
-            // Permission granted and subscribed - update subscription with current username
-            console.log('[Push Banner] Permission granted, updating subscription with username:', authData.username);
-            await handleEnable();
-          }
-        } catch (error) {
-          console.error('[Push Banner] Error checking subscription:', error);
-        }
-      }
-    };
-
-    checkPushSupport();
-  }, [authData?.username, role]);
+    // Check if notifications are supported and permission status
+    if ('Notification' in window && Notification.permission === 'default') {
+      setShowBanner(true);
+    }
+  }, []);
 
   const handleEnable = async () => {
     if (!authData?.username) {
-      console.error('[Push Banner] Username not available');
+      alert('Not authenticated');
       return;
     }
 
     setIsLoading(true);
+
     try {
-      // Register Service Worker
-      const registration = await registerServiceWorker();
-      if (!registration) {
-        console.error('[Push Banner] Failed to register Service Worker');
-        setIsLoading(false);
-        return;
-      }
-
-      // Request permission
-      const permission = await requestPushPermission();
+      // Request notification permission
+      const permission = await Notification.requestPermission();
+      
       if (permission !== 'granted') {
-        console.log('[Push Banner] User denied notification permission');
-        setIsVisible(false);
+        setShowBanner(false);
         setIsLoading(false);
         return;
       }
 
-      // Subscribe to push notifications
-      const subscription = await subscribeToPush(import.meta.env.VITE_FRONTEND_VAPID_PUBLIC_KEY || '');
-      if (!subscription) {
-        console.error('[Push Banner] Failed to subscribe to push notifications');
-        setIsLoading(false);
-        return;
-      }
+      // Register service worker
+      if ('serviceWorker' in navigator) {
+        const registration = await navigator.serviceWorker.register('/sw.js', {
+          scope: '/',
+        });
 
-      console.log('[Push Banner] Subscribing with username:', authData.username, 'role:', role, 'userId:', userId);
+        // Get or create push subscription
+        let subscription = await registration.pushManager.getSubscription();
+        
+        if (!subscription) {
+          const vapidPublicKey = import.meta.env.VITE_FRONTEND_VAPID_PUBLIC_KEY;
+          if (!vapidPublicKey) {
+            console.error('VAPID public key not configured');
+            setIsLoading(false);
+            return;
+          }
 
-      // Store subscription on server with username
-      const result = await pushSubscribeMutation.mutateAsync({
-        endpoint: subscription.endpoint,
-        auth: subscription.auth,
-        p256dh: subscription.p256dh,
-        dashboardType: role,
-        driverId: userId,
-        userAgent: navigator.userAgent,
-      });
+          subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: vapidPublicKey,
+          });
+        }
 
-      if (result.success) {
-        console.log('[Push Banner] Successfully subscribed to push notifications');
-        console.log('[Push Banner] Subscription stored with username:', authData.username);
-        setIsVisible(false);
-      } else {
-        console.error('[Push Banner] Server rejected subscription');
+        // Extract subscription details
+        const subscriptionJSON = subscription.toJSON();
+        const auth = subscriptionJSON.keys?.auth;
+        const p256dh = subscriptionJSON.keys?.p256dh;
+
+        if (!auth || !p256dh) {
+          console.error('Missing subscription keys');
+          setIsLoading(false);
+          return;
+        }
+
+        // Send to server
+        await pushSubscribeMutation.mutateAsync({
+          endpoint: subscription.endpoint,
+          auth: auth,
+          p256dh: p256dh,
+          dashboardType: role,
+          driverId: userId,
+          userAgent: navigator.userAgent,
+        });
+
+        setShowBanner(false);
       }
     } catch (error) {
-      console.error('[Push Banner] Error enabling push notifications:', error);
+      console.error('Error enabling notifications:', error);
+      alert('Failed to enable notifications: ' + (error instanceof Error ? error.message : 'Unknown error'));
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleDismiss = () => {
-    setIsVisible(false);
-  };
-
-  if (!isVisible) {
+  if (!showBanner) {
     return null;
   }
 
@@ -130,7 +108,7 @@ export function PushNotificationBannerFixed({ role, userId }: PushNotificationBa
           </p>
         </div>
         <button
-          onClick={handleDismiss}
+          onClick={() => setShowBanner(false)}
           className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
           aria-label="Dismiss"
         >
@@ -146,7 +124,7 @@ export function PushNotificationBannerFixed({ role, userId }: PushNotificationBa
           {isLoading ? 'Enabling...' : 'Enable'}
         </button>
         <button
-          onClick={handleDismiss}
+          onClick={() => setShowBanner(false)}
           disabled={isLoading}
           className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium py-2 px-3 rounded transition-colors"
         >
