@@ -32,12 +32,12 @@ export interface PushNotificationPayload {
 }
 
 /**
- * Send push notification to a specific user
+ * Send push notification to all devices subscribed to a specific dashboard type
  */
 export async function sendPushNotification(
-  userId: number,
-  role: 'admin' | 'kitchen' | 'driver',
-  payload: PushNotificationPayload
+  dashboardType: 'admin' | 'kitchen' | 'driver',
+  driverId?: number,
+  payload?: PushNotificationPayload
 ): Promise<number> {
   try {
     const db = await getDb();
@@ -46,20 +46,40 @@ export async function sendPushNotification(
       return 0;
     }
 
-    // Get all active subscriptions for this user
-    const subscriptions = await db
+    // Build query based on dashboard type
+    let query = db
       .select()
       .from(pushSubscriptions)
       .where(
         and(
-          eq(pushSubscriptions.userId, userId),
-          eq(pushSubscriptions.role, role),
+          eq(pushSubscriptions.dashboardType, dashboardType),
           eq(pushSubscriptions.isActive, true)
         )
       );
 
+    // If it's a driver notification, filter by specific driver ID
+    if (dashboardType === 'driver' && driverId) {
+      query = db
+        .select()
+        .from(pushSubscriptions)
+        .where(
+          and(
+            eq(pushSubscriptions.dashboardType, 'driver'),
+            eq(pushSubscriptions.driverId, driverId),
+            eq(pushSubscriptions.isActive, true)
+          )
+        );
+    }
+
+    const subscriptions = await query;
+
     if (subscriptions.length === 0) {
-      console.log(`[Push Service] No active subscriptions found for user ${userId} (${role})`);
+      console.log(`[Push Service] No active subscriptions found for ${dashboardType}${driverId ? ` driver ${driverId}` : ''}`);
+      return 0;
+    }
+
+    if (!payload) {
+      console.error('[Push Service] No payload provided');
       return 0;
     }
 
@@ -81,6 +101,8 @@ export async function sendPushNotification(
     // Send notification to each subscription
     for (const subscription of subscriptions) {
       try {
+        console.log(`[Push Service] Sending notification to endpoint: ${subscription.endpoint.substring(0, 50)}...`);
+        
         await webpush.sendNotification(
           {
             endpoint: subscription.endpoint,
@@ -91,13 +113,15 @@ export async function sendPushNotification(
           },
           JSON.stringify(notificationData)
         );
+        
         successCount++;
-        console.log(`[Push Service] Notification sent to subscription ${subscription.id}`);
+        console.log(`[Push Service] ✓ Notification sent successfully to subscription ${subscription.id}`);
       } catch (error: any) {
-        console.error(`[Push Service] Failed to send notification to subscription ${subscription.id}:`, error.message);
+        console.error(`[Push Service] ✗ Failed to send notification to subscription ${subscription.id}:`, error.message);
 
         // If subscription is invalid (410 Gone), mark it as inactive
         if (error.statusCode === 410 || error.statusCode === 404) {
+          console.log(`[Push Service] Marking subscription ${subscription.id} as inactive (status: ${error.statusCode})`);
           failedSubscriptions.push(subscription.id);
         }
       }
@@ -112,6 +136,7 @@ export async function sendPushNotification(
       console.log(`[Push Service] Marked ${failedSubscriptions.length} subscriptions as inactive`);
     }
 
+    console.log(`[Push Service] Successfully sent ${successCount}/${subscriptions.length} notifications for ${dashboardType}${driverId ? ` driver ${driverId}` : ''}`);
     return successCount;
   } catch (error) {
     console.error('[Push Service] Error sending push notification:', error);
@@ -120,84 +145,47 @@ export async function sendPushNotification(
 }
 
 /**
- * Send push notification to all users with a specific role
+ * Update a subscription when user switches dashboards
  */
-export async function broadcastPushNotification(
-  role: 'admin' | 'kitchen' | 'driver',
-  payload: PushNotificationPayload
-): Promise<number> {
+export async function updateSubscriptionDashboard(
+  endpoint: string,
+  dashboardType: 'admin' | 'kitchen' | 'driver',
+  driverId?: number
+): Promise<boolean> {
   try {
     const db = await getDb();
     if (!db) {
       console.error('[Push Service] Database connection failed');
-      return 0;
+      return false;
     }
 
-    // Get all active subscriptions for this role
-    const subscriptions = await db
+    // Check if subscription exists
+    const existing = await db
       .select()
       .from(pushSubscriptions)
-      .where(
-        and(
-          eq(pushSubscriptions.role, role),
-          eq(pushSubscriptions.isActive, true)
-        )
-      );
+      .where(eq(pushSubscriptions.endpoint, endpoint));
 
-    if (subscriptions.length === 0) {
-      console.log(`[Push Service] No active subscriptions found for role ${role}`);
-      return 0;
+    if (existing.length === 0) {
+      console.log('[Push Service] Subscription not found for update');
+      return false;
     }
 
-    const notificationData = {
-      title: payload.title,
-      body: payload.body,
-      icon: payload.icon || '/barrel-logo.png',
-      badge: payload.badge || '/barrel-logo.png',
-      tag: payload.tag || 'barrel-delivery',
-      data: {
-        url: payload.url || '/',
-        ...payload.data,
-      },
-    };
+    // Update the subscription with new dashboard type
+    await db
+      .update(pushSubscriptions)
+      .set({
+        dashboardType,
+        driverId: driverId || null,
+        isActive: true,
+        updatedAt: new Date(),
+      })
+      .where(eq(pushSubscriptions.endpoint, endpoint));
 
-    let successCount = 0;
-    const failedSubscriptions: number[] = [];
-
-    // Send notification to each subscription
-    for (const subscription of subscriptions) {
-      try {
-        await webpush.sendNotification(
-          {
-            endpoint: subscription.endpoint,
-            keys: {
-              auth: subscription.auth,
-              p256dh: subscription.p256dh,
-            },
-          },
-          JSON.stringify(notificationData)
-        );
-        successCount++;
-      } catch (error: any) {
-        if (error.statusCode === 410 || error.statusCode === 404) {
-          failedSubscriptions.push(subscription.id);
-        }
-      }
-    }
-
-    // Mark invalid subscriptions as inactive
-    if (failedSubscriptions.length > 0) {
-      await db
-        .update(pushSubscriptions)
-        .set({ isActive: false })
-        .where(inArray(pushSubscriptions.id, failedSubscriptions));
-    }
-
-    console.log(`[Push Service] Broadcast sent to ${successCount}/${subscriptions.length} subscriptions`);
-    return successCount;
+    console.log(`[Push Service] Updated subscription to ${dashboardType}${driverId ? ` for driver ${driverId}` : ''}`);
+    return true;
   } catch (error) {
-    console.error('[Push Service] Error broadcasting push notification:', error);
-    return 0;
+    console.error('[Push Service] Error updating subscription dashboard:', error);
+    return false;
   }
 }
 
@@ -205,11 +193,11 @@ export async function broadcastPushNotification(
  * Store a push subscription in the database
  */
 export async function storePushSubscription(
-  userId: number,
-  role: 'admin' | 'kitchen' | 'driver',
   endpoint: string,
   auth: string,
   p256dh: string,
+  dashboardType: 'admin' | 'kitchen' | 'driver' = 'admin',
+  driverId?: number,
   userAgent?: string
 ): Promise<boolean> {
   try {
@@ -230,8 +218,8 @@ export async function storePushSubscription(
       await db
         .update(pushSubscriptions)
         .set({
-          userId,
-          role,
+          dashboardType,
+          driverId: driverId || null,
           auth,
           p256dh,
           userAgent,
@@ -239,19 +227,19 @@ export async function storePushSubscription(
           updatedAt: new Date(),
         })
         .where(eq(pushSubscriptions.endpoint, endpoint));
-      console.log('[Push Service] Updated existing subscription');
+      console.log(`[Push Service] Updated existing subscription to ${dashboardType}`);
     } else {
       // Create new subscription
       await db.insert(pushSubscriptions).values({
-        userId,
-        role,
         endpoint,
         auth,
         p256dh,
+        dashboardType,
+        driverId: driverId || null,
         userAgent,
         isActive: true,
       });
-      console.log('[Push Service] New subscription stored');
+      console.log(`[Push Service] New subscription stored for ${dashboardType}`);
     }
 
     return true;
@@ -285,11 +273,11 @@ export async function removePushSubscription(endpoint: string): Promise<boolean>
 }
 
 /**
- * Get all active subscriptions for a user
+ * Get all active subscriptions for a dashboard type
  */
-export async function getUserSubscriptions(
-  userId: number,
-  role: 'admin' | 'kitchen' | 'driver'
+export async function getSubscriptionsByDashboard(
+  dashboardType: 'admin' | 'kitchen' | 'driver',
+  driverId?: number
 ): Promise<any[]> {
   try {
     const db = await getDb();
@@ -298,20 +286,32 @@ export async function getUserSubscriptions(
       return [];
     }
 
-    const subs = await db
+    let query = db
       .select()
       .from(pushSubscriptions)
       .where(
         and(
-          eq(pushSubscriptions.userId, userId),
-          eq(pushSubscriptions.role, role),
+          eq(pushSubscriptions.dashboardType, dashboardType),
           eq(pushSubscriptions.isActive, true)
         )
       );
 
-    return subs;
+    if (dashboardType === 'driver' && driverId) {
+      query = db
+        .select()
+        .from(pushSubscriptions)
+        .where(
+          and(
+            eq(pushSubscriptions.dashboardType, 'driver'),
+            eq(pushSubscriptions.driverId, driverId),
+            eq(pushSubscriptions.isActive, true)
+          )
+        );
+    }
+
+    return await query;
   } catch (error) {
-    console.error('[Push Service] Error getting user subscriptions:', error);
+    console.error('[Push Service] Error getting subscriptions:', error);
     return [];
   }
 }

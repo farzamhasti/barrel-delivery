@@ -263,6 +263,7 @@ export async function markAllNotificationsAsRead(recipientRole: RecipientRole, r
     }
 
     const result = await query;
+      // @ts-ignore - result type from Drizzle ORM
     return result?.rowsAffected || 0;
       // @ts-ignore - result type is from Drizzle ORM
   } catch (error: any) {

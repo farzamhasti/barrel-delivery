@@ -118,7 +118,7 @@ export const appRouter = router({
         const updatedOrder = await db.updateOrderStatus(input.orderId, input.status);
         // Send push notifications for order status changes
         if (updatedOrder && input.status === "Ready") {
-          await sendPushNotification(1, "admin", {
+          await sendPushNotification("admin", undefined, {
             title: "Order Ready",
             body: `Order #${(updatedOrder as any).orderNumber} is ready for delivery`,
             url: "/admin/order-tracking",
@@ -127,7 +127,7 @@ export const appRouter = router({
           }).catch(err => console.error("[Push] Failed to send ready notification:", err));
         }
         if (updatedOrder && input.status === "Delivered") {
-          await sendPushNotification(1, "admin", {
+          await sendPushNotification("admin", undefined, {
             title: "Order Delivered",
             body: `Order #${(updatedOrder as any).orderNumber} has been delivered`,
             url: "/admin/order-tracking",
@@ -203,7 +203,7 @@ export const appRouter = router({
             });
             console.log('[sendToDriver] Notification created for driver', input.driverId);
             // Send push notification to driver
-            await sendPushNotification(input.driverId, "driver", {
+            await sendPushNotification("driver", input.driverId, {
               title: "New Order Assigned",
               body: `Order #${(order as any).orderNumber} has been assigned to you`,
               url: "/driver-dashboard",
@@ -309,6 +309,7 @@ export const appRouter = router({
             recipientRole: 'kitchen',
             type: 'order_created',
             // @ts-ignore - order type is properly inferred from createOrder
+      // @ts-ignore - order type properly inferred from createOrder
             message: `Order #${(order as any).orderNumber} has received`,
             orderId: order.id,
           });
@@ -763,7 +764,7 @@ export const appRouter = router({
           });
         }
         // Send push notification to admin
-            await sendPushNotification(1, "admin", {
+            await sendPushNotification("admin", undefined, {
               title: "Reservation Completed",
               body: `Reservation #${updatedReservation.id} (${(updatedReservation as any).eventType}) has been completed`,
               url: "/admin/reservations",
@@ -906,20 +907,20 @@ export const appRouter = router({
   push: router({
     subscribe: publicProcedure
       .input(z.object({
-        userId: z.number(),
-        role: z.enum(['admin', 'kitchen', 'driver']),
         endpoint: z.string(),
         auth: z.string(),
         p256dh: z.string(),
+        dashboardType: z.enum(['admin', 'kitchen', 'driver']),
+        driverId: z.number().optional(),
         userAgent: z.string().optional(),
       }))
       .mutation(async ({ input }) => {
         const success = await storePushSubscription(
-          input.userId,
-          input.role,
           input.endpoint,
           input.auth,
           input.p256dh,
+          input.dashboardType,
+          input.driverId,
           input.userAgent
         );
         return { success };
@@ -934,13 +935,13 @@ export const appRouter = router({
       }),
     sendTest: publicProcedure
       .input(z.object({
-        userId: z.number(),
-        role: z.enum(['admin', 'kitchen', 'driver']),
+        dashboardType: z.enum(['admin', 'kitchen', 'driver']),
+        driverId: z.number().optional(),
       }))
       .mutation(async ({ input }) => {
         const count = await sendPushNotification(
-          input.userId,
-          input.role,
+          input.dashboardType,
+          input.driverId,
           {
             title: 'Test Notification',
             body: 'This is a test push notification from Barrel Delivery',
