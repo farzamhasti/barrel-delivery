@@ -10,53 +10,38 @@ interface PushNotificationBannerProps {
 
 export function PushNotificationBannerFixed({ role, userId }: PushNotificationBannerProps) {
   const [isVisible, setIsVisible] = useState(false);
-  const [isDismissed, setIsDismissed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [username, setUsername] = useState<string | null>(null);
 
   const pushSubscribeMutation = trpc.push.subscribe.useMutation();
-
-  // Generate a stable user ID based on role and localStorage data
-  const getStableUserId = (): number => {
-    if (userId) return userId; // For drivers, use the provided ID
-    
-    // For admin/kitchen, create a stable hash from role and username
-    const username = localStorage.getItem('systemUsername') || 'unknown';
-    let hash = 0;
-    for (let i = 0; i < username.length; i++) {
-      const char = username.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash; // Convert to 32bit integer
-    }
-    // Return a positive number between 1000-9999
-    return 1000 + (Math.abs(hash) % 9000);
-  };
+  const { data: authData } = trpc.auth.me.useQuery();
 
   useEffect(() => {
-    // Check if user has already dismissed this banner
-    const dismissKey = `push-banner-dismissed-${role}`;
-    const dismissed = localStorage.getItem(dismissKey);
-    if (dismissed) {
-      setIsDismissed(true);
-      return;
-    }
-
-    // Check if push notifications are supported and not already subscribed
+    // Check if push notifications are supported
     const checkPushSupport = async () => {
       if (!('serviceWorker' in navigator) || !('Notification' in window)) {
         console.log('[Push Banner] Push notifications not supported');
         return;
       }
 
+      // Get the current username from auth data
+      if (authData?.username) {
+        setUsername(authData.username);
+        console.log('[Push Banner] Current user:', authData.username);
+      }
+
+      // Show banner if permission is not yet granted
       if (Notification.permission === 'default') {
+        console.log('[Push Banner] Showing permission request banner');
         setIsVisible(true);
       } else if (Notification.permission === 'granted') {
-        // Already granted - check if subscription exists
+        // Already granted - check if subscription exists and update if needed
         try {
           const registration = await navigator.serviceWorker.ready;
           const subscription = await registration.pushManager.getSubscription();
-          if (!subscription) {
-            // Permission granted but not subscribed - subscribe silently
-            console.log('[Push Banner] Permission granted but not subscribed - subscribing silently');
+          if (subscription && authData?.username) {
+            // Permission granted and subscribed - update subscription with current username
+            console.log('[Push Banner] Permission granted, updating subscription with username:', authData.username);
             await handleEnable();
           }
         } catch (error) {
@@ -66,10 +51,13 @@ export function PushNotificationBannerFixed({ role, userId }: PushNotificationBa
     };
 
     checkPushSupport();
-  }, [role]);
+  }, [authData?.username, role]);
 
   const handleEnable = async () => {
-    if (isDismissed) return;
+    if (!authData?.username) {
+      console.error('[Push Banner] Username not available');
+      return;
+    }
 
     setIsLoading(true);
     try {
@@ -84,12 +72,9 @@ export function PushNotificationBannerFixed({ role, userId }: PushNotificationBa
       // Request permission
       const permission = await requestPushPermission();
       if (permission !== 'granted') {
-        // User denied permission - mark as dismissed so we don't ask again
-        localStorage.setItem(`push-banner-dismissed-${role}`, 'true');
-        setIsDismissed(true);
+        console.log('[Push Banner] User denied notification permission');
         setIsVisible(false);
         setIsLoading(false);
-        console.log('[Push Banner] User denied notification permission');
         return;
       }
 
@@ -101,25 +86,22 @@ export function PushNotificationBannerFixed({ role, userId }: PushNotificationBa
         return;
       }
 
-      // Get stable user ID
-      const stableUserId = getStableUserId();
-      console.log('[Push Banner] Subscribing with userId:', stableUserId, 'role:', role);
+      console.log('[Push Banner] Subscribing with username:', authData.username, 'role:', role, 'userId:', userId);
 
-      // Store subscription on server with role-based routing
+      // Store subscription on server with username
       const result = await pushSubscribeMutation.mutateAsync({
-        userId: stableUserId,
-        role,
         endpoint: subscription.endpoint,
         auth: subscription.auth,
         p256dh: subscription.p256dh,
+        dashboardType: role,
+        driverId: userId,
         userAgent: navigator.userAgent,
       });
 
       if (result.success) {
-        console.log('[Push Banner] Successfully subscribed to push notifications for role:', role);
+        console.log('[Push Banner] Successfully subscribed to push notifications');
+        console.log('[Push Banner] Subscription stored with username:', authData.username);
         setIsVisible(false);
-        localStorage.setItem(`push-banner-dismissed-${role}`, 'true');
-        setIsDismissed(true);
       } else {
         console.error('[Push Banner] Server rejected subscription');
       }
@@ -131,13 +113,10 @@ export function PushNotificationBannerFixed({ role, userId }: PushNotificationBa
   };
 
   const handleDismiss = () => {
-    // Mark as dismissed so we don't ask again
-    localStorage.setItem(`push-banner-dismissed-${role}`, 'true');
-    setIsDismissed(true);
     setIsVisible(false);
   };
 
-  if (!isVisible || isDismissed) {
+  if (!isVisible) {
     return null;
   }
 
