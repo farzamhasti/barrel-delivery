@@ -107,16 +107,14 @@ export function NotificationIcon({ role, driverId }: NotificationIconProps) {
             {filteredNotifications.length > 0 ? (
               <>
                 {/* Mark All Button at the Beginning */}
-                {unreadCount > 0 && (
-                  <div className="p-3 bg-gray-50 border-b text-center">
-                    <button
-                      onClick={handleMarkAllAsRead}
-                      className="text-xs font-medium text-blue-600 hover:text-blue-700"
-                    >
-                      Mark all as read
-                    </button>
-                  </div>
-                )}
+                <div className="p-3 bg-gray-50 border-b text-center">
+                  <button
+                    onClick={handleMarkAllAsRead}
+                    className="text-xs font-medium text-blue-600 hover:text-blue-700"
+                  >
+                    Mark all as read
+                  </button>
+                </div>
                 {filteredNotifications.map((notification) => (
                   <div
                     key={notification.id}
