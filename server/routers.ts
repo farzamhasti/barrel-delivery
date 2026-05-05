@@ -729,7 +729,7 @@ export const appRouter = router({
           createNotification({
             recipientRole: 'admin',
             type: 'reservation_done',
-            message: `Reservation #${updatedReservation.id} (${updatedReservation.eventType}) has been completed`,
+            message: `The reservation (${updatedReservation.eventType}) has been done`,
             reservationId: updatedReservation.id,
           });
         }
