@@ -274,6 +274,12 @@ function SidebarContent({
           active={currentTab === "reservations"}
         />
         <NavItem
+          href="/admin/send-message"
+          icon={<MessageSquare className="w-5 h-5" />}
+          label="Send Message"
+          active={currentTab === "send-message"}
+        />
+        <NavItem
           href="/admin/drivers"
           icon={<Truck className="w-5 h-5" />}
           label="Drivers"
@@ -284,12 +290,6 @@ function SidebarContent({
           icon={<Calendar className="w-5 h-5" />}
           label="Delivery Report"
           active={currentTab === "delivery-report"}
-        />
-        <NavItem
-          href="/admin/send-message"
-          icon={<MessageSquare className="w-5 h-5" />}
-          label="Send Message"
-          active={currentTab === "send-message"}
         />
       </nav>
 

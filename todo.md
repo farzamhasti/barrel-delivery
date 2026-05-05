@@ -1561,3 +1561,6 @@ These features are documented for future enhancement but are not required for th
 - [x] Add recipient selection modal (Kitchen + online drivers)
 - [x] Register Send Message tab in Admin dashboard navigation
 - [x] Deliver messages as notifications via existing polling system
+
+## Phase 46: Reorder Admin Dashboard Tabs
+- [x] Reorder tabs to: New Order, Orders, Order Tracking, Reservations, Send Message, Drivers, Delivery Report
