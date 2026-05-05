@@ -91,32 +91,32 @@ export function NotificationIcon({ role, driverId }: NotificationIconProps) {
       {/* Notification Dropdown */}
       {isOpen && (
         <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl z-50 max-h-96 overflow-y-auto">
-          {/* Header with Mark All Button */}
+          {/* Header */}
           <div className="sticky top-0 bg-white border-b p-4 flex justify-between items-center">
             <h3 className="text-sm font-semibold text-gray-900">Notifications</h3>
-            <div className="flex items-center gap-2">
-              {unreadCount > 0 && (
-                <button
-                  onClick={handleMarkAllAsRead}
-                  className="text-xs font-medium text-blue-600 hover:text-blue-700 px-2 py-1"
-                  title="Mark all as read"
-                >
-                  Mark all
-                </button>
-              )}
-              <button
-                onClick={() => setIsOpen(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <X size={18} />
-              </button>
-            </div>
+            <button
+              onClick={() => setIsOpen(false)}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              <X size={18} />
+            </button>
           </div>
 
           {/* Notifications List */}
           <div className="divide-y">
             {filteredNotifications.length > 0 ? (
               <>
+                {/* Mark All Button at the Beginning */}
+                {unreadCount > 0 && (
+                  <div className="p-3 bg-gray-50 border-b text-center">
+                    <button
+                      onClick={handleMarkAllAsRead}
+                      className="text-xs font-medium text-blue-600 hover:text-blue-700"
+                    >
+                      Mark all as read
+                    </button>
+                  </div>
+                )}
                 {filteredNotifications.map((notification) => (
                   <div
                     key={notification.id}
