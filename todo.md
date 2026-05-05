@@ -1552,3 +1552,12 @@ These features are documented for future enhancement but are not required for th
 ## Phase 44: Fix Driver Dashboard Real-time Stats and Map Routing
 - [x] Fix delivery statistics not updating in real-time after marking order as delivered
 - [x] Fix Delivery with Map including already-delivered orders (should only route On the Way orders)
+
+## Phase 45: Add Send Message Tab to Admin Dashboard
+- [x] Create database tables for message_templates and sent_messages
+- [x] Create DB helpers for CRUD on templates and sending messages
+- [x] Create tRPC procedures for templates and messaging
+- [x] Build Send Message tab UI with pre-made templates and custom message sections
+- [x] Add recipient selection modal (Kitchen + online drivers)
+- [x] Register Send Message tab in Admin dashboard navigation
+- [x] Deliver messages as notifications via existing polling system

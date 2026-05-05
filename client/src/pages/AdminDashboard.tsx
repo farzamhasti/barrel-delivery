@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/useMobile";
 import { DeveloperCredit } from "@/components/DeveloperCredit";
 
-import { Menu, Package2, Truck, LogOut, Settings, Plus, Map, X, Calendar, Gift } from "lucide-react";
+import { Menu, Package2, Truck, LogOut, Settings, Plus, Map, X, Calendar, Gift, MessageSquare } from "lucide-react";
 
 import { Orders } from "@/pages/Orders";
 import DriverManagement from "@/components/admin/DriverManagement";
@@ -16,6 +16,7 @@ import { ReceiptScannerTesseract } from "@/components/admin/ReceiptScannerTesser
 import OrderTrackingWithMap from "@/components/admin/OrderTrackingWithMap";
 import { DeliveryReportTab } from "@/components/DeliveryReportTab";
 import { Reservations } from "@/components/admin/Reservations";
+import { SendMessage } from "@/components/admin/SendMessage";
 
 
 // Color scheme for order statuses
@@ -224,6 +225,7 @@ export default function AdminDashboard() {
                 {currentTab === "reservations" && <Reservations />}
                 {currentTab === "drivers" && <DriverManagement />}
                 {currentTab === "delivery-report" && <DeliveryReportTab />}
+                {currentTab === "send-message" && <SendMessage />}
 
               </div>
             </div>
@@ -282,6 +284,12 @@ function SidebarContent({
           icon={<Calendar className="w-5 h-5" />}
           label="Delivery Report"
           active={currentTab === "delivery-report"}
+        />
+        <NavItem
+          href="/admin/send-message"
+          icon={<MessageSquare className="w-5 h-5" />}
+          label="Send Message"
+          active={currentTab === "send-message"}
         />
       </nav>
 

@@ -866,4 +866,101 @@ export const appRouter = router({
         return { markedCount: count };
       }),
   }),
+
+  // Messaging system
+  messaging: router({
+    // Get all message templates
+    getTemplates: publicProcedure.query(async () => {
+      const database = await getDb();
+      if (!database) throw new Error('Database not available');
+      const { messageTemplates } = await import('../drizzle/schema');
+      const templates = await database.select().from(messageTemplates).orderBy(messageTemplates.createdAt);
+      return templates;
+    }),
+
+    // Create a new message template
+    createTemplate: publicProcedure
+      .input(z.object({
+        name: z.string().min(1),
+        templateText: z.string().min(1),
+      }))
+      .mutation(async ({ input }) => {
+        const database = await getDb();
+        if (!database) throw new Error('Database not available');
+        const { messageTemplates } = await import('../drizzle/schema');
+        const result = await database.insert(messageTemplates).values({
+          name: input.name,
+          templateText: input.templateText,
+        });
+        return { id: result[0]?.insertId, name: input.name, templateText: input.templateText };
+      }),
+
+    // Delete a message template
+    deleteTemplate: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        const database = await getDb();
+        if (!database) throw new Error('Database not available');
+        const { messageTemplates } = await import('../drizzle/schema');
+        await database.delete(messageTemplates).where(eq(messageTemplates.id, input.id));
+        return { success: true };
+      }),
+
+    // Send a message to recipients (creates notifications)
+    sendMessage: publicProcedure
+      .input(z.object({
+        messageText: z.string().min(1),
+        recipients: z.array(z.object({
+          role: z.enum(['kitchen', 'driver']),
+          driverId: z.number().optional(),
+          driverName: z.string().optional(),
+        })),
+        templateId: z.number().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const database = await getDb();
+        if (!database) throw new Error('Database not available');
+        const { sentMessages } = await import('../drizzle/schema');
+        const results = [];
+
+        for (const recipient of input.recipients) {
+          // Save to sent_messages table
+          await database.insert(sentMessages).values({
+            senderRole: 'admin',
+            recipientRole: recipient.role,
+            recipientId: recipient.driverId || null,
+            recipientName: recipient.role === 'kitchen' ? 'Kitchen' : (recipient.driverName || null),
+            messageText: input.messageText,
+            templateId: input.templateId || null,
+          });
+
+          // Create a notification for the recipient
+          await createNotification({
+            recipientRole: recipient.role,
+            recipientId: recipient.driverId,
+            type: 'admin_message',
+            message: input.messageText,
+            driverId: recipient.driverId,
+          });
+
+          results.push({ role: recipient.role, driverId: recipient.driverId, sent: true });
+        }
+
+        return { success: true, sentCount: results.length, results };
+      }),
+
+    // Get sent message history
+    getSentMessages: publicProcedure
+      .input(z.object({
+        limit: z.number().optional().default(50),
+      }))
+      .query(async ({ input }) => {
+        const database = await getDb();
+        if (!database) throw new Error('Database not available');
+        const { sentMessages } = await import('../drizzle/schema');
+        const { desc } = await import('drizzle-orm');
+        const messages = await database.select().from(sentMessages).orderBy(desc(sentMessages.createdAt)).limit(input.limit);
+        return messages;
+      }),
+  }),
 });

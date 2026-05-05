@@ -56,7 +56,8 @@ export type NotificationType =
   | 'reservation_created'
   | 'reservation_edited'
   | 'reservation_done'
-  | 'driver_assignment';
+  | 'driver_assignment'
+  | 'admin_message';
 
 export type RecipientRole = 'admin' | 'kitchen' | 'driver';
 

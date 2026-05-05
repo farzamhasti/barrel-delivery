@@ -152,7 +152,8 @@ export const notifications = mysqlTable("notifications", {
     "reservation_created",
     "reservation_edited",
     "reservation_done",
-    "driver_assignment"
+    "driver_assignment",
+    "admin_message"
   ]).notNull(),
   message: text("message").notNull(),
   orderId: int("order_id"),
@@ -165,3 +166,31 @@ export const notifications = mysqlTable("notifications", {
 
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = typeof notifications.$inferInsert;
+
+
+// Message Templates (pre-made messages for admin)
+export const messageTemplates = mysqlTable("message_templates", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  templateText: text("template_text").notNull(), // Contains placeholders like [ORDER_NUMBER] or [TEXT]
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type MessageTemplate = typeof messageTemplates.$inferSelect;
+export type InsertMessageTemplate = typeof messageTemplates.$inferInsert;
+
+// Sent Messages (history of all messages sent by admin)
+export const sentMessages = mysqlTable("sent_messages", {
+  id: int("id").autoincrement().primaryKey(),
+  senderRole: varchar("sender_role", { length: 50 }).notNull().default("admin"),
+  recipientRole: varchar("recipient_role", { length: 50 }).notNull(), // "kitchen" or "driver"
+  recipientId: int("recipient_id"), // driver ID if sent to a specific driver
+  recipientName: varchar("recipient_name", { length: 255 }),
+  messageText: text("message_text").notNull(),
+  templateId: int("template_id"), // optional reference to template used
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type SentMessage = typeof sentMessages.$inferSelect;
+export type InsertSentMessage = typeof sentMessages.$inferInsert;
