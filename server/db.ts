@@ -1607,18 +1607,17 @@ export async function getDeliveredOrdersCountByDate(driverId: number, date: Date
   const db = await getDb();
   if (!db) return 0;
   
-  // Create start and end of day in Toronto timezone (EDT = UTC-4, EST = UTC-5)
-  // The date input is a local date string (YYYY-MM-DD), so we need to interpret it in Toronto time
-  const year = date.getFullYear();
-  const month = date.getMonth();
-  const day = date.getDate();
+  // The date input comes from new Date('YYYY-MM-DD') which is midnight UTC
+  // We must use UTC methods to extract the correct date components
+  const year = date.getUTCFullYear();
+  const month = date.getUTCMonth();
+  const day = date.getUTCDate();
   
-  // Use Toronto timezone offset (EDT = UTC-4)
-  const startOfDay = new Date(Date.UTC(year, month, day, 4, 0, 0, 0)); // Midnight Toronto = 4:00 UTC
-  const endOfDay = new Date(Date.UTC(year, month, day + 1, 4, 0, 0, 0)); // Next midnight Toronto = next day 4:00 UTC
+  // Toronto timezone (EDT = UTC-4): midnight Toronto = 4:00 UTC
+  const startOfDay = new Date(Date.UTC(year, month, day, 4, 0, 0, 0));
+  const endOfDay = new Date(Date.UTC(year, month, day + 1, 4, 0, 0, 0));
   
   try {
-    // First try with deliveredAt, then fall back to updatedAt for orders that don't have deliveredAt set
     const result = await db.select()
       .from(orders)
       .where(and(
