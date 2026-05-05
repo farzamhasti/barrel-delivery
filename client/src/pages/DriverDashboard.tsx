@@ -79,9 +79,13 @@ export default function DriverDashboard() {
   });
 
   // Update order status mutation
+  const utils = trpc.useUtils();
   const updateOrderStatusMutation = trpc.orders.updateStatus.useMutation({
     onSuccess: () => {
-      // Order status updated successfully
+      // Invalidate delivery count so statistics update in real-time
+      utils.drivers.getDeliveredOrdersCountByDate.invalidate();
+      // Also refetch orders to update the tabs
+      refetchOrders();
     },
     onError: (error: any) => {
       console.error("Failed to update order status:", error);
@@ -505,13 +509,18 @@ export default function DriverDashboard() {
                         console.log('[Delivery with Map] Button clicked');
                         console.log('[Delivery with Map] assignedOrders:', assignedOrders);
                         
-                        if (assignedOrders.length === 0) {
+                        // Only include "On the Way" orders (not delivered ones)
+                        const onTheWayOnly = assignedOrders.filter(
+                          (order: any) => order.status === "On the Way" && !deliveredOrders.has(order.id)
+                        );
+
+                        if (onTheWayOnly.length === 0) {
                           alert('No active deliveries to show on map');
                           return;
                         }
 
                         // Filter orders that have coordinates (explicitly check for null/undefined, not falsy)
-                        const ordersWithCoordinates = assignedOrders.filter(
+                        const ordersWithCoordinates = onTheWayOnly.filter(
                           (order: any) => order.customerLatitude !== null && order.customerLatitude !== undefined && order.customerLongitude !== null && order.customerLongitude !== undefined
                         );
 

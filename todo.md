@@ -1548,3 +1548,7 @@ These features are documented for future enhancement but are not required for th
 
 ## Phase 43: Fix Driver Delivery Statistics Still Showing 0
 - [x] Fix delivery statistics count not reflecting actual delivered orders (fixed UTC date parsing)
+
+## Phase 44: Fix Driver Dashboard Real-time Stats and Map Routing
+- [x] Fix delivery statistics not updating in real-time after marking order as delivered
+- [x] Fix Delivery with Map including already-delivered orders (should only route On the Way orders)
