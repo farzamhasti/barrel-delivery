@@ -191,9 +191,9 @@ export default function DriverDashboard() {
     }
   }, [deliveredCountData]);
 
-  // Separate orders into "On the way" and "Delivered"
-  const onTheWayOrders = assignedOrders.filter((order: any) => !deliveredOrders.has(order.id));
-  const deliveredOrdersList = assignedOrders.filter((order: any) => deliveredOrders.has(order.id));
+  // Separate orders into "On the way" and "Delivered" based on server status
+  const onTheWayOrders = assignedOrders.filter((order: any) => order.status === "On the Way" && !deliveredOrders.has(order.id));
+  const deliveredOrdersList = assignedOrders.filter((order: any) => order.status === "Delivered" || deliveredOrders.has(order.id));
 
   // Handle login form submission
   const handleLogin = async (e: React.FormEvent) => {
