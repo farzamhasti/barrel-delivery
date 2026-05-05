@@ -47,8 +47,24 @@ export function NotificationIcon({ role, driverId }: NotificationIconProps) {
     ? allNotifications.filter(n => !n.message?.includes('undefined'))
     : [];
 
+  const [clickCount, setClickCount] = useState(0);
+  const [lastClickTime, setLastClickTime] = useState(0);
+
   const handleMarkAsRead = (notificationId: number) => {
-    markAsReadMutation.mutate({ notificationId });
+    const now = Date.now();
+    // Reset if more than 300ms has passed since last click
+    if (now - lastClickTime > 300) {
+      setClickCount(1);
+    } else {
+      setClickCount(prev => prev + 1);
+    }
+    setLastClickTime(now);
+
+    // Mark as read on double-click
+    if (clickCount + 1 === 2) {
+      markAsReadMutation.mutate({ notificationId });
+      setClickCount(0);
+    }
   };
 
   const handleMarkAllAsRead = () => {
@@ -75,15 +91,26 @@ export function NotificationIcon({ role, driverId }: NotificationIconProps) {
       {/* Notification Dropdown */}
       {isOpen && (
         <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl z-50 max-h-96 overflow-y-auto">
-          {/* Header */}
+          {/* Header with Mark All Button */}
           <div className="sticky top-0 bg-white border-b p-4 flex justify-between items-center">
             <h3 className="text-sm font-semibold text-gray-900">Notifications</h3>
-            <button
-              onClick={() => setIsOpen(false)}
-              className="text-gray-400 hover:text-gray-600"
-            >
-              <X size={18} />
-            </button>
+            <div className="flex items-center gap-2">
+              {unreadCount > 0 && (
+                <button
+                  onClick={handleMarkAllAsRead}
+                  className="text-xs font-medium text-blue-600 hover:text-blue-700 px-2 py-1"
+                  title="Mark all as read"
+                >
+                  Mark all
+                </button>
+              )}
+              <button
+                onClick={() => setIsOpen(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X size={18} />
+              </button>
+            </div>
           </div>
 
           {/* Notifications List */}
@@ -113,18 +140,6 @@ export function NotificationIcon({ role, driverId }: NotificationIconProps) {
                     </div>
                   </div>
                 ))}
-
-                {/* Mark All as Read Button */}
-                {unreadCount > 0 && (
-                  <div className="p-3 bg-gray-50 border-t text-center">
-                    <button
-                      onClick={handleMarkAllAsRead}
-                      className="text-xs font-medium text-blue-600 hover:text-blue-700"
-                    >
-                      Mark all as read
-                    </button>
-                  </div>
-                )}
               </>
             ) : (
               <div className="p-8 text-center">
