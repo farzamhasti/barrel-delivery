@@ -9,7 +9,17 @@ import { getLoginUrl } from "./const";
 import { TimerStartTimeProvider } from "./contexts/TimerStartTimeContext";
 import "./index.css";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 2,
+      retryDelay: 1000,
+      refetchOnWindowFocus: false,
+      // Keep showing stale data while refetching - prevents flickering
+      staleTime: 5000,
+    },
+  },
+});
 
 const redirectToLoginIfUnauthorized = (error: unknown) => {
   if (!(error instanceof TRPCClientError)) return;

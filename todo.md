@@ -1564,3 +1564,8 @@ These features are documented for future enhancement but are not required for th
 
 ## Phase 46: Reorder Admin Dashboard Tabs
 - [x] Reorder tabs to: New Order, Orders, Order Tracking, Reservations, Send Message, Drivers, Delivery Report
+
+## Phase 47: Fix Published Version Bugs (orders/notifications flickering)
+- [x] Fix orders appearing and then hiding on published version (added retry, staleTime, removed gcTime:0)
+- [x] Fix notifications appearing and then disappearing on published version (added retry to all polling queries)
+- [x] Ensure published version behaves identically to preview (global QueryClient defaults + per-query retry)

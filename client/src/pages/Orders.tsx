@@ -65,7 +65,7 @@ export function Orders() {
 
   const { data: allOrders = [], isLoading: isLoadingOrders, refetch: refetchOrders } = trpc.orders.getTodayWithItems.useQuery({
     date: selectedDate.toISOString().split('T')[0],
-  });
+  }, { retry: 2, retryDelay: 1000 });
   
   // Refetch orders only when necessary (after mutations or manual refresh)
   // Removed auto-refetch to prevent flickering and UI resets
@@ -83,7 +83,7 @@ export function Orders() {
 
   const { data: selectedOrderDetails, refetch: refetchSelectedOrder } = trpc.orders.getWithItems.useQuery(
     { id: selectedOrderId || 0 },
-    { enabled: !!selectedOrderId }
+    { enabled: !!selectedOrderId, retry: 2, retryDelay: 1000 }
   );
   
   // Refetch selected order details only when necessary

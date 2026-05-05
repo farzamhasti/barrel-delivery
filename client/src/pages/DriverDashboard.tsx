@@ -98,7 +98,9 @@ export default function DriverDashboard() {
     { 
       enabled: !!sessionToken && !!currentDriverId,
       refetchInterval: 1000, // Refetch every 1 second for real-time updates
-      refetchIntervalInBackground: true // Continue refetching even when tab is not focused
+      refetchIntervalInBackground: true, // Continue refetching even when tab is not focused
+      retry: 2,
+      retryDelay: 1000,
     }
   );
   
@@ -120,7 +122,7 @@ export default function DriverDashboard() {
     currentDriverId && selectedStatisticsDate
       ? { driverId: currentDriverId, date: selectedStatisticsDate }
       : undefined,
-    { enabled: !!currentDriverId && !!selectedStatisticsDate }
+    { enabled: !!currentDriverId && !!selectedStatisticsDate, retry: 2, retryDelay: 1000 }
   );
 
   // Save return time mutation

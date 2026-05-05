@@ -53,17 +53,21 @@ export default function KitchenDashboardPage() {
   const [zoomImageUrl, setZoomImageUrl] = useState<string | null>(null);
 
   // Fetch today's orders with items
-  const { data: allOrders = [], isLoading, refetch } = trpc.orders.getTodayWithItems.useQuery();
+  const { data: allOrders = [], isLoading, refetch } = trpc.orders.getTodayWithItems.useQuery(undefined, {
+    retry: 2, retryDelay: 1000,
+  });
 
   // Fetch active drivers with real-time refetching
   const { data: drivers = [] } = trpc.drivers.list.useQuery(undefined, {
     refetchInterval: 1000, // Refetch every 1 second to catch driver status changes
+    retry: 2, retryDelay: 1000,
   });
   const activeDrivers = drivers.filter((d: any) => d.status === "online" && d.isActive);
 
   // Fetch pending reservations count with real-time refetching
   const { data: allReservations = [] } = trpc.reservations.getAll.useQuery(undefined, {
     refetchInterval: 1000, // Refetch every 1 second to catch new reservations
+    retry: 2, retryDelay: 1000,
   });
   const pendingReservationsCount = allReservations.filter((r: any) => r.status === "Pending").length;
 

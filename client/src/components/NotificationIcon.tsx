@@ -21,13 +21,13 @@ export function NotificationIcon({ role, driverId }: NotificationIconProps) {
   // Poll for unread notifications every 2 seconds
   const { data: unreadNotifications = [] } = trpc.notifications.getUnread.useQuery(
     { role, driverId },
-    { refetchInterval: 2000, retry: false } // Poll every 2 seconds
+    { refetchInterval: 2000, retry: 2, retryDelay: 1000 } // Poll every 2 seconds, retry on transient failures
   );
 
   // Get all notifications for display
   const { data: allNotifications = [] } = trpc.notifications.getAll.useQuery(
     { role, driverId },
-    { refetchInterval: 2000, retry: false }
+    { refetchInterval: 2000, retry: 2, retryDelay: 1000 }
   );
 
   // Mark notification as read mutation
