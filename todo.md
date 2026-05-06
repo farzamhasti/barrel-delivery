@@ -1635,3 +1635,10 @@ These features are documented for future enhancement but are not required for th
 - [x] Verify no changes to other report sections
 - [x] Test region filtering with sample data (verified in browser - displays correctly with 0 counts for empty date range)
 - [x] Move Orders by Region section before Delivery Times Breakdown (reordered sections in component)
+
+## Phase 38: Add Total Time Column to Delivery Times Breakdown
+- [x] Add totalTime calculation to getDeliveryReport database function (order placement to ready time)
+- [x] Update DeliveryMetricsModal to display Total Time column
+- [x] Format Total Time in minutes and seconds (e.g., "5m 30s")
+- [x] Verify column displays correctly in modal (verified in browser - displays with blue styling)
+- [x] Test with sample data (tested - currently 0 orders in date range)

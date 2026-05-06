@@ -8,6 +8,7 @@ interface DeliveryMetric {
   waitTime: number;
   readyTime: number;
   enRouteTime: number;
+  totalTime: number;
   deliveryTime: string;
 }
 
@@ -49,6 +50,7 @@ export function DeliveryMetricsTable({ metrics, isLoading }: DeliveryMetricsTabl
             <th className="px-4 py-3 text-center font-semibold text-gray-700">Pending Time</th>
             <th className="px-4 py-3 text-center font-semibold text-gray-700">Ready Time</th>
             <th className="px-4 py-3 text-center font-semibold text-gray-700">On the Way Time</th>
+            <th className="px-4 py-3 text-center font-semibold text-gray-700">Total Time</th>
             <th className="px-4 py-3 text-left font-semibold text-gray-700">Delivered Time</th>
           </tr>
         </thead>
@@ -60,6 +62,7 @@ export function DeliveryMetricsTable({ metrics, isLoading }: DeliveryMetricsTabl
               <td className="px-4 py-3 text-center text-gray-600">{formatSeconds(metric.waitTime)}</td>
               <td className="px-4 py-3 text-center text-gray-600">{formatSeconds(metric.readyTime)}</td>
               <td className="px-4 py-3 text-center text-gray-600">{formatSeconds(metric.enRouteTime)}</td>
+              <td className="px-4 py-3 text-center text-gray-600 font-medium text-blue-600">{formatSeconds(metric.totalTime)}</td>
               <td className="px-4 py-3 text-gray-700">{metric.deliveryTime}</td>
             </tr>
           ))}

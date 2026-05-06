@@ -9,6 +9,7 @@ interface DeliveryMetric {
   waitTime: number;
   readyTime: number;
   enRouteTime: number;
+  totalTime: number;
   deliveryTime: string;
 }
 
