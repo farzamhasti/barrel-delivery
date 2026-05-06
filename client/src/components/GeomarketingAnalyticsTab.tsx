@@ -1,21 +1,29 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BarChart3, Map as MapIcon } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import { DailyCalendarPicker } from "./DailyCalendarPicker";
+import { MonthlyCalendarPicker } from "./MonthlyCalendarPicker";
 
-type DateRange = "today" | "monthly";
+type DateRange = "daily" | "monthly";
 type AreaFilter = "all" | "Downtown" | "Central Park" | "Both";
 
 export function GeomarketingAnalyticsTab() {
-  const [dateRange, setDateRange] = useState<DateRange>("today");
+  const [dateRange, setDateRange] = useState<DateRange>("daily");
   const [areaFilter, setAreaFilter] = useState<AreaFilter>("all");
+  const [selectedDates, setSelectedDates] = useState<Date[]>([new Date()]);
+  const [selectedMonths, setSelectedMonths] = useState<{ year: number; month: number }[]>([
+    { year: new Date().getFullYear(), month: new Date().getMonth() },
+  ]);
 
   // Fetch analytics data
   const { data: analyticsData, isLoading } = trpc.analytics.getGeomarketingData.useQuery(
     {
       dateRange,
       area: areaFilter === "all" ? undefined : areaFilter,
+      dates: dateRange === "daily" ? selectedDates : undefined,
+      months: dateRange === "monthly" ? selectedMonths : undefined,
     },
     {
       enabled: true,
@@ -30,19 +38,19 @@ export function GeomarketingAnalyticsTab() {
           <CardTitle>Analytics Filters</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Date Range Filter */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Date Range
               </label>
-              <div className="flex gap-2">
+              <div className="flex gap-2 mb-4">
                 <Button
-                  variant={dateRange === "today" ? "default" : "outline"}
-                  onClick={() => setDateRange("today")}
+                  variant={dateRange === "daily" ? "default" : "outline"}
+                  onClick={() => setDateRange("daily")}
                   size="sm"
                 >
-                  Today
+                  Daily
                 </Button>
                 <Button
                   variant={dateRange === "monthly" ? "default" : "outline"}
@@ -52,6 +60,20 @@ export function GeomarketingAnalyticsTab() {
                   Monthly
                 </Button>
               </div>
+
+              {/* Calendar Pickers */}
+              {dateRange === "daily" && (
+                <DailyCalendarPicker
+                  selectedDates={selectedDates}
+                  onDatesChange={setSelectedDates}
+                />
+              )}
+              {dateRange === "monthly" && (
+                <MonthlyCalendarPicker
+                  selectedMonths={selectedMonths}
+                  onMonthsChange={setSelectedMonths}
+                />
+              )}
             </div>
 
             {/* Area Filter */}
@@ -59,7 +81,7 @@ export function GeomarketingAnalyticsTab() {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Area
               </label>
-              <div className="flex gap-2 flex-wrap">
+              <div className="flex flex-col gap-2">
                 <Button
                   variant={areaFilter === "all" ? "default" : "outline"}
                   onClick={() => setAreaFilter("all")}
@@ -88,6 +110,23 @@ export function GeomarketingAnalyticsTab() {
                 >
                   Both
                 </Button>
+              </div>
+            </div>
+
+            {/* Filter Summary */}
+            <div className="bg-blue-50 rounded-lg p-4">
+              <h4 className="font-semibold text-sm text-gray-900 mb-2">Active Filters</h4>
+              <div className="space-y-1 text-sm text-gray-700">
+                <p>
+                  <span className="font-medium">Date Range:</span>{" "}
+                  {dateRange === "daily"
+                    ? `${selectedDates.length} day${selectedDates.length !== 1 ? "s" : ""}`
+                    : `${selectedMonths.length} month${selectedMonths.length !== 1 ? "s" : ""}`}
+                </p>
+                <p>
+                  <span className="font-medium">Area:</span>{" "}
+                  {areaFilter === "all" ? "All Areas" : areaFilter}
+                </p>
               </div>
             </div>
           </div>

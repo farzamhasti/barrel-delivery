@@ -976,8 +976,13 @@ export const appRouter = router({
   analytics: router({
     getGeomarketingData: publicProcedure
       .input(z.object({
-        dateRange: z.enum(["today", "monthly"]),
+        dateRange: z.enum(["daily", "monthly"]),
         area: z.enum(["Downtown", "Central Park", "Both"]).optional(),
+        dates: z.array(z.date()).optional(),
+        months: z.array(z.object({
+          year: z.number(),
+          month: z.number(),
+        })).optional(),
       }))
       .query(async ({ input }) => {
         return {

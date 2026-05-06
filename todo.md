@@ -1662,3 +1662,11 @@ These features are documented for future enhancement but are not required for th
 - [x] Integrate AnalyticsTab into Admin dashboard navigation (added to sidebar and tab routing)
 - [x] Test all sections with sample data (verified - all 5 sections render correctly)
 - [x] Verify responsive design on tablet and desktop (grid layout responsive, map/chart side-by-side)
+
+## Phase 41: Enhanced Date Range Picker for Analytics
+- [x] Create DailyCalendarPicker component for selecting single or multiple days
+- [x] Create MonthlyCalendarPicker component for selecting single or multiple months
+- [x] Update GeomarketingAnalyticsTab to use new calendar pickers
+- [x] Update analytics data fetching to handle multiple selected dates
+- [x] Test calendar pickers with various selections (tested - multi-select working)
+- [x] Verify responsive design on mobile/tablet/desktop (responsive grid layout confirmed)
