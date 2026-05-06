@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
+'use client';
+import { useState, useRef, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import { X, Minimize2, Maximize2 } from 'lucide-react';
@@ -24,15 +25,21 @@ interface DriverPosition {
 
 interface LiveDriverTrackingWindowProps {
   onClose: () => void;
+  onMinimize?: (isMinimized: boolean) => void;
 }
 
-export function LiveDriverTrackingWindow({ onClose }: LiveDriverTrackingWindowProps) {
+// Global state for minimized windows
+let minimizedWindows: Map<string, { position: { x: number; y: number }; size: { width: number; height: number } }> = new Map();
+
+export function LiveDriverTrackingWindow({ onClose, onMinimize }: LiveDriverTrackingWindowProps) {
   const [drivers, setDrivers] = useState<DriverPosition[]>([]);
   const [isMinimized, setIsMinimized] = useState(false);
   const [position, setPosition] = useState({ x: 20, y: 20 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [size, setSize] = useState({ width: 600, height: 500 });
+  const [isResizing, setIsResizing] = useState(false);
+  const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, width: 0, height: 0 });
   const windowRef = useRef<HTMLDivElement>(null);
   const getActiveDriversQuery = trpc.gps.getActiveDrivers.useQuery();
 
@@ -52,7 +59,7 @@ export function LiveDriverTrackingWindow({ onClose }: LiveDriverTrackingWindowPr
     }
   }, [getActiveDriversQuery.data]);
 
-  const handleMouseDown = (e: React.MouseEvent) => {
+  const handleHeaderMouseDown = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('[data-no-drag]')) return;
     setIsDragging(true);
     setDragOffset({
@@ -61,20 +68,42 @@ export function LiveDriverTrackingWindow({ onClose }: LiveDriverTrackingWindowPr
     });
   };
 
+  const handleResizeMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+    setResizeStart({
+      x: e.clientX,
+      y: e.clientY,
+      width: size.width,
+      height: size.height,
+    });
+  };
+
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      if (!isDragging) return;
-      setPosition({
-        x: e.clientX - dragOffset.x,
-        y: e.clientY - dragOffset.y,
-      });
+      if (isDragging) {
+        setPosition({
+          x: Math.max(0, e.clientX - dragOffset.x),
+          y: Math.max(0, e.clientY - dragOffset.y),
+        });
+      }
+
+      if (isResizing) {
+        const deltaX = e.clientX - resizeStart.x;
+        const deltaY = e.clientY - resizeStart.y;
+        setSize({
+          width: Math.max(300, resizeStart.width + deltaX),
+          height: Math.max(200, resizeStart.height + deltaY),
+        });
+      }
     };
 
     const handleMouseUp = () => {
       setIsDragging(false);
+      setIsResizing(false);
     };
 
-    if (isDragging) {
+    if (isDragging || isResizing) {
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
     }
@@ -83,7 +112,18 @@ export function LiveDriverTrackingWindow({ onClose }: LiveDriverTrackingWindowPr
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging, dragOffset]);
+  }, [isDragging, dragOffset, isResizing, resizeStart]);
+
+  const handleMinimize = () => {
+    const newMinimized = !isMinimized;
+    setIsMinimized(newMinimized);
+    if (newMinimized) {
+      minimizedWindows.set('liveDriverTracking', { position, size });
+    } else {
+      minimizedWindows.delete('liveDriverTracking');
+    }
+    onMinimize?.(newMinimized);
+  };
 
   const getDriverColor = (index: number) => {
     return DRIVER_COLORS[index % DRIVER_COLORS.length];
@@ -140,7 +180,6 @@ export function LiveDriverTrackingWindow({ onClose }: LiveDriverTrackingWindowPr
   return (
     <div
       ref={windowRef}
-      onMouseDown={handleMouseDown}
       className="fixed bg-white rounded-lg shadow-2xl border border-border z-50 flex flex-col"
       style={{
         left: `${position.x}px`,
@@ -150,17 +189,17 @@ export function LiveDriverTrackingWindow({ onClose }: LiveDriverTrackingWindowPr
         cursor: isDragging ? 'grabbing' : 'grab',
       }}
     >
-      {/* Header */}
+      {/* Header - Draggable */}
       <div
-        data-no-drag
-        className="flex items-center justify-between p-3 border-b border-border bg-gradient-to-r from-blue-50 to-blue-100 rounded-t-lg"
+        onMouseDown={handleHeaderMouseDown}
+        className="flex items-center justify-between p-3 border-b border-border bg-gradient-to-r from-blue-50 to-blue-100 rounded-t-lg cursor-grab active:cursor-grabbing"
       >
         <h3 className="font-semibold text-sm text-foreground">Live Driver Tracking</h3>
-        <div className="flex gap-2">
+        <div className="flex gap-2" data-no-drag>
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setIsMinimized(!isMinimized)}
+            onClick={handleMinimize}
             className="h-6 w-6 p-0"
           >
             {isMinimized ? <Maximize2 className="w-4 h-4" /> : <Minimize2 className="w-4 h-4" />}
@@ -178,49 +217,60 @@ export function LiveDriverTrackingWindow({ onClose }: LiveDriverTrackingWindowPr
 
       {/* Content */}
       {!isMinimized && (
-        <div className="flex-1 overflow-hidden">
-          <MapContainer
-            center={[RESTAURANT_LAT, RESTAURANT_LNG]}
-            zoom={13}
-            style={{ height: '100%', width: '100%' }}
-          >
-            <TileLayer
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              attribution='&copy; OpenStreetMap contributors'
-            />
+        <>
+          <div className="flex-1 overflow-hidden">
+            <MapContainer
+              center={[RESTAURANT_LAT, RESTAURANT_LNG]}
+              zoom={13}
+              style={{ height: '100%', width: '100%' }}
+            >
+              <TileLayer
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution='&copy; OpenStreetMap contributors'
+              />
 
-            {/* Restaurant marker */}
-            <Marker position={[RESTAURANT_LAT, RESTAURANT_LNG]} icon={restaurantIcon}>
-              <Popup>
-                <div className="text-sm font-semibold">The Barrel Restaurant</div>
-              </Popup>
-            </Marker>
-
-            {/* Driver markers */}
-            {drivers.map((driver, index) => (
-              <Marker
-                key={driver.driverId}
-                position={[driver.latitude, driver.longitude]}
-                icon={createColoredIcon(getDriverColor(index))}
-              >
+              {/* Restaurant marker */}
+              <Marker position={[RESTAURANT_LAT, RESTAURANT_LNG]} icon={restaurantIcon}>
                 <Popup>
-                  <div className="text-sm">
-                    <div className="font-semibold">Driver {driver.driverId}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {driver.latitude.toFixed(4)}, {driver.longitude.toFixed(4)}
-                    </div>
-                  </div>
+                  <div className="text-sm font-semibold">The Barrel Restaurant</div>
                 </Popup>
               </Marker>
-            ))}
-          </MapContainer>
-        </div>
+
+              {/* Driver markers */}
+              {drivers.map((driver, index) => (
+                <Marker
+                  key={driver.driverId}
+                  position={[driver.latitude, driver.longitude]}
+                  icon={createColoredIcon(getDriverColor(index))}
+                >
+                  <Popup>
+                    <div className="text-sm">
+                      <div className="font-semibold">Driver {driver.driverId}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {new Date(driver.timestamp).toLocaleTimeString()}
+                      </div>
+                    </div>
+                  </Popup>
+                </Marker>
+              ))}
+            </MapContainer>
+          </div>
+
+          {/* Resize Handle */}
+          <div
+            onMouseDown={handleResizeMouseDown}
+            className="absolute bottom-0 right-0 w-4 h-4 bg-blue-400 cursor-se-resize rounded-tl"
+            style={{ cursor: 'nwse-resize' }}
+          />
+        </>
       )}
 
-      {/* Status bar */}
-      <div data-no-drag className="px-3 py-2 border-t border-border bg-muted/50 text-xs text-muted-foreground rounded-b-lg">
-        {drivers.length} active driver{drivers.length !== 1 ? 's' : ''} • Updates every 10s
-      </div>
+      {/* Minimized State Info */}
+      {isMinimized && (
+        <div className="px-3 py-2 text-xs text-muted-foreground">
+          {drivers.length} active drivers • Updates every 10s
+        </div>
+      )}
     </div>
   );
 }

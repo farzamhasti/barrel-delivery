@@ -1728,3 +1728,11 @@ These features are documented for future enhancement but are not required for th
 - [x] Test GPS permission request flow (permission handling in useGeolocation)
 - [x] Test floating window dragging and resizing (drag/resize logic implemented)
 - [x] Verify no interference with existing UI/functionality (button added to header, window floats above)
+
+## Phase 48: Live Driver Tracking Window Enhancements
+- [x] Enhance window dragging to work in all directions (full mouse tracking with boundary constraints)
+- [x] Add minimize/restore functionality with taskbar state (minimized state shows driver count)
+- [x] Add window resizing from bottom-right corner (resize handle with visual feedback)
+- [x] Test dragging window across screen (drag functionality verified working)
+- [x] Test minimize/restore button functionality (minimize/maximize buttons functional)
+- [x] Verify window stays within viewport bounds (boundary constraints applied)

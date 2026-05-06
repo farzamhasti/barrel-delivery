@@ -9,7 +9,8 @@ import { MapView } from "@/components/Map";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useDriverReturnTime } from "@/contexts/DriverReturnTimeContext";
-import { Clock, CheckCircle2, Truck, Package, Maximize2 } from "lucide-react";
+import { Clock, CheckCircle2, Truck, Package, Maximize2, Navigation } from "lucide-react";
+import { LiveDriverTrackingWindow } from "@/components/LiveDriverTrackingWindow";
 import { toast } from "sonner";
 import { FullscreenMapModal } from "@/components/FullscreenMapModal";
 import { useCountdownTimer } from "@/hooks/useCountdownTimer";
@@ -81,6 +82,7 @@ export default function OrderTrackingWithMap() {
   const fullscreenRestaurantMarkerRef = useRef<google.maps.Marker | null>(null);
   const fullscreenGeocodingQueueRef = useRef<number[]>([]);
   const fullscreenGeocodingInProgressRef = useRef<Set<number>>(new Set());
+  const [showLiveTracking, setShowLiveTracking] = useState(false);
 
   // Geocoding mutation
   const geocodeMutation = (trpc as any).maps.geocode.useMutation();
@@ -236,16 +238,32 @@ export default function OrderTrackingWithMap() {
             </Button>
           )}
         </div>
-        <Button
-          onClick={() => setShowFullscreenMap(true)}
-          variant="outline"
-          size="sm"
-          className="gap-2"
-        >
-          <Maximize2 className="w-4 h-4" />
-          Better Map View
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={() => setShowLiveTracking(!showLiveTracking)}
+            variant={showLiveTracking ? "default" : "outline"}
+            size="sm"
+            className="gap-2"
+          >
+            <Navigation className="w-4 h-4" />
+            Live Driver Tracking
+          </Button>
+          <Button
+            onClick={() => setShowFullscreenMap(true)}
+            variant="outline"
+            size="sm"
+            className="gap-2"
+          >
+            <Maximize2 className="w-4 h-4" />
+            Better Map View
+          </Button>
+        </div>
       </div>
+
+      {/* Live Driver Tracking Window */}
+      {showLiveTracking && (
+        <LiveDriverTrackingWindow onClose={() => setShowLiveTracking(false)} />
+      )}
 
       <div className="flex gap-4 flex-1">
         {/* Map Section - Hidden on Mobile */}
