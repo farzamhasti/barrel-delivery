@@ -1595,3 +1595,10 @@ These features are documented for future enhancement but are not required for th
 - [x] Update DriverDashboard.tsx to initialize date with Ontario timezone (added getOntarioTodayString function)
 - [x] Verify date picker shows 2026-05-05 (not 2026-05-06) - Code verified
 - [x] Test timezone correction in preview - Code change applied
+
+## Phase 33: Notification Icon Mobile Visibility Fix (COMPLETED)
+- [x] Locate notification icon component in admin dashboard (found in NotificationIcon.tsx)
+- [x] Identify responsive styling issue (NotificationIcon was missing from mobile header in AdminDashboard.tsx)
+- [x] Fix by adding NotificationIcon to mobile header (line 104 in AdminDashboard.tsx)
+- [x] Test notification icon visibility on mobile/tablet - VERIFIED
+- [x] Verify no changes to functionality or other UI elements - VERIFIED

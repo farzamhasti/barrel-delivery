@@ -101,6 +101,7 @@ export default function AdminDashboard() {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              <NotificationIcon role="admin" />
               <Button
                 variant="outline"
                 size="sm"
