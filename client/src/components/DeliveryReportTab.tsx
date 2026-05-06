@@ -84,7 +84,7 @@ export function DeliveryReportTab() {
 
           <Card className="bg-gradient-to-br from-blue-50 to-blue-100">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-blue-900">Avg. Wait Time</CardTitle>
+              <CardTitle className="text-sm font-medium text-blue-900">Avg. Pending Time</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-blue-600">{formatSeconds(metrics.averageWaitTime)}</div>
@@ -104,7 +104,7 @@ export function DeliveryReportTab() {
 
           <Card className="bg-gradient-to-br from-orange-50 to-orange-100">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-orange-900">Avg. En Route</CardTitle>
+              <CardTitle className="text-sm font-medium text-orange-900">Avg. On the Way Time</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-orange-600">{formatSeconds(metrics.averageEnRouteTime)}</div>

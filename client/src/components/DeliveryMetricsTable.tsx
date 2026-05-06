@@ -46,10 +46,10 @@ export function DeliveryMetricsTable({ metrics, isLoading }: DeliveryMetricsTabl
           <tr>
             <th className="px-4 py-3 text-left font-semibold text-gray-700">Order #</th>
             <th className="px-4 py-3 text-left font-semibold text-gray-700">Driver</th>
-            <th className="px-4 py-3 text-center font-semibold text-gray-700">Wait Time</th>
+            <th className="px-4 py-3 text-center font-semibold text-gray-700">Pending Time</th>
             <th className="px-4 py-3 text-center font-semibold text-gray-700">Ready Time</th>
-            <th className="px-4 py-3 text-center font-semibold text-gray-700">En Route Time</th>
-            <th className="px-4 py-3 text-left font-semibold text-gray-700">Delivery Time (Ontario)</th>
+            <th className="px-4 py-3 text-center font-semibold text-gray-700">On the Way Time</th>
+            <th className="px-4 py-3 text-left font-semibold text-gray-700">Delivered Time</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-200">
