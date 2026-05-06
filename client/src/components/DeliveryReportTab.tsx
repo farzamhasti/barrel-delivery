@@ -4,11 +4,13 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar, TrendingUp, Truck, CheckCircle2, BarChart3 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { DeliveryMetricsTable } from "@/components/DeliveryMetricsTable";
+import { DeliveryMetricsModal } from "@/components/DeliveryMetricsModal";
 import { DriverStatsTable } from "@/components/DriverStatsTable";
 import { SimpleReportDateSelector } from "@/components/SimpleReportDateSelector";
 
 export function DeliveryReportTab() {
   const [dateRange, setDateRange] = useState<{ startDate: Date; endDate: Date } | null>(null);
+  const [showMetricsModal, setShowMetricsModal] = useState(false);
 
   // Fetch delivery report data
   const { data: reportData, isLoading } = trpc.orders.getDeliveryReport.useQuery(
@@ -114,7 +116,7 @@ export function DeliveryReportTab() {
         </div>
       )}
 
-      {/* Delivery Times Table */}
+      {/* Delivery Times Button */}
       {dateRange && (
         <Card>
           <CardHeader>
@@ -122,13 +124,16 @@ export function DeliveryReportTab() {
               <Calendar className="w-5 h-5" />
               Delivery Times Breakdown
             </CardTitle>
-            <CardDescription>Detailed breakdown of each order's delivery timeline</CardDescription>
+            <CardDescription>View detailed breakdown of each order's delivery timeline</CardDescription>
           </CardHeader>
           <CardContent>
-            <DeliveryMetricsTable 
-              metrics={reportData?.orders || []} 
-              isLoading={isLoading}
-            />
+            <Button 
+              onClick={() => setShowMetricsModal(true)}
+              className="w-full"
+              size="lg"
+            >
+              View Detailed Report ({reportData?.orders?.length || 0} orders)
+            </Button>
           </CardContent>
         </Card>
       )}
@@ -151,6 +156,14 @@ export function DeliveryReportTab() {
           </CardContent>
         </Card>
       )}
+
+      {/* Delivery Metrics Modal */}
+      <DeliveryMetricsModal
+        isOpen={showMetricsModal}
+        metrics={reportData?.orders || []}
+        isLoading={isLoading}
+        onClose={() => setShowMetricsModal(false)}
+      />
     </div>
   );
 }
