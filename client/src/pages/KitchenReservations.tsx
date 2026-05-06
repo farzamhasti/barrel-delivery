@@ -6,7 +6,12 @@ import { trpc } from '@/lib/trpc';
 import { CheckCircle2, Clock, Calendar, Users, FileText } from 'lucide-react';
 
 export function KitchenReservations() {
-  const [selectedDate, setSelectedDate] = useState<string>('');
+  // Default to today's date
+  const getTodayDate = () => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  };
+  const [selectedDate, setSelectedDate] = useState<string>(getTodayDate());
   const { data: allReservations = [], refetch } = trpc.reservations.getAll.useQuery();
   const markDoneMutation = trpc.reservations.markDone.useMutation();
 
@@ -50,16 +55,14 @@ export function KitchenReservations() {
           className="w-40"
           placeholder="Filter by date"
         />
-        {selectedDate && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setSelectedDate('')}
-            className="text-xs"
-          >
-            Clear
-          </Button>
-        )}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setSelectedDate(getTodayDate())}
+          className="text-xs"
+        >
+          Today
+        </Button>
       </div>
 
       {/* Pending Reservations Section */}
