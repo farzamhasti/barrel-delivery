@@ -12,6 +12,7 @@ import { GISGeographicDistribution } from "./GISGeographicDistribution";
 import { GISDeliveryPerformance } from "./GISDeliveryPerformance";
 import { GISDriverPerformance } from "./GISDriverPerformance";
 import { GISGrowthOpportunities } from "./GISGrowthOpportunities";
+import { GISTimeAnalysis } from "./GISTimeAnalysis";
 
 type ViewType = "google" | "gis" | "chart";
 
@@ -46,6 +47,8 @@ export function AnalyticsSectionModalWithGIS({
             }}
           />
         );
+      case "time":
+        return <GISTimeAnalysis data={data?.timeAnalysis} />;
       case "performance":
         return (
           <GISDeliveryPerformance
