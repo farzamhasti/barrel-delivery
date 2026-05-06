@@ -2,7 +2,9 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, X } from "lucide-react";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay } from "date-fns";
+import { format } from "date-fns";
+import { DailyCalendarModal } from "@/components/DailyCalendarModal";
+import { MonthlyCalendarModal } from "@/components/MonthlyCalendarModal";
 
 type ReportType = "daily" | "monthly";
 
@@ -16,41 +18,8 @@ export function SimpleReportDateSelector({ onDateRangeChange }: SimpleReportDate
   const [selectedMonths, setSelectedMonths] = useState<string[]>([
     new Date().toISOString().slice(0, 7),
   ]);
-  
-  // Calendar navigation
-  const [calendarMonth, setCalendarMonth] = useState(new Date());
-  const [monthPickerYear, setMonthPickerYear] = useState(new Date().getFullYear());
-
-  // Get days in the calendar view
-  const getDaysInCalendar = () => {
-    const firstDay = startOfMonth(calendarMonth);
-    const lastDay = endOfMonth(calendarMonth);
-    return eachDayOfInterval({ start: firstDay, end: lastDay });
-  };
-
-  // Get starting day of week (0 = Sunday)
-  const getStartingDayOfWeek = () => {
-    return startOfMonth(calendarMonth).getDay();
-  };
-
-  const handleDayClick = (day: Date) => {
-    const dayStr = day.toISOString().split("T")[0];
-    const selectedStr = selectedDays.map((d) => d.toISOString().split("T")[0]);
-
-    if (selectedStr.includes(dayStr)) {
-      setSelectedDays(selectedDays.filter((d) => d.toISOString().split("T")[0] !== dayStr));
-    } else {
-      setSelectedDays([...selectedDays, day]);
-    }
-  };
-
-  const handleMonthClick = (month: string) => {
-    if (selectedMonths.includes(month)) {
-      setSelectedMonths(selectedMonths.filter((m) => m !== month));
-    } else {
-      setSelectedMonths([...selectedMonths, month]);
-    }
-  };
+  const [showDailyModal, setShowDailyModal] = useState(false);
+  const [showMonthlyModal, setShowMonthlyModal] = useState(false);
 
   const handleApply = () => {
     if (reportType === "daily") {
@@ -73,24 +42,14 @@ export function SimpleReportDateSelector({ onDateRangeChange }: SimpleReportDate
     }
   };
 
-  const daysInCalendar = getDaysInCalendar();
-  const startingDayOfWeek = getStartingDayOfWeek();
-  const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
-  // Get months for the year picker
-  const getMonthsForYear = (year: number) => {
-    const months = [];
-    for (let i = 0; i < 12; i++) {
-      const date = new Date(year, i, 1);
-      months.push({
-        value: date.toISOString().slice(0, 7),
-        label: format(date, "MMM"),
-      });
-    }
-    return months;
+  const handleRemoveDay = (day: Date) => {
+    const dayStr = day.toISOString().split("T")[0];
+    setSelectedDays(selectedDays.filter((d) => d.toISOString().split("T")[0] !== dayStr));
   };
 
-  const monthsForYear = getMonthsForYear(monthPickerYear);
+  const handleRemoveMonth = (month: string) => {
+    setSelectedMonths(selectedMonths.filter((m) => m !== month));
+  };
 
   return (
     <Card>
@@ -123,139 +82,33 @@ export function SimpleReportDateSelector({ onDateRangeChange }: SimpleReportDate
           </div>
         </div>
 
-        {/* Daily Calendar Picker */}
-        {reportType === "daily" && (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-semibold text-gray-700">
-                Select Days ({selectedDays.length} selected)
-              </h3>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1))}
-                >
-                  ←
-                </Button>
-                <span className="text-sm font-medium px-3 py-1">
-                  {format(calendarMonth, "MMMM yyyy")}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1))}
-                >
-                  →
-                </Button>
-              </div>
-            </div>
-
-            {/* Calendar Grid */}
-            <div className="border border-gray-200 rounded-lg p-4">
-              {/* Week day headers */}
-              <div className="grid grid-cols-7 gap-1 mb-2">
-                {weekDays.map((day) => (
-                  <div key={day} className="text-center text-xs font-semibold text-gray-600 py-2">
-                    {day}
-                  </div>
-                ))}
-              </div>
-
-              {/* Calendar days */}
-              <div className="grid grid-cols-7 gap-1">
-                {/* Empty cells for days before month starts */}
-                {Array.from({ length: startingDayOfWeek }).map((_, i) => (
-                  <div key={`empty-${i}`} className="aspect-square" />
-                ))}
-
-                {/* Days of the month */}
-                {daysInCalendar.map((day) => {
-                  const dayStr = day.toISOString().split("T")[0];
-                  const isSelected = selectedDays.some(
-                    (d) => d.toISOString().split("T")[0] === dayStr
-                  );
-                  const isToday = isSameDay(day, new Date());
-
-                  return (
-                    <button
-                      key={dayStr}
-                      onClick={() => handleDayClick(day)}
-                      className={`aspect-square rounded text-sm font-medium transition-colors ${
-                        isSelected
-                          ? "bg-blue-600 text-white"
-                          : isToday
-                          ? "bg-blue-100 text-blue-900 border border-blue-300"
-                          : "hover:bg-gray-100 text-gray-700"
-                      }`}
-                    >
-                      {format(day, "d")}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Monthly Picker */}
-        {reportType === "monthly" && (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-semibold text-gray-700">
-                Select Months ({selectedMonths.length} selected)
-              </h3>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setMonthPickerYear(monthPickerYear - 1)}
-                >
-                  ←
-                </Button>
-                <span className="text-sm font-medium px-3 py-1">{monthPickerYear}</span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setMonthPickerYear(monthPickerYear + 1)}
-                >
-                  →
-                </Button>
-              </div>
-            </div>
-
-            {/* Month Grid */}
-            <div className="border border-gray-200 rounded-lg p-4">
-              <div className="grid grid-cols-3 gap-2">
-                {monthsForYear.map((month) => {
-                  const isSelected = selectedMonths.includes(month.value);
-                  const isCurrentMonth =
-                    month.value === new Date().toISOString().slice(0, 7);
-
-                  return (
-                    <button
-                      key={month.value}
-                      onClick={() => handleMonthClick(month.value)}
-                      className={`py-3 rounded font-medium text-sm transition-colors ${
-                        isSelected
-                          ? "bg-blue-600 text-white"
-                          : isCurrentMonth
-                          ? "bg-blue-100 text-blue-900 border border-blue-300"
-                          : "hover:bg-gray-100 text-gray-700"
-                      }`}
-                    >
-                      {month.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Date Selection Buttons */}
+        <div className="space-y-3">
+          <label className="text-sm font-semibold text-gray-700">
+            {reportType === "daily" ? "Select Days" : "Select Months"}
+          </label>
+          <Button
+            onClick={() => {
+              if (reportType === "daily") {
+                setShowDailyModal(true);
+              } else {
+                setShowMonthlyModal(true);
+              }
+            }}
+            variant="outline"
+            className="w-full"
+            size="lg"
+          >
+            <Calendar className="w-4 h-4 mr-2" />
+            {reportType === "daily"
+              ? `Choose Days (${selectedDays.length} selected)`
+              : `Choose Months (${selectedMonths.length} selected)`}
+          </Button>
+        </div>
 
         {/* Selected Items Display */}
         {(selectedDays.length > 0 || selectedMonths.length > 0) && (
-          <div className="bg-gray-50 rounded-lg p-3 space-y-2">
+          <div className="bg-gray-50 rounded-lg p-4 space-y-3">
             <p className="text-xs font-semibold text-gray-600">SELECTED:</p>
             <div className="flex flex-wrap gap-2">
               {reportType === "daily" &&
@@ -268,7 +121,7 @@ export function SimpleReportDateSelector({ onDateRangeChange }: SimpleReportDate
                     >
                       {format(day, "MMM d, yyyy")}
                       <button
-                        onClick={() => handleDayClick(day)}
+                        onClick={() => handleRemoveDay(day)}
                         className="hover:text-blue-600"
                       >
                         <X className="w-3 h-3" />
@@ -283,7 +136,7 @@ export function SimpleReportDateSelector({ onDateRangeChange }: SimpleReportDate
                   >
                     {format(new Date(`${month}-01`), "MMMM yyyy")}
                     <button
-                      onClick={() => handleMonthClick(month)}
+                      onClick={() => handleRemoveMonth(month)}
                       className="hover:text-blue-600"
                     >
                       <X className="w-3 h-3" />
@@ -299,6 +152,20 @@ export function SimpleReportDateSelector({ onDateRangeChange }: SimpleReportDate
           Generate Report
         </Button>
       </CardContent>
+
+      {/* Modals */}
+      <DailyCalendarModal
+        isOpen={showDailyModal}
+        selectedDays={selectedDays}
+        onDaysChange={setSelectedDays}
+        onClose={() => setShowDailyModal(false)}
+      />
+      <MonthlyCalendarModal
+        isOpen={showMonthlyModal}
+        selectedMonths={selectedMonths}
+        onMonthsChange={setSelectedMonths}
+        onClose={() => setShowMonthlyModal(false)}
+      />
     </Card>
   );
 }
