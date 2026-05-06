@@ -1634,3 +1634,4 @@ These features are documented for future enhancement but are not required for th
 - [x] Add region statistics section to DeliveryReportTab
 - [x] Verify no changes to other report sections
 - [x] Test region filtering with sample data (verified in browser - displays correctly with 0 counts for empty date range)
+- [x] Move Orders by Region section before Delivery Times Breakdown (reordered sections in component)

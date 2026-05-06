@@ -118,6 +118,24 @@ export function DeliveryReportTab() {
         </div>
       )}
 
+      {/* Region Statistics Table */}
+      {dateRange && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BarChart3 className="w-5 h-5" />
+              Orders by Region
+            </CardTitle>
+            <CardDescription>Number of orders delivered to each region</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <RegionStatsTable 
+              regionStats={reportData?.regionStats || []} 
+            />
+          </CardContent>
+        </Card>
+      )}
+
       {/* Delivery Times Button */}
       {dateRange && (
         <Card>
@@ -154,24 +172,6 @@ export function DeliveryReportTab() {
             <DriverStatsTable 
               drivers={reportData?.drivers || []} 
               isLoading={isLoading}
-            />
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Region Statistics Table */}
-      {dateRange && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="w-5 h-5" />
-              Orders by Region
-            </CardTitle>
-            <CardDescription>Number of orders delivered to each region</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <RegionStatsTable 
-              regionStats={reportData?.regionStats || []} 
             />
           </CardContent>
         </Card>
