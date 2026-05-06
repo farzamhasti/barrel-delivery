@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BarChart3, Map as MapIcon } from "lucide-react";
+import { BarChart3, Map as MapIcon, Calendar } from "lucide-react";
 import { trpc } from "@/lib/trpc";
-import { DailyCalendarPicker } from "./DailyCalendarPicker";
-import { MonthlyCalendarPicker } from "./MonthlyCalendarPicker";
+import { DatePickerModal } from "./DatePickerModal";
+import { AnalyticsSectionModal } from "./AnalyticsSectionModal";
 
 type DateRange = "daily" | "monthly";
 type AreaFilter = "all" | "Downtown" | "Central Park" | "Both";
@@ -16,6 +16,10 @@ export function GeomarketingAnalyticsTab() {
   const [selectedMonths, setSelectedMonths] = useState<{ year: number; month: number }[]>([
     { year: new Date().getFullYear(), month: new Date().getMonth() },
   ]);
+
+  // Modal states
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+  const [openSectionModal, setOpenSectionModal] = useState<string | null>(null);
 
   // Fetch analytics data
   const { data: analyticsData, isLoading } = trpc.analytics.getGeomarketingData.useQuery(
@@ -30,25 +34,34 @@ export function GeomarketingAnalyticsTab() {
     }
   );
 
+  const getDateRangeLabel = () => {
+    if (dateRange === "daily") {
+      return `${selectedDates.length} day${selectedDates.length !== 1 ? "s" : ""}`;
+    } else {
+      return `${selectedMonths.length} month${selectedMonths.length !== 1 ? "s" : ""}`;
+    }
+  };
+
   return (
     <div className="space-y-6">
-      {/* Global Controls */}
+      {/* Global Controls Card */}
       <Card className="border-0 shadow-sm">
         <CardHeader>
           <CardTitle>Analytics Filters</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Date Range Filter */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Date Range Selector */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Date Range
               </label>
-              <div className="flex gap-2 mb-4">
+              <div className="flex gap-2">
                 <Button
                   variant={dateRange === "daily" ? "default" : "outline"}
                   onClick={() => setDateRange("daily")}
                   size="sm"
+                  className="flex-1"
                 >
                   Daily
                 </Button>
@@ -56,24 +69,20 @@ export function GeomarketingAnalyticsTab() {
                   variant={dateRange === "monthly" ? "default" : "outline"}
                   onClick={() => setDateRange("monthly")}
                   size="sm"
+                  className="flex-1"
                 >
                   Monthly
                 </Button>
               </div>
-
-              {/* Calendar Pickers */}
-              {dateRange === "daily" && (
-                <DailyCalendarPicker
-                  selectedDates={selectedDates}
-                  onDatesChange={setSelectedDates}
-                />
-              )}
-              {dateRange === "monthly" && (
-                <MonthlyCalendarPicker
-                  selectedMonths={selectedMonths}
-                  onMonthsChange={setSelectedMonths}
-                />
-              )}
+              <Button
+                variant="outline"
+                onClick={() => setIsDatePickerOpen(true)}
+                size="sm"
+                className="w-full mt-2"
+              >
+                <Calendar className="w-4 h-4 mr-2" />
+                Select Dates ({getDateRangeLabel()})
+              </Button>
             </div>
 
             {/* Area Filter */}
@@ -118,10 +127,7 @@ export function GeomarketingAnalyticsTab() {
               <h4 className="font-semibold text-sm text-gray-900 mb-2">Active Filters</h4>
               <div className="space-y-1 text-sm text-gray-700">
                 <p>
-                  <span className="font-medium">Date Range:</span>{" "}
-                  {dateRange === "daily"
-                    ? `${selectedDates.length} day${selectedDates.length !== 1 ? "s" : ""}`
-                    : `${selectedMonths.length} month${selectedMonths.length !== 1 ? "s" : ""}`}
+                  <span className="font-medium">Date Range:</span> {getDateRangeLabel()}
                 </p>
                 <p>
                   <span className="font-medium">Area:</span>{" "}
@@ -133,205 +139,196 @@ export function GeomarketingAnalyticsTab() {
         </CardContent>
       </Card>
 
-      {/* Section 1: Geographic Distribution */}
-      <Card className="border-0 shadow-sm">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MapIcon className="w-5 h-5" />
-            Geographic Distribution
-          </CardTitle>
-          <CardDescription>
-            Heatmap of delivery locations and order volume by area
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Map placeholder */}
-            <div className="bg-gray-100 rounded-lg h-96 flex items-center justify-center">
+      {/* Analytics Sections Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Section 1: Geographic Distribution */}
+        <Card
+          className="border-0 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => setOpenSectionModal("geographic")}
+        >
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <MapIcon className="w-5 h-5" />
+              Geographic Distribution
+            </CardTitle>
+            <CardDescription>Heatmap of delivery locations and order volume</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="bg-gray-100 rounded-lg h-48 flex items-center justify-center">
               <div className="text-center">
-                <MapIcon className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                <p className="text-gray-500">Map View (Heatmap)</p>
-                <p className="text-xs text-gray-400 mt-1">Geographic Distribution Map</p>
+                <MapIcon className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                <p className="text-sm text-gray-500">Click to view details</p>
               </div>
             </div>
-
-            {/* Chart/Table */}
-            <div className="space-y-4">
-              <div className="grid grid-cols-3 gap-3">
-                <div className="bg-blue-50 rounded-lg p-4 text-center">
-                  <p className="text-2xl font-bold text-blue-600">
-                    {analyticsData?.geographicStats?.downtown || 0}
-                  </p>
-                  <p className="text-xs text-blue-700 mt-1">Downtown</p>
-                </div>
-                <div className="bg-green-50 rounded-lg p-4 text-center">
-                  <p className="text-2xl font-bold text-green-600">
-                    {analyticsData?.geographicStats?.centralPark || 0}
-                  </p>
-                  <p className="text-xs text-green-700 mt-1">Central Park</p>
-                </div>
-                <div className="bg-orange-50 rounded-lg p-4 text-center">
-                  <p className="text-2xl font-bold text-orange-600">
-                    {analyticsData?.geographicStats?.both || 0}
-                  </p>
-                  <p className="text-xs text-orange-700 mt-1">Both</p>
-                </div>
+            <div className="grid grid-cols-3 gap-2 mt-4">
+              <div className="bg-blue-50 rounded p-2 text-center">
+                <p className="text-lg font-bold text-blue-600">
+                  {analyticsData?.geographicStats?.downtown || 0}
+                </p>
+                <p className="text-xs text-blue-700">Downtown</p>
               </div>
-              <div className="bg-gray-50 rounded-lg p-4 h-64 flex items-center justify-center">
-                <div className="text-center">
-                  <BarChart3 className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                  <p className="text-gray-500">Bar Chart</p>
-                  <p className="text-xs text-gray-400 mt-1">Orders per Area</p>
-                </div>
+              <div className="bg-green-50 rounded p-2 text-center">
+                <p className="text-lg font-bold text-green-600">
+                  {analyticsData?.geographicStats?.centralPark || 0}
+                </p>
+                <p className="text-xs text-green-700">Central Park</p>
+              </div>
+              <div className="bg-orange-50 rounded p-2 text-center">
+                <p className="text-lg font-bold text-orange-600">
+                  {analyticsData?.geographicStats?.both || 0}
+                </p>
+                <p className="text-xs text-orange-700">Both</p>
               </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      {/* Section 2: Time Analysis */}
-      <Card className="border-0 shadow-sm">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MapIcon className="w-5 h-5" />
-            Time Analysis
-          </CardTitle>
-          <CardDescription>
-            Order distribution by time of day and day of week
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Map placeholder */}
-            <div className="bg-gray-100 rounded-lg h-96 flex items-center justify-center">
+        {/* Section 2: Time Analysis */}
+        <Card
+          className="border-0 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => setOpenSectionModal("time")}
+        >
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <BarChart3 className="w-5 h-5" />
+              Time Analysis
+            </CardTitle>
+            <CardDescription>Order distribution by time of day and week</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="bg-gray-100 rounded-lg h-48 flex items-center justify-center">
               <div className="text-center">
-                <MapIcon className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                <p className="text-gray-500">Map View (Time-Colored)</p>
-                <p className="text-xs text-gray-400 mt-1">Morning/Afternoon/Evening/Night</p>
+                <BarChart3 className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                <p className="text-sm text-gray-500">Click to view details</p>
               </div>
             </div>
+          </CardContent>
+        </Card>
 
-            {/* Chart/Table */}
-            <div className="space-y-4">
-              <div className="bg-gray-50 rounded-lg p-4 h-80 flex items-center justify-center">
-                <div className="text-center">
-                  <BarChart3 className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                  <p className="text-gray-500">Time Charts</p>
-                  <p className="text-xs text-gray-400 mt-1">Orders by Hour & Day of Week</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Section 3: Delivery Performance */}
-      <Card className="border-0 shadow-sm">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MapIcon className="w-5 h-5" />
-            Delivery Performance
-          </CardTitle>
-          <CardDescription>
-            Delivery times by location and area
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Map placeholder */}
-            <div className="bg-gray-100 rounded-lg h-96 flex items-center justify-center">
+        {/* Section 3: Delivery Performance */}
+        <Card
+          className="border-0 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => setOpenSectionModal("performance")}
+        >
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <MapIcon className="w-5 h-5" />
+              Delivery Performance
+            </CardTitle>
+            <CardDescription>Delivery times by location and area</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="bg-gray-100 rounded-lg h-48 flex items-center justify-center">
               <div className="text-center">
-                <MapIcon className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                <p className="text-gray-500">Map View (Performance)</p>
-                <p className="text-xs text-gray-400 mt-1">Green/Yellow/Red by Delivery Time</p>
+                <MapIcon className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                <p className="text-sm text-gray-500">Click to view details</p>
               </div>
             </div>
+          </CardContent>
+        </Card>
 
-            {/* Chart/Table */}
-            <div className="space-y-4">
-              <div className="bg-gray-50 rounded-lg p-4 h-80 flex items-center justify-center">
-                <div className="text-center">
-                  <BarChart3 className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                  <p className="text-gray-500">Performance Table</p>
-                  <p className="text-xs text-gray-400 mt-1">Average Times per Area</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Section 4: Driver Performance */}
-      <Card className="border-0 shadow-sm">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MapIcon className="w-5 h-5" />
-            Driver Performance
-          </CardTitle>
-          <CardDescription>
-            Driver delivery locations and performance metrics
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Map placeholder */}
-            <div className="bg-gray-100 rounded-lg h-96 flex items-center justify-center">
+        {/* Section 4: Driver Performance */}
+        <Card
+          className="border-0 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => setOpenSectionModal("driver")}
+        >
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <BarChart3 className="w-5 h-5" />
+              Driver Performance
+            </CardTitle>
+            <CardDescription>Driver delivery locations and metrics</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="bg-gray-100 rounded-lg h-48 flex items-center justify-center">
               <div className="text-center">
-                <MapIcon className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                <p className="text-gray-500">Map View (Driver-Colored)</p>
-                <p className="text-xs text-gray-400 mt-1">Each Driver in Different Color</p>
+                <BarChart3 className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                <p className="text-sm text-gray-500">Click to view details</p>
               </div>
             </div>
+          </CardContent>
+        </Card>
 
-            {/* Chart/Table */}
-            <div className="space-y-4">
-              <div className="bg-gray-50 rounded-lg p-4 h-80 flex items-center justify-center">
-                <div className="text-center">
-                  <BarChart3 className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                  <p className="text-gray-500">Driver Table & Chart</p>
-                  <p className="text-xs text-gray-400 mt-1">Orders, Avg Time, Frequent Area</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Section 5: Growth Opportunities */}
-      <Card className="border-0 shadow-sm">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MapIcon className="w-5 h-5" />
-            Growth Opportunities
-          </CardTitle>
-          <CardDescription>
-            Identify areas for expansion and optimization
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Map placeholder */}
-            <div className="bg-gray-100 rounded-lg h-96 flex items-center justify-center">
+        {/* Section 5: Growth Opportunities */}
+        <Card
+          className="border-0 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => setOpenSectionModal("growth")}
+        >
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <MapIcon className="w-5 h-5" />
+              Growth Opportunities
+            </CardTitle>
+            <CardDescription>Identify areas for expansion and optimization</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="bg-gray-100 rounded-lg h-48 flex items-center justify-center">
               <div className="text-center">
-                <MapIcon className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                <p className="text-gray-500">Map View (Opportunities)</p>
-                <p className="text-xs text-gray-400 mt-1">Yellow/Red/Green Zones</p>
+                <MapIcon className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                <p className="text-sm text-gray-500">Click to view details</p>
               </div>
             </div>
+          </CardContent>
+        </Card>
+      </div>
 
-            {/* Chart/Table */}
-            <div className="space-y-4">
-              <div className="bg-gray-50 rounded-lg p-4 h-80 flex items-center justify-center">
-                <div className="text-center">
-                  <BarChart3 className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                  <p className="text-gray-500">Recommendations</p>
-                  <p className="text-xs text-gray-400 mt-1">Growth Zones & Promotion Times</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Date Picker Modal */}
+      <DatePickerModal
+        isOpen={isDatePickerOpen}
+        onClose={() => setIsDatePickerOpen(false)}
+        dateRange={dateRange}
+        onDateRangeChange={setDateRange}
+        selectedDates={selectedDates}
+        onDatesChange={setSelectedDates}
+        selectedMonths={selectedMonths}
+        onMonthsChange={setSelectedMonths}
+      />
+
+      {/* Analytics Section Modals */}
+      <AnalyticsSectionModal
+        isOpen={openSectionModal === "geographic"}
+        onClose={() => setOpenSectionModal(null)}
+        title="Geographic Distribution"
+        description="Heatmap of delivery locations and order volume by area"
+        mapPlaceholder="Map View (Heatmap) - Geographic Distribution Map"
+        chartPlaceholder="Bar Chart - Orders per Area"
+      />
+
+      <AnalyticsSectionModal
+        isOpen={openSectionModal === "time"}
+        onClose={() => setOpenSectionModal(null)}
+        title="Time Analysis"
+        description="Order distribution by time of day and day of week"
+        mapPlaceholder="Map View (Time-Colored) - Morning/Afternoon/Evening/Night"
+        chartPlaceholder="Time Charts - Orders by Hour & Day of Week"
+      />
+
+      <AnalyticsSectionModal
+        isOpen={openSectionModal === "performance"}
+        onClose={() => setOpenSectionModal(null)}
+        title="Delivery Performance"
+        description="Delivery times by location and area"
+        mapPlaceholder="Map View (Performance) - Green/Yellow/Red by Delivery Time"
+        chartPlaceholder="Performance Table - Average Times per Area"
+      />
+
+      <AnalyticsSectionModal
+        isOpen={openSectionModal === "driver"}
+        onClose={() => setOpenSectionModal(null)}
+        title="Driver Performance"
+        description="Driver delivery locations and performance metrics"
+        mapPlaceholder="Map View (Driver-Colored) - Each Driver in Different Color"
+        chartPlaceholder="Driver Table & Chart - Orders, Avg Time, Frequent Area"
+      />
+
+      <AnalyticsSectionModal
+        isOpen={openSectionModal === "growth"}
+        onClose={() => setOpenSectionModal(null)}
+        title="Growth Opportunities"
+        description="Identify areas for expansion and optimization"
+        mapPlaceholder="Map View (Opportunities) - Yellow/Red/Green Zones"
+        chartPlaceholder="Recommendations - Growth Zones & Promotion Times"
+      />
     </div>
   );
 }
