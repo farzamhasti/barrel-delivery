@@ -1569,3 +1569,13 @@ These features are documented for future enhancement but are not required for th
 - [x] Fix orders appearing and then hiding on published version (added retry, staleTime, removed gcTime:0)
 - [x] Fix notifications appearing and then disappearing on published version (added retry to all polling queries)
 - [x] Ensure published version behaves identically to preview (global QueryClient defaults + per-query retry)
+
+## Phase 30: Timer UI Enhancement (COMPLETED)
+- [x] Locate timer components in HeaderDriversTable.tsx (Admin dashboard)
+- [x] Locate timer components in Dashboard.tsx (Admin drivers table)
+- [x] Locate timer components in KitchenDashboard.tsx (Kitchen dashboard)
+- [x] Enhance timer styling: larger font size (text-lg), bold weight, better visibility
+- [x] Improve timer appearance with background color (bg-accent/20), border (border-accent/40), padding (px-3 py-2)
+- [x] Test timer improvements in preview environment (verified in both Admin and Kitchen dashboards)
+- [x] Verify functionality remains unchanged (countdown logic untouched, only CSS styling enhanced)
+- [x] Create checkpoint with timer UI improvements

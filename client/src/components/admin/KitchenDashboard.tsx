@@ -129,8 +129,10 @@ export default function KitchenDashboard() {
         <td className="py-2 px-3">
           <Badge className="bg-green-100 text-green-800 text-xs">Online</Badge>
         </td>
-        <td className="py-2 px-3 text-muted-foreground font-mono">
-          {shouldShowTimer ? displayTime : "00:00"}
+        <td className="py-2 px-3">
+          <div className="font-mono font-bold text-lg text-foreground bg-accent/20 px-3 py-2 rounded border border-accent/40 inline-block">
+            {shouldShowTimer ? displayTime : "00:00"}
+          </div>
         </td>
       </tr>
     );
