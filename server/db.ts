@@ -1727,8 +1727,8 @@ export async function getDeliveryReport(startDate: Date, endDate: Date) {
     // Calculate driver statistics
     const driverStats = new Map<number, { name: string; deliveryCount: number; status: string }>();
     
-    // First, add all drivers (online and offline)
-    const allDrivers = await db.select().from(drivers);
+    // First, add only active drivers (online and offline)
+    const allDrivers = await db.select().from(drivers).where(eq(drivers.isActive, true));
     allDrivers.forEach(driver => {
       driverStats.set(driver.id, {
         name: driver.name,
