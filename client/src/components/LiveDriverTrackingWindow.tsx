@@ -29,13 +29,12 @@ interface LiveDriverTrackingWindowProps {
   initialPosition?: { x: number; y: number };
   initialSize?: { width: number; height: number };
   initialIsMinimized?: boolean;
-  onStateChange?: (state: { position: { x: number; y: number }; size: { width: number; height: number }; isMinimized: boolean }) => void;
 }
 
 // Global state for minimized windows
 let minimizedWindows: Map<string, { position: { x: number; y: number }; size: { width: number; height: number } }> = new Map();
 
-export function LiveDriverTrackingWindow({ onClose, onMinimize, initialPosition, initialSize, initialIsMinimized, onStateChange }: LiveDriverTrackingWindowProps) {
+export function LiveDriverTrackingWindow({ onClose, onMinimize, initialPosition, initialSize, initialIsMinimized }: LiveDriverTrackingWindowProps) {
   const [drivers, setDrivers] = useState<DriverPosition[]>([]);
   const [isMinimized, setIsMinimized] = useState(initialIsMinimized || false);
   const [position, setPosition] = useState(initialPosition || { x: 20, y: 20 });
@@ -129,13 +128,7 @@ export function LiveDriverTrackingWindow({ onClose, onMinimize, initialPosition,
       minimizedWindows.delete('liveDriverTracking');
     }
     onMinimize?.(newMinimized);
-    onStateChange?.({ position, size, isMinimized: newMinimized });
   };
-
-  // Notify parent of state changes
-  useEffect(() => {
-    onStateChange?.({ position, size, isMinimized });
-  }, [position, size, isMinimized, onStateChange]);
 
   const getDriverColor = (index: number) => {
     return DRIVER_COLORS[index % DRIVER_COLORS.length];

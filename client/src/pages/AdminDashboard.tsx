@@ -245,9 +245,6 @@ export default function AdminDashboard() {
             initialPosition={windowState.position}
             initialSize={windowState.size}
             initialIsMinimized={windowState.isMinimized}
-            onStateChange={(newState) => {
-              setWindowState(newState);
-            }}
             onMinimize={(isMinimized) => {
               setWindowState({
                 ...windowState,
