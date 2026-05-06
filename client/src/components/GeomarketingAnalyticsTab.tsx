@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { BarChart3, Map as MapIcon, Calendar } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { DatePickerModal } from "./DatePickerModal";
-import { AnalyticsSectionModal } from "./AnalyticsSectionModal";
+import { AnalyticsSectionModalWithGIS } from "./AnalyticsSectionModalWithGIS";
 
 type DateRange = "daily" | "monthly";
 type AreaFilter = "all" | "Downtown" | "Central Park" | "Both";
@@ -284,50 +284,50 @@ export function GeomarketingAnalyticsTab() {
         onMonthsChange={setSelectedMonths}
       />
 
-      {/* Analytics Section Modals */}
-      <AnalyticsSectionModal
+      {/* Analytics Section Modals with GIS */}
+      <AnalyticsSectionModalWithGIS
         isOpen={openSectionModal === "geographic"}
         onClose={() => setOpenSectionModal(null)}
         title="Geographic Distribution"
         description="Heatmap of delivery locations and order volume by area"
-        mapPlaceholder="Map View (Heatmap) - Geographic Distribution Map"
-        chartPlaceholder="Bar Chart - Orders per Area"
+        sectionType="geographic"
+        data={analyticsData}
       />
 
-      <AnalyticsSectionModal
+      <AnalyticsSectionModalWithGIS
         isOpen={openSectionModal === "time"}
         onClose={() => setOpenSectionModal(null)}
         title="Time Analysis"
         description="Order distribution by time of day and day of week"
-        mapPlaceholder="Map View (Time-Colored) - Morning/Afternoon/Evening/Night"
-        chartPlaceholder="Time Charts - Orders by Hour & Day of Week"
+        sectionType="time"
+        data={analyticsData}
       />
 
-      <AnalyticsSectionModal
+      <AnalyticsSectionModalWithGIS
         isOpen={openSectionModal === "performance"}
         onClose={() => setOpenSectionModal(null)}
         title="Delivery Performance"
         description="Delivery times by location and area"
-        mapPlaceholder="Map View (Performance) - Green/Yellow/Red by Delivery Time"
-        chartPlaceholder="Performance Table - Average Times per Area"
+        sectionType="performance"
+        data={analyticsData}
       />
 
-      <AnalyticsSectionModal
+      <AnalyticsSectionModalWithGIS
         isOpen={openSectionModal === "driver"}
         onClose={() => setOpenSectionModal(null)}
         title="Driver Performance"
         description="Driver delivery locations and performance metrics"
-        mapPlaceholder="Map View (Driver-Colored) - Each Driver in Different Color"
-        chartPlaceholder="Driver Table & Chart - Orders, Avg Time, Frequent Area"
+        sectionType="driver"
+        data={analyticsData}
       />
 
-      <AnalyticsSectionModal
+      <AnalyticsSectionModalWithGIS
         isOpen={openSectionModal === "growth"}
         onClose={() => setOpenSectionModal(null)}
         title="Growth Opportunities"
         description="Identify areas for expansion and optimization"
-        mapPlaceholder="Map View (Opportunities) - Yellow/Red/Green Zones"
-        chartPlaceholder="Recommendations - Growth Zones & Promotion Times"
+        sectionType="growth"
+        data={analyticsData}
       />
     </div>
   );
