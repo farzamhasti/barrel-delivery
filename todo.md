@@ -1606,3 +1606,14 @@ These features are documented for future enhancement but are not required for th
 ## Phase 34: Developer Credit Update (COMPLETED)
 - [x] Remove "(AI-assisted)" from developer credit text in DeveloperCredit.tsx
 - [x] Updated from "Developed by Farzam Hasti (AI-assisted)" to "Developed by Farzam Hasti"
+
+## Phase 35: Delivery Report Sheet Enhancement (COMPLETED)
+- [x] Examine current Delivery Report page structure
+- [x] Add database queries for delivery time metrics (getDeliveryReport in db.ts)
+- [x] Create tRPC procedures for report data retrieval (orders.getDeliveryReport)
+- [x] Build UI with period selector (AdvancedDateRangeSelector already present)
+- [x] Display total orders delivered count (metrics card showing totalDelivered)
+- [x] Create delivery times table with all required metrics (DeliveryMetricsTable component)
+- [x] Create driver list with delivery counts (DriverStatsTable component)
+- [x] Calculate wait time, ready time, en route time, and delivery time in Ontario timezone
+- [x] Verify no changes to app appearance or other sections (only updated DeliveryReportTab)

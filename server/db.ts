@@ -1639,3 +1639,121 @@ export async function getDeliveredOrdersCountByDate(driverId: number, date: Date
     return 0;
   }
 }
+
+
+// Get comprehensive delivery report with time metrics
+export async function getDeliveryReport(startDate: Date, endDate: Date) {
+  const db = await getDb();
+  if (!db) {
+    console.error('[getDeliveryReport] Database not available');
+    return { orders: [], drivers: [], totalDelivered: 0 };
+  }
+
+  try {
+    // Fetch all delivered orders in the date range
+    const deliveredOrders = await db
+      .select({
+        id: orders.id,
+        orderNumber: orders.orderNumber,
+        driverId: orders.driverId,
+        driverName: drivers.name,
+        status: orders.status,
+        createdAt: orders.createdAt,
+        deliveredAt: orders.deliveredAt,
+        pickedUpAt: orders.pickedUpAt,
+      })
+      .from(orders)
+      .leftJoin(drivers, eq(orders.driverId, drivers.id))
+      .where(and(
+        eq(orders.status, 'Delivered'),
+        gte(orders.deliveredAt, startDate),
+        lt(orders.deliveredAt, endDate)
+      ))
+      .orderBy(desc(orders.deliveredAt));
+
+    // Fetch status history for all delivered orders
+    const orderIds = deliveredOrders.map(o => o.id);
+    let statusHistories: any[] = [];
+    
+    if (orderIds.length > 0) {
+      statusHistories = await db
+        .select()
+        .from(orderStatusHistory)
+        .where(inArray(orderStatusHistory.orderId, orderIds));
+    }
+
+    // Calculate delivery metrics for each order
+    const ordersWithMetrics = deliveredOrders.map(order => {
+      const history = statusHistories.filter(h => h.orderId === order.id);
+      
+      // Find timestamps for each status
+      const pendingTime = order.createdAt;
+      const readyTime = history.find(h => h.status === 'Ready')?.createdAt;
+      const onTheWayTime = history.find(h => h.status === 'On the Way')?.createdAt;
+      const deliveredTime = history.find(h => h.status === 'Delivered')?.createdAt || order.deliveredAt;
+
+      // Calculate time differences in seconds
+      const waitTime = readyTime ? Math.floor((readyTime.getTime() - pendingTime.getTime()) / 1000) : 0;
+      const readyWaitTime = onTheWayTime && readyTime ? Math.floor((onTheWayTime.getTime() - readyTime.getTime()) / 1000) : 0;
+      const enRouteTime = deliveredTime && onTheWayTime ? Math.floor((deliveredTime.getTime() - onTheWayTime.getTime()) / 1000) : 0;
+
+      // Format delivery time in Ontario timezone
+      const torontoFormatter = new Intl.DateTimeFormat("en-US", {
+        timeZone: "America/Toronto",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false,
+      });
+      
+      const deliveryTimeStr = deliveredTime ? torontoFormatter.format(deliveredTime) : '';
+
+      return {
+        id: order.id,
+        orderNumber: order.orderNumber,
+        driverId: order.driverId,
+        driverName: order.driverName,
+        waitTime,
+        readyTime: readyWaitTime,
+        enRouteTime,
+        deliveryTime: deliveryTimeStr,
+        deliveredAt: deliveredTime,
+      };
+    });
+
+    // Calculate driver statistics
+    const driverStats = new Map<number, { name: string; deliveryCount: number; status: string }>();
+    
+    // First, add all drivers (online and offline)
+    const allDrivers = await db.select().from(drivers);
+    allDrivers.forEach(driver => {
+      driverStats.set(driver.id, {
+        name: driver.name,
+        deliveryCount: 0,
+        status: driver.status,
+      });
+    });
+
+    // Count deliveries per driver
+    ordersWithMetrics.forEach(order => {
+      if (order.driverId) {
+        const stat = driverStats.get(order.driverId);
+        if (stat) {
+          stat.deliveryCount += 1;
+        }
+      }
+    });
+
+    return {
+      orders: ordersWithMetrics,
+      drivers: Array.from(driverStats.values()),
+      totalDelivered: ordersWithMetrics.length,
+    };
+  } catch (error) {
+    console.error('[getDeliveryReport] Error fetching delivery report:', error);
+    return { orders: [], drivers: [], totalDelivered: 0 };
+  }
+}

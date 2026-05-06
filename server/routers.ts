@@ -353,6 +353,15 @@ export const appRouter = router({
         
         return updatedOrder;
       }),
+
+    getDeliveryReport: publicProcedure
+      .input(z.object({
+        startDate: z.date(),
+        endDate: z.date(),
+      }))
+      .query(async ({ input }) => {
+        return await db.getDeliveryReport(input.startDate, input.endDate);
+      }),
   }),
 
   drivers: router({

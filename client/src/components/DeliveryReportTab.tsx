@@ -1,17 +1,13 @@
-import { useState, useRef } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, TrendingUp, Truck, CheckCircle2, Download, BarChart3 } from "lucide-react";
+import { Calendar, TrendingUp, Truck, CheckCircle2, BarChart3 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
-import { OrderTimelineTable } from "@/components/OrderTimelineTable";
-import { DeliveryGanttChart } from "@/components/DeliveryGanttChart";
-import { DriverPerformanceTable } from "@/components/DriverPerformanceTable";
+import { DeliveryMetricsTable } from "@/components/DeliveryMetricsTable";
+import { DriverStatsTable } from "@/components/DriverStatsTable";
 import { AdvancedDateRangeSelector, type DateRange } from "@/components/AdvancedDateRangeSelector";
-// PDF export removed - not required
 
 export function DeliveryReportTab() {
-  // PDF export removed - not required
   const [dateRange, setDateRange] = useState<DateRange>({
     startDate: new Date(new Date().setDate(new Date().getDate() - 7)),
     endDate: new Date(),
@@ -19,34 +15,54 @@ export function DeliveryReportTab() {
     reportType: "daily",
   });
 
-  // Fetch today's orders for delivery report
-  const { data: allOrders = [], isLoading } = trpc.orders.getTodayWithItems.useQuery();
-  const { data: timelines = [], isLoading: timelinesLoading } = trpc.orders.getTodayWithItems.useQuery();
+  // Fetch delivery report data
+  const { data: reportData, isLoading } = trpc.orders.getDeliveryReport.useQuery({
+    startDate: dateRange.startDate,
+    endDate: dateRange.endDate,
+  });
 
   const handleDateRangeChange = (newDateRange: DateRange) => {
     setDateRange(newDateRange);
   };
 
-  // Calculate metrics from orders
-  const deliveredOrders = allOrders?.filter((o: any) => o.status === 'Delivered').length || 0;
-  const metrics = {
-    totalOrders: allOrders?.length || 0,
-    completedOrders: deliveredOrders,
-    deliveredOrders: deliveredOrders,
-    deliveryRate: allOrders?.length ? Math.round((deliveredOrders / allOrders.length) * 100) : 0,
-    averageDeliveryTime: 0,
-    onTimePercentage: 0,
-  };
+  // Calculate metrics from report data
+  const metrics = useMemo(() => {
+    if (!reportData) {
+      return {
+        totalDelivered: 0,
+        averageWaitTime: 0,
+        averageReadyTime: 0,
+        averageEnRouteTime: 0,
+      };
+    }
 
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  };
+    const orders = reportData.orders || [];
+    if (orders.length === 0) {
+      return {
+        totalDelivered: 0,
+        averageWaitTime: 0,
+        averageReadyTime: 0,
+        averageEnRouteTime: 0,
+      };
+    }
 
-  // Export functions removed - not required
+    const totalWaitTime = orders.reduce((sum, o) => sum + (o.waitTime || 0), 0);
+    const totalReadyTime = orders.reduce((sum, o) => sum + (o.readyTime || 0), 0);
+    const totalEnRouteTime = orders.reduce((sum, o) => sum + (o.enRouteTime || 0), 0);
+
+    return {
+      totalDelivered: orders.length,
+      averageWaitTime: Math.round(totalWaitTime / orders.length),
+      averageReadyTime: Math.round(totalReadyTime / orders.length),
+      averageEnRouteTime: Math.round(totalEnRouteTime / orders.length),
+    };
+  }, [reportData]);
+
+  const formatSeconds = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}m ${secs}s`;
+  };
 
   return (
     <div className="space-y-6">
@@ -58,89 +74,64 @@ export function DeliveryReportTab() {
       />
 
       {/* Metrics Cards */}
-      {!isLoading && metrics && (
+      {!isLoading && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card className="bg-gradient-to-br from-blue-50 to-blue-100">
+          <Card className="bg-gradient-to-br from-green-50 to-green-100">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-blue-900">Total Orders</CardTitle>
+              <CardTitle className="text-sm font-medium text-green-900">Total Delivered</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-blue-600">{metrics.totalOrders}</div>
-              <p className="text-xs text-blue-700 mt-1">in selected period</p>
+              <div className="text-3xl font-bold text-green-600">{metrics.totalDelivered}</div>
+              <p className="text-xs text-green-700 mt-1">orders completed</p>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-green-50 to-green-100">
+          <Card className="bg-gradient-to-br from-blue-50 to-blue-100">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-green-900">Delivered</CardTitle>
+              <CardTitle className="text-sm font-medium text-blue-900">Avg. Wait Time</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-green-600">{metrics.deliveredOrders}</div>
-              <p className="text-xs text-green-700 mt-1">completed</p>
+              <div className="text-2xl font-bold text-blue-600">{formatSeconds(metrics.averageWaitTime)}</div>
+              <p className="text-xs text-blue-700 mt-1">order to ready</p>
             </CardContent>
           </Card>
 
           <Card className="bg-gradient-to-br from-purple-50 to-purple-100">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-purple-900">Delivery Rate</CardTitle>
+              <CardTitle className="text-sm font-medium text-purple-900">Avg. Ready Time</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-purple-600">{metrics.deliveryRate}%</div>
-              <p className="text-xs text-purple-700 mt-1">completion rate</p>
+              <div className="text-2xl font-bold text-purple-600">{formatSeconds(metrics.averageReadyTime)}</div>
+              <p className="text-xs text-purple-700 mt-1">ready to driver</p>
             </CardContent>
           </Card>
 
           <Card className="bg-gradient-to-br from-orange-50 to-orange-100">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-orange-900">Avg. Time</CardTitle>
+              <CardTitle className="text-sm font-medium text-orange-900">Avg. En Route</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-orange-600">{metrics.averageDeliveryTime}</div>
-              <p className="text-xs text-orange-700 mt-1">minutes</p>
+              <div className="text-2xl font-bold text-orange-600">{formatSeconds(metrics.averageEnRouteTime)}</div>
+              <p className="text-xs text-orange-700 mt-1">driver to delivery</p>
             </CardContent>
           </Card>
         </div>
       )}
 
-
-
-      {/* Delivery Gantt Chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BarChart3 className="w-5 h-5" />
-            Order Timeline Visualization
-          </CardTitle>
-          <CardDescription>Visual representation of order progression through each status</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {timelinesLoading ? (
-            <div className="text-center py-8 text-gray-500">Loading chart...</div>
-          ) : timelines && timelines.length > 0 ? (
-            <DeliveryGanttChart timelines={timelines.map((t: any) => ({ ...t, customerName: t.orderNumber }))} isLoading={false} />
-          ) : (
-            <div className="text-center py-8 text-gray-500">No data available for selected period</div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Order Timeline Table */}
+      {/* Delivery Times Table */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calendar className="w-5 h-5" />
-            Order Status Timeline
+            Delivery Times Breakdown
           </CardTitle>
-          <CardDescription>Detailed breakdown of each order's status transitions</CardDescription>
+          <CardDescription>Detailed breakdown of each order's delivery timeline</CardDescription>
         </CardHeader>
         <CardContent>
-          {timelinesLoading ? (
-            <div className="text-center py-8 text-gray-500">Loading timelines...</div>
-          ) : timelines && timelines.length > 0 ? (
-            <OrderTimelineTable timelines={timelines.map((t: any) => ({ ...t, customerName: t.orderNumber }))} />
-          ) : (
-            <div className="text-center py-8 text-gray-500">No orders found for selected period</div>
-          )}
+          <DeliveryMetricsTable 
+            metrics={reportData?.orders || []} 
+            isLoading={isLoading}
+          />
         </CardContent>
       </Card>
 
@@ -149,20 +140,17 @@ export function DeliveryReportTab() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Truck className="w-5 h-5" />
-            Driver Performance
+            Driver Delivery Statistics
           </CardTitle>
-          <CardDescription>Performance metrics for all drivers in the selected period</CardDescription>
+          <CardDescription>Number of deliveries completed by each driver (online and offline)</CardDescription>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
-            <div className="text-center py-8 text-gray-500">Loading driver data...</div>
-          ) : (
-            <DriverPerformanceTable timelines={(timelines || []) as any} isLoading={isLoading} />
-          )}
+          <DriverStatsTable 
+            drivers={reportData?.drivers || []} 
+            isLoading={isLoading}
+          />
         </CardContent>
       </Card>
-
-      {/* PDF export removed - not required */}
     </div>
   );
 }
