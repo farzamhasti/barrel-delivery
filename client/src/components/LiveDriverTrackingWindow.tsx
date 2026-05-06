@@ -136,29 +136,48 @@ export function LiveDriverTrackingWindow({ onClose, onMinimize, initialPosition,
     return DRIVER_COLORS[index % DRIVER_COLORS.length];
   };
 
-  const createColoredIcon = (color: string) => {
+  const createColoredIcon = (color: string, driverName: string) => {
     return L.divIcon({
       html: `
         <div style="
-          width: 32px;
-          height: 32px;
-          background-color: ${color};
-          border: 3px solid white;
-          border-radius: 50%;
           display: flex;
+          flex-direction: column;
           align-items: center;
-          justify-content: center;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-          font-weight: bold;
-          color: white;
-          font-size: 12px;
+          gap: 2px;
         ">
-          🚗
+          <div style="
+            width: 32px;
+            height: 32px;
+            background-color: ${color};
+            border: 3px solid white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            font-weight: bold;
+            color: white;
+            font-size: 12px;
+          ">
+            🚗
+          </div>
+          <div style="
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: bold;
+            white-space: nowrap;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+          ">
+            ${driverName}
+          </div>
         </div>
       `,
-      iconSize: [32, 32],
-      iconAnchor: [16, 16],
-      popupAnchor: [0, -16],
+      iconSize: [60, 50],
+      iconAnchor: [30, 45],
+      popupAnchor: [0, -45],
     });
   };
 
@@ -243,19 +262,18 @@ export function LiveDriverTrackingWindow({ onClose, onMinimize, initialPosition,
                 </Popup>
               </Marker>
 
-              {/* Driver markers */}
-              {drivers.map((driver, index) => (
+              {/* Driver markers - only show online drivers */}
+              {drivers
+                .filter(driver => driver.status === 'online')
+                .map((driver, index) => (
                 <Marker
                   key={driver.driverId}
                   position={[driver.latitude, driver.longitude]}
-                  icon={createColoredIcon(getDriverColor(index))}
+                  icon={createColoredIcon(getDriverColor(index), driver.driverName)}
                 >
                   <Popup>
                     <div className="text-sm">
                       <div className="font-semibold">{driver.driverName}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {driver.status === 'online' ? 'Online' : 'Offline'}
-                      </div>
                       <div className="text-xs text-muted-foreground">
                         {new Date(driver.timestamp).toLocaleTimeString()}
                       </div>
@@ -278,7 +296,7 @@ export function LiveDriverTrackingWindow({ onClose, onMinimize, initialPosition,
       {/* Minimized State Info */}
       {isMinimized && (
         <div className="px-3 py-2 text-xs text-muted-foreground">
-          {drivers.length} active drivers • Updates every 10s
+          {drivers.filter(d => d.status === 'online').length} online drivers • Updates every 10s
         </div>
       )}
     </div>
