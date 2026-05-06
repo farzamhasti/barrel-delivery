@@ -8,6 +8,7 @@ import { DeliveryMetricsTable } from "@/components/DeliveryMetricsTable";
 import { DeliveryMetricsModal } from "@/components/DeliveryMetricsModal";
 import { DriverStatsTable } from "@/components/DriverStatsTable";
 import { SimpleReportDateSelector } from "@/components/SimpleReportDateSelector";
+import { RegionStatsTable } from "@/components/RegionStatsTable";
 
 export function DeliveryReportTab() {
   const [dateRange, setDateRange] = useState<{ startDate: Date; endDate: Date } | null>(null);
@@ -153,6 +154,24 @@ export function DeliveryReportTab() {
             <DriverStatsTable 
               drivers={reportData?.drivers || []} 
               isLoading={isLoading}
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Region Statistics Table */}
+      {dateRange && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BarChart3 className="w-5 h-5" />
+              Orders by Region
+            </CardTitle>
+            <CardDescription>Number of orders delivered to each region</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <RegionStatsTable 
+              regionStats={reportData?.regionStats || []} 
             />
           </CardContent>
         </Card>

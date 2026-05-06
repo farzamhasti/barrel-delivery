@@ -1646,7 +1646,7 @@ export async function getDeliveryReport(startDate: Date, endDate: Date) {
   const db = await getDb();
   if (!db) {
     console.error('[getDeliveryReport] Database not available');
-    return { orders: [], drivers: [], totalDelivered: 0 };
+    return { orders: [], drivers: [], totalDelivered: 0, regionStats: [] };
   }
 
   try {
@@ -1661,6 +1661,7 @@ export async function getDeliveryReport(startDate: Date, endDate: Date) {
         createdAt: orders.createdAt,
         deliveredAt: orders.deliveredAt,
         pickedUpAt: orders.pickedUpAt,
+        area: orders.area,
       })
       .from(orders)
       .leftJoin(drivers, eq(orders.driverId, drivers.id))
@@ -1747,13 +1748,31 @@ export async function getDeliveryReport(startDate: Date, endDate: Date) {
       }
     });
 
+    // Calculate region statistics
+    const regionStats = new Map<string, number>();
+    const regions = ['Downtown', 'Central Park', 'Both'];
+    regions.forEach(region => regionStats.set(region, 0));
+    
+    deliveredOrders.forEach(order => {
+      if (order.area) {
+        const count = regionStats.get(order.area) || 0;
+        regionStats.set(order.area, count + 1);
+      }
+    });
+
+    const regionStatsArray = Array.from(regionStats.entries()).map(([region, count]) => ({
+      region,
+      count,
+    }));
+
     return {
       orders: ordersWithMetrics,
       drivers: Array.from(driverStats.values()),
       totalDelivered: ordersWithMetrics.length,
+      regionStats: regionStatsArray,
     };
   } catch (error) {
     console.error('[getDeliveryReport] Error fetching delivery report:', error);
-    return { orders: [], drivers: [], totalDelivered: 0 };
+    return { orders: [], drivers: [], totalDelivered: 0, regionStats: [] };
   }
 }

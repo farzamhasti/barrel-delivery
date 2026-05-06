@@ -1627,3 +1627,10 @@ These features are documented for future enhancement but are not required for th
 - [x] Update DeliveryReportTab to use new SimpleReportDateSelector
 - [x] Implement Generate Report button to trigger data fetch
 - [x] Verify no changes to other sections (only DeliveryReportTab updated)
+
+## Phase 37: Region-Based Delivery Statistics
+- [x] Add region aggregation to getDeliveryReport database function
+- [x] Create RegionStatsTable component to display region delivery counts
+- [x] Add region statistics section to DeliveryReportTab
+- [x] Verify no changes to other report sections
+- [ ] Test region filtering with sample data
