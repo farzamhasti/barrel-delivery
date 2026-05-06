@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { DeveloperCredit } from "@/components/DeveloperCredit";
 import { NotificationIcon } from "@/components/NotificationIcon";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useGeolocation } from "@/hooks/useGeolocation";
 
 const DRIVER_SESSION_KEY = "driver_session_token";
 
@@ -49,6 +50,12 @@ export default function DriverDashboard() {
   const [deliveredCount, setDeliveredCount] = useState<number>(0);
   const [returnTimeSeconds, setReturnTimeSeconds] = useState<number>(0);
   const [isTimerRunning, setIsTimerRunning] = useState<boolean>(false);
+  
+  // GPS Tracking
+  const { position, permissionDenied, isTracking } = useGeolocation(
+    currentDriverId?.toString(),
+    isLoggedIn && driverStatus === "online"
+  );
   
   // Get stored session token from localStorage on mount
   useEffect(() => {

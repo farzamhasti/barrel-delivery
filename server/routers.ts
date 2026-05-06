@@ -998,4 +998,45 @@ export const appRouter = router({
         };
       }),
   }),
+  gps: router({
+    updateDriverPosition: protectedProcedure
+      .input(z.object({
+        driverId: z.string(),
+        latitude: z.number(),
+        longitude: z.number(),
+      }))
+      .mutation(async ({ input }) => {
+        try {
+          if (!(global as any).driverPositions) {
+            (global as any).driverPositions = {};
+          }
+          const key = `driver_${input.driverId}`;
+          (global as any).driverPositions[key] = {
+            driverId: input.driverId,
+            latitude: input.latitude,
+            longitude: input.longitude,
+            timestamp: Date.now(),
+          };
+          return { success: true };
+        } catch (error) {
+          console.error('[gps.updateDriverPosition] Error:', error);
+          throw new Error('Failed to update driver position');
+        }
+      }),
+    getActiveDrivers: publicProcedure
+      .query(async () => {
+        try {
+          if (!(global as any).driverPositions) {
+            (global as any).driverPositions = {};
+          }
+          const drivers = Object.values((global as any).driverPositions || {});
+          const now = Date.now();
+          const activeDrivers = drivers.filter((d: any) => now - d.timestamp < 5 * 60 * 1000);
+          return activeDrivers;
+        } catch (error) {
+          console.error('[gps.getActiveDrivers] Error:', error);
+          return [];
+        }
+      }),
+  }),
 });

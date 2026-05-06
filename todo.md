@@ -1717,3 +1717,14 @@ These features are documented for future enhancement but are not required for th
 - [x] Add Geomarketing Analytics feature item with icon and description (📊 Geomarketing Analytics added)
 - [x] Maintain consistent styling with existing features (consistent grid layout and styling)
 - [x] Test display on different screen sizes (verified - displays correctly on home page)
+
+## Phase 47: Live Driver Tracking Feature
+- [x] Add GPS tracking endpoints to backend (store/retrieve driver positions) (gps.updateDriverPosition, gps.getActiveDrivers)
+- [x] Create LiveDriverTrackingWindow floating component with Leaflet map (draggable, resizable, minimize)
+- [x] Add GPS geolocation hook for driver dashboard (useGeolocation hook created)
+- [x] Integrate GPS tracking into driver dashboard page (integrated with online status check)
+- [x] Add "Live Driver Tracking" button to Order Tracking tab (Navigation icon button added)
+- [x] Implement driver marker updates every 10 seconds (10s refetch interval in window)
+- [x] Test GPS permission request flow (permission handling in useGeolocation)
+- [x] Test floating window dragging and resizing (drag/resize logic implemented)
+- [x] Verify no interference with existing UI/functionality (button added to header, window floats above)

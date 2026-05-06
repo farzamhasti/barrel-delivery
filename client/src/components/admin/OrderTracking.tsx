@@ -2,13 +2,15 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MapPin, Clock, Phone } from "lucide-react";
+import { MapPin, Clock, Phone, Navigation } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import MapView from "./MapView";
+import { LiveDriverTrackingWindow } from "@/components/LiveDriverTrackingWindow";
 
 export default function OrderTracking() {
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
   const [showMap, setShowMap] = useState(true);
+  const [showLiveTracking, setShowLiveTracking] = useState(false);
 
   // Fetch all orders and filter on client side
   const { data: allOrders = [], isLoading, refetch } = trpc.orders.list.useQuery();
@@ -41,10 +43,25 @@ export default function OrderTracking() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold text-foreground">Order Tracking</h2>
-        <p className="text-muted-foreground mt-1">Monitor active orders in real-time</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl font-bold text-foreground">Order Tracking</h2>
+          <p className="text-muted-foreground mt-1">Monitor active orders in real-time</p>
+        </div>
+        <Button
+          onClick={() => setShowLiveTracking(!showLiveTracking)}
+          variant={showLiveTracking ? "default" : "outline"}
+          className="gap-2"
+        >
+          <Navigation className="w-4 h-4" />
+          Live Driver Tracking
+        </Button>
       </div>
+
+      {/* Live Driver Tracking Window */}
+      {showLiveTracking && (
+        <LiveDriverTrackingWindow onClose={() => setShowLiveTracking(false)} />
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Orders List */}
