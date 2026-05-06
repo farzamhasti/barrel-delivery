@@ -15,6 +15,7 @@ import { NotificationIcon } from "@/components/NotificationIcon";
 import { ReceiptScannerTesseract } from "@/components/admin/ReceiptScannerTesseract";
 import OrderTrackingWithMap from "@/components/admin/OrderTrackingWithMap";
 import { DeliveryReportTab } from "@/components/DeliveryReportTab";
+import { GeomarketingAnalyticsTab } from "@/components/GeomarketingAnalyticsTab";
 import { Reservations } from "@/components/admin/Reservations";
 import { SendMessage } from "@/components/admin/SendMessage";
 
@@ -226,6 +227,7 @@ export default function AdminDashboard() {
                 {currentTab === "reservations" && <Reservations />}
                 {currentTab === "drivers" && <DriverManagement />}
                 {currentTab === "delivery-report" && <DeliveryReportTab />}
+                {currentTab === "geomarketing-analytics" && <GeomarketingAnalyticsTab />}
                 {currentTab === "send-message" && <SendMessage />}
 
               </div>
@@ -291,6 +293,12 @@ function SidebarContent({
           icon={<Calendar className="w-5 h-5" />}
           label="Delivery Report"
           active={currentTab === "delivery-report"}
+        />
+        <NavItem
+          href="/admin/geomarketing-analytics"
+          icon={<Map className="w-5 h-5" />}
+          label="Geomarketing Analytics"
+          active={currentTab === "geomarketing-analytics"}
         />
       </nav>
 

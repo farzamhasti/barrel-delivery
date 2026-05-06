@@ -972,4 +972,25 @@ export const appRouter = router({
         return messages;
       }),
   }),
+
+  analytics: router({
+    getGeomarketingData: publicProcedure
+      .input(z.object({
+        dateRange: z.enum(["today", "monthly"]),
+        area: z.enum(["Downtown", "Central Park", "Both"]).optional(),
+      }))
+      .query(async ({ input }) => {
+        return {
+          geographicStats: {
+            downtown: 0,
+            centralPark: 0,
+            both: 0,
+          },
+          timeStats: [],
+          performanceStats: [],
+          driverStats: [],
+          growthOpportunities: [],
+        };
+      }),
+  }),
 });

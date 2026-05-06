@@ -1650,3 +1650,15 @@ These features are documented for future enhancement but are not required for th
 - [x] Add filter button and reset functionality
 - [x] Display results count and empty state messaging
 - [x] Integrate section into DeliveryReportTab (tested - displays correctly with 0 orders in current date range)
+
+## Phase 40: Geomarketing Analytics Tab
+- [x] Create AnalyticsTab component with global date range and area filters
+- [x] Create backend tRPC procedure to fetch analytics data (orders with coordinates, times, drivers)
+- [x] Section 1: Geographic Distribution (heatmap + bar chart + summary cards)
+- [x] Section 2: Time Analysis (time-colored map + hour/day of week charts)
+- [x] Section 3: Delivery Performance (performance-colored map + performance table)
+- [x] Section 4: Driver Performance (driver-colored map + driver table + comparison chart)
+- [x] Section 5: Growth Opportunities (opportunity-colored map + growth recommendations)
+- [x] Integrate AnalyticsTab into Admin dashboard navigation (added to sidebar and tab routing)
+- [x] Test all sections with sample data (verified - all 5 sections render correctly)
+- [x] Verify responsive design on tablet and desktop (grid layout responsive, map/chart side-by-side)
