@@ -7,8 +7,8 @@ import { trpc } from '@/lib/trpc';
 import { Button } from '@/components/ui/button';
 
 // Restaurant location (224 Garrison Rd, Fort Erie, ON L2A 1M7)
-const RESTAURANT_LAT = 42.9051676;
-const RESTAURANT_LNG = -78.9458911;
+const RESTAURANT_LAT = 42.9052194;
+const RESTAURANT_LNG = -78.9232931;
 
 // Driver colors for markers
 const DRIVER_COLORS = [
