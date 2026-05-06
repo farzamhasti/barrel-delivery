@@ -104,7 +104,7 @@ export default function Home() {
           {/* Features */}
           <div className="mt-12 pt-8 border-t border-border">
             <p className="text-xs text-muted-foreground text-center mb-6">Key Features</p>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               <div className="text-center">
                 <div className="text-2xl mb-2">🗺️</div>
                 <p className="text-xs text-muted-foreground">Spatial Tracking</p>
@@ -120,6 +120,10 @@ export default function Home() {
               <div className="text-center">
                 <div className="text-2xl mb-2">📦</div>
                 <p className="text-xs text-muted-foreground">Delivery Management</p>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl mb-2">📊</div>
+                <p className="text-xs text-muted-foreground">Geomarketing Analytics</p>
               </div>
             </div>
           </div>
