@@ -11,7 +11,12 @@ import { CustomDateTimePicker } from '@/components/CustomDateTimePicker';
 export function Reservations() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [selectedDate, setSelectedDate] = useState<string>('');
+  // Default to today's date
+  const getTodayDate = () => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  };
+  const [selectedDate, setSelectedDate] = useState<string>(getTodayDate());
   const [formData, setFormData] = useState({
     eventType: '',
     numberOfPeople: '',
@@ -68,7 +73,7 @@ export function Reservations() {
       setEditingId(null);
       setIsFormOpen(false);
       refetch();
-      setSelectedDate(''); // Reset date filter after creating
+      // Keep the selected date after creating
     } catch (error) {
       console.error('Error saving reservation:', error);
     }
@@ -117,16 +122,14 @@ export function Reservations() {
               className="w-40"
               placeholder="Filter by date"
             />
-            {selectedDate && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setSelectedDate('')}
-                className="text-xs"
-              >
-                Clear
-              </Button>
-            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSelectedDate(getTodayDate())}
+              className="text-xs"
+            >
+              Today
+            </Button>
           </div>
         </div>
         <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
