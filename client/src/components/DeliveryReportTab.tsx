@@ -9,6 +9,7 @@ import { DeliveryMetricsModal } from "@/components/DeliveryMetricsModal";
 import { DriverStatsTable } from "@/components/DriverStatsTable";
 import { SimpleReportDateSelector } from "@/components/SimpleReportDateSelector";
 import { RegionStatsTable } from "@/components/RegionStatsTable";
+import { FilterOrdersSection } from "@/components/FilterOrdersSection";
 
 export function DeliveryReportTab() {
   const [dateRange, setDateRange] = useState<{ startDate: Date; endDate: Date } | null>(null);
@@ -156,6 +157,11 @@ export function DeliveryReportTab() {
             </Button>
           </CardContent>
         </Card>
+      )}
+
+      {/* Filter Orders Section */}
+      {dateRange && reportData?.orders && (
+        <FilterOrdersSection orders={reportData.orders} />
       )}
 
       {/* Driver Performance Table */}
