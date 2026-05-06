@@ -28,8 +28,23 @@ export default function DriverDashboard() {
   const [deliveredOrders, setDeliveredOrders] = useState<Set<number>>(new Set());
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [showOrderDetails, setShowOrderDetails] = useState(false);
+  // Initialize statistics date to today in Ontario timezone
+  const getOntarioTodayString = () => {
+    const now = new Date();
+    const torontoFormatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/Toronto',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+    const parts = torontoFormatter.formatToParts(now);
+    const year = parts.find(p => p.type === 'year')?.value || '2024';
+    const month = parts.find(p => p.type === 'month')?.value || '01';
+    const day = parts.find(p => p.type === 'day')?.value || '01';
+    return `${year}-${month}-${day}`;
+  };
   const [selectedStatisticsDate, setSelectedStatisticsDate] = useState<string>(
-    new Date().toISOString().split('T')[0]
+    getOntarioTodayString()
   );
   const [deliveredCount, setDeliveredCount] = useState<number>(0);
   const [returnTimeSeconds, setReturnTimeSeconds] = useState<number>(0);
