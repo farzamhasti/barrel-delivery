@@ -1617,3 +1617,13 @@ These features are documented for future enhancement but are not required for th
 - [x] Create driver list with delivery counts (DriverStatsTable component)
 - [x] Calculate wait time, ready time, en route time, and delivery time in Ontario timezone
 - [x] Verify no changes to app appearance or other sections (only updated DeliveryReportTab)
+
+## Phase 36: Delivery Report Date Selector Customization (COMPLETED)
+- [x] Create new SimpleReportDateSelector component with Daily/Monthly options
+- [x] Remove AdvancedDateRangeSelector from DeliveryReportTab
+- [x] Add Daily/Monthly report type buttons (removed Weekly)
+- [x] Add day picker for Daily report type (multi-select, last 30 days)
+- [x] Add month picker for Monthly report type (multi-select, last 12 months)
+- [x] Update DeliveryReportTab to use new SimpleReportDateSelector
+- [x] Implement Generate Report button to trigger data fetch
+- [x] Verify no changes to other sections (only DeliveryReportTab updated)

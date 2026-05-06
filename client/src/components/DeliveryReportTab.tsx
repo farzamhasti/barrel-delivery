@@ -5,24 +5,24 @@ import { Calendar, TrendingUp, Truck, CheckCircle2, BarChart3 } from "lucide-rea
 import { trpc } from "@/lib/trpc";
 import { DeliveryMetricsTable } from "@/components/DeliveryMetricsTable";
 import { DriverStatsTable } from "@/components/DriverStatsTable";
-import { AdvancedDateRangeSelector, type DateRange } from "@/components/AdvancedDateRangeSelector";
+import { SimpleReportDateSelector } from "@/components/SimpleReportDateSelector";
 
 export function DeliveryReportTab() {
-  const [dateRange, setDateRange] = useState<DateRange>({
-    startDate: new Date(new Date().setDate(new Date().getDate() - 7)),
-    endDate: new Date(),
-    preset: "last7days",
-    reportType: "daily",
-  });
+  const [dateRange, setDateRange] = useState<{ startDate: Date; endDate: Date } | null>(null);
 
   // Fetch delivery report data
-  const { data: reportData, isLoading } = trpc.orders.getDeliveryReport.useQuery({
-    startDate: dateRange.startDate,
-    endDate: dateRange.endDate,
-  });
+  const { data: reportData, isLoading } = trpc.orders.getDeliveryReport.useQuery(
+    dateRange ? {
+      startDate: dateRange.startDate,
+      endDate: dateRange.endDate,
+    } : undefined,
+    {
+      enabled: !!dateRange,
+    }
+  );
 
-  const handleDateRangeChange = (newDateRange: DateRange) => {
-    setDateRange(newDateRange);
+  const handleDateRangeChange = (startDate: Date, endDate: Date) => {
+    setDateRange({ startDate, endDate });
   };
 
   // Calculate metrics from report data
@@ -66,15 +66,11 @@ export function DeliveryReportTab() {
 
   return (
     <div className="space-y-6">
-      {/* Advanced Date Range Selector */}
-      <AdvancedDateRangeSelector 
-        onDateRangeChange={handleDateRangeChange}
-        defaultPreset={dateRange.preset as any}
-        defaultReportType={dateRange.reportType}
-      />
+      {/* Simple Date Range Selector */}
+      <SimpleReportDateSelector onDateRangeChange={handleDateRangeChange} />
 
       {/* Metrics Cards */}
-      {!isLoading && (
+      {dateRange && !isLoading && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card className="bg-gradient-to-br from-green-50 to-green-100">
             <CardHeader className="pb-2">
@@ -119,38 +115,42 @@ export function DeliveryReportTab() {
       )}
 
       {/* Delivery Times Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="w-5 h-5" />
-            Delivery Times Breakdown
-          </CardTitle>
-          <CardDescription>Detailed breakdown of each order's delivery timeline</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <DeliveryMetricsTable 
-            metrics={reportData?.orders || []} 
-            isLoading={isLoading}
-          />
-        </CardContent>
-      </Card>
+      {dateRange && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="w-5 h-5" />
+              Delivery Times Breakdown
+            </CardTitle>
+            <CardDescription>Detailed breakdown of each order's delivery timeline</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <DeliveryMetricsTable 
+              metrics={reportData?.orders || []} 
+              isLoading={isLoading}
+            />
+          </CardContent>
+        </Card>
+      )}
 
       {/* Driver Performance Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Truck className="w-5 h-5" />
-            Driver Delivery Statistics
-          </CardTitle>
-          <CardDescription>Number of deliveries completed by each driver (online and offline)</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <DriverStatsTable 
-            drivers={reportData?.drivers || []} 
-            isLoading={isLoading}
-          />
-        </CardContent>
-      </Card>
+      {dateRange && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Truck className="w-5 h-5" />
+              Driver Delivery Statistics
+            </CardTitle>
+            <CardDescription>Number of deliveries completed by each driver (online and offline)</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <DriverStatsTable 
+              drivers={reportData?.drivers || []} 
+              isLoading={isLoading}
+            />
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
