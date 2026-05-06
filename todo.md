@@ -1581,3 +1581,12 @@ These features are documented for future enhancement but are not required for th
 - [x] Update KitchenDashboardPage.tsx timer styling to match Admin Dashboard exactly
 - [x] Verify Kitchen Dashboard timer now displays with same beige/tan background as Admin
 - [x] Create checkpoint with timer UI improvements and consistency fixes
+
+## Phase 31: Timezone Correction to Ontario (America/Toronto) (COMPLETED)
+- [x] Locate all date/time logic in server-side code
+- [x] Locate all date/time logic in client-side code
+- [x] Update server-side to use Ontario timezone for date calculations (getTodayWithItems now accepts date parameter)
+- [x] Update client-side to use Ontario timezone for date display (Orders.tsx initializes with Ontario timezone)
+- [x] Fix date picker to show correct date (May 5, not May 6) - VERIFIED
+- [x] Test timezone correction in preview environment - VERIFIED: Date picker shows 2026-05-05
+- [x] Verify no changes to appearance or functionality of other sections - VERIFIED

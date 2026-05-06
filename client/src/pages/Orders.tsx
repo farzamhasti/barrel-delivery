@@ -52,7 +52,22 @@ export function Orders() {
   const editCameraInputRef = useRef<HTMLInputElement>(null);
 
   const [statusFilter, setStatusFilter] = useState<"Pending" | "Ready" | "On the Way" | "Delivered">("Pending");
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  // Initialize selectedDate to today in Ontario timezone
+  const getOntarioToday = () => {
+    const now = new Date();
+    const torontoFormatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/Toronto',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+    const parts = torontoFormatter.formatToParts(now);
+    const year = parseInt(parts.find(p => p.type === 'year')?.value || '2024');
+    const month = parseInt(parts.find(p => p.type === 'month')?.value || '1');
+    const day = parseInt(parts.find(p => p.type === 'day')?.value || '1');
+    return new Date(year, month - 1, day);
+  };
+  const [selectedDate, setSelectedDate] = useState<Date>(getOntarioToday());
 
   const [formData, setFormData] = useState<OrderFormData>({
     orderNumber: "",

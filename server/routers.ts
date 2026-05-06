@@ -220,10 +220,10 @@ export const appRouter = router({
     //   }),
 
     getTodayWithItems: publicProcedure
-      .input(z.object({ driverId: z.number().optional() }).optional())
+      .input(z.object({ driverId: z.number().optional(), date: z.string().optional() }).optional())
       .query(async ({ input }) => {
-        // Get all orders for today
-        const allOrders = await db.getTodayOrdersWithItems(undefined);
+        // Get all orders for the specified date (or today if no date provided)
+        const allOrders = await db.getTodayOrdersWithItems(input?.date);
         // If driverId is provided, filter by driver ID and include both "On the Way" and "Delivered" orders
         if (input?.driverId) {
           return allOrders.filter((order: any) => 
