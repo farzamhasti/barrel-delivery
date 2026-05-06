@@ -1736,3 +1736,13 @@ These features are documented for future enhancement but are not required for th
 - [x] Test dragging window across screen (drag functionality verified working)
 - [x] Test minimize/restore button functionality (minimize/maximize buttons functional)
 - [x] Verify window stays within viewport bounds (boundary constraints applied)
+
+## Phase 49: Fix Restaurant Location and Persistent Window State
+- [x] Update restaurant marker coordinates to correct location (224 Garrison Rd, Fort Erie, ON L2A 1M7 = 42.9054992, -78.9293273)
+- [x] Fix LiveDriverTrackingWindow component to use correct restaurant coordinates
+- [x] Create LiveTrackingContext to manage window state at app level
+- [x] Move Live Driver Tracking state from OrderTrackingWithMap to AdminDashboard level
+- [x] Persist window state (position, size, minimized status) across tab changes
+- [x] Update LiveDriverTrackingWindow to accept initial state props
+- [x] Update OrderTrackingWithMap to use LiveTrackingContext
+- [x] Update AdminDashboard to render window at app level with persistent state

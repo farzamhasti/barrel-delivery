@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useDriverReturnTime } from "@/contexts/DriverReturnTimeContext";
 import { Clock, CheckCircle2, Truck, Package, Maximize2, Navigation } from "lucide-react";
 import { LiveDriverTrackingWindow } from "@/components/LiveDriverTrackingWindow";
+import { useLiveTracking } from "@/contexts/LiveTrackingContext";
 import { toast } from "sonner";
 import { FullscreenMapModal } from "@/components/FullscreenMapModal";
 import { useCountdownTimer } from "@/hooks/useCountdownTimer";
@@ -82,7 +83,7 @@ export default function OrderTrackingWithMap() {
   const fullscreenRestaurantMarkerRef = useRef<google.maps.Marker | null>(null);
   const fullscreenGeocodingQueueRef = useRef<number[]>([]);
   const fullscreenGeocodingInProgressRef = useRef<Set<number>>(new Set());
-  const [showLiveTracking, setShowLiveTracking] = useState(false);
+  const { isVisible: showLiveTracking, setIsVisible: setShowLiveTracking, windowState, setWindowState } = useLiveTracking();
 
   // Geocoding mutation
   const geocodeMutation = (trpc as any).maps.geocode.useMutation();
@@ -260,10 +261,7 @@ export default function OrderTrackingWithMap() {
         </div>
       </div>
 
-      {/* Live Driver Tracking Window */}
-      {showLiveTracking && (
-        <LiveDriverTrackingWindow onClose={() => setShowLiveTracking(false)} />
-      )}
+      {/* Live Driver Tracking Window - Removed from here, now managed at AdminDashboard level */}
 
       <div className="flex gap-4 flex-1">
         {/* Map Section - Hidden on Mobile */}

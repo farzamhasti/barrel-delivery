@@ -18,6 +18,8 @@ import { DeliveryReportTab } from "@/components/DeliveryReportTab";
 import { GeomarketingAnalyticsTab } from "@/components/GeomarketingAnalyticsTab";
 import { Reservations } from "@/components/admin/Reservations";
 import { SendMessage } from "@/components/admin/SendMessage";
+import { LiveDriverTrackingWindow } from "@/components/LiveDriverTrackingWindow";
+import { useLiveTracking } from "@/contexts/LiveTrackingContext";
 
 
 // Color scheme for order statuses
@@ -48,6 +50,7 @@ export default function AdminDashboard() {
   const { logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const isMobile = useIsMobile();
+  const { isVisible, setIsVisible, windowState, setWindowState } = useLiveTracking();
   const width = useWindowWidth();
   
   const isTablet = width >= 768 && width < 1024;
@@ -234,6 +237,25 @@ export default function AdminDashboard() {
             </div>
           </div>
         </main>
+
+        {/* Live Driver Tracking Window - Persists across tabs */}
+        {isVisible && (
+          <LiveDriverTrackingWindow
+            onClose={() => setIsVisible(false)}
+            initialPosition={windowState.position}
+            initialSize={windowState.size}
+            initialIsMinimized={windowState.isMinimized}
+            onStateChange={(newState) => {
+              setWindowState(newState);
+            }}
+            onMinimize={(isMinimized) => {
+              setWindowState({
+                ...windowState,
+                isMinimized,
+              });
+            }}
+          />
+        )}
       </div>
     </div>
   );

@@ -1,14 +1,14 @@
 'use client';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import { X, Minimize2, Maximize2 } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
 import { Button } from '@/components/ui/button';
 
-// Restaurant location (Fort Erie, ON)
-const RESTAURANT_LAT = 42.9849;
-const RESTAURANT_LNG = -79.0504;
+// Restaurant location (224 Garrison Rd, Fort Erie, ON L2A 1M7)
+const RESTAURANT_LAT = 42.9054992;
+const RESTAURANT_LNG = -78.9293273;
 
 // Driver colors for markers
 const DRIVER_COLORS = [
@@ -26,18 +26,22 @@ interface DriverPosition {
 interface LiveDriverTrackingWindowProps {
   onClose: () => void;
   onMinimize?: (isMinimized: boolean) => void;
+  initialPosition?: { x: number; y: number };
+  initialSize?: { width: number; height: number };
+  initialIsMinimized?: boolean;
+  onStateChange?: (state: { position: { x: number; y: number }; size: { width: number; height: number }; isMinimized: boolean }) => void;
 }
 
 // Global state for minimized windows
 let minimizedWindows: Map<string, { position: { x: number; y: number }; size: { width: number; height: number } }> = new Map();
 
-export function LiveDriverTrackingWindow({ onClose, onMinimize }: LiveDriverTrackingWindowProps) {
+export function LiveDriverTrackingWindow({ onClose, onMinimize, initialPosition, initialSize, initialIsMinimized, onStateChange }: LiveDriverTrackingWindowProps) {
   const [drivers, setDrivers] = useState<DriverPosition[]>([]);
-  const [isMinimized, setIsMinimized] = useState(false);
-  const [position, setPosition] = useState({ x: 20, y: 20 });
+  const [isMinimized, setIsMinimized] = useState(initialIsMinimized || false);
+  const [position, setPosition] = useState(initialPosition || { x: 20, y: 20 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  const [size, setSize] = useState({ width: 600, height: 500 });
+  const [size, setSize] = useState(initialSize || { width: 600, height: 500 });
   const [isResizing, setIsResizing] = useState(false);
   const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, width: 0, height: 0 });
   const windowRef = useRef<HTMLDivElement>(null);
@@ -82,19 +86,21 @@ export function LiveDriverTrackingWindow({ onClose, onMinimize }: LiveDriverTrac
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (isDragging) {
-        setPosition({
+        const newPos = {
           x: Math.max(0, e.clientX - dragOffset.x),
           y: Math.max(0, e.clientY - dragOffset.y),
-        });
+        };
+        setPosition(newPos);
       }
 
       if (isResizing) {
         const deltaX = e.clientX - resizeStart.x;
         const deltaY = e.clientY - resizeStart.y;
-        setSize({
+        const newSize = {
           width: Math.max(300, resizeStart.width + deltaX),
           height: Math.max(200, resizeStart.height + deltaY),
-        });
+        };
+        setSize(newSize);
       }
     };
 
@@ -123,7 +129,13 @@ export function LiveDriverTrackingWindow({ onClose, onMinimize }: LiveDriverTrac
       minimizedWindows.delete('liveDriverTracking');
     }
     onMinimize?.(newMinimized);
+    onStateChange?.({ position, size, isMinimized: newMinimized });
   };
+
+  // Notify parent of state changes
+  useEffect(() => {
+    onStateChange?.({ position, size, isMinimized });
+  }, [position, size, isMinimized, onStateChange]);
 
   const getDriverColor = (index: number) => {
     return DRIVER_COLORS[index % DRIVER_COLORS.length];

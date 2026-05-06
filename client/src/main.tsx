@@ -7,6 +7,7 @@ import superjson from "superjson";
 import App from "./App";
 import { getLoginUrl } from "./const";
 import { TimerStartTimeProvider } from "./contexts/TimerStartTimeContext";
+import { LiveTrackingProvider } from "./contexts/LiveTrackingContext";
 import "./index.css";
 
 const queryClient = new QueryClient({
@@ -112,7 +113,9 @@ createRoot(document.getElementById("root")!).render(
   <trpc.Provider client={trpcClient} queryClient={queryClient}>
     <QueryClientProvider client={queryClient}>
       <TimerStartTimeProvider>
-        <App />
+        <LiveTrackingProvider>
+          <App />
+        </LiveTrackingProvider>
       </TimerStartTimeProvider>
     </QueryClientProvider>
   </trpc.Provider>
