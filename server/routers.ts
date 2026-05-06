@@ -1026,13 +1026,39 @@ export const appRouter = router({
     getActiveDrivers: publicProcedure
       .query(async () => {
         try {
+          // Get all active drivers from database
+          const allActiveDrivers = await db.getActiveDrivers();
+          
+          // Get GPS positions from in-memory storage
           if (!(global as any).driverPositions) {
             (global as any).driverPositions = {};
           }
-          const drivers = Object.values((global as any).driverPositions || {});
+          const gpsPositions = Object.values((global as any).driverPositions || {});
           const now = Date.now();
-          const activeDrivers = drivers.filter((d: any) => now - d.timestamp < 5 * 60 * 1000);
-          return activeDrivers;
+          
+          // Create a map of recent GPS positions (last 5 minutes)
+          const recentPositions: Record<number, any> = {};
+          gpsPositions.forEach((pos: any) => {
+            if (now - pos.timestamp < 5 * 60 * 1000) {
+              recentPositions[pos.driverId] = pos;
+            }
+          });
+          
+          // Merge driver data with GPS positions
+          // Include all active drivers, but use GPS position if available
+          const result = allActiveDrivers.map(driver => {
+            const gpsData = recentPositions[driver.id];
+            return {
+              driverId: driver.id,
+              driverName: driver.name,
+              status: driver.status,
+              latitude: gpsData?.latitude || 42.9052194, // Default to restaurant if no GPS
+              longitude: gpsData?.longitude || -78.9232931,
+              timestamp: gpsData?.timestamp || now,
+            };
+          });
+          
+          return result;
         } catch (error) {
           console.error('[gps.getActiveDrivers] Error:', error);
           return [];

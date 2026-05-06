@@ -18,6 +18,8 @@ const DRIVER_COLORS = [
 
 interface DriverPosition {
   driverId: string;
+  driverName: string;
+  status: string;
   latitude: number;
   longitude: number;
   timestamp: number;
@@ -250,7 +252,10 @@ export function LiveDriverTrackingWindow({ onClose, onMinimize, initialPosition,
                 >
                   <Popup>
                     <div className="text-sm">
-                      <div className="font-semibold">Driver {driver.driverId}</div>
+                      <div className="font-semibold">{driver.driverName}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {driver.status === 'online' ? 'Online' : 'Offline'}
+                      </div>
                       <div className="text-xs text-muted-foreground">
                         {new Date(driver.timestamp).toLocaleTimeString()}
                       </div>
