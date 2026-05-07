@@ -16,7 +16,7 @@ function DriverCard({ driver, hasOnTheWayOrders }: { driver: any; hasOnTheWayOrd
         <Badge className="bg-green-100 text-green-800 text-xs h-4 mt-1">Online</Badge>
       </div>
       <div className="text-right ml-2">
-        <div className="text-xs text-muted-foreground mb-1">Est. Return:</div>
+        <div className="text-sm font-semibold text-muted-foreground mb-1">Est. Return:</div>
         <div className="font-mono font-bold text-lg text-foreground bg-accent/20 px-2 py-1 rounded border border-accent/40">
           {shouldShowTimer ? displayTime : "00:00"}
         </div>
