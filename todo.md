@@ -1802,3 +1802,11 @@ These features are documented for future enhancement but are not required for th
 - [x] Timer now resets to new calculated value instead of resuming from stopped time
 - [x] Added clearTimerStartTime call in calculateReturnTimeMutation onSuccess
 - [x] Verified dev server running with timer recalculation fix
+
+## Phase 56: Fix Timer Display Reset in Dashboard Tables on Recalculation
+- [x] Added recalculation detection in useCountdownTimer hook
+- [x] Detect when initialSeconds changes by >5 seconds (indicates recalculation)
+- [x] Clear old timer context and reinitialize with new value
+- [x] Timer in dashboards now shows full new time when driver recalculates
+- [x] Example: Stop at 14:00 of 15:00, recalculate shows 15:00 not 14:00
+- [x] Verified dev server running with recalculation detection fix

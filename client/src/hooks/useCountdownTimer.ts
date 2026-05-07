@@ -10,6 +10,9 @@ import { useTimerStartTime } from '@/contexts/TimerStartTimeContext';
  * CRITICAL FIX: Once the timer is initialized, it runs independently from initialSeconds.
  * This prevents the timer from stopping when driver data is refetched from the server.
  * The timer only stops when explicitly cleared (user clicks Stop) or when it reaches 0.
+ * 
+ * RECALCULATION FIX: When initialSeconds changes significantly (>5 seconds difference),
+ * it indicates the driver recalculated. The timer reinitializes to the new value.
  */
 export function useCountdownTimer(initialSeconds: number | null | undefined, driverId: number) {
   const { timerData, setTimerStartTime, getRemainingSeconds, clearTimerStartTime } = useTimerStartTime();
@@ -30,6 +33,20 @@ export function useCountdownTimer(initialSeconds: number | null | undefined, dri
       setTimerStartTime(driverId, initialSeconds, Date.now());
       initializationRef.current.add(driverId);
     } 
+    // Detect recalculation: if initialSeconds changed significantly (more than 5 seconds difference)
+    // This indicates the driver clicked "Calculate Return Time" again
+    else if (
+      isInitialized && 
+      initialSeconds && 
+      initialSeconds > 0 && 
+      previousSeconds && 
+      Math.abs(initialSeconds - previousSeconds) > 5
+    ) {
+      // Driver recalculated: reinitialize timer with new value
+      clearTimerStartTime(driverId);
+      setTimerStartTime(driverId, initialSeconds, Date.now());
+      // Keep initialized flag as true since we're reinitializing
+    }
     // Only clear the timer if it was explicitly set to 0 (user clicked Stop)
     // AND we were previously initialized (not just a data fetch that returned null)
     else if (initialSeconds === 0 && previousSeconds !== null && previousSeconds !== undefined && isInitialized) {
