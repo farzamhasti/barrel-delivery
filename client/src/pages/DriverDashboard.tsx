@@ -73,27 +73,8 @@ export default function DriverDashboard() {
     }
   }, []);
 
-  // Request GPS permission immediately when dashboard loads
-  useEffect(() => {
-    if (!isLoggedIn || !navigator.geolocation) {
-      return;
-    }
-    
-    // Trigger GPS permission popup immediately
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        console.log('[GPS] Permission granted, location:', position.coords);
-      },
-      (error) => {
-        console.log('[GPS] Permission denied or error:', error.message);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0
-      }
-    );
-  }, [isLoggedIn]);
+  // GPS permission is requested in loginMutation.onSuccess
+  // No need for redundant permission request here - it causes mobile hang
   
   // Real driver login mutation
   const loginMutation = trpc.drivers.login.useMutation({
@@ -109,36 +90,13 @@ export default function DriverDashboard() {
       setLicenseNumber("");
       setLoginError("");
       
-      // Force GPS permission request on login - always request fresh
+      // Request GPS permission on login
+      // The useGeolocation hook will handle continuous tracking with watchPosition
       console.log('[GPS] Login successful - requesting location permission...');
       if (navigator.geolocation) {
-        // Stop any existing watch to reset state
-        if (window.gpsWatchId) {
-          navigator.geolocation.clearWatch(window.gpsWatchId);
-          window.gpsWatchId = null;
-        }
-        
-        // Request fresh location - this triggers permission popup
         navigator.geolocation.getCurrentPosition(
           (position) => {
-            console.log('[GPS] Permission granted on login, location:', position.coords);
-            // Start continuous tracking after permission granted
-            if (window.gpsWatchId) {
-              navigator.geolocation.clearWatch(window.gpsWatchId);
-            }
-            window.gpsWatchId = navigator.geolocation.watchPosition(
-              (pos) => {
-                console.log('[GPS] Location updated:', pos.coords);
-              },
-              (err) => {
-                console.error('[GPS] Tracking error:', err.message);
-              },
-              {
-                enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 5000
-              }
-            );
+            console.log('[GPS] Permission granted on login');
           },
           (error) => {
             console.log('[GPS] Permission denied or error on login:', error.message);
