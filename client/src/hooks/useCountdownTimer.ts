@@ -8,9 +8,9 @@ import { useTimerStartTime } from '@/contexts/TimerStartTimeContext';
  * @returns Object with current time in MM:SS format and remaining seconds
  * 
  * PERMANENT FIX: 
- * - Timer runs independently from server data after initialization (prevents stopping on order delivery)
- * - On recalculation (>5 second difference in initialSeconds), reset startTime to NOW
- * - This ensures remaining time = initialSeconds on recalculation, not old elapsed time
+ * - Timer runs independently from server data after initialization
+ * - When Stop is clicked (initialSeconds=0), clear context and reset initialization flag
+ * - When recalculation happens after Stop, properly reinitialize with new time
  */
 export function useCountdownTimer(initialSeconds: number | null | undefined, driverId: number) {
   const { timerData, setTimerStartTime, getRemainingSeconds, clearTimerStartTime } = useTimerStartTime();
@@ -22,28 +22,24 @@ export function useCountdownTimer(initialSeconds: number | null | undefined, dri
     const isInitialized = initializationRef.current.has(driverId);
     const previousSeconds = previousSecondsRef.current;
     
-    // First initialization: set timer with current timestamp
-    if (initialSeconds && initialSeconds > 0 && !isInitialized) {
-      setTimerStartTime(driverId, initialSeconds, Date.now(), false);
-      initializationRef.current.add(driverId);
-    } 
-    // Recalculation detected: initialSeconds changed by >5 seconds
-    // Reset startTime to NOW so remaining = initialSeconds (full new time)
-    else if (
-      isInitialized && 
-      initialSeconds && 
-      initialSeconds > 0 && 
-      previousSeconds && 
-      Math.abs(initialSeconds - previousSeconds) > 5
-    ) {
-      // Force reinitialize with current timestamp
-      // This resets the startTime, making remaining = initialSeconds
-      setTimerStartTime(driverId, initialSeconds, Date.now(), true);
-    }
     // Stop button clicked: initialSeconds = 0
-    else if (initialSeconds === 0 && previousSeconds !== null && previousSeconds !== undefined && isInitialized) {
+    // Clear timer and reset initialization flag so next calculation can reinitialize
+    if (initialSeconds === 0 && previousSeconds !== null && previousSeconds !== undefined && isInitialized) {
       clearTimerStartTime(driverId);
-      initializationRef.current.delete(driverId);
+      initializationRef.current.delete(driverId); // CRITICAL: Reset flag so next calculation reinitializes
+    }
+    // First initialization OR recalculation after Stop
+    // Initialize if: not initialized yet, OR was initialized but then cleared (Stop clicked)
+    else if (initialSeconds && initialSeconds > 0) {
+      if (!isInitialized) {
+        // First time: initialize the timer
+        setTimerStartTime(driverId, initialSeconds, Date.now(), false);
+        initializationRef.current.add(driverId);
+      } else if (previousSeconds === 0 || previousSeconds === null || previousSeconds === undefined) {
+        // Recalculation after Stop: reinitialize with new time
+        setTimerStartTime(driverId, initialSeconds, Date.now(), true);
+      }
+      // Otherwise timer is running normally, don't reinitialize
     }
     
     previousSecondsRef.current = initialSeconds;

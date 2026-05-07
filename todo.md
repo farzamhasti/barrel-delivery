@@ -1811,11 +1811,11 @@ These features are documented for future enhancement but are not required for th
 - [x] Example: Stop at 14:00 of 15:00, recalculate shows 15:00 not 14:00
 - [x] Verified dev server running with recalculation detection fix
 
-## Phase 57: Permanent Timer Recalculation Fix
+## Phase 57: Complete Timer Stop/Recalculate Fix
 - [x] Added forceReinit parameter to TimerStartTimeContext.setTimerStartTime
 - [x] Allow context to override existing timer data when forceReinit=true
-- [x] Updated useCountdownTimer to reset startTime to NOW on recalculation
-- [x] On recalculation (>5 second difference), set startTime=Date.now()
-- [x] This ensures remaining = initialSeconds (full new time, not old elapsed)
-- [x] Timer now shows 15:00 when recalculated, not 14:00 (old elapsed time)
-- [x] Verified dev server running with permanent fix
+- [x] Fixed useCountdownTimer to reset initialization flag when Stop is clicked
+- [x] When Stop clicked (initialSeconds=0), clear context AND delete initialization flag
+- [x] When recalculation after Stop, properly reinitialize with new time
+- [x] Timer now shows 0 when Stop clicked, restarts from full time on recalculation
+- [x] Verified dev server running with complete Stop/Recalculate fix
