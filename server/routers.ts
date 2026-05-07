@@ -606,7 +606,18 @@ export const appRouter = router({
       }))
       .mutation(async ({ input }) => {
         try {
-          const result = await getDb()
+          const RESTAURANT_LAT = 42.9849;
+          const RESTAURANT_LNG = -81.2453;
+          
+          if (input.latitude === RESTAURANT_LAT && input.longitude === RESTAURANT_LNG) {
+            console.warn('[drivers.updateLocation] Rejecting restaurant coordinates');
+            throw new Error('Location matches restaurant. Provide real GPS coordinates.');
+          }
+          
+          const database = await getDb();
+          if (!database) throw new Error('Database connection failed');
+          
+          const result = await database
             .update(drivers)
             .set({
               latitude: input.latitude,

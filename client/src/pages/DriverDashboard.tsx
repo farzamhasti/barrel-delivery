@@ -54,7 +54,7 @@ export default function DriverDashboard() {
   const [isTimerRunning, setIsTimerRunning] = useState<boolean>(false);
   
   // GPS Tracking
-  const { position, permissionDenied, isTracking } = useGeolocation(
+  const { position, permissionDenied, isTracking, gpsError } = useGeolocation(
     currentDriverId?.toString(),
     isLoggedIn && driverStatus === "online"
   );
@@ -402,6 +402,14 @@ export default function DriverDashboard() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-8 flex-1 overflow-y-auto">
+        {/* GPS Error Message */}
+        {gpsError && (
+          <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded mb-6">
+            <p className="font-semibold">Location Access Required</p>
+            <p className="text-sm mt-1">{gpsError}</p>
+          </div>
+        )}
+        
         {/* Status, Statistics, Return Time, and Map Section - 2x2 Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Status Section */}
