@@ -12,7 +12,7 @@ import { useTimerStartTime } from '@/contexts/TimerStartTimeContext';
  * The timer only stops when explicitly cleared (user clicks Stop) or when it reaches 0.
  * 
  * RECALCULATION FIX: When initialSeconds changes significantly (>5 seconds difference),
- * it indicates the driver recalculated. The timer reinitializes to the new value.
+ * it indicates the driver recalculated. The timer reinitializes to the new value using forceReinit.
  */
 export function useCountdownTimer(initialSeconds: number | null | undefined, driverId: number) {
   const { timerData, setTimerStartTime, getRemainingSeconds, clearTimerStartTime } = useTimerStartTime();
@@ -30,7 +30,7 @@ export function useCountdownTimer(initialSeconds: number | null | undefined, dri
     // Only initialize if we have a valid initial value and haven't initialized yet
     if (initialSeconds && initialSeconds > 0 && !isInitialized) {
       // First time: initialize the timer with the initial seconds
-      setTimerStartTime(driverId, initialSeconds, Date.now());
+      setTimerStartTime(driverId, initialSeconds, Date.now(), false);
       initializationRef.current.add(driverId);
     } 
     // Detect recalculation: if initialSeconds changed significantly (more than 5 seconds difference)
@@ -42,10 +42,9 @@ export function useCountdownTimer(initialSeconds: number | null | undefined, dri
       previousSeconds && 
       Math.abs(initialSeconds - previousSeconds) > 5
     ) {
-      // Driver recalculated: reinitialize timer with new value
-      clearTimerStartTime(driverId);
-      setTimerStartTime(driverId, initialSeconds, Date.now());
-      // Keep initialized flag as true since we're reinitializing
+      // Driver recalculated: force reinitialize timer with new value
+      // forceReinit=true allows the context to override the existing timer data
+      setTimerStartTime(driverId, initialSeconds, Date.now(), true);
     }
     // Only clear the timer if it was explicitly set to 0 (user clicked Stop)
     // AND we were previously initialized (not just a data fetch that returned null)

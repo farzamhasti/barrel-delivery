@@ -7,7 +7,7 @@ interface TimerData {
 
 interface TimerStartTimeContextType {
   timerData: Record<number, TimerData>; // driverId -> TimerData
-  setTimerStartTime: (driverId: number, initialSeconds: number, dbTimestamp?: number) => void;
+  setTimerStartTime: (driverId: number, initialSeconds: number, dbTimestamp?: number, forceReinit?: boolean) => void;
   getRemainingSeconds: (driverId: number, currentDbTimestamp?: number) => number;
   clearTimerStartTime: (driverId: number) => void;
 }
@@ -17,10 +17,11 @@ const TimerStartTimeContext = createContext<TimerStartTimeContextType | undefine
 export function TimerStartTimeProvider({ children }: { children: React.ReactNode }) {
   const [timerData, setTimerData] = useState<Record<number, TimerData>>({});
 
-  const setTimerStartTime = useCallback((driverId: number, initialSeconds: number, dbTimestamp?: number) => {
+  const setTimerStartTime = useCallback((driverId: number, initialSeconds: number, dbTimestamp?: number, forceReinit?: boolean) => {
     setTimerData(prev => {
-      // Only set if not already set for this driver
-      if (prev[driverId]) {
+      // Allow reinitialize if forceReinit is true (driver recalculated)
+      // Otherwise only set if not already set for this driver
+      if (prev[driverId] && !forceReinit) {
         return prev;
       }
       return {
