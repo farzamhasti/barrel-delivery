@@ -172,6 +172,11 @@ export default function DriverDashboard() {
         alert('No active deliveries to calculate');
         setIsTimerRunning(false);
       } else {
+        // Clear old timer data from context so new calculation starts fresh
+        if (currentDriverId) {
+          clearTimerStartTime(currentDriverId);
+        }
+        
         // Start the countdown timer with the calculated return time in seconds
         setReturnTimeSeconds(result.totalReturnTime);
         setIsTimerRunning(true);

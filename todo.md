@@ -1796,3 +1796,9 @@ These features are documented for future enhancement but are not required for th
 - [x] Updated Dashboard shouldShowTimer condition
 - [x] Updated HeaderDriversTable shouldShowTimer condition
 - [x] Verified dev server running with complete fix
+
+## Phase 55: Fix Timer Recalculation Reset
+- [x] Clear old timer context when driver recalculates return time
+- [x] Timer now resets to new calculated value instead of resuming from stopped time
+- [x] Added clearTimerStartTime call in calculateReturnTimeMutation onSuccess
+- [x] Verified dev server running with timer recalculation fix
