@@ -349,11 +349,11 @@ export async function getTodayOrdersWithItems(dateStr?: string) {
   // When we format 'now' in Toronto timezone, we get the Toronto local time
   // The offset is how much we need to add to Toronto time to get UTC
   const torontoTimeMs = new Date(year, month - 1, day, hour, minute, second).getTime();
-  const offsetMs = dateStr ? 0 : now.getTime() - torontoTimeMs;
+  const offsetMs = now.getTime() - torontoTimeMs;
   
   // Start of day in UTC: midnight Toronto time + offset
   const midnightTorontoMs = new Date(year, month - 1, day, 0, 0, 0, 0).getTime();
-  const startOfDay = dateStr ? new Date(midnightTorontoMs) : new Date(midnightTorontoMs + offsetMs);
+  const startOfDay = new Date(midnightTorontoMs + offsetMs);
   const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000);
   
   console.log('[getTodayOrdersWithItems] Timezone calculation:', {
@@ -362,6 +362,8 @@ export async function getTodayOrdersWithItems(dateStr?: string) {
     offsetMs,
     nowUTC: now.toISOString(),
     requestedDate: dateStr,
+    startOfDayUTC: new Date(midnightTorontoMs + offsetMs).toISOString(),
+    endOfDayUTC: new Date(midnightTorontoMs + offsetMs + 24 * 60 * 60 * 1000).toISOString(),
   });
   
   console.log('[getTodayOrdersWithItems] Date range:', {

@@ -1752,3 +1752,9 @@ These features are documented for future enhancement but are not required for th
 - [x] Ensure new orders appear immediately in Order Tracking tab
 - [x] Maintain existing Orders tab functionality for historical order viewing
 - [x] Preserve app appearance and overall UI/UX
+
+## Phase 51: Fix Orders Tab Timezone Filtering for Production
+- [x] Fix timezone offset calculation to work correctly in production environments
+- [x] Ensure date filtering uses Toronto timezone consistently for all date requests
+- [x] Apply timezone offset to all date ranges, not just current date queries
+- [x] Verify orders display correctly both in development and production
