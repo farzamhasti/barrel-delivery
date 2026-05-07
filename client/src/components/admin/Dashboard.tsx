@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc";
 import { useDriverReturnTime } from "@/contexts/DriverReturnTimeContext";
 import { useCountdownTimer } from "@/hooks/useCountdownTimer";
+import { useTimerStartTime } from "@/contexts/TimerStartTimeContext";
 
 // Helper function to format return time from seconds to MM:SS format
 function formatReturnTime(seconds: number | null | undefined): string {
@@ -15,10 +16,12 @@ function formatReturnTime(seconds: number | null | undefined): string {
 
 // Component to display a single driver with countdown timer
 function DriverRow({ driver, hasOnTheWayOrders }: { driver: any; hasOnTheWayOrders: boolean }) {
-  const { displayTime } = useCountdownTimer(driver.estimatedReturnTime, driver.id);
+  const { displayTime, remainingSeconds } = useCountdownTimer(driver.estimatedReturnTime, driver.id);
+  const { timerData } = useTimerStartTime();
   
-  // Only show timer if driver has on_the_way orders AND has set estimated return time
-  const shouldShowTimer = hasOnTheWayOrders && driver.estimatedReturnTime && driver.estimatedReturnTime > 0;
+  // Show timer if there's active timer data for this driver (not dependent on server data)
+  // This ensures timer continues running even when driver data is refetched
+  const shouldShowTimer = timerData[driver.id] && remainingSeconds > 0;
   
   return (
     <tr className="border-b border-border hover:bg-muted/30">

@@ -15,6 +15,7 @@ import { useLiveTracking } from "@/contexts/LiveTrackingContext";
 import { toast } from "sonner";
 import { FullscreenMapModal } from "@/components/FullscreenMapModal";
 import { useCountdownTimer } from "@/hooks/useCountdownTimer";
+import { useTimerStartTime } from "@/contexts/TimerStartTimeContext";
 
 const FORT_ERIE_CENTER = { lat: 42.905191, lng: -78.9225479 };
 const RESTAURANT_ADDRESS = { lat: 42.905191, lng: -78.9225479 }; // 224 Garrison Rd, Fort Erie, ON L2A 1M7
@@ -29,10 +30,12 @@ function formatReturnTime(seconds: number | null | undefined): string {
 
 // Component to display a single driver with countdown timer
 function DriverRowWithTimer({ driver, hasOnTheWayOrders }: { driver: any; hasOnTheWayOrders: boolean }) {
-  const { displayTime } = useCountdownTimer(driver.estimatedReturnTime, driver.id);
+  const { displayTime, remainingSeconds } = useCountdownTimer(driver.estimatedReturnTime, driver.id);
+  const { timerData } = useTimerStartTime();
   
-  // Show timer if driver has set estimated return time (regardless of order status)
-  const shouldShowTimer = driver.estimatedReturnTime && driver.estimatedReturnTime > 0;
+  // Show timer if there's active timer data for this driver (not dependent on server data)
+  // This ensures timer continues running even when driver data is refetched
+  const shouldShowTimer = timerData[driver.id] && remainingSeconds > 0;
   
   return (
     <tr className="border-b border-border hover:bg-muted/30">

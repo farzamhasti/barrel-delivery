@@ -1,13 +1,16 @@
 import { useCountdownTimer } from "@/hooks/useCountdownTimer";
+import { useTimerStartTime } from "@/contexts/TimerStartTimeContext";
 import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc";
 import { useMemo } from "react";
 
 function DriverCard({ driver, hasOnTheWayOrders }: { driver: any; hasOnTheWayOrders: boolean }) {
-  const { displayTime } = useCountdownTimer(driver.estimatedReturnTime, driver.id);
+  const { displayTime, remainingSeconds } = useCountdownTimer(driver.estimatedReturnTime, driver.id);
+  const { timerData } = useTimerStartTime();
   
-  // Only show timer if driver has on_the_way orders AND has set estimated return time
-  const shouldShowTimer = hasOnTheWayOrders && driver.estimatedReturnTime && driver.estimatedReturnTime > 0;
+  // Show timer if there's active timer data for this driver (not dependent on server data)
+  // This ensures timer continues running even when driver data is refetched
+  const shouldShowTimer = timerData[driver.id] && remainingSeconds > 0;
   
   return (
     <div className="flex items-center justify-between px-3 py-2 bg-muted/30 rounded border border-border/40 text-xs">

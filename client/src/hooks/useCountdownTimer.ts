@@ -6,6 +6,10 @@ import { useTimerStartTime } from '@/contexts/TimerStartTimeContext';
  * @param initialSeconds - Initial time in seconds (only used on first mount)
  * @param driverId - Driver ID to store/retrieve timer data
  * @returns Object with current time in MM:SS format and remaining seconds
+ * 
+ * CRITICAL FIX: Once the timer is initialized, it runs independently from initialSeconds.
+ * This prevents the timer from stopping when driver data is refetched from the server.
+ * The timer only stops when explicitly cleared (user clicks Stop) or when it reaches 0.
  */
 export function useCountdownTimer(initialSeconds: number | null | undefined, driverId: number) {
   const { timerData, setTimerStartTime, getRemainingSeconds, clearTimerStartTime } = useTimerStartTime();
@@ -14,32 +18,28 @@ export function useCountdownTimer(initialSeconds: number | null | undefined, dri
   const previousSecondsRef = useRef<number | null | undefined>(initialSeconds);
 
   // Initialize timer start time ONLY once per driver (on first mount)
-  // Also reinitialize if initialSeconds changes (driver clicked Calculate again after Stop)
+  // CRITICAL: Once initialized, the timer runs from context data, NOT from initialSeconds
+  // This prevents the timer from stopping when driver data is refetched
   useEffect(() => {
     const isInitialized = initializationRef.current.has(driverId);
-    const secondsChanged = previousSecondsRef.current !== initialSeconds;
+    const previousSeconds = previousSecondsRef.current;
     
-    if (initialSeconds && initialSeconds > 0) {
-      // If timer was reset (initialSeconds went to 0 and back), reinitialize
-      if (secondsChanged && isInitialized) {
-        // Clear old timer data and reinitialize
-        clearTimerStartTime(driverId);
-        initializationRef.current.delete(driverId);
-      }
-      
-      if (!initializationRef.current.has(driverId)) {
-        // Use current time as the database timestamp (when driver calculated)
-        // This ensures all dashboards calculate from the same reference point
-        setTimerStartTime(driverId, initialSeconds, Date.now());
-        initializationRef.current.add(driverId);
-      }
-    } else if (initialSeconds === 0 || initialSeconds === null) {
-      // Timer was cleared (Stop button clicked)
-      if (isInitialized) {
-        clearTimerStartTime(driverId);
-        initializationRef.current.delete(driverId);
-      }
+    // Only initialize if we have a valid initial value and haven't initialized yet
+    if (initialSeconds && initialSeconds > 0 && !isInitialized) {
+      // First time: initialize the timer with the initial seconds
+      setTimerStartTime(driverId, initialSeconds, Date.now());
+      initializationRef.current.add(driverId);
+    } 
+    // Only clear the timer if it was explicitly set to 0 (user clicked Stop)
+    // AND we were previously initialized (not just a data fetch that returned null)
+    else if (initialSeconds === 0 && previousSeconds !== null && previousSeconds !== undefined && isInitialized) {
+      // User explicitly stopped the timer
+      clearTimerStartTime(driverId);
+      initializationRef.current.delete(driverId);
     }
+    // CRITICAL FIX: If initialSeconds becomes null but we're initialized, DO NOT clear the timer
+    // The timer should continue running from the context data
+    // This is the key fix that prevents the timer from stopping when orders are delivered
     
     previousSecondsRef.current = initialSeconds;
   }, [driverId, initialSeconds, setTimerStartTime, clearTimerStartTime]);
