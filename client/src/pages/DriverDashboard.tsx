@@ -10,11 +10,13 @@ import { DeveloperCredit } from "@/components/DeveloperCredit";
 import { NotificationIcon } from "@/components/NotificationIcon";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useGeolocation } from "@/hooks/useGeolocation";
+import { useTimerStartTime } from "@/contexts/TimerStartTimeContext";
 
 const DRIVER_SESSION_KEY = "driver_session_token";
 
 export default function DriverDashboard() {
   const [, setLocation] = useLocation();
+  const { clearTimerStartTime } = useTimerStartTime();
   
   // Driver authentication state
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -512,6 +514,8 @@ export default function DriverDashboard() {
                         // Clear the return time from database
                         if (currentDriverId) {
                           clearReturnTimeMutation.mutate({ driverId: currentDriverId });
+                          // Also clear from context so timer disappears from dashboards
+                          clearTimerStartTime(currentDriverId);
                         }
                         console.log('Timer stopped and cleared');
                       }}
