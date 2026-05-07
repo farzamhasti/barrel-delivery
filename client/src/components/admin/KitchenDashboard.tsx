@@ -125,7 +125,7 @@ export default function KitchenDashboard() {
     
     return (
       <tr className="border-b border-border hover:bg-muted/30">
-        <td className="py-2 px-3 font-bold text-lg text-foreground">{driver.name}</td>
+        <td className="py-2 px-3 font-bold text-base text-foreground">{driver.name}</td>
         <td className="py-2 px-3">
           <Badge className="bg-green-100 text-green-800 text-xs">Online</Badge>
         </td>
@@ -334,7 +334,7 @@ export default function KitchenDashboard() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-xs">
+              <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border bg-muted/50">
                     <th className="text-left py-2 px-3 font-semibold">Name</th>
