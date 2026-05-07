@@ -3,16 +3,14 @@ import { useTimerStartTime } from '@/contexts/TimerStartTimeContext';
 
 /**
  * Custom hook for countdown timer with persistent elapsed time tracking
- * @param initialSeconds - Initial time in seconds (only used on first mount)
+ * @param initialSeconds - Initial time in seconds (from driver.estimatedReturnTime)
  * @param driverId - Driver ID to store/retrieve timer data
  * @returns Object with current time in MM:SS format and remaining seconds
  * 
- * CRITICAL FIX: Once the timer is initialized, it runs independently from initialSeconds.
- * This prevents the timer from stopping when driver data is refetched from the server.
- * The timer only stops when explicitly cleared (user clicks Stop) or when it reaches 0.
- * 
- * RECALCULATION FIX: When initialSeconds changes significantly (>5 seconds difference),
- * it indicates the driver recalculated. The timer reinitializes to the new value using forceReinit.
+ * PERMANENT FIX: 
+ * - Timer runs independently from server data after initialization (prevents stopping on order delivery)
+ * - On recalculation (>5 second difference in initialSeconds), reset startTime to NOW
+ * - This ensures remaining time = initialSeconds on recalculation, not old elapsed time
  */
 export function useCountdownTimer(initialSeconds: number | null | undefined, driverId: number) {
   const { timerData, setTimerStartTime, getRemainingSeconds, clearTimerStartTime } = useTimerStartTime();
@@ -20,21 +18,17 @@ export function useCountdownTimer(initialSeconds: number | null | undefined, dri
   const initializationRef = useRef<Set<number>>(new Set());
   const previousSecondsRef = useRef<number | null | undefined>(initialSeconds);
 
-  // Initialize timer start time ONLY once per driver (on first mount)
-  // CRITICAL: Once initialized, the timer runs from context data, NOT from initialSeconds
-  // This prevents the timer from stopping when driver data is refetched
   useEffect(() => {
     const isInitialized = initializationRef.current.has(driverId);
     const previousSeconds = previousSecondsRef.current;
     
-    // Only initialize if we have a valid initial value and haven't initialized yet
+    // First initialization: set timer with current timestamp
     if (initialSeconds && initialSeconds > 0 && !isInitialized) {
-      // First time: initialize the timer with the initial seconds
       setTimerStartTime(driverId, initialSeconds, Date.now(), false);
       initializationRef.current.add(driverId);
     } 
-    // Detect recalculation: if initialSeconds changed significantly (more than 5 seconds difference)
-    // This indicates the driver clicked "Calculate Return Time" again
+    // Recalculation detected: initialSeconds changed by >5 seconds
+    // Reset startTime to NOW so remaining = initialSeconds (full new time)
     else if (
       isInitialized && 
       initialSeconds && 
@@ -42,42 +36,33 @@ export function useCountdownTimer(initialSeconds: number | null | undefined, dri
       previousSeconds && 
       Math.abs(initialSeconds - previousSeconds) > 5
     ) {
-      // Driver recalculated: force reinitialize timer with new value
-      // forceReinit=true allows the context to override the existing timer data
+      // Force reinitialize with current timestamp
+      // This resets the startTime, making remaining = initialSeconds
       setTimerStartTime(driverId, initialSeconds, Date.now(), true);
     }
-    // Only clear the timer if it was explicitly set to 0 (user clicked Stop)
-    // AND we were previously initialized (not just a data fetch that returned null)
+    // Stop button clicked: initialSeconds = 0
     else if (initialSeconds === 0 && previousSeconds !== null && previousSeconds !== undefined && isInitialized) {
-      // User explicitly stopped the timer
       clearTimerStartTime(driverId);
       initializationRef.current.delete(driverId);
     }
-    // CRITICAL FIX: If initialSeconds becomes null but we're initialized, DO NOT clear the timer
-    // The timer should continue running from the context data
-    // This is the key fix that prevents the timer from stopping when orders are delivered
     
     previousSecondsRef.current = initialSeconds;
   }, [driverId, initialSeconds, setTimerStartTime, clearTimerStartTime]);
 
-  // Update remaining seconds every second from context
+  // Update remaining seconds every second
   useEffect(() => {
-    // Check if timer data exists for this driver
     if (!timerData[driverId]) {
       setRemainingSeconds(0);
       return;
     }
 
-    // Set initial value
     const remaining = getRemainingSeconds(driverId);
     setRemainingSeconds(remaining);
 
-    // Update every second
     const interval = setInterval(() => {
       const remaining = getRemainingSeconds(driverId);
       setRemainingSeconds(remaining);
       
-      // Stop interval when timer reaches 0
       if (remaining <= 0) {
         clearInterval(interval);
       }
@@ -86,7 +71,6 @@ export function useCountdownTimer(initialSeconds: number | null | undefined, dri
     return () => clearInterval(interval);
   }, [driverId, timerData, getRemainingSeconds]);
 
-  // Format seconds to MM:SS
   const formatTime = (seconds: number): string => {
     if (seconds <= 0) return '00:00';
     const minutes = Math.floor(seconds / 60);
