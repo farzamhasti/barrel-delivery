@@ -5,10 +5,12 @@ import { Loader2, AlertCircle, CheckCircle2, Camera, Upload, X } from "lucide-re
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { useState, useRef, useEffect } from "react";
+import { useLocation } from "wouter";
 import { processReceiptImage } from "@/lib/receiptImageProcessor";
 import { loadGoogleMapsWithPlaces } from "@/lib/googleMapsLoader";
 
 export function ReceiptScannerTesseract() {
+  const [, setLocation] = useLocation();
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
@@ -204,7 +206,7 @@ export function ReceiptScannerTesseract() {
       setSubmitSuccess(true);
       toast.success("Order created successfully!");
 
-      // Reset form after 2 seconds
+      // Reset form and navigate to Order Tracking after 1.5 seconds
       setTimeout(() => {
         setFormData({
           checkNumber: "",
@@ -218,7 +220,9 @@ export function ReceiptScannerTesseract() {
         setImagePreview(null);
         setSubmitSuccess(false);
         setPlaceCoordinates(null);
-      }, 2000);
+        // Navigate to Order Tracking tab
+        setLocation("/admin/order-tracking");
+      }, 1500);
     } catch (err: any) {
       setError(err.message || "Failed to create order");
     } finally {
