@@ -53,10 +53,10 @@ export default function DriverDashboard() {
   const [returnTimeSeconds, setReturnTimeSeconds] = useState<number>(0);
   const [isTimerRunning, setIsTimerRunning] = useState<boolean>(false);
   
-  // GPS Tracking
+  // GPS Tracking - Enable immediately when driver logs in
   const { position, permissionDenied, isTracking, gpsError } = useGeolocation(
     currentDriverId?.toString(),
-    isLoggedIn && driverStatus === "online"
+    isLoggedIn
   );
   
   // Get stored session token from localStorage on mount
