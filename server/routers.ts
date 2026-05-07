@@ -7,6 +7,7 @@ import { convertOntarioTimeToUTC } from './timezoneHelper';
 import * as db from './db';
 import { getDb } from './db';
 import { createNotification } from './notifications';
+import { drivers } from '../drizzle/schema';
 
 export const appRouter = router({
   places: router({
@@ -594,6 +595,30 @@ export const appRouter = router({
         } catch (error) {
           console.error('[drivers.getReturnTime] Error:', error);
           throw new Error(`Failed to get return time: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+      }),
+
+    updateLocation: publicProcedure
+      .input(z.object({
+        driverId: z.number(),
+        latitude: z.number(),
+        longitude: z.number(),
+      }))
+      .mutation(async ({ input }) => {
+        try {
+          const result = await getDb()
+            .update(drivers)
+            .set({
+              latitude: input.latitude,
+              longitude: input.longitude,
+              locationUpdatedAt: new Date(),
+            })
+            .where(eq(drivers.id, input.driverId))
+            .execute();
+          return { success: true, latitude: input.latitude, longitude: input.longitude };
+        } catch (error) {
+          console.error('[drivers.updateLocation] Error:', error);
+          throw new Error(`Failed to update driver location: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
       }),
   }),

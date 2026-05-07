@@ -9,8 +9,9 @@ interface GeolocationPosition {
 export function useGeolocation(driverId: string | undefined, enabled: boolean = true) {
   const [position, setPosition] = useState<GeolocationPosition | null>(null);
   const [permissionDenied, setPermissionDenied] = useState(false);
+  const [isTracking, setIsTracking] = useState(false);
   const watchIdRef = useRef<number | null>(null);
-  const updateMutation = trpc.gps.updateDriverPosition.useMutation();
+  const updateMutation = trpc.drivers.updateLocation.useMutation();
 
   useEffect(() => {
     if (!enabled || !driverId || !navigator.geolocation) {
@@ -23,10 +24,11 @@ export function useGeolocation(driverId: string | undefined, enabled: boolean = 
         const { latitude, longitude } = pos.coords;
         setPosition({ latitude, longitude });
         setPermissionDenied(false);
+        setIsTracking(true);
 
         // Send initial position
         updateMutation.mutate({
-          driverId,
+          driverId: parseInt(driverId),
           latitude,
           longitude,
         });
@@ -39,7 +41,7 @@ export function useGeolocation(driverId: string | undefined, enabled: boolean = 
 
             // Send position update
             updateMutation.mutate({
-              driverId,
+              driverId: parseInt(driverId),
               latitude,
               longitude,
             });
@@ -48,6 +50,7 @@ export function useGeolocation(driverId: string | undefined, enabled: boolean = 
             console.error('[useGeolocation] Error:', error);
             if (error.code === error.PERMISSION_DENIED) {
               setPermissionDenied(true);
+              setIsTracking(false);
             }
           },
           {
@@ -61,6 +64,7 @@ export function useGeolocation(driverId: string | undefined, enabled: boolean = 
         console.error('[useGeolocation] Permission error:', error);
         if (error.code === error.PERMISSION_DENIED) {
           setPermissionDenied(true);
+          setIsTracking(false);
         }
       }
     );
@@ -75,6 +79,6 @@ export function useGeolocation(driverId: string | undefined, enabled: boolean = 
   return {
     position,
     permissionDenied,
-    isTracking: position !== null && !permissionDenied,
+    isTracking,
   };
 }

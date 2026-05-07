@@ -299,6 +299,30 @@ export default function OrderTrackingWithMap() {
                   },
                 });
                 
+                // Add driver markers with GPS location or restaurant location
+                activeDrivers.forEach((driver: any) => {
+                  const driverLocation = {
+                    lat: driver.latitude || RESTAURANT_ADDRESS.lat,
+                    lng: driver.longitude || RESTAURANT_ADDRESS.lng,
+                  };
+                  
+                  const driverMarker = new google.maps.Marker({
+                    map,
+                    position: driverLocation,
+                    title: `${driver.name} (Driver)`,
+                    icon: {
+                      path: google.maps.SymbolPath.CIRCLE,
+                      scale: 12,
+                      fillColor: "#8b5cf6",
+                      fillOpacity: 1,
+                      strokeColor: "white",
+                      strokeWeight: 2,
+                    },
+                  });
+                  
+                  markersRef.current.push(driverMarker);
+                });
+                
                 // Recreate all order markers from geocoded locations
                 Object.entries(geocodedLocations).forEach(([orderId, location]) => {
                   const order = orders.find((o: any) => o.id === parseInt(orderId));
@@ -639,6 +663,30 @@ onMapReady={(map) => {
               strokeColor: "white",
               strokeWeight: 2,
             },
+          });
+          
+          // Add driver markers with GPS location or restaurant location
+          activeDrivers.forEach((driver: any) => {
+            const driverLocation = {
+              lat: driver.latitude || RESTAURANT_ADDRESS.lat,
+              lng: driver.longitude || RESTAURANT_ADDRESS.lng,
+            };
+            
+            const driverMarker = new google.maps.Marker({
+              map,
+              position: driverLocation,
+              title: `${driver.name} (Driver)`,
+              icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 12,
+                fillColor: "#8b5cf6",
+                fillOpacity: 1,
+                strokeColor: "white",
+                strokeWeight: 2,
+              },
+            });
+            
+            fullscreenMarkersRef.current.push(driverMarker);
           });
           
           // Add all order markers from geocoded locations
