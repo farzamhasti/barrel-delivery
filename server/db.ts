@@ -308,19 +308,31 @@ export async function getTodayOrdersWithItems(dateStr?: string) {
     return [];
   }
   
-  // Get the requested date or today
-  let targetDate: Date;
+  // Determine the target date
+  let year: number, month: number, day: number;
   if (dateStr) {
-    const [year, month, day] = dateStr.split('-').map(Number);
-    // Create a UTC date at midnight for the requested date
-    targetDate = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
+    const [y, m, d] = dateStr.split('-').map(Number);
+    year = y;
+    month = m;
+    day = d;
   } else {
-    targetDate = new Date();
+    // Get today in Toronto timezone
+    const now = new Date();
+    const torontoFormatter = new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/Toronto",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+    const parts = torontoFormatter.formatToParts(now);
+    year = parseInt(parts.find((p) => p.type === "year")?.value || "2024");
+    month = parseInt(parts.find((p) => p.type === "month")?.value || "1");
+    day = parseInt(parts.find((p) => p.type === "day")?.value || "1");
   }
   
-  // Get Toronto timezone offset by formatting a known UTC time and comparing
-  // Use a reference UTC time (noon UTC) to calculate the offset
-  const referenceUTC = new Date(Date.UTC(2026, 0, 1, 12, 0, 0, 0)); // Jan 1, 2026 noon UTC
+  // Calculate Toronto timezone offset using a reference date
+  // Format a known UTC time in Toronto timezone to determine the offset
+  const testUTC = new Date(Date.UTC(year, month - 1, day, 12, 0, 0, 0)); // Noon UTC on target date
   const torontoFormatter = new Intl.DateTimeFormat("en-US", {
     timeZone: "America/Toronto",
     year: "numeric",
@@ -332,23 +344,16 @@ export async function getTodayOrdersWithItems(dateStr?: string) {
     hour12: false,
   });
   
-  const torontoParts = torontoFormatter.formatToParts(referenceUTC);
-  const refYear = parseInt(torontoParts.find((p) => p.type === "year")?.value || "2026");
-  const refMonth = parseInt(torontoParts.find((p) => p.type === "month")?.value || "1");
-  const refDay = parseInt(torontoParts.find((p) => p.type === "day")?.value || "1");
-  const refHour = parseInt(torontoParts.find((p) => p.type === "hour")?.value || "0");
-  const refMinute = parseInt(torontoParts.find((p) => p.type === "minute")?.value || "0");
+  const torontoParts = torontoFormatter.formatToParts(testUTC);
+  const torontoYear = parseInt(torontoParts.find((p) => p.type === "year")?.value || "2024");
+  const torontoMonth = parseInt(torontoParts.find((p) => p.type === "month")?.value || "1");
+  const torontoDay = parseInt(torontoParts.find((p) => p.type === "day")?.value || "1");
+  const torontoHour = parseInt(torontoParts.find((p) => p.type === "hour")?.value || "0");
+  const torontoMinute = parseInt(torontoParts.find((p) => p.type === "minute")?.value || "0");
   
-  // Calculate offset: UTC time - Toronto local time
-  const torontoRefMs = new Date(refYear, refMonth - 1, refDay, refHour, refMinute, 0, 0).getTime();
-  const offsetMs = referenceUTC.getTime() - torontoRefMs;
-  
-  // Now get the target date in Toronto timezone
-  const targetDateFormatter = torontoFormatter;
-  const targetParts = targetDateFormatter.formatToParts(targetDate);
-  const year = parseInt(targetParts.find((p) => p.type === "year")?.value || "2024");
-  const month = parseInt(targetParts.find((p) => p.type === "month")?.value || "1");
-  const day = parseInt(targetParts.find((p) => p.type === "day")?.value || "1");
+  // Calculate the offset: how many milliseconds to add to Toronto local time to get UTC
+  const torontoLocalMs = new Date(torontoYear, torontoMonth - 1, torontoDay, torontoHour, torontoMinute, 0, 0).getTime();
+  const offsetMs = testUTC.getTime() - torontoLocalMs;
   
   // Start of day in UTC: midnight Toronto time + offset
   const midnightTorontoMs = new Date(year, month - 1, day, 0, 0, 0, 0).getTime();
@@ -356,9 +361,8 @@ export async function getTodayOrdersWithItems(dateStr?: string) {
   const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000);
   
   console.log('[getTodayOrdersWithItems] Timezone calculation:', {
-    torontoDate: `${year}-${month}-${day}`,
+    targetDate: `${year}-${month}-${day}`,
     offsetMs,
-    targetDateUTC: targetDate.toISOString(),
     requestedDate: dateStr,
     startOfDayUTC: startOfDay.toISOString(),
     endOfDayUTC: endOfDay.toISOString(),
