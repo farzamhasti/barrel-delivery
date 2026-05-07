@@ -33,9 +33,10 @@ function DriverRowWithTimer({ driver, hasOnTheWayOrders }: { driver: any; hasOnT
   const { displayTime, remainingSeconds } = useCountdownTimer(driver.estimatedReturnTime, driver.id);
   const { timerData } = useTimerStartTime();
   
-  // Show timer if there's active timer data for this driver (not dependent on server data)
-  // This ensures timer continues running even when driver data is refetched
-  const shouldShowTimer = timerData[driver.id] && remainingSeconds > 0;
+  // Show timer only if: (1) timer exists in context AND (2) server still has estimatedReturnTime set
+  // This ensures timer stops when driver clicks Stop (estimatedReturnTime becomes null)
+  // and continues when orders are delivered (server data persists)
+  const shouldShowTimer = timerData[driver.id] && driver.estimatedReturnTime && driver.estimatedReturnTime > 0 && remainingSeconds > 0;
   
   return (
     <tr className="border-b border-border hover:bg-muted/30">

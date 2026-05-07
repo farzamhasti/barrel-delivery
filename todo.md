@@ -1785,3 +1785,14 @@ These features are documented for future enhancement but are not required for th
 - [x] Timer disappears from all dashboard tables when Stop is clicked
 - [x] Timer reappears in dashboards when Calculate Return Time is clicked again
 - [x] Verified dev server running with Stop button fix
+
+## Phase 54: Fix Timer Stop/Start in Dashboard Tables
+- [x] Updated shouldShowTimer logic to check BOTH context AND server data
+- [x] Timer now stops in dashboards when driver clicks Stop (estimatedReturnTime becomes null)
+- [x] Timer now starts in dashboards when driver clicks Calculate Return Time
+- [x] Timer continues running through order deliveries (server data persists)
+- [x] Updated KitchenDashboard shouldShowTimer condition
+- [x] Updated OrderTrackingWithMap shouldShowTimer condition
+- [x] Updated Dashboard shouldShowTimer condition
+- [x] Updated HeaderDriversTable shouldShowTimer condition
+- [x] Verified dev server running with complete fix
