@@ -206,7 +206,7 @@ export function ReceiptScannerTesseract() {
       setSubmitSuccess(true);
       toast.success("Order created successfully!");
 
-      // Reset form and navigate to Order Tracking after 1.5 seconds
+      // Reset form after 1.5 seconds, stay on New Order tab
       setTimeout(() => {
         setFormData({
           checkNumber: "",
@@ -220,8 +220,6 @@ export function ReceiptScannerTesseract() {
         setImagePreview(null);
         setSubmitSuccess(false);
         setPlaceCoordinates(null);
-        // Navigate to Order Tracking tab
-        setLocation("/admin/order-tracking");
       }, 1500);
     } catch (err: any) {
       setError(err.message || "Failed to create order");
