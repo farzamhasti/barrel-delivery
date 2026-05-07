@@ -109,14 +109,44 @@ export default function DriverDashboard() {
       setLicenseNumber("");
       setLoginError("");
       
-      // Request GPS permission when driver logs in
+      // Force GPS permission request on login - always request fresh
+      console.log('[GPS] Login successful - requesting location permission...');
       if (navigator.geolocation) {
+        // Stop any existing watch to reset state
+        if (window.gpsWatchId) {
+          navigator.geolocation.clearWatch(window.gpsWatchId);
+          window.gpsWatchId = null;
+        }
+        
+        // Request fresh location - this triggers permission popup
         navigator.geolocation.getCurrentPosition(
           (position) => {
-            console.log('GPS permission granted, location:', position.coords);
+            console.log('[GPS] Permission granted on login, location:', position.coords);
+            // Start continuous tracking after permission granted
+            if (window.gpsWatchId) {
+              navigator.geolocation.clearWatch(window.gpsWatchId);
+            }
+            window.gpsWatchId = navigator.geolocation.watchPosition(
+              (pos) => {
+                console.log('[GPS] Location updated:', pos.coords);
+              },
+              (err) => {
+                console.error('[GPS] Tracking error:', err.message);
+              },
+              {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 5000
+              }
+            );
           },
           (error) => {
-            console.log('GPS permission denied or error:', error.message);
+            console.log('[GPS] Permission denied or error on login:', error.message);
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
           }
         );
       }

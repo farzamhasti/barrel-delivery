@@ -620,8 +620,8 @@ export const appRouter = router({
           const result = await database
             .update(drivers)
             .set({
-              latitude: input.latitude,
-              longitude: input.longitude,
+              latitude: input.latitude?.toString() || null,
+              longitude: input.longitude?.toString() || null,
               locationUpdatedAt: new Date(),
             })
             .where(eq(drivers.id, input.driverId))
