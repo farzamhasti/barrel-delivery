@@ -1842,3 +1842,10 @@ These features are documented for future enhancement but are not required for th
 - [ ] Test GPS permission request when driver logs in
 - [ ] Verify driver location updates in real-time on maps
 - [ ] Confirm GPS location persists and displays correctly across dashboards
+- [x] Add drivers.updateLocation endpoint to store GPS positions
+- [x] Add drivers.getActiveLocations endpoint to retrieve active driver positions
+- [x] Store only latest position per driver (no history)
+- [x] Add GPS permission request when driver logs in
+- [ ] Test GPS permission flow in browser
+- [ ] Verify driver location updates in real-time
+- [ ] Confirm locations display correctly on tracking map

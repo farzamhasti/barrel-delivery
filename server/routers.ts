@@ -621,6 +621,30 @@ export const appRouter = router({
           throw new Error(`Failed to update driver location: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
       }),
+
+    getActiveLocations: publicProcedure
+      .query(async () => {
+        try {
+          const database = await getDb();
+          if (!database) throw new Error('Database connection failed');
+          const { drivers: driversTable } = await import('../drizzle/schema');
+          const result = await database
+            .select({
+              id: driversTable.id,
+              name: driversTable.name,
+              latitude: driversTable.latitude,
+              longitude: driversTable.longitude,
+              status: driversTable.status,
+            })
+            .from(driversTable)
+            .where(eq(driversTable.status, 'online'))
+            .execute();
+          return result;
+        } catch (error) {
+          console.error('[drivers.getActiveLocations] Error:', error);
+          throw new Error(`Failed to get active driver locations: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+      }),
   }),
 
   system: router({

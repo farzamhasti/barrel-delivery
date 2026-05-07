@@ -70,6 +70,18 @@ export default function DriverDashboard() {
       const storedId = localStorage.getItem("driver_id");
       if (storedName) setLoggedInDriverName(storedName);
       if (storedId) setCurrentDriverId(parseInt(storedId));
+      
+      // Request GPS permission when driver logs in
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            console.log('GPS permission granted, location:', position.coords);
+          },
+          (error) => {
+            console.log('GPS permission denied or error:', error.message);
+          }
+        );
+      }
     }
   }, []);
   
@@ -86,6 +98,18 @@ export default function DriverDashboard() {
       setDriverName("");
       setLicenseNumber("");
       setLoginError("");
+      
+      // Request GPS permission when driver logs in
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            console.log('GPS permission granted, location:', position.coords);
+          },
+          (error) => {
+            console.log('GPS permission denied or error:', error.message);
+          }
+        );
+      }
     },
     onError: (error: any) => {
       setLoginError(error.message || "Login failed. Please check your credentials.");
