@@ -125,7 +125,7 @@ export default function KitchenDashboard() {
     
     return (
       <tr className="border-b border-border hover:bg-muted/30">
-        <td className="py-2 px-3 font-bold text-base text-foreground">{driver.name}</td>
+        <td className="py-2 px-3" style={{fontWeight: '900', fontSize: '16px', color: 'inherit'}}>{driver.name}</td>
         <td className="py-2 px-3">
           <Badge className="bg-green-100 text-green-800 text-xs">Online</Badge>
         </td>
