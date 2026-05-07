@@ -1765,3 +1765,8 @@ These features are documented for future enhancement but are not required for th
 - [x] Fix timer display in Order Tracking drivers table
 - [x] Fix timer display in Kitchen Dashboard drivers table
 - [x] Verify timer behavior on driver's own page
+- [x] Add drivers.list invalidation to DriverDashboard updateOrderStatusMutation
+- [x] Add drivers.list invalidation to KitchenDashboard updateStatusMutation
+- [x] Add drivers.list invalidation to invalidateOrderCache function
+- [x] Create and run timer invalidation tests (3 tests passing)
+- [x] Verify timer continues after order is marked as delivered (cache invalidation fix complete)

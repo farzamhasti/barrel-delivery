@@ -106,6 +106,8 @@ export default function DriverDashboard() {
     onSuccess: () => {
       // Invalidate delivery count so statistics update in real-time
       utils.drivers.getDeliveredOrdersCountByDate.invalidate();
+      // Invalidate drivers list so dashboards refresh driver data (including estimatedReturnTime)
+      utils.drivers.list.invalidate();
       // Also refetch orders to update the tabs
       refetchOrders();
     },

@@ -17,6 +17,10 @@ export function invalidateOrderCache(utils: ReturnType<typeof trpc.useUtils>) {
   // This is a catch-all that invalidates any getById query
   utils.orders.getWithItems.invalidate();
 
+  // Invalidate drivers list so timers continue to display after order status changes
+  // When an order is marked as delivered, the driver's estimatedReturnTime should remain visible
+  utils.drivers.list.invalidate();
+
   // Note: customers doesn't have a list query, but individual customer updates
   // will be caught by order query invalidation
 }

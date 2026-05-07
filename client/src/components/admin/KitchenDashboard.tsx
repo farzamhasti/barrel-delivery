@@ -56,7 +56,10 @@ export default function KitchenDashboard() {
       toast.success("Order marked as ready!");
       // Immediately invalidate the cache and refetch
       await utils.orders.getTodayWithItems.invalidate();
+      // Invalidate drivers list so timer continues to display after order status changes
+      await utils.drivers.list.invalidate();
       await refetch();
+      await refetchDrivers();
     },
     onError: (error) => {
       const errorMsg = error?.message || "Failed to update order status";
