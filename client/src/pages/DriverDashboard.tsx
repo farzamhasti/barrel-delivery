@@ -70,20 +70,30 @@ export default function DriverDashboard() {
       const storedId = localStorage.getItem("driver_id");
       if (storedName) setLoggedInDriverName(storedName);
       if (storedId) setCurrentDriverId(parseInt(storedId));
-      
-      // Request GPS permission when driver logs in
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            console.log('GPS permission granted, location:', position.coords);
-          },
-          (error) => {
-            console.log('GPS permission denied or error:', error.message);
-          }
-        );
-      }
     }
   }, []);
+
+  // Request GPS permission immediately when dashboard loads
+  useEffect(() => {
+    if (!isLoggedIn || !navigator.geolocation) {
+      return;
+    }
+    
+    // Trigger GPS permission popup immediately
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        console.log('[GPS] Permission granted, location:', position.coords);
+      },
+      (error) => {
+        console.log('[GPS] Permission denied or error:', error.message);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
+    );
+  }, [isLoggedIn]);
   
   // Real driver login mutation
   const loginMutation = trpc.drivers.login.useMutation({
