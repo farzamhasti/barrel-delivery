@@ -7,7 +7,6 @@ import { convertOntarioTimeToUTC } from './timezoneHelper';
 import * as db from './db';
 import { getDb } from './db';
 import { createNotification } from './notifications';
-import { drivers } from '../drizzle/schema';
 
 export const appRouter = router({
   places: router({
@@ -595,65 +594,6 @@ export const appRouter = router({
         } catch (error) {
           console.error('[drivers.getReturnTime] Error:', error);
           throw new Error(`Failed to get return time: ${error instanceof Error ? error.message : 'Unknown error'}`);
-        }
-      }),
-
-    updateLocation: publicProcedure
-      .input(z.object({
-        driverId: z.number(),
-        latitude: z.number(),
-        longitude: z.number(),
-      }))
-      .mutation(async ({ input }) => {
-        try {
-          const RESTAURANT_LAT = 42.9849;
-          const RESTAURANT_LNG = -81.2453;
-          
-          if (input.latitude === RESTAURANT_LAT && input.longitude === RESTAURANT_LNG) {
-            console.warn('[drivers.updateLocation] Rejecting restaurant coordinates');
-            throw new Error('Location matches restaurant. Provide real GPS coordinates.');
-          }
-          
-          const database = await getDb();
-          if (!database) throw new Error('Database connection failed');
-          
-          const result = await database
-            .update(drivers)
-            .set({
-              latitude: input.latitude?.toString() || null,
-              longitude: input.longitude?.toString() || null,
-              locationUpdatedAt: new Date(),
-            })
-            .where(eq(drivers.id, input.driverId))
-            .execute();
-          return { success: true, latitude: input.latitude, longitude: input.longitude };
-        } catch (error) {
-          console.error('[drivers.updateLocation] Error:', error);
-          throw new Error(`Failed to update driver location: ${error instanceof Error ? error.message : 'Unknown error'}`);
-        }
-      }),
-
-    getActiveLocations: publicProcedure
-      .query(async () => {
-        try {
-          const database = await getDb();
-          if (!database) throw new Error('Database connection failed');
-          const { drivers: driversTable } = await import('../drizzle/schema');
-          const result = await database
-            .select({
-              id: driversTable.id,
-              name: driversTable.name,
-              latitude: driversTable.latitude,
-              longitude: driversTable.longitude,
-              status: driversTable.status,
-            })
-            .from(driversTable)
-            .where(eq(driversTable.status, 'online'))
-            .execute();
-          return result;
-        } catch (error) {
-          console.error('[drivers.getActiveLocations] Error:', error);
-          throw new Error(`Failed to get active driver locations: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
       }),
   }),

@@ -53,10 +53,10 @@ export default function DriverDashboard() {
   const [returnTimeSeconds, setReturnTimeSeconds] = useState<number>(0);
   const [isTimerRunning, setIsTimerRunning] = useState<boolean>(false);
   
-  // GPS Tracking - Enable immediately when driver logs in
-  const { position, permissionDenied, isTracking, gpsError } = useGeolocation(
+  // GPS Tracking
+  const { position, permissionDenied, isTracking } = useGeolocation(
     currentDriverId?.toString(),
-    isLoggedIn
+    isLoggedIn && driverStatus === "online"
   );
   
   // Get stored session token from localStorage on mount
@@ -72,9 +72,6 @@ export default function DriverDashboard() {
       if (storedId) setCurrentDriverId(parseInt(storedId));
     }
   }, []);
-
-  // GPS permission is requested in loginMutation.onSuccess
-  // No need for redundant permission request here - it causes mobile hang
   
   // Real driver login mutation
   const loginMutation = trpc.drivers.login.useMutation({
@@ -89,25 +86,6 @@ export default function DriverDashboard() {
       setDriverName("");
       setLicenseNumber("");
       setLoginError("");
-      
-      // Request GPS permission on login
-      // The useGeolocation hook will handle continuous tracking with watchPosition
-      console.log('[GPS] Login successful - requesting location permission...');
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            console.log('[GPS] Permission granted on login');
-          },
-          (error) => {
-            console.log('[GPS] Permission denied or error on login:', error.message);
-          },
-          {
-            enableHighAccuracy: true,
-            timeout: 30000,
-            maximumAge: 0
-          }
-        );
-      }
     },
     onError: (error: any) => {
       setLoginError(error.message || "Login failed. Please check your credentials.");
@@ -140,20 +118,24 @@ export default function DriverDashboard() {
     },
   });
   
-  // Get assigned orders for today - fetch on demand instead of polling
+  // Get assigned orders for today with real-time polling
   const { data: assignedOrdersRaw = [], refetch: refetchOrders } = trpc.orders.getTodayWithItems.useQuery(
     currentDriverId ? { driverId: currentDriverId } : undefined,
     { 
       enabled: !!sessionToken && !!currentDriverId,
-      // Disabled aggressive polling to prevent mobile hang
-      // Use manual refetch when needed instead
+      refetchInterval: 1000, // Refetch every 1 second for real-time updates
+      refetchIntervalInBackground: true, // Continue refetching even when tab is not focused
       retry: 2,
       retryDelay: 1000,
     }
   );
   
-  // Refetch orders when driver marks one as delivered
-  // No automatic polling to prevent mobile hang
+  // Log polling activity
+  useEffect(() => {
+    if (currentDriverId) {
+      console.log('[DriverDashboard] Polling started for driver:', currentDriverId);
+    }
+  }, [currentDriverId]);
   const assignedOrders = (assignedOrdersRaw as any) || [];
   
   // Log when orders change
@@ -396,14 +378,6 @@ export default function DriverDashboard() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-8 flex-1 overflow-y-auto">
-        {/* GPS Error Message */}
-        {gpsError && (
-          <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded mb-6">
-            <p className="font-semibold">Location Access Required</p>
-            <p className="text-sm mt-1">{gpsError}</p>
-          </div>
-        )}
-        
         {/* Status, Statistics, Return Time, and Map Section - 2x2 Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Status Section */}

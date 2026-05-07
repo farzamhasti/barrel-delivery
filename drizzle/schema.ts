@@ -29,9 +29,6 @@ export const drivers = mysqlTable("drivers", {
   estimatedReturnTime: int("estimated_return_time"),
   estimatedReturnTimeUpdatedAt: timestamp("estimated_return_time_updated_at"),
   timerStartTime: bigint("timer_start_time", { mode: 'number' }), // Milliseconds since epoch when timer was started
-  latitude: decimal("latitude", { precision: 10, scale: 6 }), // Driver's current GPS latitude
-  longitude: decimal("longitude", { precision: 10, scale: 6 }), // Driver's current GPS longitude
-  locationUpdatedAt: timestamp("location_updated_at"), // Last time driver location was updated
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
