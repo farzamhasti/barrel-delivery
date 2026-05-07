@@ -1758,3 +1758,10 @@ These features are documented for future enhancement but are not required for th
 - [x] Ensure date filtering uses Toronto timezone consistently for all date requests
 - [x] Apply timezone offset to all date ranges, not just current date queries
 - [x] Verify orders display correctly both in development and production
+
+## Phase 52: Fix Timer Behavior on Order Delivery
+- [x] Remove logic that stops timer when individual orders are marked as delivered
+- [x] Ensure timer continues running based on driver's estimated return time only
+- [x] Fix timer display in Order Tracking drivers table
+- [x] Fix timer display in Kitchen Dashboard drivers table
+- [x] Verify timer behavior on driver's own page

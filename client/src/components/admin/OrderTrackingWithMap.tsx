@@ -31,8 +31,8 @@ function formatReturnTime(seconds: number | null | undefined): string {
 function DriverRowWithTimer({ driver, hasOnTheWayOrders }: { driver: any; hasOnTheWayOrders: boolean }) {
   const { displayTime } = useCountdownTimer(driver.estimatedReturnTime, driver.id);
   
-  // Only show timer if driver has on_the_way orders AND has set estimated return time
-  const shouldShowTimer = hasOnTheWayOrders && driver.estimatedReturnTime && driver.estimatedReturnTime > 0;
+  // Show timer if driver has set estimated return time (regardless of order status)
+  const shouldShowTimer = driver.estimatedReturnTime && driver.estimatedReturnTime > 0;
   
   return (
     <tr className="border-b border-border hover:bg-muted/30">
