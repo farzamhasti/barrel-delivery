@@ -6,9 +6,16 @@ import { Download } from "lucide-react";
 
 interface GISGeographicDistributionProps {
   data?: {
-    downtown: number;
-    centralPark: number;
-    both: number;
+    downtown?: number;
+    centralPark?: number;
+    both?: number;
+    clusters?: Array<{
+      lat: number;
+      lng: number;
+      orders: Array<{ id: number; area?: string; customerLatitude?: any; customerLongitude?: any }>;
+      radius: number;
+    }>;
+    areaMetrics?: Record<string, { total: number; percentage: number; avgPerDay: number }>;
   };
 }
 
@@ -56,15 +63,41 @@ export function GISGeographicDistribution({ data }: GISGeographicDistributionPro
 
     L.control.scale().addTo(map.current);
 
-    // Add area polygons with choropleth coloring
+    // Add order clusters as circle markers
+    if (data?.clusters && data.clusters.length > 0) {
+      data.clusters.forEach((cluster) => {
+        const clusterSize = cluster.orders.length;
+        const areaColors: Record<string, string> = {
+          "Downtown": "#1e40af",
+          "Central Park": "#16a34a",
+          "Both": "#ea580c",
+        };
+        
+        const dominantArea = cluster.orders[0]?.area || "Unknown";
+        const color = areaColors[dominantArea] || "#6b7280";
+        
+        L.circleMarker([cluster.lat, cluster.lng], {
+          radius: Math.min(5 + Math.sqrt(clusterSize) * 2, 20),
+          fillColor: color,
+          color: color,
+          weight: 2,
+          opacity: 0.8,
+          fillOpacity: 0.6,
+        })
+          .addTo(map.current!)
+          .bindPopup(`<strong>${dominantArea}</strong><br/>Orders in cluster: ${clusterSize}`);
+      });
+    }
+
+    // Add area polygons with choropleth coloring (semi-transparent background)
     const totalOrders = (data?.downtown || 0) + (data?.centralPark || 0) + (data?.both || 0) || 1;
 
     // Downtown polygon
     L.polygon(AREA_BOUNDARIES.downtown, {
       color: "#1e40af",
-      weight: 2,
-      opacity: 0.8,
-      fillOpacity: Math.min(0.3 + (data?.downtown || 0) / (totalOrders * 2), 0.8),
+      weight: 1,
+      opacity: 0.3,
+      fillOpacity: Math.min(0.1 + (data?.downtown || 0) / (totalOrders * 4), 0.2),
       fillColor: "#1e40af",
     })
       .addTo(map.current!)
@@ -75,9 +108,9 @@ export function GISGeographicDistribution({ data }: GISGeographicDistributionPro
     // Central Park polygon
     L.polygon(AREA_BOUNDARIES.centralPark, {
       color: "#16a34a",
-      weight: 2,
-      opacity: 0.8,
-      fillOpacity: Math.min(0.3 + (data?.centralPark || 0) / (totalOrders * 2), 0.8),
+      weight: 1,
+      opacity: 0.3,
+      fillOpacity: Math.min(0.1 + (data?.centralPark || 0) / (totalOrders * 4), 0.2),
       fillColor: "#16a34a",
     })
       .addTo(map.current!)
@@ -88,9 +121,9 @@ export function GISGeographicDistribution({ data }: GISGeographicDistributionPro
     // Both polygon
     L.polygon(AREA_BOUNDARIES.both, {
       color: "#ea580c",
-      weight: 2,
-      opacity: 0.8,
-      fillOpacity: Math.min(0.3 + (data?.both || 0) / (totalOrders * 2), 0.8),
+      weight: 1,
+      opacity: 0.3,
+      fillOpacity: Math.min(0.1 + (data?.both || 0) / (totalOrders * 4), 0.2),
       fillColor: "#ea580c",
     })
       .addTo(map.current!)

@@ -42,6 +42,8 @@ export function AnalyticsSectionModalWithGIS({
       downtown: data.areaMetrics["Downtown"]?.total || 0,
       centralPark: data.areaMetrics["Central Park"]?.total || 0,
       both: data.areaMetrics["Both"]?.total || 0,
+      clusters: data.clusters,
+      areaMetrics: data.areaMetrics,
     };
   };
 
