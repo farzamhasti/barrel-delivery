@@ -255,6 +255,8 @@ export async function calculateDriverPerformance(startDate: Date, endDate: Date)
   const driversList = await db.select().from(drivers);
 
   const driverMetrics: Record<number, {
+    driverId: string;
+    driverName: string;
     totalDeliveries: number;
     avgDeliveryTime: number;
     onTimeRate: number;
@@ -292,6 +294,8 @@ export async function calculateDriverPerformance(startDate: Date, endDate: Date)
     const efficiencyScore = (onTimeRate * 0.5) + ((1 / avgDeliveryTime) * 100 * 0.5);
 
     driverMetrics[driver.id] = {
+      driverId: driver.id.toString(),
+      driverName: driver.name,
       totalDeliveries: driverOrders.length,
       avgDeliveryTime,
       onTimeRate,

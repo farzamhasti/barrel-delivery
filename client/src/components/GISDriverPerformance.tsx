@@ -48,7 +48,7 @@ export function GISDriverPerformance({ driverMetrics = {} }: GISDriverPerformanc
   // Build driver list with names and colors
   const driverList = Object.entries(driverMetrics).map(([driverId, metrics], index) => ({
     id: driverId,
-    name: metrics.driverId || `Driver ${driverId}`,
+    name: metrics.driverName || `Driver ${driverId}`,
     color: DRIVER_COLORS[index % DRIVER_COLORS.length],
     deliveries: metrics.totalDeliveries || 0,
     avgTime: metrics.avgDeliveryTime || 0,
