@@ -1179,3 +1179,34 @@ export const appRouter = router({
       }),
   }),
 });
+
+    // Phase 2: Spatial Intelligence
+    getSpatialAnalysis: publicProcedure
+      .input(z.object({
+        startDate: z.date().optional(),
+        endDate: z.date().optional(),
+        restaurantLat: z.number().default(42.90517),
+        restaurantLng: z.number().default(-78.92295),
+      }))
+      .query(async ({ input }) => {
+        try {
+          // For now, return empty spatial analysis
+          // In production, this would fetch orders and competitors from DB
+          return {
+            success: true,
+            gridCells: [],
+            competitors: [],
+            insights: [],
+            timestamp: new Date(),
+          };
+        } catch (error) {
+          console.error('[analytics.getSpatialAnalysis] Error:', error);
+          return {
+            success: false,
+            gridCells: [],
+            competitors: [],
+            insights: [],
+            error: error instanceof Error ? error.message : 'Unknown error',
+          };
+        }
+      }),
