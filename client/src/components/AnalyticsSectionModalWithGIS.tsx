@@ -33,7 +33,7 @@ export function AnalyticsSectionModalWithGIS({
   sectionType,
   data,
 }: AnalyticsSectionModalWithGISProps) {
-  const [activeView, setActiveView] = useState<ViewType>("google");
+  const [activeView, setActiveView] = useState<ViewType>("gis");
 
   const renderGISMap = () => {
     switch (sectionType) {
@@ -100,15 +100,6 @@ export function AnalyticsSectionModalWithGIS({
         {/* View Toggle */}
         <div className="flex gap-2 border-b pb-4">
           <Button
-            variant={activeView === "google" ? "default" : "outline"}
-            onClick={() => setActiveView("google")}
-            size="sm"
-            className="gap-2"
-          >
-            <MapIcon className="w-4 h-4" />
-            Google Maps
-          </Button>
-          <Button
             variant={activeView === "gis" ? "default" : "outline"}
             onClick={() => setActiveView("gis")}
             size="sm"
@@ -130,15 +121,6 @@ export function AnalyticsSectionModalWithGIS({
 
         {/* Content */}
         <div className="py-4">
-          {activeView === "google" && (
-            <div className="bg-gray-100 rounded-lg h-96 flex items-center justify-center">
-              <div className="text-center">
-                <MapIcon className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                <p className="text-gray-500">{title} - Google Maps View</p>
-              </div>
-            </div>
-          )}
-
           {activeView === "gis" && (
             <div className="space-y-4">
               {renderGISMap()}
