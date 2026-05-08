@@ -15,7 +15,7 @@ interface GISTimeAnalysisProps {
   };
 }
 
-const RESTAURANT_LOCATION = { lat: 43.2589, lng: -79.8711 };
+const RESTAURANT_LOCATION = { lat: 42.90517, lng: -78.92295 };
 
 const TIME_SLOTS = {
   morning: { label: "Morning (6-12)", color: "#fbbf24", range: [6, 12] },

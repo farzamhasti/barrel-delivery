@@ -14,7 +14,7 @@ interface GISDriverPerformanceProps {
   drivers?: Driver[];
 }
 
-const RESTAURANT_LOCATION = { lat: 43.2589, lng: -79.8711 };
+const RESTAURANT_LOCATION = { lat: 42.90517, lng: -78.92295 };
 
 const DRIVER_COLORS = [
   "#FF6B6B",

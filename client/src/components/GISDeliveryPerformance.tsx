@@ -10,7 +10,7 @@ interface GISDeliveryPerformanceProps {
   };
 }
 
-const RESTAURANT_LOCATION = { lat: 43.2589, lng: -79.8711 };
+const RESTAURANT_LOCATION = { lat: 42.90517, lng: -78.92295 };
 
 const AREA_BOUNDARIES = {
   downtown: [

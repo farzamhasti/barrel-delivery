@@ -14,7 +14,7 @@ interface GISGrowthOpportunitiesProps {
   zones?: GrowthZone[];
 }
 
-const RESTAURANT_LOCATION = { lat: 43.2589, lng: -79.8711 };
+const RESTAURANT_LOCATION = { lat: 42.90517, lng: -78.92295 };
 
 const getZoneColor = (avgTime: number) => {
   if (avgTime > 35) return "#dc2626"; // Red - high delivery time
