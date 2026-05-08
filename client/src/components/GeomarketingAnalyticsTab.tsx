@@ -21,18 +21,44 @@ export function GeomarketingAnalyticsTab() {
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [openSectionModal, setOpenSectionModal] = useState<string | null>(null);
 
-  // Fetch analytics data
-  const { data: analyticsData, isLoading } = trpc.analytics.getGeomarketingData.useQuery(
-    {
-      dateRange,
-      area: areaFilter === "all" ? undefined : areaFilter,
-      dates: dateRange === "daily" ? selectedDates : undefined,
-      months: dateRange === "monthly" ? selectedMonths : undefined,
-    },
-    {
-      enabled: true,
+  // Calculate date range for queries
+  const getDateRangeForQuery = () => {
+    if (dateRange === "daily") {
+      if (selectedDates.length === 0) return { startDate: new Date(), endDate: new Date() };
+      const dates = [...selectedDates].sort((a, b) => a.getTime() - b.getTime());
+      return {
+        startDate: new Date(dates[0].getFullYear(), dates[0].getMonth(), dates[0].getDate()),
+        endDate: new Date(dates[dates.length - 1].getFullYear(), dates[dates.length - 1].getMonth(), dates[dates.length - 1].getDate() + 1),
+      };
+    } else {
+      if (selectedMonths.length === 0) {
+        const now = new Date();
+        return {
+          startDate: new Date(now.getFullYear(), now.getMonth(), 1),
+          endDate: new Date(now.getFullYear(), now.getMonth() + 1, 1),
+        };
+      }
+      const months = [...selectedMonths].sort((a, b) => {
+        if (a.year !== b.year) return a.year - b.year;
+        return a.month - b.month;
+      });
+      return {
+        startDate: new Date(months[0].year, months[0].month, 1),
+        endDate: new Date(months[months.length - 1].year, months[months.length - 1].month + 1, 1),
+      };
     }
-  );
+  };
+
+  const dateRangeQuery = getDateRangeForQuery();
+
+  // Fetch analytics data for all 5 sections
+  const { data: geographicData, isLoading: geoLoading } = trpc.analytics.getGeographicDistribution.useQuery(dateRangeQuery);
+  const { data: timeData, isLoading: timeLoading } = trpc.analytics.getTimeAnalysis.useQuery(dateRangeQuery);
+  const { data: performanceData, isLoading: perfLoading } = trpc.analytics.getDeliveryPerformance.useQuery(dateRangeQuery);
+  const { data: driverData, isLoading: driverLoading } = trpc.analytics.getDriverPerformance.useQuery(dateRangeQuery);
+  const { data: growthData, isLoading: growthLoading } = trpc.analytics.getGrowthOpportunities.useQuery(dateRangeQuery);
+
+  const isLoading = geoLoading || timeLoading || perfLoading || driverLoading || growthLoading;
 
   const getDateRangeLabel = () => {
     if (dateRange === "daily") {
@@ -41,6 +67,21 @@ export function GeomarketingAnalyticsTab() {
       return `${selectedMonths.length} month${selectedMonths.length !== 1 ? "s" : ""}`;
     }
   };
+
+  // Get top area from geographic data
+  const getTopAreas = () => {
+    if (!geographicData?.areaMetrics) return { area1: 0, area2: 0, area3: 0 };
+    const areas = Object.entries(geographicData.areaMetrics)
+      .sort((a, b) => b[1].total - a[1].total)
+      .slice(0, 3);
+    return {
+      area1: areas[0]?.[1]?.total || 0,
+      area2: areas[1]?.[1]?.total || 0,
+      area3: areas[2]?.[1]?.total || 0,
+    };
+  };
+
+  const topAreas = getTopAreas();
 
   return (
     <div className="space-y-6">
@@ -163,21 +204,21 @@ export function GeomarketingAnalyticsTab() {
             <div className="grid grid-cols-3 gap-2 mt-4">
               <div className="bg-blue-50 rounded p-2 text-center">
                 <p className="text-lg font-bold text-blue-600">
-                  {analyticsData?.geographicStats?.downtown || 0}
+                  {topAreas.area1}
                 </p>
-                <p className="text-xs text-blue-700">Downtown</p>
+                <p className="text-xs text-blue-700">Top Area</p>
               </div>
               <div className="bg-green-50 rounded p-2 text-center">
                 <p className="text-lg font-bold text-green-600">
-                  {analyticsData?.geographicStats?.centralPark || 0}
+                  {topAreas.area2}
                 </p>
-                <p className="text-xs text-green-700">Central Park</p>
+                <p className="text-xs text-green-700">2nd Area</p>
               </div>
               <div className="bg-orange-50 rounded p-2 text-center">
                 <p className="text-lg font-bold text-orange-600">
-                  {analyticsData?.geographicStats?.both || 0}
+                  {topAreas.area3}
                 </p>
-                <p className="text-xs text-orange-700">Both</p>
+                <p className="text-xs text-orange-700">3rd Area</p>
               </div>
             </div>
           </CardContent>
@@ -199,7 +240,9 @@ export function GeomarketingAnalyticsTab() {
             <div className="bg-gray-100 rounded-lg h-48 flex items-center justify-center">
               <div className="text-center">
                 <BarChart3 className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                <p className="text-sm text-gray-500">Click to view details</p>
+                <p className="text-sm text-gray-500">
+                  {timeData?.peakHour ? `Peak Hour: ${timeData.peakHour}:00` : "Click to view details"}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -243,7 +286,11 @@ export function GeomarketingAnalyticsTab() {
             <div className="bg-gray-100 rounded-lg h-48 flex items-center justify-center">
               <div className="text-center">
                 <BarChart3 className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                <p className="text-sm text-gray-500">Click to view details</p>
+                <p className="text-sm text-gray-500">
+                  {driverData && Object.keys(driverData).length > 0 
+                    ? `${Object.keys(driverData).length} drivers` 
+                    : "Click to view details"}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -265,7 +312,9 @@ export function GeomarketingAnalyticsTab() {
             <div className="bg-gray-100 rounded-lg h-48 flex items-center justify-center">
               <div className="text-center">
                 <MapIcon className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                <p className="text-sm text-gray-500">Click to view details</p>
+                <p className="text-sm text-gray-500">
+                  {growthData?.topGrowthZones?.length ? `${growthData.topGrowthZones.length} zones` : "Click to view details"}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -291,7 +340,7 @@ export function GeomarketingAnalyticsTab() {
         title="Geographic Distribution"
         description="Heatmap of delivery locations and order volume by area"
         sectionType="geographic"
-        data={analyticsData}
+        data={geographicData}
       />
 
       <AnalyticsSectionModalWithGIS
@@ -300,7 +349,7 @@ export function GeomarketingAnalyticsTab() {
         title="Time Analysis"
         description="Order distribution by time of day and day of week"
         sectionType="time"
-        data={analyticsData}
+        data={timeData}
       />
 
       <AnalyticsSectionModalWithGIS
@@ -309,7 +358,7 @@ export function GeomarketingAnalyticsTab() {
         title="Delivery Performance"
         description="Delivery times by location and area"
         sectionType="performance"
-        data={analyticsData}
+        data={performanceData}
       />
 
       <AnalyticsSectionModalWithGIS
@@ -318,7 +367,7 @@ export function GeomarketingAnalyticsTab() {
         title="Driver Performance"
         description="Driver delivery locations and performance metrics"
         sectionType="driver"
-        data={analyticsData}
+        data={driverData}
       />
 
       <AnalyticsSectionModalWithGIS
@@ -327,7 +376,7 @@ export function GeomarketingAnalyticsTab() {
         title="Growth Opportunities"
         description="Identify areas for expansion and optimization"
         sectionType="growth"
-        data={analyticsData}
+        data={growthData}
       />
     </div>
   );

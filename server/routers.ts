@@ -7,6 +7,13 @@ import { convertOntarioTimeToUTC } from './timezoneHelper';
 import * as db from './db';
 import { getDb } from './db';
 import { createNotification } from './notifications';
+import {
+  calculateGeographicDistribution,
+  calculateTimeAnalysis,
+  calculateDeliveryPerformance,
+  calculateDriverPerformance,
+  calculateGrowthOpportunities,
+} from './geomarketing';
 
 export const appRouter = router({
   places: router({
@@ -974,28 +981,49 @@ export const appRouter = router({
   }),
 
   analytics: router({
-    getGeomarketingData: publicProcedure
+    getGeographicDistribution: publicProcedure
       .input(z.object({
-        dateRange: z.enum(["daily", "monthly"]),
-        area: z.enum(["Downtown", "Central Park", "Both"]).optional(),
-        dates: z.array(z.date()).optional(),
-        months: z.array(z.object({
-          year: z.number(),
-          month: z.number(),
-        })).optional(),
+        startDate: z.date(),
+        endDate: z.date(),
       }))
       .query(async ({ input }) => {
-        return {
-          geographicStats: {
-            downtown: 0,
-            centralPark: 0,
-            both: 0,
-          },
-          timeStats: [],
-          performanceStats: [],
-          driverStats: [],
-          growthOpportunities: [],
-        };
+        return await calculateGeographicDistribution(input.startDate, input.endDate);
+      }),
+    
+    getTimeAnalysis: publicProcedure
+      .input(z.object({
+        startDate: z.date(),
+        endDate: z.date(),
+      }))
+      .query(async ({ input }) => {
+        return await calculateTimeAnalysis(input.startDate, input.endDate);
+      }),
+    
+    getDeliveryPerformance: publicProcedure
+      .input(z.object({
+        startDate: z.date(),
+        endDate: z.date(),
+      }))
+      .query(async ({ input }) => {
+        return await calculateDeliveryPerformance(input.startDate, input.endDate);
+      }),
+    
+    getDriverPerformance: publicProcedure
+      .input(z.object({
+        startDate: z.date(),
+        endDate: z.date(),
+      }))
+      .query(async ({ input }) => {
+        return await calculateDriverPerformance(input.startDate, input.endDate);
+      }),
+    
+    getGrowthOpportunities: publicProcedure
+      .input(z.object({
+        startDate: z.date(),
+        endDate: z.date(),
+      }))
+      .query(async ({ input }) => {
+        return await calculateGrowthOpportunities(input.startDate, input.endDate);
       }),
   }),
   gps: router({

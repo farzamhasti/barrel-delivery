@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS geocoded_addresses (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  address TEXT NOT NULL,\n  latitude DECIMAL(10, 6) NOT NULL,\n  longitude DECIMAL(10, 6) NOT NULL,\n  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n  UNIQUE KEY unique_address (address(255))\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3vEgeGHWz6yFd3X.root --database GArd6gSmf3RbAbT5WtHac3 --execute CREATE TABLE IF NOT EXISTS geocoded_addresses (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  address TEXT NOT NULL,\n  latitude DECIMAL(10, 6) NOT NULL,\n  longitude DECIMAL(10, 6) NOT NULL,\n  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n  UNIQUE KEY unique_address (address(255))\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 478
+}

@@ -195,3 +195,16 @@ export const sentMessages = mysqlTable("sent_messages", {
 
 export type SentMessage = typeof sentMessages.$inferSelect;
 export type InsertSentMessage = typeof sentMessages.$inferInsert;
+
+
+// Geocoded Addresses Cache - for storing geocoding results
+export const geocodedAddresses = mysqlTable("geocoded_addresses", {
+  id: int("id").autoincrement().primaryKey(),
+  address: text("address").notNull().unique(),
+  latitude: decimal("latitude", { precision: 10, scale: 6 }).notNull(),
+  longitude: decimal("longitude", { precision: 10, scale: 6 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type GeocodedAddress = typeof geocodedAddresses.$inferSelect;
+export type InsertGeocodedAddress = typeof geocodedAddresses.$inferInsert;
