@@ -267,3 +267,100 @@ export const competitorRefreshLog = mysqlTable("competitor_refresh_log", {
 
 export type CompetitorRefreshLog = typeof competitorRefreshLog.$inferSelect;
 export type InsertCompetitorRefreshLog = typeof competitorRefreshLog.$inferInsert;
+
+
+// ============================================================================
+// PHASE 27: ADVANCED GEOMARKETING & SPATIAL COMPETITION ANALYSIS
+// ============================================================================
+
+// Spatial clusters - grid-based delivery hotspots
+export const spatialClusters = mysqlTable("spatial_clusters", {
+  id: int("id").autoincrement().primaryKey(),
+  gridCellId: varchar("grid_cell_id", { length: 100 }).notNull().unique(), // e.g., "grid_42.9_-78.9"
+  centroidLatitude: decimal("centroid_latitude", { precision: 10, scale: 6 }).notNull(),
+  centroidLongitude: decimal("centroid_longitude", { precision: 10, scale: 6 }).notNull(),
+  orderCount: int("order_count").default(0).notNull(),
+  avgDeliveryTimeMinutes: decimal("avg_delivery_time_minutes", { precision: 10, scale: 2 }),
+  zoneType: varchar("zone_type", { length: 50 }), // "underserved", "high_competition", "growing_demand", "efficient", "inefficient"
+  competitorCount: int("competitor_count").default(0),
+  lastUpdatedAt: timestamp("last_updated_at").defaultNow().onUpdateNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type SpatialCluster = typeof spatialClusters.$inferSelect;
+export type InsertSpatialCluster = typeof spatialClusters.$inferInsert;
+
+// Growth analysis - periodic scoring and trend analysis
+export const growthAnalysis = mysqlTable("growth_analysis", {
+  id: int("id").autoincrement().primaryKey(),
+  analysisId: varchar("analysis_id", { length: 100 }).notNull().unique(), // e.g., "growth_2026_05_week"
+  periodType: varchar("period_type", { length: 20 }).notNull(), // "daily", "weekly", "monthly"
+  periodStart: timestamp("period_start").notNull(),
+  periodEnd: timestamp("period_end").notNull(),
+  gridCellId: varchar("grid_cell_id", { length: 100 }).notNull(),
+  orderCount: int("order_count").default(0),
+  growthScore: decimal("growth_score", { precision: 10, scale: 4 }), // 0-1 scale
+  trend: varchar("trend", { length: 20 }), // "increasing", "decreasing", "stable"
+  competitorDensity: decimal("competitor_density", { precision: 10, scale: 4 }), // competitors per sq km
+  efficiencyRating: varchar("efficiency_rating", { length: 20 }), // "excellent", "good", "fair", "poor"
+  avgDeliveryTimeMinutes: decimal("avg_delivery_time_minutes", { precision: 10, scale: 2 }),
+  insights: text("insights"), // AI-generated insights
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type GrowthAnalysis = typeof growthAnalysis.$inferSelect;
+export type InsertGrowthAnalysis = typeof growthAnalysis.$inferInsert;
+
+// Delivery heatmap data - grid-based density and efficiency
+export const deliveryHeatmapData = mysqlTable("delivery_heatmap_data", {
+  id: int("id").autoincrement().primaryKey(),
+  gridCellId: varchar("grid_cell_id", { length: 100 }).notNull().unique(),
+  centroidLatitude: decimal("centroid_latitude", { precision: 10, scale: 6 }).notNull(),
+  centroidLongitude: decimal("centroid_longitude", { precision: 10, scale: 6 }).notNull(),
+  orderDensity: int("order_density").default(0), // orders per grid cell
+  avgDeliveryTimeMinutes: decimal("avg_delivery_time_minutes", { precision: 10, scale: 2 }),
+  efficiencyScore: decimal("efficiency_score", { precision: 10, scale: 4 }), // 0-1 scale (1 = 20min target)
+  competitorCount: int("competitor_count").default(0),
+  isUnderserved: boolean("is_underserved").default(false), // avg_delivery_time > 20 min
+  isHighCompetition: boolean("is_high_competition").default(false), // >= 3 competitors
+  isGrowingDemand: boolean("is_growing_demand").default(false), // 5+ orders, <=2 competitors, score > 0.6
+  lastUpdatedAt: timestamp("last_updated_at").defaultNow().onUpdateNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type DeliveryHeatmapData = typeof deliveryHeatmapData.$inferSelect;
+export type InsertDeliveryHeatmapData = typeof deliveryHeatmapData.$inferInsert;
+
+// Spatial analysis cache - store latest analysis results
+export const spatialAnalysisCache = mysqlTable("spatial_analysis_cache", {
+  id: int("id").autoincrement().primaryKey(),
+  cacheKey: varchar("cache_key", { length: 100 }).notNull().unique(), // e.g., "spatial_analysis_2026_05_08"
+  analysisType: varchar("analysis_type", { length: 50 }).notNull(), // "clusters", "growth", "heatmap", "full"
+  analysisData: text("analysis_data").notNull(), // JSON serialized analysis results
+  gridCellCount: int("grid_cell_count").default(0),
+  competitorCount: int("competitor_count").default(0),
+  analysisDurationSeconds: int("analysis_duration_seconds"),
+  expiresAt: timestamp("expires_at").notNull(), // 24 hours from creation
+  lastUpdatedAt: timestamp("last_updated_at").defaultNow().onUpdateNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type SpatialAnalysisCache = typeof spatialAnalysisCache.$inferSelect;
+export type InsertSpatialAnalysisCache = typeof spatialAnalysisCache.$inferInsert;
+
+// Spatial analysis job log - track background job execution
+export const spatialAnalysisJobLog = mysqlTable("spatial_analysis_job_log", {
+  id: int("id").autoincrement().primaryKey(),
+  jobType: varchar("job_type", { length: 50 }).notNull(), // "daily_clustering", "weekly_growth", "monthly_trends", "heatmap_generation"
+  jobStatus: varchar("job_status", { length: 20 }).notNull(), // "pending", "running", "completed", "failed"
+  startedAt: timestamp("started_at"),
+  completedAt: timestamp("completed_at"),
+  durationSeconds: int("duration_seconds"),
+  recordsProcessed: int("records_processed"),
+  errorMessage: text("error_message"),
+  nextScheduledRun: timestamp("next_scheduled_run"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type SpatialAnalysisJobLog = typeof spatialAnalysisJobLog.$inferSelect;
+export type InsertSpatialAnalysisJobLog = typeof spatialAnalysisJobLog.$inferInsert;
