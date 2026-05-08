@@ -1701,8 +1701,8 @@ export async function getDeliveryReport(startDate: Date, endDate: Date) {
       const waitTime = readyTime ? Math.floor((readyTime.getTime() - pendingTime.getTime()) / 1000) : 0;
       const readyWaitTime = onTheWayTime && readyTime ? Math.floor((onTheWayTime.getTime() - readyTime.getTime()) / 1000) : 0;
       const enRouteTime = deliveredTime && onTheWayTime ? Math.floor((deliveredTime.getTime() - onTheWayTime.getTime()) / 1000) : 0;
-      // Total time from order placement to ready (when driver picks up)
-      const totalTime = readyTime ? Math.floor((readyTime.getTime() - pendingTime.getTime()) / 1000) : 0;
+      // Total time from order placement to delivery
+      const totalTime = deliveredTime ? Math.floor((deliveredTime.getTime() - pendingTime.getTime()) / 1000) : 0;
 
       // Format delivery time in Ontario timezone
       const torontoFormatter = new Intl.DateTimeFormat("en-US", {
