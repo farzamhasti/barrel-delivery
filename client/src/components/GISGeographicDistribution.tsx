@@ -12,7 +12,7 @@ interface GISGeographicDistributionProps {
   };
 }
 
-const RESTAURANT_LOCATION = { lat: 42.9849, lng: -79.0504 };
+const RESTAURANT_LOCATION = { lat: 43.2589, lng: -79.8711 };
 
 // Approximate area boundaries for Fort Erie
 const AREA_BOUNDARIES = {

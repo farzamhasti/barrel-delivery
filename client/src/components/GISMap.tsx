@@ -11,7 +11,7 @@ interface GISMapProps {
 }
 
 // Fort Erie, ON coordinates (restaurant location)
-const RESTAURANT_LOCATION = { lat: 42.9849, lng: -79.0504 };
+const RESTAURANT_LOCATION = { lat: 43.2589, lng: -79.8711 };
 
 export function GISMap({ title, onMapReady, children }: GISMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
