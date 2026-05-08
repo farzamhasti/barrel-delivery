@@ -1177,8 +1177,6 @@ export const appRouter = router({
           return [];
         }
       }),
-  }),
-});
 
     // Phase 2: Spatial Intelligence
     getSpatialAnalysis: publicProcedure
@@ -1210,3 +1208,7 @@ export const appRouter = router({
           };
         }
       }),
+  }),
+});
+
+export type AppRouter = typeof appRouter;
