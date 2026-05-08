@@ -208,3 +208,62 @@ export const geocodedAddresses = mysqlTable("geocoded_addresses", {
 
 export type GeocodedAddress = typeof geocodedAddresses.$inferSelect;
 export type InsertGeocodedAddress = typeof geocodedAddresses.$inferInsert;
+
+
+// ============================================================================
+// PHASE 1: COMPETITOR INTEGRATION - MINIMAL SCHEMA
+// ============================================================================
+
+// Cached competitor data from OpenStreetMap/Overpass API
+export const competitors = mysqlTable("competitors", {
+  id: int("id").autoincrement().primaryKey(),
+  osmId: varchar("osm_id", { length: 50 }).notNull().unique(),
+  name: varchar("name", { length: 255 }).notNull(),
+  latitude: decimal("latitude", { precision: 10, scale: 6 }).notNull(),
+  longitude: decimal("longitude", { precision: 10, scale: 6 }).notNull(),
+  type: varchar("type", { length: 50 }).notNull(), // "restaurant", "fast_food", "cafe", "bar", "food_court", etc.
+  distanceFromRestaurantKm: decimal("distance_from_restaurant_km", { precision: 10, scale: 2 }),
+  address: varchar("address", { length: 500 }),
+  website: varchar("website", { length: 500 }),
+  phone: varchar("phone", { length: 20 }),
+  openingHours: varchar("opening_hours", { length: 500 }),
+  cachedAt: timestamp("cached_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Competitor = typeof competitors.$inferSelect;
+export type InsertCompetitor = typeof competitors.$inferInsert;
+
+// Competitor cache metadata - tracks refresh status and timing
+export const competitorCache = mysqlTable("competitor_cache", {
+  id: int("id").autoincrement().primaryKey(),
+  restaurantId: varchar("restaurant_id", { length: 50 }).notNull(),
+  lastRefreshAt: timestamp("last_refresh_at"),
+  nextRefreshAt: timestamp("next_refresh_at"),
+  totalCompetitors: int("total_competitors").default(0),
+  extractionRadiusKm: decimal("extraction_radius_km", { precision: 10, scale: 2 }).default("2"),
+  cacheStatus: varchar("cache_status", { length: 20 }).default("valid"), // "valid", "stale", "refreshing", "error"
+  lastErrorMessage: text("last_error_message"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type CompetitorCache = typeof competitorCache.$inferSelect;
+export type InsertCompetitorCache = typeof competitorCache.$inferInsert;
+
+// Competitor refresh log - audit trail of refresh operations
+export const competitorRefreshLog = mysqlTable("competitor_refresh_log", {
+  id: int("id").autoincrement().primaryKey(),
+  restaurantId: varchar("restaurant_id", { length: 50 }).notNull(),
+  refreshTimestamp: timestamp("refresh_timestamp").defaultNow().notNull(),
+  refreshStatus: varchar("refresh_status", { length: 20 }).notNull(), // "success", "partial", "failed"
+  competitorCountBefore: int("competitor_count_before"),
+  competitorCountAfter: int("competitor_count_after"),
+  newCompetitorsAdded: int("new_competitors_added"),
+  competitorsRemoved: int("competitors_removed"),
+  durationSeconds: int("duration_seconds"),
+  errorMessage: text("error_message"),
+});
+
+export type CompetitorRefreshLog = typeof competitorRefreshLog.$inferSelect;
+export type InsertCompetitorRefreshLog = typeof competitorRefreshLog.$inferInsert;

@@ -1819,3 +1819,103 @@ These features are documented for future enhancement but are not required for th
 - [x] When recalculation after Stop, properly reinitialize with new time
 - [x] Timer now shows 0 when Stop clicked, restarts from full time on recalculation
 - [x] Verified dev server running with complete Stop/Recalculate fix
+
+
+---
+
+## Phase 27: Advanced GeoMarketing & Spatial Competition Analysis System
+
+### Phase 27.1: Database Schema & Infrastructure
+- [ ] Create competitors table (id, name, coordinates, category, distance, osm_id, last_updated)
+- [ ] Create competitor_cache table (restaurant_id, competitor_id, extraction_radius, cache_timestamp)
+- [ ] Create spatial_clusters table (cluster_id, centroid_lat, centroid_lng, order_count, avg_delivery_time, zone_type)
+- [ ] Create growth_analysis table (analysis_id, period_type, zone_id, score, trend, competitor_density, efficiency_rating)
+- [ ] Create delivery_heatmap_data table (grid_cell, order_density, avg_delivery_time, efficiency_score)
+- [ ] Add spatial indexes for geographic queries
+- [ ] Create competitor_refresh_log table (timestamp, status, records_fetched, api_calls)
+
+### Phase 27.2: Competitor Data Integration (Overpass API)
+- [ ] Create Overpass API client in server/spatial/overpass.ts
+- [ ] Implement competitor extraction logic (restaurants, cafes, fast food, food courts)
+- [ ] Implement delivery radius auto-detection from historical orders
+- [ ] Create competitor caching logic (24-hour TTL, manual refresh)
+- [ ] Implement competitor deduplication (same location, different names)
+- [ ] Add competitor distance calculation (Haversine + road network estimation)
+- [ ] Create tRPC procedure for manual competitor data refresh
+- [ ] Add error handling and retry logic for API failures
+
+### Phase 27.3: Spatial Analytics Engine (Python Backend)
+- [ ] Create Python spatial analytics module (server/spatial/analytics.py)
+- [ ] Implement clustering algorithm (DBSCAN for delivery hotspots)
+- [ ] Implement competitor proximity analysis
+- [ ] Implement delivery efficiency analysis (vs 20-minute benchmark)
+- [ ] Implement underserved zone detection
+- [ ] Implement high-competition high-demand zone detection
+- [ ] Implement heatmap generation (grid-based density calculation)
+- [ ] Create growth trend detection algorithm
+
+### Phase 27.4: Background Job Scheduler
+- [ ] Set up background job runner for periodic analytics precomputation
+- [ ] Create job for daily spatial clustering
+- [ ] Create job for weekly trend analysis
+- [ ] Create job for monthly growth opportunity scoring
+- [ ] Create job for heatmap data generation
+- [ ] Implement job scheduling (cron or interval-based)
+- [ ] Add job monitoring and error logging
+
+### Phase 27.5: Growth Opportunity Scoring & Trend Analysis
+- [ ] Implement scoring model combining: order density, growth trend, competitor density, delivery efficiency, avg delivery time, repeat concentration
+- [ ] Implement trend comparison (current vs previous period)
+- [ ] Implement emerging growth zone detection
+- [ ] Implement predictive growth analysis based on order density trends
+- [ ] Create scoring visualization logic (color-coded zones)
+- [ ] Implement zone classification (high-demand, underserved, high-competition, efficient, inefficient)
+
+### Phase 27.6: tRPC Procedures for Analytics Queries
+- [ ] Create procedure: analytics.getCompetitors (with filters)
+- [ ] Create procedure: analytics.getSpatialClusters (with temporal filters)
+- [ ] Create procedure: analytics.getGrowthOpportunities (with scoring)
+- [ ] Create procedure: analytics.getDeliveryEfficiencyZones
+- [ ] Create procedure: analytics.getHeatmapData (grid-based)
+- [ ] Create procedure: analytics.getTrendAnalysis (period comparison)
+- [ ] Create procedure: analytics.refreshCompetitorData (manual trigger)
+- [ ] Create procedure: analytics.getGrowthInsights (AI-generated summaries)
+
+### Phase 27.7: Advanced Map Visualization Layer
+- [ ] Create CompetitorLayer component (Leaflet)
+- [ ] Create ClusterLayer component (Leaflet)
+- [ ] Create HeatmapLayer component (Leaflet.heat integration)
+- [ ] Create EfficiencyZonesLayer component
+- [ ] Create GrowthOpportunitiesLayer component (with scoring visualization)
+- [ ] Create LayerToggle component (show/hide layers)
+- [ ] Implement layer opacity and styling controls
+- [ ] Create marker popups with detailed competitor/zone information
+
+### Phase 27.8: Temporal Analysis & Filtering UI
+- [ ] Add temporal filter controls (daily, weekly, monthly)
+- [ ] Implement period comparison UI (current vs previous)
+- [ ] Create trend visualization (line charts for growth)
+- [ ] Add competitor category filters
+- [ ] Add efficiency zone filters (by delivery time)
+- [ ] Create refresh competitor data button
+- [ ] Add last-updated timestamp display
+- [ ] Implement loading states and progress indicators
+
+### Phase 27.9: Testing & Validation
+- [ ] Write unit tests for clustering algorithms
+- [ ] Write unit tests for scoring model
+- [ ] Write unit tests for Overpass API integration
+- [ ] Write integration tests for spatial queries
+- [ ] Test competitor data caching logic
+- [ ] Test background job execution
+- [ ] Validate map visualization rendering
+- [ ] Performance test analytics queries (target: <5s)
+
+### Phase 27.10: Checkpoint & Documentation
+- [ ] Create comprehensive documentation
+- [ ] Document API endpoints and parameters
+- [ ] Document spatial analysis algorithms
+- [ ] Create user guide for Growth Opportunities section
+- [ ] Document competitor data refresh process
+- [ ] Create technical architecture diagram
+- [ ] Save final checkpoint

@@ -14,6 +14,12 @@ import {
   calculateDriverPerformance,
   calculateGrowthOpportunities,
 } from './geomarketing';
+import {
+  refreshCompetitorData,
+  getCachedCompetitors,
+  getCacheStatus,
+  getCompetitorsFromAPI,
+} from './competitors';
 
 export const appRouter = router({
   places: router({
@@ -1024,6 +1030,85 @@ export const appRouter = router({
       }))
       .query(async ({ input }) => {
         return await calculateGrowthOpportunities(input.startDate, input.endDate);
+      }),
+    
+    // Competitor data procedures
+    getCompetitors: publicProcedure
+      .input(z.object({
+        restaurantId: z.string().default('barrel-delivery'),
+      }))
+      .query(async ({ input }) => {
+        try {
+          const result = await getCachedCompetitors(input.restaurantId);
+          return result;
+        } catch (error) {
+          console.error('[analytics.getCompetitors] Error:', error);
+          return {
+            competitors: [],
+            cacheStatus: 'error',
+            message: 'Failed to fetch competitors',
+          };
+        }
+      }),
+    
+    getCacheStatus: publicProcedure
+      .input(z.object({
+        restaurantId: z.string().default('barrel-delivery'),
+      }))
+      .query(async ({ input }) => {
+        try {
+          return await getCacheStatus(input.restaurantId);
+        } catch (error) {
+          console.error('[analytics.getCacheStatus] Error:', error);
+          return {
+            status: 'error',
+            totalCompetitors: 0,
+          };
+        }
+      }),
+    
+    refreshCompetitors: publicProcedure
+      .input(z.object({
+        restaurantId: z.string().default('barrel-delivery'),
+        radiusKm: z.number().default(2),
+      }))
+      .mutation(async ({ input }) => {
+        try {
+          const result = await refreshCompetitorData(input.restaurantId, input.radiusKm);
+          return result;
+        } catch (error) {
+          console.error('[analytics.refreshCompetitors] Error:', error);
+          return {
+            success: false,
+            competitorCount: 0,
+            message: 'Failed to refresh competitors',
+          };
+        }
+      }),
+    
+    fetchCompetitorsFromAPI: publicProcedure
+      .input(z.object({
+        latitude: z.number().default(42.90517),
+        longitude: z.number().default(-78.92295),
+        radiusKm: z.number().default(2),
+      }))
+      .query(async ({ input }) => {
+        try {
+          const competitors = await getCompetitorsFromAPI(input.latitude, input.longitude, input.radiusKm);
+          return {
+            success: true,
+            competitors,
+            count: competitors.length,
+          };
+        } catch (error) {
+          console.error('[analytics.fetchCompetitorsFromAPI] Error:', error);
+          return {
+            success: false,
+            competitors: [],
+            count: 0,
+            error: error instanceof Error ? error.message : 'Unknown error',
+          };
+        }
       }),
   }),
   gps: router({

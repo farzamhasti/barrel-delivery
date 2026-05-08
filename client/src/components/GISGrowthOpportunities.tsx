@@ -13,6 +13,8 @@ interface GrowthZone {
 interface GISGrowthOpportunitiesProps {
   zones?: GrowthZone[];
   gridCells?: Record<string, { orderCount: number; orders?: any[] }>;
+  competitors?: any[];
+  showCompetitors?: boolean;
 }
 
 const RESTAURANT_LOCATION = { lat: 42.90517, lng: -78.92295 };
@@ -22,7 +24,7 @@ const getZoneColor = (avgTime: number) => {
   return "#16a34a"; // Green - normal
 };
 
-export function GISGrowthOpportunities({ zones = [], gridCells = {} }: GISGrowthOpportunitiesProps) {
+export function GISGrowthOpportunities({ zones = [], gridCells = {}, competitors = [], showCompetitors = true }: GISGrowthOpportunitiesProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<L.Map | null>(null);
   const cellsRef = useRef<L.Rectangle[]>([]);
@@ -113,6 +115,38 @@ export function GISGrowthOpportunities({ zones = [], gridCells = {} }: GISGrowth
         );
     });
 
+    // Add competitor markers if available
+    if (showCompetitors && competitors.length > 0) {
+      const competitorColors: Record<string, string> = {
+        restaurant: "#FF6B6B",
+        fast_food: "#FFA500",
+        cafe: "#8B4513",
+        bar: "#4B0082",
+        food_court: "#FF1493",
+        pub: "#8B0000",
+        bakery: "#FFD700",
+        ice_cream: "#87CEEB",
+        pizza: "#DC143C",
+        other: "#808080",
+      };
+
+      competitors.forEach((competitor: any) => {
+        const color = competitorColors[competitor.type] || competitorColors.other;
+        L.circleMarker([competitor.latitude, competitor.longitude], {
+          radius: 6,
+          fillColor: color,
+          color: "white",
+          weight: 2,
+          opacity: 0.9,
+          fillOpacity: 0.7,
+        })
+          .addTo(map.current!)
+          .bindPopup(
+            `<strong>${competitor.name}</strong><br/>Type: ${competitor.type}<br/>Distance: ${competitor.distanceFromRestaurantKm?.toFixed(1) || "N/A"} km`
+          );
+      });
+    }
+
     return () => {
       if (map.current) {
         cellsRef.current.forEach((cell) => map.current!.removeLayer(cell));
@@ -120,7 +154,7 @@ export function GISGrowthOpportunities({ zones = [], gridCells = {} }: GISGrowth
         map.current = null;
       }
     };
-  }, [zones, gridCells]);
+  }, [zones, gridCells, competitors, showCompetitors]);
 
   return (
     <div className="space-y-2">
