@@ -61,6 +61,8 @@ export function AnalyticsSectionModalWithGIS({
     }));
     return {
       hourlyData: hourlyArray,
+      orders: data.orders,
+      peakHour: data.peakHour,
     };
   };
 
@@ -70,30 +72,55 @@ export function AnalyticsSectionModalWithGIS({
       downtown: { avgTime: data.areaMetrics["Downtown"]?.avgTotalTime || 0 },
       centralPark: { avgTime: data.areaMetrics["Central Park"]?.avgTotalTime || 0 },
       both: { avgTime: data.areaMetrics["Both"]?.avgTotalTime || 0 },
+      areaMetrics: data.areaMetrics,
+      orders: data.orders,
     };
   };
 
   const transformDriverData = () => {
-    if (!data || typeof data !== "object") return [];
+    if (!data || typeof data !== "object") return { drivers: [], driverMetrics: {} };
     const colors = ["#FF6B6B", "#4ECDC4", "#45B7D1", "#FFA07A", "#98D8C8"];
     let colorIndex = 0;
-    return Object.entries(data).map(([driverId, metrics]: any) => ({
+    const drivers = Object.entries(data).map(([driverId, metrics]: any) => ({
       name: metrics.driverId || `Driver ${driverId}`,
       color: colors[colorIndex++ % colors.length],
       deliveries: metrics.totalDeliveries || 0,
       avgTime: metrics.avgDeliveryTime || 0,
     }));
+    return {
+      drivers,
+      driverMetrics: data,
+    };
   };
 
   const transformGrowthData = () => {
-    if (!data?.topGrowthZones) return [];
-    return data.topGrowthZones.map((zone: any, idx: number) => ({
-      name: `Zone ${idx + 1}`,
-      lat: zone.centerLat,
-      lng: zone.centerLng,
-      orderCount: zone.orderCount,
-      avgDeliveryTime: zone.avgDeliveryTime,
-    }));
+    if (!data?.topGrowthZones) return { zones: [] };
+    const zones = data.topGrowthZones.map((zone: any, idx: number) => {
+      // Calculate center from orders if available
+      if (zone.orders && zone.orders.length > 0) {
+        const lats = zone.orders.map((o: any) => parseFloat(o.customerLatitude || 0));
+        const lngs = zone.orders.map((o: any) => parseFloat(o.customerLongitude || 0));
+        const centerLat = lats.reduce((a: number, b: number) => a + b, 0) / lats.length;
+        const centerLng = lngs.reduce((a: number, b: number) => a + b, 0) / lngs.length;
+        return {
+          name: `Zone ${idx + 1}`,
+          lat: centerLat,
+          lng: centerLng,
+          orderCount: zone.orderCount,
+          avgDeliveryTime: zone.distanceFromRestaurant,
+          orders: zone.orders,
+        };
+      }
+      return {
+        name: `Zone ${idx + 1}`,
+        lat: 42.90517,
+        lng: -78.92295,
+        orderCount: zone.orderCount,
+        avgDeliveryTime: 0,
+        orders: [],
+      };
+    });
+    return { zones, gridCells: data.gridCells };
   };
 
   const renderGISMap = () => {
@@ -101,13 +128,17 @@ export function AnalyticsSectionModalWithGIS({
       case "geographic":
         return <GISGeographicDistribution data={transformGeographicData()} />;
       case "time":
-        return <GISTimeAnalysis data={transformTimeData()} />;
+        const timeData = transformTimeData();
+        return <GISTimeAnalysis data={timeData} />;
       case "performance":
-        return <GISDeliveryPerformance data={transformPerformanceData()} />;
+        const perfData = transformPerformanceData();
+        return <GISDeliveryPerformance data={perfData} />;
       case "driver":
-        return <GISDriverPerformance drivers={transformDriverData()} />;
+        const driverData = transformDriverData();
+        return <GISDriverPerformance drivers={driverData.drivers} driverMetrics={driverData.driverMetrics} />;
       case "growth":
-        return <GISGrowthOpportunities zones={transformGrowthData()} />;
+        const growthData = transformGrowthData();
+        return <GISGrowthOpportunities zones={growthData.zones} gridCells={growthData.gridCells} />;
       default:
         return <div className="text-gray-500">GIS map not available for this section</div>;
     }

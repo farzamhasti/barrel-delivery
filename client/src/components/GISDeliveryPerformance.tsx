@@ -4,34 +4,15 @@ import "leaflet/dist/leaflet.css";
 
 interface GISDeliveryPerformanceProps {
   data?: {
-    downtown: { avgTime: number };
-    centralPark: { avgTime: number };
-    both: { avgTime: number };
+    downtown?: { avgTime: number };
+    centralPark?: { avgTime: number };
+    both?: { avgTime: number };
+    areaMetrics?: Record<string, { avgPrepTime: number; avgDeliveryTime: number; avgTotalTime: number; rating: string }>;
+    orders?: Array<{ id: number; area?: string; customerLatitude?: any; customerLongitude?: any; readyAt?: any; pickedUpAt?: any; deliveredAt?: any; createdAt?: any }>;
   };
 }
 
 const RESTAURANT_LOCATION = { lat: 42.90517, lng: -78.92295 };
-
-const AREA_BOUNDARIES = {
-  downtown: [
-    [42.98, -79.06],
-    [42.99, -79.06],
-    [42.99, -79.04],
-    [42.98, -79.04],
-  ],
-  centralPark: [
-    [42.97, -79.06],
-    [42.98, -79.06],
-    [42.98, -79.04],
-    [42.97, -79.04],
-  ],
-  both: [
-    [42.99, -79.06],
-    [43.0, -79.06],
-    [43.0, -79.04],
-    [42.99, -79.04],
-  ],
-};
 
 const getPerformanceColor = (avgTime: number) => {
   if (avgTime < 20) return "#16a34a"; // Green - fast
@@ -59,55 +40,40 @@ export function GISDeliveryPerformance({ data }: GISDeliveryPerformanceProps) {
 
     L.control.scale().addTo(map.current);
 
-    const downtownTime = data?.downtown?.avgTime || 0;
-    const cpTime = data?.centralPark?.avgTime || 0;
-    const bothTime = data?.both?.avgTime || 0;
-
-    // Downtown polygon
-    L.polygon(AREA_BOUNDARIES.downtown, {
-      color: getPerformanceColor(downtownTime),
-      weight: 2,
-      opacity: 0.8,
-      fillOpacity: 0.6,
-      fillColor: getPerformanceColor(downtownTime),
-    })
-      .addTo(map.current!)
-      .bindPopup(
-        `<strong>Downtown</strong><br/>Avg Delivery Time: ${downtownTime.toFixed(1)} min<br/>${downtownTime < 20 ? "✓ Fast" : downtownTime < 35 ? "~ Average" : "⚠ Slow"}`
-      );
-
-    // Central Park polygon
-    L.polygon(AREA_BOUNDARIES.centralPark, {
-      color: getPerformanceColor(cpTime),
-      weight: 2,
-      opacity: 0.8,
-      fillOpacity: 0.6,
-      fillColor: getPerformanceColor(cpTime),
-    })
-      .addTo(map.current!)
-      .bindPopup(
-        `<strong>Central Park</strong><br/>Avg Delivery Time: ${cpTime.toFixed(1)} min<br/>${cpTime < 20 ? "✓ Fast" : cpTime < 35 ? "~ Average" : "⚠ Slow"}`
-      );
-
-    // Both polygon
-    L.polygon(AREA_BOUNDARIES.both, {
-      color: getPerformanceColor(bothTime),
-      weight: 2,
-      opacity: 0.8,
-      fillOpacity: 0.6,
-      fillColor: getPerformanceColor(bothTime),
-    })
-      .addTo(map.current!)
-      .bindPopup(
-        `<strong>Both</strong><br/>Avg Delivery Time: ${bothTime.toFixed(1)} min<br/>${bothTime < 20 ? "✓ Fast" : bothTime < 35 ? "~ Average" : "⚠ Slow"}`
-      );
-
     // Add restaurant marker
     L.marker([RESTAURANT_LOCATION.lat, RESTAURANT_LOCATION.lng], {
       title: "Restaurant Location",
     })
       .addTo(map.current!)
       .bindPopup("Restaurant - The Barrel");
+
+    // Add order markers color-coded by delivery performance
+    if (data?.orders && data.orders.length > 0) {
+      data.orders.forEach((order) => {
+        if (!order.customerLatitude || !order.customerLongitude) return;
+        if (!order.deliveredAt || !order.createdAt) return;
+
+        // Calculate total delivery time
+        const totalTime = (order.deliveredAt.getTime() - order.createdAt.getTime()) / (1000 * 60); // minutes
+        const color = getPerformanceColor(totalTime);
+
+        L.circleMarker(
+          [parseFloat(order.customerLatitude), parseFloat(order.customerLongitude)],
+          {
+            radius: 6,
+            fillColor: color,
+            color: color,
+            weight: 2,
+            opacity: 0.8,
+            fillOpacity: 0.6,
+          }
+        )
+          .addTo(map.current!)
+          .bindPopup(
+            `<strong>${order.area || "Unknown"}</strong><br/>Order #${order.id}<br/>Total Time: ${totalTime.toFixed(1)}m`
+          );
+      });
+    }
 
     return () => {
       if (map.current) {
@@ -127,37 +93,18 @@ export function GISDeliveryPerformance({ data }: GISDeliveryPerformanceProps) {
         className="rounded-lg border border-gray-200 overflow-hidden"
         style={{ height: "500px" }}
       />
-      <div className="space-y-2 text-xs">
-        <div className="grid grid-cols-3 gap-2">
-          <div className="bg-green-50 p-2 rounded">
-            <div className="font-semibold text-green-900">Downtown</div>
-            <div className="text-green-700">{(data?.downtown?.avgTime || 0).toFixed(1)} min</div>
-          </div>
-          <div className="bg-yellow-50 p-2 rounded">
-            <div className="font-semibold text-yellow-900">Central Park</div>
-            <div className="text-yellow-700">{(data?.centralPark?.avgTime || 0).toFixed(1)} min</div>
-          </div>
-          <div className="bg-red-50 p-2 rounded">
-            <div className="font-semibold text-red-900">Both</div>
-            <div className="text-red-700">{(data?.both?.avgTime || 0).toFixed(1)} min</div>
-          </div>
+      <div className="grid grid-cols-3 gap-2 text-xs">
+        <div className="bg-green-50 p-2 rounded">
+          <div className="font-semibold text-green-900">Fast</div>
+          <div className="text-green-700">&lt; 20 min</div>
         </div>
-        <div className="bg-gray-50 p-2 rounded">
-          <div className="font-semibold text-gray-700 mb-1">Performance Legend:</div>
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-green-500 rounded"></div>
-              <span>Fast (under 20 min)</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-yellow-500 rounded"></div>
-              <span>Average (20-35 min)</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-red-500 rounded"></div>
-              <span>Slow (over 35 min)</span>
-            </div>
-          </div>
+        <div className="bg-yellow-50 p-2 rounded">
+          <div className="font-semibold text-yellow-900">Average</div>
+          <div className="text-yellow-700">20-35 min</div>
+        </div>
+        <div className="bg-red-50 p-2 rounded">
+          <div className="font-semibold text-red-900">Slow</div>
+          <div className="text-red-700">&gt; 35 min</div>
         </div>
       </div>
     </div>

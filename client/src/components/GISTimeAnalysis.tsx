@@ -8,10 +8,11 @@ interface GISTimeAnalysisProps {
   data?: {
     hourlyData?: Array<{
       hour: number;
-      downtown: number;
-      centralPark: number;
-      both: number;
+      total: number;
+      areaBreakdown?: Record<string, number>;
     }>;
+    orders?: Array<{ id: number; createdAt: any; customerLatitude?: any; customerLongitude?: any; area?: string }>;
+    peakHour?: number;
   };
 }
 
@@ -22,6 +23,12 @@ const TIME_SLOTS = {
   afternoon: { label: "Afternoon (12-18)", color: "#f97316", range: [12, 18] },
   evening: { label: "Evening (18-24)", color: "#8b5cf6", range: [18, 24] },
   night: { label: "Night (0-6)", color: "#1e3a8a", range: [0, 6] },
+};
+
+const AREA_COLORS: Record<string, string> = {
+  "Downtown": "#1e40af",
+  "Central Park": "#16a34a",
+  "Both": "#ea580c",
 };
 
 const getTimeSlot = (hour: number) => {
@@ -82,78 +89,37 @@ export function GISTimeAnalysis({ data }: GISTimeAnalysisProps) {
     markersRef.current.forEach((marker) => map.current!.removeLayer(marker));
     markersRef.current = [];
 
-    // Generate sample delivery points for current hour
-    const hourData = data?.hourlyData?.find((d) => d.hour === currentHour);
-    const totalOrders = (hourData?.downtown || 0) + (hourData?.centralPark || 0) + (hourData?.both || 0) || 1;
+    // Filter orders by current hour
+    const hourOrders = data?.orders?.filter((order) => {
+      const hour = order.createdAt?.getHours?.() || 0;
+      return hour === currentHour;
+    }) || [];
 
-    // Downtown deliveries
-    for (let i = 0; i < (hourData?.downtown || 0); i++) {
-      const angle = (Math.random() * Math.PI * 2);
-      const distance = 0.005 + Math.random() * 0.01;
+    // Add actual order locations
+    hourOrders.forEach((order) => {
+      if (!order.customerLatitude || !order.customerLongitude) return;
+      
+      const area = order.area || "Unknown";
+      const color = AREA_COLORS[area] || "#6b7280";
+      
       const marker = L.circleMarker(
         [
-          RESTAURANT_LOCATION.lat + Math.cos(angle) * distance,
-          RESTAURANT_LOCATION.lng + Math.sin(angle) * distance,
+          parseFloat(order.customerLatitude),
+          parseFloat(order.customerLongitude),
         ],
         {
-          radius: 4,
-          fillColor: "#1e40af",
-          color: "#1e40af",
-          weight: 1,
-          opacity: 0.7,
-          fillOpacity: 0.5,
+          radius: 6,
+          fillColor: color,
+          color: color,
+          weight: 2,
+          opacity: 0.8,
+          fillOpacity: 0.6,
         }
       )
         .addTo(map.current!)
-        .bindPopup(`Downtown - Hour ${currentHour}`);
+        .bindPopup(`<strong>${area}</strong><br/>Order #${order.id}<br/>Hour: ${currentHour}:00`);
       markersRef.current.push(marker);
-    }
-
-    // Central Park deliveries
-    for (let i = 0; i < (hourData?.centralPark || 0); i++) {
-      const angle = (Math.random() * Math.PI * 2);
-      const distance = 0.005 + Math.random() * 0.01;
-      const marker = L.circleMarker(
-        [
-          RESTAURANT_LOCATION.lat + Math.cos(angle) * distance,
-          RESTAURANT_LOCATION.lng + Math.sin(angle) * distance,
-        ],
-        {
-          radius: 4,
-          fillColor: "#16a34a",
-          color: "#16a34a",
-          weight: 1,
-          opacity: 0.7,
-          fillOpacity: 0.5,
-        }
-      )
-        .addTo(map.current!)
-        .bindPopup(`Central Park - Hour ${currentHour}`);
-      markersRef.current.push(marker);
-    }
-
-    // Both area deliveries
-    for (let i = 0; i < (hourData?.both || 0); i++) {
-      const angle = (Math.random() * Math.PI * 2);
-      const distance = 0.005 + Math.random() * 0.01;
-      const marker = L.circleMarker(
-        [
-          RESTAURANT_LOCATION.lat + Math.cos(angle) * distance,
-          RESTAURANT_LOCATION.lng + Math.sin(angle) * distance,
-        ],
-        {
-          radius: 4,
-          fillColor: "#ea580c",
-          color: "#ea580c",
-          weight: 1,
-          opacity: 0.7,
-          fillOpacity: 0.5,
-        }
-      )
-        .addTo(map.current!)
-        .bindPopup(`Both - Hour ${currentHour}`);
-      markersRef.current.push(marker);
-    }
+    });
   }, [currentHour, data]);
 
   // Animation loop
@@ -166,6 +132,9 @@ export function GISTimeAnalysis({ data }: GISTimeAnalysisProps) {
 
     return () => clearInterval(interval);
   }, [isAnimating]);
+
+  const hourData = data?.hourlyData?.find((d) => d.hour === currentHour);
+  const totalOrdersThisHour = hourData?.total || 0;
 
   return (
     <div className="space-y-2">
@@ -206,7 +175,7 @@ export function GISTimeAnalysis({ data }: GISTimeAnalysisProps) {
           Reset
         </Button>
         <div className="text-sm font-semibold text-gray-700 ml-auto">
-          Hour: {currentHour}:00 - {TIME_SLOTS[getTimeSlot(currentHour) as keyof typeof TIME_SLOTS].label}
+          Hour: {currentHour}:00 - {TIME_SLOTS[getTimeSlot(currentHour) as keyof typeof TIME_SLOTS].label} ({totalOrdersThisHour} orders)
         </div>
       </div>
 
@@ -218,15 +187,15 @@ export function GISTimeAnalysis({ data }: GISTimeAnalysisProps) {
 
       <div className="space-y-2 text-xs">
         <div className="bg-gray-50 p-2 rounded">
-          <div className="font-semibold text-gray-700 mb-2">Time Slots Legend:</div>
-          <div className="grid grid-cols-2 gap-2">
-            {Object.entries(TIME_SLOTS).map(([key, slot]) => (
-              <div key={key} className="flex items-center gap-2">
+          <div className="font-semibold text-gray-700 mb-2">Area Legend:</div>
+          <div className="grid grid-cols-3 gap-2">
+            {Object.entries(AREA_COLORS).map(([area, color]) => (
+              <div key={area} className="flex items-center gap-2">
                 <div
-                  className="w-4 h-4 rounded"
-                  style={{ backgroundColor: slot.color }}
+                  className="w-4 h-4 rounded-full"
+                  style={{ backgroundColor: color }}
                 ></div>
-                <span>{slot.label}</span>
+                <span>{area}</span>
               </div>
             ))}
           </div>
