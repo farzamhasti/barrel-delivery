@@ -1,0 +1,23 @@
+{
+  "query": "SELECT id, order_number, createdAt, ready_at, picked_up_at, delivered_at, customer_address, area, customer_latitude, customer_longitude, driver_id FROM orders WHERE DATE(createdAt) = '2026-05-07' LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3vEgeGHWz6yFd3X.root --database GArd6gSmf3RbAbT5WtHac3 --execute SELECT id, order_number, createdAt, ready_at, picked_up_at, delivered_at, customer_address, area, customer_latitude, customer_longitude, driver_id FROM orders WHERE DATE(createdAt) = '2026-05-07' LIMIT 20;",
+  "rows": [
+    {
+      "id": "690022",
+      "order_number": "50035",
+      "createdAt": "2026-05-07 01:58:59",
+      "ready_at": "2026-05-07 02:13:15",
+      "picked_up_at": "2026-05-07 02:20:56",
+      "delivered_at": "2026-05-07 02:39:54",
+      "customer_address": "1637 Pettit Rd, Fort Erie, ON L2A 5M4, Canada",
+      "area": "Central Park",
+      "customer_latitude": "42.922195",
+      "customer_longitude": "-78.967388",
+      "driver_id": "930001"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\torder_number\tcreatedAt\tready_at\tpicked_up_at\tdelivered_at\tcustomer_address\tarea\tcustomer_latitude\tcustomer_longitude\tdriver_id\n690022\t50035\t2026-05-07 01:58:59\t2026-05-07 02:13:15\t2026-05-07 02:20:56\t2026-05-07 02:39:54\t1637 Pettit Rd, Fort Erie, ON L2A 5M4, Canada\tCentral Park\t42.922195\t-78.967388\t930001\n",
+  "stderr": "",
+  "execution_time_ms": 259
+}

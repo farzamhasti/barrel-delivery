@@ -63,13 +63,17 @@ export async function getOrdersWithCoordinates(startDate: Date, endDate: Date) {
   const db = await getDb();
   if (!db) return [];
 
+  const adjustedEndDate = new Date(endDate);
+  adjustedEndDate.setDate(adjustedEndDate.getDate() + 1);
+  adjustedEndDate.setHours(0, 0, 0, 0);
+
   const results = await db
     .select()
     .from(orders)
     .where(
       and(
         gte(orders.createdAt, startDate),
-        lte(orders.createdAt, endDate),
+        lte(orders.createdAt, adjustedEndDate),
         isNotNull(orders.deliveredAt)
       )
     );
