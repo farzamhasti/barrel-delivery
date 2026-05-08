@@ -517,6 +517,18 @@ export async function updateOrderStatus(orderId: number, status: any) {
   
   await db.update(orders).set(updateData).where(eq(orders.id, orderId));
   
+  // Record status change in history
+  try {
+    const { orderStatusHistory } = await import('../drizzle/schema');
+    await db.insert(orderStatusHistory).values({
+      orderId: orderId,
+      status: status,
+      createdAt: new Date(),
+    });
+  } catch (error) {
+    console.error('[updateOrderStatus] Error recording status history:', error);
+  }
+  
   // Return the updated order
   const updatedOrder = await db.select().from(orders).where(eq(orders.id, orderId)).then(rows => rows[0]);
   return updatedOrder;
@@ -551,6 +563,18 @@ export async function assignOrderToDriver(orderId: number, driverId: number) {
       driverId: validatedDriverId,
       pickedUpAt: new Date(),
     }).where(eq(orders.id, orderId));
+    
+    // Record status change in history
+    try {
+      const { orderStatusHistory } = await import('../drizzle/schema');
+      await db.insert(orderStatusHistory).values({
+        orderId: orderId,
+        status: "On the Way",
+        createdAt: new Date(),
+      });
+    } catch (error) {
+      console.error('[assignOrderToDriver] Error recording status history:', error);
+    }
     
     return result;
   } catch (error) {
@@ -746,6 +770,18 @@ export async function createOrder(data: InsertOrder) {
   const createdOrder = await db.select().from(orders).where(eq(orders.id, insertId));
   if (!createdOrder[0]) {
     throw new Error('Failed to fetch created order');
+  }
+  
+  // Record initial Pending status in history
+  try {
+    const { orderStatusHistory } = await import('../drizzle/schema');
+    await db.insert(orderStatusHistory).values({
+      orderId: insertId,
+      status: 'Pending',
+      createdAt: new Date(),
+    });
+  } catch (error) {
+    console.error('[createOrder] Error recording initial status history:', error);
   }
   
   // Convert Decimal values to numbers for the response
