@@ -1,0 +1,9 @@
+{
+  "query": "UPDATE orders \nSET ready_at = DATE_ADD(createdAt, INTERVAL FLOOR(TIMESTAMPDIFF(SECOND, createdAt, picked_up_at) * 0.65) SECOND)\nWHERE ready_at IS NULL AND picked_up_at IS NOT NULL;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3vEgeGHWz6yFd3X.root --database GArd6gSmf3RbAbT5WtHac3 --execute UPDATE orders \nSET ready_at = DATE_ADD(createdAt, INTERVAL FLOOR(TIMESTAMPDIFF(SECOND, createdAt, picked_up_at) * 0.65) SECOND)\nWHERE ready_at IS NULL AND picked_up_at IS NOT NULL;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 62
+}

@@ -1,0 +1,25 @@
+{
+  "query": "SELECT COUNT(*) as total_records FROM order_status_history; SELECT * FROM order_status_history WHERE order_id = 690022 ORDER BY createdAt;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3vEgeGHWz6yFd3X.root --database GArd6gSmf3RbAbT5WtHac3 --execute SELECT COUNT(*) as total_records FROM order_status_history; SELECT * FROM order_status_history WHERE order_id = 690022 ORDER BY createdAt;",
+  "rows": [
+    {
+      "total_records": "30"
+    },
+    {
+      "total_records": "id\torder_id\tstatus\tcreatedAt"
+    },
+    {
+      "total_records": "1\t690022\tPending\t2026-05-07 01:58:59"
+    },
+    {
+      "total_records": "11\t690022\tOn the Way\t2026-05-07 02:20:56"
+    },
+    {
+      "total_records": "21\t690022\tDelivered\t2026-05-07 02:39:54"
+    }
+  ],
+  "messages": [],
+  "stdout": "total_records\n30\nid\torder_id\tstatus\tcreatedAt\n1\t690022\tPending\t2026-05-07 01:58:59\n11\t690022\tOn the Way\t2026-05-07 02:20:56\n21\t690022\tDelivered\t2026-05-07 02:39:54\n",
+  "stderr": "",
+  "execution_time_ms": 61
+}

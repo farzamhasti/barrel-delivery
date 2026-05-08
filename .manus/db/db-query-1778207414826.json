@@ -1,0 +1,35 @@
+{
+  "query": "SELECT * FROM orders WHERE id = 690022;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3vEgeGHWz6yFd3X.root --database GArd6gSmf3RbAbT5WtHac3 --execute SELECT * FROM orders WHERE id = 690022;",
+  "rows": [
+    {
+      "id": "690022",
+      "order_number": "50035",
+      "customer_name": "NULL",
+      "customer_address": "1637 Pettit Rd, Fort Erie, ON L2A 5M4, Canada",
+      "customer_phone": "4372129880",
+      "area": "Central Park",
+      "delivery_time": "NULL",
+      "has_delivery_time": "0",
+      "receipt_text": "NULL",
+      "receipt_image": "https://d2xsxph8kpxj0f.cloudfront.net/310519663535340497/GArd6gSmf3RbAbT5WtHac3/receipts/50035-1778119139660.png",
+      "formatted_receipt_image": "NULL",
+      "subtotal": "0.00",
+      "tax_percentage": "13.00",
+      "tax_amount": "0.00",
+      "total_price": "0.00",
+      "status": "Delivered",
+      "driver_id": "930001",
+      "picked_up_at": "2026-05-07 02:20:56",
+      "delivered_at": "2026-05-07 02:39:54",
+      "createdAt": "2026-05-07 01:58:59",
+      "updatedAt": "2026-05-07 02:39:53",
+      "customer_latitude": "42.922195",
+      "customer_longitude": "-78.967388"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\torder_number\tcustomer_name\tcustomer_address\tcustomer_phone\tarea\tdelivery_time\thas_delivery_time\treceipt_text\treceipt_image\tformatted_receipt_image\tsubtotal\ttax_percentage\ttax_amount\ttotal_price\tstatus\tdriver_id\tpicked_up_at\tdelivered_at\tcreatedAt\tupdatedAt\tcustomer_latitude\tcustomer_longitude\n690022\t50035\tNULL\t1637 Pettit Rd, Fort Erie, ON L2A 5M4, Canada\t4372129880\tCentral Park\tNULL\t0\tNULL\thttps://d2xsxph8kpxj0f.cloudfront.net/310519663535340497/GArd6gSmf3RbAbT5WtHac3/receipts/50035-1778119139660.png\tNULL\t0.00\t13.00\t0.00\t0.00\tDelivered\t930001\t2026-05-07 02:20:56\t2026-05-07 02:39:54\t2026-05-07 01:58:59\t2026-05-07 02:39:53\t42.922195\t-78.967388\n",
+  "stderr": "",
+  "execution_time_ms": 49
+}

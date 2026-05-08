@@ -1,0 +1,18 @@
+{
+  "query": "SELECT id, order_number, createdAt, picked_up_at, delivered_at, status FROM orders WHERE id = 690022;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3vEgeGHWz6yFd3X.root --database GArd6gSmf3RbAbT5WtHac3 --execute SELECT id, order_number, createdAt, picked_up_at, delivered_at, status FROM orders WHERE id = 690022;",
+  "rows": [
+    {
+      "id": "690022",
+      "order_number": "50035",
+      "createdAt": "2026-05-07 01:58:59",
+      "picked_up_at": "2026-05-07 02:20:56",
+      "delivered_at": "2026-05-07 02:39:54",
+      "status": "Delivered"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\torder_number\tcreatedAt\tpicked_up_at\tdelivered_at\tstatus\n690022\t50035\t2026-05-07 01:58:59\t2026-05-07 02:20:56\t2026-05-07 02:39:54\tDelivered\n",
+  "stderr": "",
+  "execution_time_ms": 57
+}

@@ -55,6 +55,7 @@ export const orders = mysqlTable("orders", {
   totalPrice: decimal("total_price", { precision: 10, scale: 2 }),
   status: varchar("status", { length: 50 }).default("Pending"),
   driverId: int("driver_id"),
+  readyAt: timestamp("ready_at"),
   pickedUpAt: timestamp("picked_up_at"),
   deliveredAt: timestamp("delivered_at"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),

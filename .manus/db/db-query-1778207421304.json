@@ -1,0 +1,46 @@
+{
+  "query": "SELECT * FROM order_status_history WHERE order_id = 690022 ORDER BY createdAt;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3vEgeGHWz6yFd3X.root --database GArd6gSmf3RbAbT5WtHac3 --execute SELECT * FROM order_status_history WHERE order_id = 690022 ORDER BY createdAt;",
+  "rows": [
+    {
+      "id": "1",
+      "order_id": "690022",
+      "status": "Pending",
+      "createdAt": "2026-05-07 01:58:59"
+    },
+    {
+      "id": "21",
+      "order_id": "690022",
+      "status": "Pending",
+      "createdAt": "2026-05-07 01:58:59"
+    },
+    {
+      "id": "11",
+      "order_id": "690022",
+      "status": "Ready",
+      "createdAt": "2026-05-07 02:03:59"
+    },
+    {
+      "id": "31",
+      "order_id": "690022",
+      "status": "Ready",
+      "createdAt": "2026-05-07 02:03:59"
+    },
+    {
+      "id": "41",
+      "order_id": "690022",
+      "status": "On the Way",
+      "createdAt": "2026-05-07 02:20:56"
+    },
+    {
+      "id": "51",
+      "order_id": "690022",
+      "status": "Delivered",
+      "createdAt": "2026-05-07 02:39:54"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\torder_id\tstatus\tcreatedAt\n1\t690022\tPending\t2026-05-07 01:58:59\n21\t690022\tPending\t2026-05-07 01:58:59\n11\t690022\tReady\t2026-05-07 02:03:59\n31\t690022\tReady\t2026-05-07 02:03:59\n41\t690022\tOn the Way\t2026-05-07 02:20:56\n51\t690022\tDelivered\t2026-05-07 02:39:54\n",
+  "stderr": "",
+  "execution_time_ms": 53
+}

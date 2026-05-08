@@ -1,0 +1,50 @@
+{
+  "query": "SELECT id, order_number, createdAt, ready_at, picked_up_at, delivered_at FROM orders LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3vEgeGHWz6yFd3X.root --database GArd6gSmf3RbAbT5WtHac3 --execute SELECT id, order_number, createdAt, ready_at, picked_up_at, delivered_at FROM orders LIMIT 5;",
+  "rows": [
+    {
+      "id": "690022",
+      "order_number": "50035",
+      "createdAt": "2026-05-07 01:58:59",
+      "ready_at": "NULL",
+      "picked_up_at": "2026-05-07 02:20:56",
+      "delivered_at": "2026-05-07 02:39:54"
+    },
+    {
+      "id": "750001",
+      "order_number": "50035",
+      "createdAt": "2026-05-08 00:58:47",
+      "ready_at": "NULL",
+      "picked_up_at": "2026-05-08 01:30:44",
+      "delivered_at": "2026-05-08 01:36:14"
+    },
+    {
+      "id": "750002",
+      "order_number": "40098",
+      "createdAt": "2026-05-08 00:59:33",
+      "ready_at": "NULL",
+      "picked_up_at": "2026-05-08 01:10:02",
+      "delivered_at": "2026-05-08 01:15:32"
+    },
+    {
+      "id": "750003",
+      "order_number": "40109",
+      "createdAt": "2026-05-08 01:08:16",
+      "ready_at": "NULL",
+      "picked_up_at": "2026-05-08 01:20:17",
+      "delivered_at": "2026-05-08 01:29:44"
+    },
+    {
+      "id": "750004",
+      "order_number": "50031",
+      "createdAt": "2026-05-08 01:12:21",
+      "ready_at": "NULL",
+      "picked_up_at": "2026-05-08 01:20:13",
+      "delivered_at": "2026-05-08 01:26:23"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\torder_number\tcreatedAt\tready_at\tpicked_up_at\tdelivered_at\n690022\t50035\t2026-05-07 01:58:59\tNULL\t2026-05-07 02:20:56\t2026-05-07 02:39:54\n750001\t50035\t2026-05-08 00:58:47\tNULL\t2026-05-08 01:30:44\t2026-05-08 01:36:14\n750002\t40098\t2026-05-08 00:59:33\tNULL\t2026-05-08 01:10:02\t2026-05-08 01:15:32\n750003\t40109\t2026-05-08 01:08:16\tNULL\t2026-05-08 01:20:17\t2026-05-08 01:29:44\n750004\t50031\t2026-05-08 01:12:21\tNULL\t2026-05-08 01:20:13\t2026-05-08 01:26:23\n",
+  "stderr": "",
+  "execution_time_ms": 53
+}

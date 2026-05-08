@@ -1,0 +1,9 @@
+{
+  "query": "TRUNCATE TABLE order_status_history;\n\nINSERT INTO order_status_history (order_id, status, createdAt) \nSELECT id, 'Pending', createdAt FROM orders;\n\nINSERT INTO order_status_history (order_id, status, createdAt) \nSELECT id, 'Ready', ready_at FROM orders \nWHERE ready_at IS NOT NULL;\n\nINSERT INTO order_status_history (order_id, status, createdAt) \nSELECT id, 'On the Way', picked_up_at FROM orders \nWHERE picked_up_at IS NOT NULL;\n\nINSERT INTO order_status_history (order_id, status, createdAt) \nSELECT id, 'Delivered', delivered_at FROM orders \nWHERE delivered_at IS NOT NULL AND status = 'Delivered';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3vEgeGHWz6yFd3X.root --database GArd6gSmf3RbAbT5WtHac3 --execute TRUNCATE TABLE order_status_history;\n\nINSERT INTO order_status_history (order_id, status, createdAt) \nSELECT id, 'Pending', createdAt FROM orders;\n\nINSERT INTO order_status_history (order_id, status, createdAt) \nSELECT id, 'Ready', ready_at FROM orders \nWHERE ready_at IS NOT NULL;\n\nINSERT INTO order_status_history (order_id, status, createdAt) \nSELECT id, 'On the Way', picked_up_at FROM orders \nWHERE picked_up_at IS NOT NULL;\n\nINSERT INTO order_status_history (order_id, status, createdAt) \nSELECT id, 'Delivered', delivered_at FROM orders \nWHERE delivered_at IS NOT NULL AND status = 'Delivered';",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 191
+}

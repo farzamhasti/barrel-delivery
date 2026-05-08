@@ -508,11 +508,14 @@ export async function updateOrderStatus(orderId: number, status: any) {
   
   // Set timestamps based on status changes
   const updateData: any = { status };
+  const now = new Date();
   
-  if (status === "On the Way") {
-    updateData.pickedUpAt = new Date();
+  if (status === "Ready") {
+    updateData.readyAt = now;
+  } else if (status === "On the Way") {
+    updateData.pickedUpAt = now;
   } else if (status === "Delivered") {
-    updateData.deliveredAt = new Date();
+    updateData.deliveredAt = now;
   }
   
   await db.update(orders).set(updateData).where(eq(orders.id, orderId));
@@ -524,9 +527,9 @@ export async function updateOrderStatus(orderId: number, status: any) {
       await db.insert(orderStatusHistory).values({
         orderId: orderId,
         status: status as any,
-        createdAt: new Date(),
+        createdAt: now,
       });
-      console.log(`[updateOrderStatus] Recorded status change: Order ${orderId} -> ${status}`);
+      console.log(`[updateOrderStatus] Recorded status change: Order ${orderId} -> ${status} at ${now.toISOString()}`);
     } catch (error) {
       console.error('[updateOrderStatus] Error recording status history:', error);
     }
@@ -1702,8 +1705,9 @@ export async function getDeliveryReport(startDate: Date, endDate: Date) {
         driverName: drivers.name,
         status: orders.status,
         createdAt: orders.createdAt,
-        deliveredAt: orders.deliveredAt,
+        readyAt: orders.readyAt,
         pickedUpAt: orders.pickedUpAt,
+        deliveredAt: orders.deliveredAt,
         area: orders.area,
       })
       .from(orders)
@@ -1715,33 +1719,23 @@ export async function getDeliveryReport(startDate: Date, endDate: Date) {
       ))
       .orderBy(desc(orders.deliveredAt));
 
-    // Fetch status history for all delivered orders
-    const orderIds = deliveredOrders.map(o => o.id);
-    let statusHistories: any[] = [];
-    
-    if (orderIds.length > 0) {
-      statusHistories = await db
-        .select()
-        .from(orderStatusHistory)
-        .where(inArray(orderStatusHistory.orderId, orderIds));
-    }
-
-    // Calculate delivery metrics for each order
+    // Calculate delivery metrics for each order using exact timestamps from orders table
     const ordersWithMetrics = deliveredOrders.map(order => {
-      const history = statusHistories.filter(h => h.orderId === order.id);
-      
-      // Find timestamps for each status
-      const pendingTime = order.createdAt;
-      const readyTime = history.find(h => h.status === 'Ready')?.createdAt;
-      const onTheWayTime = history.find(h => h.status === 'On the Way')?.createdAt;
-      const deliveredTime = history.find(h => h.status === 'Delivered')?.createdAt || order.deliveredAt;
+      // Use exact timestamps from orders table
+      const createdTime = order.createdAt;
+      const readyTime = order.readyAt;
+      const onTheWayTime = order.pickedUpAt;
+      const deliveredTime = order.deliveredAt;
 
       // Calculate time differences in seconds
-      const waitTime = readyTime ? Math.floor((readyTime.getTime() - pendingTime.getTime()) / 1000) : 0;
+      // Pending Time: from order creation to ready
+      const waitTime = readyTime ? Math.floor((readyTime.getTime() - createdTime.getTime()) / 1000) : 0;
+      // Ready Time: from ready to on the way (picked up)
       const readyWaitTime = onTheWayTime && readyTime ? Math.floor((onTheWayTime.getTime() - readyTime.getTime()) / 1000) : 0;
+      // On the Way Time: from picked up to delivered
       const enRouteTime = deliveredTime && onTheWayTime ? Math.floor((deliveredTime.getTime() - onTheWayTime.getTime()) / 1000) : 0;
       // Total time from order placement to delivery
-      const totalTime = deliveredTime ? Math.floor((deliveredTime.getTime() - pendingTime.getTime()) / 1000) : 0;
+      const totalTime = deliveredTime ? Math.floor((deliveredTime.getTime() - createdTime.getTime()) / 1000) : 0;
 
       // Format delivery time in Ontario timezone
       const torontoFormatter = new Intl.DateTimeFormat("en-US", {
