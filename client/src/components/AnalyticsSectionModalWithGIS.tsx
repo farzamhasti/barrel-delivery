@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -13,6 +13,7 @@ import { GISDeliveryPerformance } from "./GISDeliveryPerformance";
 import { GISDriverPerformance } from "./GISDriverPerformance";
 import { GISGrowthOpportunities } from "./GISGrowthOpportunities";
 import { GISTimeAnalysis } from "./GISTimeAnalysis";
+import { trpc } from "@/lib/trpc";
 
 type ViewType = "gis" | "chart";
 
@@ -34,6 +35,28 @@ export function AnalyticsSectionModalWithGIS({
   data,
 }: AnalyticsSectionModalWithGISProps) {
   const [activeView, setActiveView] = useState<ViewType>("gis");
+  const [competitors, setCompetitors] = useState<any[]>([]);
+  const [isLoadingCompetitors, setIsLoadingCompetitors] = useState(false);
+
+  // Fetch competitors when modal opens for growth section
+  useEffect(() => {
+    if (isOpen && sectionType === "growth") {
+      setIsLoadingCompetitors(true);
+      trpc.analytics.fetchCompetitorsFromAPI
+        .query({
+          latitude: 42.90517,
+          longitude: -78.92295,
+          radiusKm: 2,
+        })
+        .then((result) => {
+          if (result.success && result.competitors) {
+            setCompetitors(result.competitors);
+          }
+          setIsLoadingCompetitors(false);
+        })
+        .catch(() => setIsLoadingCompetitors(false));
+    }
+  }, [isOpen, sectionType]);
 
   // Transform backend data to GIS component format
   const transformGeographicData = () => {
@@ -141,6 +164,8 @@ export function AnalyticsSectionModalWithGIS({
           <GISGrowthOpportunities
             zones={growthData.zones}
             gridCells={data?.gridCells}
+            competitors={competitors}
+            showCompetitors={true}
           />
         );
       default:
