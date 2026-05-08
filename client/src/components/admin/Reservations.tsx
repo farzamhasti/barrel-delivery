@@ -11,10 +11,19 @@ import { CustomDateTimePicker } from '@/components/CustomDateTimePicker';
 export function Reservations() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
-  // Default to today's date
+  // Default to today's date in Toronto timezone
   const getTodayDate = () => {
-    const today = new Date();
-    return today.toISOString().split('T')[0];
+    const torontoFormatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Toronto',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+    const parts = torontoFormatter.formatToParts(new Date());
+    const year = parts.find(p => p.type === 'year')?.value;
+    const month = parts.find(p => p.type === 'month')?.value;
+    const day = parts.find(p => p.type === 'day')?.value;
+    return `${year}-${month}-${day}`;
   };
   const [selectedDate, setSelectedDate] = useState<string>(getTodayDate());
   const [formData, setFormData] = useState({
