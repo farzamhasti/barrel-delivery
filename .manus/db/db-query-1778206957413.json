@@ -1,0 +1,76 @@
+{
+  "query": "SELECT COUNT(*) as total_records FROM order_status_history; SELECT * FROM order_status_history LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3vEgeGHWz6yFd3X.root --database GArd6gSmf3RbAbT5WtHac3 --execute SELECT COUNT(*) as total_records FROM order_status_history; SELECT * FROM order_status_history LIMIT 20;",
+  "rows": [
+    {
+      "total_records": "60"
+    },
+    {
+      "total_records": "id\torder_id\tstatus\tcreatedAt"
+    },
+    {
+      "total_records": "1\t690022\tPending\t2026-05-07 01:58:59"
+    },
+    {
+      "total_records": "2\t750001\tPending\t2026-05-08 00:58:47"
+    },
+    {
+      "total_records": "3\t750002\tPending\t2026-05-08 00:59:33"
+    },
+    {
+      "total_records": "4\t750003\tPending\t2026-05-08 01:08:16"
+    },
+    {
+      "total_records": "5\t750004\tPending\t2026-05-08 01:12:21"
+    },
+    {
+      "total_records": "6\t750005\tPending\t2026-05-08 01:14:44"
+    },
+    {
+      "total_records": "7\t750006\tPending\t2026-05-08 01:17:27"
+    },
+    {
+      "total_records": "8\t750007\tPending\t2026-05-08 01:19:52"
+    },
+    {
+      "total_records": "9\t750008\tPending\t2026-05-08 01:31:52"
+    },
+    {
+      "total_records": "10\t750009\tPending\t2026-05-08 01:33:11"
+    },
+    {
+      "total_records": "11\t690022\tReady\t2026-05-07 02:03:59"
+    },
+    {
+      "total_records": "12\t750001\tReady\t2026-05-08 01:03:47"
+    },
+    {
+      "total_records": "13\t750002\tReady\t2026-05-08 01:04:33"
+    },
+    {
+      "total_records": "14\t750003\tReady\t2026-05-08 01:13:16"
+    },
+    {
+      "total_records": "15\t750004\tReady\t2026-05-08 01:17:21"
+    },
+    {
+      "total_records": "16\t750005\tReady\t2026-05-08 01:19:44"
+    },
+    {
+      "total_records": "17\t750006\tReady\t2026-05-08 01:22:27"
+    },
+    {
+      "total_records": "18\t750007\tReady\t2026-05-08 01:24:52"
+    },
+    {
+      "total_records": "19\t750008\tReady\t2026-05-08 01:36:52"
+    },
+    {
+      "total_records": "20\t750009\tReady\t2026-05-08 01:38:11"
+    }
+  ],
+  "messages": [],
+  "stdout": "total_records\n60\nid\torder_id\tstatus\tcreatedAt\n1\t690022\tPending\t2026-05-07 01:58:59\n2\t750001\tPending\t2026-05-08 00:58:47\n3\t750002\tPending\t2026-05-08 00:59:33\n4\t750003\tPending\t2026-05-08 01:08:16\n5\t750004\tPending\t2026-05-08 01:12:21\n6\t750005\tPending\t2026-05-08 01:14:44\n7\t750006\tPending\t2026-05-08 01:17:27\n8\t750007\tPending\t2026-05-08 01:19:52\n9\t750008\tPending\t2026-05-08 01:31:52\n10\t750009\tPending\t2026-05-08 01:33:11\n11\t690022\tReady\t2026-05-07 02:03:59\n12\t750001\tReady\t2026-05-08 01:03:47\n13\t750002\tReady\t2026-05-08 01:04:33\n14\t750003\tReady\t2026-05-08 01:13:16\n15\t750004\tReady\t2026-05-08 01:17:21\n16\t750005\tReady\t2026-05-08 01:19:44\n17\t750006\tReady\t2026-05-08 01:22:27\n18\t750007\tReady\t2026-05-08 01:24:52\n19\t750008\tReady\t2026-05-08 01:36:52\n20\t750009\tReady\t2026-05-08 01:38:11\n",
+  "stderr": "",
+  "execution_time_ms": 67
+}

@@ -1,0 +1,9 @@
+{
+  "query": "INSERT INTO order_status_history (order_id, status, createdAt) \nSELECT id, 'Pending', createdAt FROM orders;\n\nINSERT INTO order_status_history (order_id, status, createdAt) \nSELECT id, 'Ready', DATE_ADD(createdAt, INTERVAL 5 MINUTE) FROM orders \nWHERE status IN ('Ready', 'On the Way', 'Delivered');\n\nINSERT INTO order_status_history (order_id, status, createdAt) \nSELECT id, 'On the Way', picked_up_at FROM orders \nWHERE picked_up_at IS NOT NULL \nAND status IN ('On the Way', 'Delivered');\n\nINSERT INTO order_status_history (order_id, status, createdAt) \nSELECT id, 'Delivered', delivered_at FROM orders \nWHERE delivered_at IS NOT NULL \nAND status = 'Delivered';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3vEgeGHWz6yFd3X.root --database GArd6gSmf3RbAbT5WtHac3 --execute INSERT INTO order_status_history (order_id, status, createdAt) \nSELECT id, 'Pending', createdAt FROM orders;\n\nINSERT INTO order_status_history (order_id, status, createdAt) \nSELECT id, 'Ready', DATE_ADD(createdAt, INTERVAL 5 MINUTE) FROM orders \nWHERE status IN ('Ready', 'On the Way', 'Delivered');\n\nINSERT INTO order_status_history (order_id, status, createdAt) \nSELECT id, 'On the Way', picked_up_at FROM orders \nWHERE picked_up_at IS NOT NULL \nAND status IN ('On the Way', 'Delivered');\n\nINSERT INTO order_status_history (order_id, status, createdAt) \nSELECT id, 'Delivered', delivered_at FROM orders \nWHERE delivered_at IS NOT NULL \nAND status = 'Delivered';",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 88
+}

@@ -1,0 +1,19 @@
+{
+  "query": "SELECT COUNT(*) as total_orders FROM orders; SELECT COUNT(*) as delivered_orders FROM orders WHERE status = 'Delivered';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3vEgeGHWz6yFd3X.root --database GArd6gSmf3RbAbT5WtHac3 --execute SELECT COUNT(*) as total_orders FROM orders; SELECT COUNT(*) as delivered_orders FROM orders WHERE status = 'Delivered';",
+  "rows": [
+    {
+      "total_orders": "10"
+    },
+    {
+      "total_orders": "delivered_orders"
+    },
+    {
+      "total_orders": "10"
+    }
+  ],
+  "messages": [],
+  "stdout": "total_orders\n10\ndelivered_orders\n10\n",
+  "stderr": "",
+  "execution_time_ms": 61
+}

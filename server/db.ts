@@ -517,16 +517,19 @@ export async function updateOrderStatus(orderId: number, status: any) {
   
   await db.update(orders).set(updateData).where(eq(orders.id, orderId));
   
-  // Record status change in history
-  try {
-    const { orderStatusHistory } = await import('../drizzle/schema');
-    await db.insert(orderStatusHistory).values({
-      orderId: orderId,
-      status: status,
-      createdAt: new Date(),
-    });
-  } catch (error) {
-    console.error('[updateOrderStatus] Error recording status history:', error);
+  // Record status change in history (only for valid history statuses)
+  const validHistoryStatuses = ['Pending', 'Ready', 'On the Way', 'Delivered'];
+  if (validHistoryStatuses.includes(status)) {
+    try {
+      await db.insert(orderStatusHistory).values({
+        orderId: orderId,
+        status: status as any,
+        createdAt: new Date(),
+      });
+      console.log(`[updateOrderStatus] Recorded status change: Order ${orderId} -> ${status}`);
+    } catch (error) {
+      console.error('[updateOrderStatus] Error recording status history:', error);
+    }
   }
   
   // Return the updated order
@@ -566,12 +569,12 @@ export async function assignOrderToDriver(orderId: number, driverId: number) {
     
     // Record status change in history
     try {
-      const { orderStatusHistory } = await import('../drizzle/schema');
       await db.insert(orderStatusHistory).values({
         orderId: orderId,
         status: "On the Way",
         createdAt: new Date(),
       });
+      console.log(`[assignOrderToDriver] Recorded status change: Order ${orderId} -> On the Way`);
     } catch (error) {
       console.error('[assignOrderToDriver] Error recording status history:', error);
     }
@@ -774,12 +777,12 @@ export async function createOrder(data: InsertOrder) {
   
   // Record initial Pending status in history
   try {
-    const { orderStatusHistory } = await import('../drizzle/schema');
     await db.insert(orderStatusHistory).values({
       orderId: insertId,
       status: 'Pending',
       createdAt: new Date(),
     });
+    console.log(`[createOrder] Recorded initial status: Order ${insertId} -> Pending`);
   } catch (error) {
     console.error('[createOrder] Error recording initial status history:', error);
   }
