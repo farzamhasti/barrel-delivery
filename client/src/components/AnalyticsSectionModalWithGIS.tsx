@@ -229,15 +229,15 @@ export function AnalyticsSectionModalWithGIS({
                     <div className="grid grid-cols-3 gap-2 text-sm">
                       <div>
                         <p className="text-gray-600">Prep Time</p>
-                        <p className="font-semibold">{metrics.avgPrepTime.toFixed(1)}m</p>
+                        <p className="font-semibold">{(metrics.avgPrepTime || 0).toFixed(1)}m</p>
                       </div>
                       <div>
                         <p className="text-gray-600">Delivery Time</p>
-                        <p className="font-semibold">{metrics.avgDeliveryTime.toFixed(1)}m</p>
+                        <p className="font-semibold">{(metrics.avgDeliveryTime || 0).toFixed(1)}m</p>
                       </div>
                       <div>
                         <p className="text-gray-600">Total Time</p>
-                        <p className="font-semibold">{metrics.avgTotalTime.toFixed(1)}m</p>
+                        <p className="font-semibold">{(metrics.avgTotalTime || 0).toFixed(1)}m</p>
                       </div>
                     </div>
                   </div>
@@ -265,15 +265,15 @@ export function AnalyticsSectionModalWithGIS({
                       </div>
                       <div>
                         <p className="text-gray-600">Avg Time</p>
-                        <p className="font-semibold">{metrics.avgDeliveryTime.toFixed(1)}m</p>
+                        <p className="font-semibold">{(metrics.avgDeliveryTime || 0).toFixed(1)}m</p>
                       </div>
                       <div>
                         <p className="text-gray-600">On-Time Rate</p>
-                        <p className="font-semibold">{metrics.onTimeRate.toFixed(1)}%</p>
+                        <p className="font-semibold">{(metrics.onTimeRate || 0).toFixed(1)}%</p>
                       </div>
                       <div>
                         <p className="text-gray-600">Efficiency</p>
-                        <p className="font-semibold">{metrics.efficiencyScore.toFixed(1)}/100</p>
+                        <p className="font-semibold">{(metrics.efficiencyScore || 0).toFixed(1)}/100</p>
                       </div>
                     </div>
                     <p className="text-xs text-gray-500 mt-2">Main Area: {metrics.mostFrequentArea}</p>
@@ -305,7 +305,7 @@ export function AnalyticsSectionModalWithGIS({
                       </div>
                       <div>
                         <p className="text-gray-600">Avg Delivery</p>
-                        <p className="font-semibold">{zone.avgDeliveryTime.toFixed(1)}m</p>
+                        <p className="font-semibold">{(zone.avgDeliveryTime || 0).toFixed(1)}m</p>
                       </div>
                     </div>
                   </div>
