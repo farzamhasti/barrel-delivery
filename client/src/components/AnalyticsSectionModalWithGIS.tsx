@@ -138,7 +138,12 @@ export function AnalyticsSectionModalWithGIS({
         return <GISDriverPerformance drivers={driverData.drivers} driverMetrics={driverData.driverMetrics} />;
       case "growth":
         const growthData = transformGrowthData();
-        return <GISGrowthOpportunities zones={growthData.zones} gridCells={growthData.gridCells} />;
+        return (
+          <GISGrowthOpportunities
+            zones={growthData.zones}
+            gridCells={data?.gridCells}
+          />
+        );
       default:
         return <div className="text-gray-500">GIS map not available for this section</div>;
     }
