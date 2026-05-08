@@ -3,16 +3,25 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Checkbox } from "@/components/ui/checkbox";
 
-interface Driver {
-  name: string;
-  color: string;
-  deliveries: number;
-  avgTime: number;
+interface Order {
+  id: number;
+  customerLatitude?: string | number;
+  customerLongitude?: string | number;
+  area?: string;
+}
+
+interface DriverMetrics {
+  totalDeliveries: number;
+  avgDeliveryTime: number;
+  onTimeRate: number;
+  mostFrequentArea: string;
+  efficiencyScore: number;
+  locations?: Order[];
+  driverId?: string;
 }
 
 interface GISDriverPerformanceProps {
-  drivers?: Driver[];
-  driverMetrics?: Record<number, { locations?: Array<{ id: number; customerLatitude?: any; customerLongitude?: any; area?: string }>; totalDeliveries: number; avgDeliveryTime: number }>;
+  driverMetrics?: Record<string | number, DriverMetrics>;
 }
 
 const RESTAURANT_LOCATION = { lat: 42.90517, lng: -78.92295 };
@@ -28,12 +37,23 @@ const DRIVER_COLORS = [
   "#85C1E2",
 ];
 
-export function GISDriverPerformance({ drivers = [], driverMetrics = {} }: GISDriverPerformanceProps) {
+export function GISDriverPerformance({ driverMetrics = {} }: GISDriverPerformanceProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<L.Map | null>(null);
+  const markersRef = useRef<Map<string, L.CircleMarker[]>>(new Map());
   const [visibleDrivers, setVisibleDrivers] = useState<Set<string>>(
-    new Set(drivers.map((d) => d.name))
+    new Set(Object.keys(driverMetrics))
   );
+
+  // Build driver list with names and colors
+  const driverList = Object.entries(driverMetrics).map(([driverId, metrics], index) => ({
+    id: driverId,
+    name: metrics.driverId || `Driver ${driverId}`,
+    color: DRIVER_COLORS[index % DRIVER_COLORS.length],
+    deliveries: metrics.totalDeliveries || 0,
+    avgTime: metrics.avgDeliveryTime || 0,
+    metrics,
+  }));
 
   useEffect(() => {
     if (!mapContainer.current) return;
@@ -70,54 +90,52 @@ export function GISDriverPerformance({ drivers = [], driverMetrics = {} }: GISDr
   useEffect(() => {
     if (!map.current) return;
 
-    // Clear all markers except restaurant
-    map.current.eachLayer((layer) => {
-      if (layer instanceof L.CircleMarker || (layer instanceof L.Marker && layer.getPopup()?.getContent() !== "Restaurant - The Barrel")) {
-        map.current!.removeLayer(layer);
-      }
+    // Clear all existing driver markers
+    markersRef.current.forEach((markers) => {
+      markers.forEach((marker) => map.current!.removeLayer(marker));
     });
+    markersRef.current.clear();
 
     // Add driver delivery locations
-    drivers.forEach((driver) => {
-      if (!visibleDrivers.has(driver.name)) return;
+    driverList.forEach((driver) => {
+      if (!visibleDrivers.has(driver.id)) return;
 
-      const driverId = Object.keys(driverMetrics).find(
-        (id) => driverMetrics[parseInt(id)]?.locations?.some(() => true)
-      );
+      const driverMarkers: L.CircleMarker[] = [];
 
-      if (driverId) {
-        const metrics = driverMetrics[parseInt(driverId)];
-        if (metrics?.locations) {
-          metrics.locations.forEach((order) => {
-            if (!order.customerLatitude || !order.customerLongitude) return;
+      if (driver.metrics.locations && driver.metrics.locations.length > 0) {
+        driver.metrics.locations.forEach((order) => {
+          const lat = parseFloat(order.customerLatitude?.toString() || "0");
+          const lng = parseFloat(order.customerLongitude?.toString() || "0");
 
-            L.circleMarker(
-              [parseFloat(order.customerLatitude), parseFloat(order.customerLongitude)],
-              {
-                radius: 6,
-                fillColor: driver.color,
-                color: driver.color,
-                weight: 2,
-                opacity: 0.8,
-                fillOpacity: 0.6,
-              }
-            )
-              .addTo(map.current!)
-              .bindPopup(
-                `<strong>${driver.name}</strong><br/>${order.area || "Unknown"}<br/>Order #${order.id}`
-              );
-          });
-        }
+          if (lat === 0 && lng === 0) return;
+
+          const marker = L.circleMarker([lat, lng], {
+            radius: 7,
+            fillColor: driver.color,
+            color: "#333",
+            weight: 2,
+            opacity: 1,
+            fillOpacity: 0.8,
+          })
+            .addTo(map.current!)
+            .bindPopup(
+              `<strong>${driver.name}</strong><br/>Order #${order.id}<br/>${order.area || "Unknown Area"}`
+            );
+
+          driverMarkers.push(marker);
+        });
       }
-    });
-  }, [visibleDrivers, drivers, driverMetrics]);
 
-  const toggleDriver = (driverName: string) => {
+      markersRef.current.set(driver.id, driverMarkers);
+    });
+  }, [visibleDrivers, driverList]);
+
+  const toggleDriver = (driverId: string) => {
     const newVisible = new Set(visibleDrivers);
-    if (newVisible.has(driverName)) {
-      newVisible.delete(driverName);
+    if (newVisible.has(driverId)) {
+      newVisible.delete(driverId);
     } else {
-      newVisible.add(driverName);
+      newVisible.add(driverId);
     }
     setVisibleDrivers(newVisible);
   };
@@ -132,23 +150,30 @@ export function GISDriverPerformance({ drivers = [], driverMetrics = {} }: GISDr
         className="rounded-lg border border-gray-200 overflow-hidden"
         style={{ height: "500px" }}
       />
-      <div className="bg-gray-50 p-2 rounded space-y-2 max-h-40 overflow-y-auto">
+      <div className="bg-gray-50 p-3 rounded space-y-2 max-h-48 overflow-y-auto">
         <div className="font-semibold text-sm text-gray-700">Drivers</div>
-        {drivers.map((driver) => (
-          <div key={driver.name} className="flex items-center gap-2">
-            <Checkbox
-              checked={visibleDrivers.has(driver.name)}
-              onCheckedChange={() => toggleDriver(driver.name)}
-            />
-            <div
-              className="w-3 h-3 rounded-full"
-              style={{ backgroundColor: driver.color }}
-            ></div>
-            <span className="text-xs">
-              {driver.name} ({driver.deliveries} deliveries, {driver.avgTime.toFixed(1)}m avg)
-            </span>
-          </div>
-        ))}
+        {driverList.length === 0 ? (
+          <p className="text-xs text-gray-500">No driver data available</p>
+        ) : (
+          driverList.map((driver) => (
+            <div key={driver.id} className="flex items-center gap-2">
+              <Checkbox
+                checked={visibleDrivers.has(driver.id)}
+                onCheckedChange={() => toggleDriver(driver.id)}
+              />
+              <div
+                className="w-3 h-3 rounded-full flex-shrink-0"
+                style={{ backgroundColor: driver.color }}
+              ></div>
+              <div className="flex-1 min-w-0">
+                <div className="text-xs font-medium text-gray-700 truncate">{driver.name}</div>
+                <div className="text-xs text-gray-500">
+                  {driver.deliveries} deliveries • {driver.avgTime.toFixed(1)}m avg • {driver.metrics.onTimeRate.toFixed(0)}% on-time
+                </div>
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );

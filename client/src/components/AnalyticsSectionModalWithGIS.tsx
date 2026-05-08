@@ -134,8 +134,7 @@ export function AnalyticsSectionModalWithGIS({
         const perfData = transformPerformanceData();
         return <GISDeliveryPerformance data={perfData} />;
       case "driver":
-        const driverData = transformDriverData();
-        return <GISDriverPerformance drivers={driverData.drivers} driverMetrics={driverData.driverMetrics} />;
+        return <GISDriverPerformance driverMetrics={data} />;
       case "growth":
         const growthData = transformGrowthData();
         return (
