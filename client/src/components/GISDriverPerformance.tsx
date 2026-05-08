@@ -18,6 +18,7 @@ interface DriverMetrics {
   efficiencyScore: number;
   locations?: Order[];
   driverId?: string;
+  driverName?: string;
 }
 
 interface GISDriverPerformanceProps {
@@ -41,14 +42,17 @@ export function GISDriverPerformance({ driverMetrics = {} }: GISDriverPerformanc
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<L.Map | null>(null);
   const markersRef = useRef<Map<string, L.CircleMarker[]>>(new Map());
-  const [visibleDrivers, setVisibleDrivers] = useState<Set<string>>(
-    new Set(Object.keys(driverMetrics))
-  );
+  const [visibleDrivers, setVisibleDrivers] = useState<Set<string>>(new Set());
+
+  // Sync visible drivers when driverMetrics loads
+  useEffect(() => {
+    setVisibleDrivers(new Set(Object.keys(driverMetrics)));
+  }, [driverMetrics]);
 
   // Build driver list with names and colors
   const driverList = Object.entries(driverMetrics).map(([driverId, metrics], index) => ({
     id: driverId,
-    name: metrics.driverName || `Driver ${driverId}`,
+    name: metrics.driverName ?? metrics.driverId ?? `Driver ${driverId}`,
     color: DRIVER_COLORS[index % DRIVER_COLORS.length],
     deliveries: metrics.totalDeliveries || 0,
     avgTime: metrics.avgDeliveryTime || 0,
@@ -104,8 +108,8 @@ export function GISDriverPerformance({ driverMetrics = {} }: GISDriverPerformanc
 
       if (driver.metrics.locations && driver.metrics.locations.length > 0) {
         driver.metrics.locations.forEach((order) => {
-          const lat = parseFloat(order.customerLatitude?.toString() || "0");
-          const lng = parseFloat(order.customerLongitude?.toString() || "0");
+          const lat = parseFloat(String(order.customerLatitude || 0));
+          const lng = parseFloat(String(order.customerLongitude || 0));
 
           if (lat === 0 && lng === 0) return;
 

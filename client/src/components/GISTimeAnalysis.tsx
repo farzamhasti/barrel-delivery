@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Button } from "@/components/ui/button";
@@ -41,6 +41,20 @@ const getTimeSlot = (hour: number) => {
 const getTimeSlotColor = (hour: number) => {
   const slot = getTimeSlot(hour);
   return TIME_SLOTS[slot as keyof typeof TIME_SLOTS].color;
+};
+
+const getHourFromDate = (dateValue: any): number => {
+  try {
+    if (dateValue instanceof Date) {
+      return dateValue.getHours();
+    }
+    if (typeof dateValue === "string") {
+      return new Date(dateValue).getHours();
+    }
+    return 0;
+  } catch {
+    return 0;
+  }
 };
 
 export function GISTimeAnalysis({ data }: GISTimeAnalysisProps) {
@@ -91,22 +105,22 @@ export function GISTimeAnalysis({ data }: GISTimeAnalysisProps) {
 
     // Filter orders by current hour
     const hourOrders = data?.orders?.filter((order) => {
-      const hour = order.createdAt?.getHours?.() || 0;
+      const hour = getHourFromDate(order.createdAt);
       return hour === currentHour;
     }) || [];
 
     // Add actual order locations
     hourOrders.forEach((order) => {
-      if (!order.customerLatitude || !order.customerLongitude) return;
+      const lat = parseFloat(String(order.customerLatitude || 0));
+      const lng = parseFloat(String(order.customerLongitude || 0));
+      
+      if (lat === 0 && lng === 0) return;
       
       const area = order.area || "Unknown";
       const color = AREA_COLORS[area] || "#6b7280";
       
       const marker = L.circleMarker(
-        [
-          parseFloat(order.customerLatitude),
-          parseFloat(order.customerLongitude),
-        ],
+        [lat, lng],
         {
           radius: 6,
           fillColor: color,
@@ -148,57 +162,51 @@ export function GISTimeAnalysis({ data }: GISTimeAnalysisProps) {
           variant="outline"
           size="sm"
           onClick={() => setIsAnimating(!isAnimating)}
-          className="gap-2"
+          className="gap-1"
         >
           {isAnimating ? (
             <>
-              <Pause className="w-4 h-4" />
-              Pause
+              <Pause className="w-4 h-4" /> Pause
             </>
           ) : (
             <>
-              <Play className="w-4 h-4" />
-              Play
+              <Play className="w-4 h-4" /> Play
             </>
           )}
         </Button>
         <Button
           variant="outline"
           size="sm"
-          onClick={() => {
-            setIsAnimating(false);
-            setCurrentHour(0);
-          }}
-          className="gap-2"
+          onClick={() => setCurrentHour(0)}
+          className="gap-1"
         >
-          <RotateCcw className="w-4 h-4" />
-          Reset
+          <RotateCcw className="w-4 h-4" /> Reset
         </Button>
-        <div className="text-sm font-semibold text-gray-700 ml-auto">
-          Hour: {currentHour}:00 - {TIME_SLOTS[getTimeSlot(currentHour) as keyof typeof TIME_SLOTS].label} ({totalOrdersThisHour} orders)
-        </div>
+        <span className="text-xs font-medium text-gray-700 ml-auto">
+          Hour: {currentHour}:00 - {getTimeSlot(currentHour).charAt(0).toUpperCase() + getTimeSlot(currentHour).slice(1)} ({totalOrdersThisHour} orders)
+        </span>
       </div>
 
+      {/* Map */}
       <div
         ref={mapContainer}
         className="rounded-lg border border-gray-200 overflow-hidden"
         style={{ height: "500px" }}
       />
 
-      <div className="space-y-2 text-xs">
-        <div className="bg-gray-50 p-2 rounded">
-          <div className="font-semibold text-gray-700 mb-2">Area Legend:</div>
-          <div className="grid grid-cols-3 gap-2">
-            {Object.entries(AREA_COLORS).map(([area, color]) => (
-              <div key={area} className="flex items-center gap-2">
-                <div
-                  className="w-4 h-4 rounded-full"
-                  style={{ backgroundColor: color }}
-                ></div>
-                <span>{area}</span>
-              </div>
-            ))}
-          </div>
+      {/* Legend */}
+      <div className="bg-gray-50 p-2 rounded text-xs space-y-1">
+        <div className="font-semibold text-gray-700">Time Slots</div>
+        <div className="grid grid-cols-2 gap-1">
+          {Object.entries(TIME_SLOTS).map(([key, slot]) => (
+            <div key={key} className="flex items-center gap-2">
+              <div
+                className="w-3 h-3 rounded-full"
+                style={{ backgroundColor: slot.color }}
+              ></div>
+              <span className="text-gray-600">{slot.label}</span>
+            </div>
+          ))}
         </div>
       </div>
     </div>
