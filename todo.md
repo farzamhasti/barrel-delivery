@@ -1903,3 +1903,13 @@ These features are documented for future enhancement but are not required for th
 - [ ] Pricing optimization recommendations
 - [ ] Service area expansion recommendations
 - [ ] Marketing focus area identification
+
+
+## Phase 28: Competitor Buffer Analysis (COMPLETED)
+- [x] Implement Competitor Buffer Analysis section in Chart/Table view
+- [x] Calculate percentage of orders inside competitor buffers (loyal customers)
+- [x] Calculate percentage of orders outside competitor buffers
+- [x] Display buffer analysis summary with key metrics
+- [x] Make analysis update dynamically when buffer radius changes
+- [x] Make analysis update dynamically when selected competitors change
+- [x] Ensure no regressions in existing dashboard functionality

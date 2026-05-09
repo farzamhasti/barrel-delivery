@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Slider } from "@/components/ui/slider";
@@ -20,6 +20,7 @@ interface Competitor {
   latitude: number;
   longitude: number;
   type: string;
+  hasDelivery?: boolean;
 }
 
 interface GISGrowthOpportunitiesProps {
@@ -27,68 +28,72 @@ interface GISGrowthOpportunitiesProps {
   gridCells?: Record<string, { orderCount: number; orders?: any[] }>;
   competitors?: Competitor[];
   showCompetitors?: boolean;
+  selectedCompetitorIds?: Set<number>;
+  onSelectedCompetitorsChange?: (ids: Set<number>) => void;
+  bufferRadiusKm?: number;
+  onBufferRadiusChange?: (radius: number) => void;
 }
 
 const RESTAURANT_LOCATION = { lat: 42.90517, lng: -78.92295 };
 
 // Fort Erie competitors data - All 36 competitors from the data file
 const FORT_ERIE_COMPETITORS: Competitor[] = [
-  { id: 1172079406, name: "McDonald's", latitude: 42.9077128, longitude: -78.9190110, type: "fast_food" },
-  { id: 1721210349, name: "Shake n' Dog", latitude: 42.8639661, longitude: -79.0683893, type: "restaurant" },
+  { id: 1172079406, name: "McDonald's", latitude: 42.9077128, longitude: -78.9190110, type: "fast_food", hasDelivery: true },
+  { id: 1721210349, name: "Shake n' Dog", latitude: 42.8639661, longitude: -79.0683893, type: "restaurant", hasDelivery: false },
   { id: 2503413489, name: "Tim Hortons", latitude: 42.9076679, longitude: -78.9189208, type: "cafe" },
-  { id: 5070173721, name: "335 on the Ridge", latitude: 42.8833677, longitude: -79.0524639, type: "restaurant" },
-  { id: 6728537025, name: "Our Corner Cafe", latitude: 42.8859235, longitude: -79.0522642, type: "cafe" },
-  { id: 7349691717, name: "Chuck's Roadhouse", latitude: 42.9048291, longitude: -78.9274862, type: "restaurant" },
-  { id: 7349691731, name: "Pizza Pizza", latitude: 42.9047653, longitude: -78.9256173, type: "fast_food" },
-  { id: 7349691783, name: "The Barrel", latitude: 42.9052194, longitude: -78.9232931, type: "restaurant" },
-  { id: 7349692458, name: "Little Caesars", latitude: 42.9048874, longitude: -78.9308618, type: "fast_food" },
-  { id: 7349692460, name: "M&J's", latitude: 42.9049739, longitude: -78.9301483, type: "fast_food" },
-  { id: 7349731014, name: "Subway", latitude: 42.9058015, longitude: -78.9244808, type: "fast_food" },
-  { id: 7349731015, name: "Pita Pit", latitude: 42.9058074, longitude: -78.9237995, type: "fast_food" },
-  { id: 7349738505, name: "Yukiguni II", latitude: 42.9057459, longitude: -78.9396668, type: "restaurant" },
-  { id: 7352994236, name: "Subway", latitude: 42.9501464, longitude: -79.0555546, type: "fast_food" },
-  { id: 9989780584, name: "Shaggy's Pizza & Eats", latitude: 42.9445158, longitude: -79.0550848, type: "restaurant" },
-  { id: 10172458516, name: "Mae's Place", latitude: 42.9448312, longitude: -79.0545588, type: "restaurant" },
-  { id: 10278842509, name: "Bella Pizza", latitude: 42.8851377, longitude: -79.0579428, type: "fast_food" },
-  { id: 10278852409, name: "Subway", latitude: 42.8850714, longitude: -79.0589701, type: "fast_food" },
-  { id: 11979893866, name: "South Coast Cookhouse", latitude: 42.8638695, longitude: -79.0614649, type: "restaurant" },
-  { id: 11992741406, name: "Amafli's Trattoria & Bar", latitude: 42.8639310, longitude: -79.0631738, type: "restaurant" },
-  { id: 663169639, name: "McDonald's", latitude: 42.9060040, longitude: -78.9275090, type: "fast_food" },
-  { id: 663169665, name: "Garrison Grill", latitude: 42.9051515, longitude: -78.9295640, type: "fast_food" },
-  { id: 663171739, name: "Tim Hortons", latitude: 42.9044395, longitude: -78.9589475, type: "cafe" },
-  { id: 663182520, name: "Tim Hortons", latitude: 42.9061340, longitude: -78.9182915, type: "cafe" },
-  { id: 663182521, name: "Wendy's", latitude: 42.9060295, longitude: -78.9187955, type: "fast_food" },
-  { id: 663182646, name: "Artemis", latitude: 42.9059780, longitude: -78.9210090, type: "restaurant" },
-  { id: 663182691, name: "KFC", latitude: 42.9047770, longitude: -78.9253040, type: "fast_food" },
-  { id: 663182734, name: "Vaticano Restaurant", latitude: 42.9110805, longitude: -78.9090575, type: "restaurant" },
-  { id: 663182735, name: "Happy Jack's", latitude: 42.9113715, longitude: -78.9090245, type: "restaurant" },
-  { id: 663182737, name: "Ming Teh", latitude: 42.9119595, longitude: -78.9089565, type: "restaurant" },
-  { id: 663182827, name: "The Sicilian Chef", latitude: 42.9094398, longitude: -78.9145282, type: "restaurant" },
-  { id: 663214348, name: "The Breakfast Beacon", latitude: 42.8644220, longitude: -79.0583545, type: "restaurant" },
-  { id: 663299556, name: "The Scuttlebutt Tap & Eatery", latitude: 42.9455105, longitude: -79.0544950, type: "restaurant" },
-  { id: 663299642, name: "Tim Hortons", latitude: 42.9506930, longitude: -79.0542615, type: "cafe" },
-  { id: 1111892111, name: "Red's Takeout", latitude: 42.9460823, longitude: -79.0545900, type: "restaurant" },
-  { id: 1469989685, name: "A&W", latitude: 42.9056188, longitude: -78.9380640, type: "fast_food" },
-  { id: 9999999999, name: "Red Swan Pizza", latitude: 42.9056700, longitude: -78.9264499, type: "restaurant" },
-  { id: 9999999998, name: "Crafted 1885", latitude: 42.8862884, longitude: -78.9633893, type: "restaurant" },
-  { id: 9999999997, name: "Take 2 Restaurant & Bar", latitude: 42.9042302, longitude: -78.9848798, type: "restaurant" },
-  { id: 9999999996, name: "Rizzo's House of Parm", latitude: 42.8747407, longitude: -79.0588556, type: "restaurant" },
-  { id: 9999999995, name: "Rina's Place", latitude: 42.8863661, longitude: -78.9598362, type: "restaurant" },
-  { id: 9999999994, name: "Tahini's", latitude: 42.9053193, longitude: -78.9330572, type: "restaurant" },
-  { id: 9999999993, name: "Osmow's Shawarma", latitude: 42.9053193, longitude: -78.9330572, type: "fast_food" },
-  { id: 9999999992, name: "The Plaice Bar & Grill", latitude: 42.9048928, longitude: -78.9514935, type: "restaurant" },
-  { id: 9999999991, name: "Pizza Hut", latitude: 42.9057655, longitude: -78.9210877, type: "fast_food" },
-  { id: 9999999990, name: "Arby's", latitude: 42.9057655, longitude: -78.9210877, type: "fast_food" },
-  { id: 9999999989, name: "Little Red Coffee & Catering", latitude: 42.9093891, longitude: -78.9118284, type: "restaurant" },
-  { id: 9999999988, name: "Southsides Patio Bar & Grill", latitude: 42.9107045, longitude: -78.9091060, type: "cafe" },
-  { id: 9999999987, name: "City Thai Restaurant", latitude: 42.9108257, longitude: -78.9095244, type: "restaurant" },
-  { id: 9999999986, name: "Quality Pizza Burgers Subs", latitude: 42.9196380, longitude: -78.9189240, type: "fast_food" },
-  { id: 9999999985, name: "Tito's Pizza and Wings Fort Erie", latitude: 42.9296855, longitude: -78.9181012, type: "fast_food" },
-  { id: 9999999984, name: "Kaizen Sushi & Ramen", latitude: 42.9297233, longitude: -78.9162130, type: "restaurant" },
-  { id: 9999999983, name: "Central Pizza", latitude: 42.9128035, longitude: -78.9189003, type: "fast_food" },
-  { id: 9999999982, name: "Zia's Pizzeria", latitude: 42.9046522, longitude: -78.9618237, type: "fast_food" },
-  { id: 9999999981, name: "Domino's Pizza 1", latitude: 42.9043651, longitude: -78.9630328, type: "fast_food" },
-  { id: 9999999980, name: "Domino's Pizza 2", latitude: 42.8850714, longitude: -79.0589701, type: "fast_food" },
+  { id: 5070173721, name: "335 on the Ridge", latitude: 42.8833677, longitude: -79.0524639, type: "restaurant", hasDelivery: false },
+  { id: 6728537025, name: "Our Corner Cafe", latitude: 42.8859235, longitude: -79.0522642, type: "cafe", hasDelivery: false },
+  { id: 7349691717, name: "Chuck's Roadhouse", latitude: 42.9048291, longitude: -78.9274862, type: "restaurant", hasDelivery: false },
+  { id: 7349691731, name: "Pizza Pizza", latitude: 42.9047653, longitude: -78.9256173, type: "fast_food", hasDelivery: true },
+  { id: 7349691783, name: "The Barrel", latitude: 42.9052194, longitude: -78.9232931, type: "restaurant", hasDelivery: false },
+  { id: 7349692458, name: "Little Caesars", latitude: 42.9048874, longitude: -78.9308618, type: "fast_food", hasDelivery: true },
+  { id: 7349692460, name: "M&J's", latitude: 42.9049739, longitude: -78.9301483, type: "fast_food", hasDelivery: true },
+  { id: 7349731014, name: "Subway", latitude: 42.9058015, longitude: -78.9244808, type: "fast_food", hasDelivery: true },
+  { id: 7349731015, name: "Pita Pit", latitude: 42.9058074, longitude: -78.9237995, type: "fast_food", hasDelivery: true },
+  { id: 7349738505, name: "Yukiguni II", latitude: 42.9057459, longitude: -78.9396668, type: "restaurant", hasDelivery: false },
+  { id: 7352994236, name: "Subway", latitude: 42.9501464, longitude: -79.0555546, type: "fast_food", hasDelivery: false },
+  { id: 9989780584, name: "Shaggy's Pizza & Eats", latitude: 42.9445158, longitude: -79.0550848, type: "restaurant", hasDelivery: false },
+  { id: 10172458516, name: "Mae's Place", latitude: 42.9448312, longitude: -79.0545588, type: "restaurant", hasDelivery: false },
+  { id: 10278842509, name: "Bella Pizza", latitude: 42.8851377, longitude: -79.0579428, type: "fast_food", hasDelivery: true },
+  { id: 10278852409, name: "Subway", latitude: 42.8850714, longitude: -79.0589701, type: "fast_food", hasDelivery: false },
+  { id: 11979893866, name: "South Coast Cookhouse", latitude: 42.8638695, longitude: -79.0614649, type: "restaurant", hasDelivery: false },
+  { id: 11992741406, name: "Amafli's Trattoria & Bar", latitude: 42.8639310, longitude: -79.0631738, type: "restaurant", hasDelivery: false },
+  { id: 663169639, name: "McDonald's", latitude: 42.9060040, longitude: -78.9275090, type: "fast_food", hasDelivery: false },
+  { id: 663169665, name: "Garrison Grill", latitude: 42.9051515, longitude: -78.9295640, type: "fast_food", hasDelivery: true },
+  { id: 663171739, name: "Tim Hortons", latitude: 42.9044395, longitude: -78.9589475, type: "cafe", hasDelivery: false },
+  { id: 663182520, name: "Tim Hortons", latitude: 42.9061340, longitude: -78.9182915, type: "cafe", hasDelivery: false },
+  { id: 663182521, name: "Wendy's", latitude: 42.9060295, longitude: -78.9187955, type: "fast_food", hasDelivery: true },
+  { id: 663182646, name: "Artemis", latitude: 42.9059780, longitude: -78.9210090, type: "restaurant", hasDelivery: false },
+  { id: 663182691, name: "KFC", latitude: 42.9047770, longitude: -78.9253040, type: "fast_food", hasDelivery: true },
+  { id: 663182734, name: "Vaticano Restaurant", latitude: 42.9110805, longitude: -78.9090575, type: "restaurant", hasDelivery: true },
+  { id: 663182735, name: "Happy Jack's", latitude: 42.9113715, longitude: -78.9090245, type: "restaurant", hasDelivery: true },
+  { id: 663182737, name: "Ming Teh", latitude: 42.9119595, longitude: -78.9089565, type: "restaurant", hasDelivery: false },
+  { id: 663182827, name: "The Sicilian Chef", latitude: 42.9094398, longitude: -78.9145282, type: "restaurant", hasDelivery: true },
+  { id: 663214348, name: "The Breakfast Beacon", latitude: 42.8644220, longitude: -79.0583545, type: "restaurant", hasDelivery: false },
+  { id: 663299556, name: "The Scuttlebutt Tap & Eatery", latitude: 42.9455105, longitude: -79.0544950, type: "restaurant", hasDelivery: false },
+  { id: 663299642, name: "Tim Hortons", latitude: 42.9506930, longitude: -79.0542615, type: "cafe", hasDelivery: false },
+  { id: 1111892111, name: "Red's Takeout", latitude: 42.9460823, longitude: -79.0545900, type: "restaurant", hasDelivery: false },
+  { id: 1469989685, name: "A&W", latitude: 42.9056188, longitude: -78.9380640, type: "fast_food", hasDelivery: true },
+  { id: 9999999999, name: "Red Swan Pizza", latitude: 42.9056700, longitude: -78.9264499, type: "restaurant", hasDelivery: true },
+  { id: 9999999998, name: "Crafted 1885", latitude: 42.8862884, longitude: -78.9633893, type: "restaurant", hasDelivery: true },
+  { id: 9999999997, name: "Take 2 Restaurant & Bar", latitude: 42.9042302, longitude: -78.9848798, type: "restaurant", hasDelivery: false },
+  { id: 9999999996, name: "Rizzo's House of Parm", latitude: 42.8747407, longitude: -79.0588556, type: "restaurant", hasDelivery: false },
+  { id: 9999999995, name: "Rina's Place", latitude: 42.8863661, longitude: -78.9598362, type: "restaurant", hasDelivery: true },
+  { id: 9999999994, name: "Tahini's", latitude: 42.9053193, longitude: -78.9330572, type: "restaurant", hasDelivery: true },
+  { id: 9999999993, name: "Osmow's Shawarma", latitude: 42.9053193, longitude: -78.9330572, type: "fast_food", hasDelivery: true },
+  { id: 9999999992, name: "The Plaice Bar & Grill", latitude: 42.9048928, longitude: -78.9514935, type: "restaurant", hasDelivery: false },
+  { id: 9999999991, name: "Pizza Hut", latitude: 42.9057655, longitude: -78.9210877, type: "fast_food", hasDelivery: true },
+  { id: 9999999990, name: "Arby's", latitude: 42.9057655, longitude: -78.9210877, type: "fast_food", hasDelivery: true },
+  { id: 9999999989, name: "Little Red Coffee & Catering", latitude: 42.9093891, longitude: -78.9118284, type: "restaurant", hasDelivery: true },
+  { id: 9999999988, name: "Southsides Patio Bar & Grill", latitude: 42.9107045, longitude: -78.9091060, type: "cafe", hasDelivery: false },
+  { id: 9999999987, name: "City Thai Restaurant", latitude: 42.9108257, longitude: -78.9095244, type: "restaurant", hasDelivery: false },
+  { id: 9999999986, name: "Quality Pizza Burgers Subs", latitude: 42.9196380, longitude: -78.9189240, type: "fast_food", hasDelivery: true },
+  { id: 9999999985, name: "Tito's Pizza and Wings Fort Erie", latitude: 42.9296855, longitude: -78.9181012, type: "fast_food", hasDelivery: true },
+  { id: 9999999984, name: "Kaizen Sushi & Ramen", latitude: 42.9297233, longitude: -78.9162130, type: "restaurant", hasDelivery: true },
+  { id: 9999999983, name: "Central Pizza", latitude: 42.9128035, longitude: -78.9189003, type: "fast_food", hasDelivery: true },
+  { id: 9999999982, name: "Zia's Pizzeria", latitude: 42.9046522, longitude: -78.9618237, type: "fast_food", hasDelivery: true },
+  { id: 9999999981, name: "Domino's Pizza 1", latitude: 42.9043651, longitude: -78.9630328, type: "fast_food", hasDelivery: true },
+  { id: 9999999980, name: "Domino's Pizza 2", latitude: 42.8850714, longitude: -79.0589701, type: "fast_food", hasDelivery: true },
 ];
 
 // Haversine distance calculation
@@ -111,12 +116,32 @@ export function GISGrowthOpportunities({
   gridCells = {},
   competitors: propCompetitors = [],
   showCompetitors = true,
+  selectedCompetitorIds: parentSelectedIds,
+  onSelectedCompetitorsChange,
+  bufferRadiusKm: parentBufferRadius,
+  onBufferRadiusChange,
 }: GISGrowthOpportunitiesProps) {
   const competitors = FORT_ERIE_COMPETITORS;
-  const [radiusKm, setRadiusKm] = useState(1);
+  
+  // Use parent state if provided, otherwise use local state
+  const [radiusKm, setRadiusKm] = useState(parentBufferRadius ?? 1);
   const [visibleTypes, setVisibleTypes] = useState<Set<string>>(new Set(['restaurant', 'cafe', 'fast_food']));
-  const [selectedCompetitors, setSelectedCompetitors] = useState<Set<number>>(new Set());
+  const [selectedCompetitors, setSelectedCompetitors] = useState<Set<number>>(parentSelectedIds ?? new Set());
   const [showCompetitorList, setShowCompetitorList] = useState(false);
+  const [showDeliveryOnly, setShowDeliveryOnly] = useState(false);
+  
+  // Sync with parent state if callbacks are provided
+  useEffect(() => {
+    if (onBufferRadiusChange && parentBufferRadius !== undefined) {
+      setRadiusKm(parentBufferRadius);
+    }
+  }, [parentBufferRadius, onBufferRadiusChange]);
+  
+  useEffect(() => {
+    if (onSelectedCompetitorsChange && parentSelectedIds !== undefined) {
+      setSelectedCompetitors(parentSelectedIds);
+    }
+  }, [parentSelectedIds, onSelectedCompetitorsChange]);
   
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<L.Map | null>(null);
@@ -141,10 +166,24 @@ export function GISGrowthOpportunities({
       newSelected.add(competitorId);
     }
     setSelectedCompetitors(newSelected);
+    if (onSelectedCompetitorsChange) {
+      onSelectedCompetitorsChange(newSelected);
+    }
   };
 
   const clearCompetitorSelection = () => {
-    setSelectedCompetitors(new Set());
+    const newSelected = new Set<number>();
+    setSelectedCompetitors(newSelected);
+    if (onSelectedCompetitorsChange) {
+      onSelectedCompetitorsChange(newSelected);
+    }
+  };
+  
+  const handleRadiusChange = (newRadius: number) => {
+    setRadiusKm(newRadius);
+    if (onBufferRadiusChange) {
+      onBufferRadiusChange(newRadius);
+    }
   };
 
   // Initialize map
@@ -194,6 +233,11 @@ export function GISGrowthOpportunities({
   // Update markers when data or settings change
   useEffect(() => {
     if (!map.current) return;
+    
+    // Sync radius with parent if it changed
+    if (parentBufferRadius !== undefined && parentBufferRadius !== radiusKm) {
+      setRadiusKm(parentBufferRadius);
+    }
 
     // Clear existing markers
     markersRef.current.forEach((marker) => {
@@ -262,8 +306,13 @@ export function GISGrowthOpportunities({
     };
 
     competitors.forEach((competitor: Competitor) => {
-      // Only show if type is visible
-      if (!visibleTypes.has(competitor.type)) {
+      // If delivery filter is active, only show competitors with delivery
+      if (showDeliveryOnly && !competitor.hasDelivery) {
+        return;
+      }
+
+      // If delivery filter is NOT active, check type visibility
+      if (!showDeliveryOnly && !visibleTypes.has(competitor.type)) {
         return;
       }
 
@@ -308,7 +357,7 @@ export function GISGrowthOpportunities({
 
       circlesRef.current.push(circle);
     });
-  }, [gridCells, radiusKm, visibleTypes, selectedCompetitors]);
+  }, [gridCells, radiusKm, visibleTypes, selectedCompetitors, showDeliveryOnly]);
 
   return (
     <div className="space-y-4">
@@ -327,8 +376,8 @@ export function GISGrowthOpportunities({
             min={0.5}
             max={5}
             step={0.1}
-            value={[radiusKm]}
-            onValueChange={(value) => setRadiusKm(value[0])}
+                  value={[radiusKm]}
+                  onValueChange={(value) => handleRadiusChange(value[0])}
             className="w-full"
           />
         </div>
@@ -366,6 +415,16 @@ export function GISGrowthOpportunities({
             >
               🍔 Fast Food
             </button>
+            <button
+              onClick={() => setShowDeliveryOnly(!showDeliveryOnly)}
+              className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                showDeliveryOnly
+                  ? 'bg-green-500 text-white'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              🚚 Delivery
+            </button>
           </div>
         </div>
 
@@ -385,7 +444,8 @@ export function GISGrowthOpportunities({
                 Clear Selection
               </button>
               <div className="space-y-1">
-                {competitors.map((competitor) => (
+                {competitors
+                  .map((competitor) => (
                   <label key={competitor.id} className="flex items-center gap-2 cursor-pointer hover:bg-gray-100 p-1 rounded">
                     <input
                       type="checkbox"
@@ -396,6 +456,7 @@ export function GISGrowthOpportunities({
                     <span className="text-xs text-gray-700 flex-1">
                       {competitor.name}
                       <span className="text-gray-500 ml-1">({competitor.type})</span>
+                      {competitor.hasDelivery && <span className="text-green-600 ml-1">🚚</span>}
                     </span>
                   </label>
                 ))}
@@ -431,6 +492,10 @@ export function GISGrowthOpportunities({
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full" style={{ backgroundColor: "#10b981" }}></div>
             <span>Orders</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm">🚚</span>
+            <span>Has Delivery</span>
           </div>
         </div>
       </div>
