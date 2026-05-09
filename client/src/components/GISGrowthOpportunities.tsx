@@ -209,14 +209,19 @@ export function GISGrowthOpportunities({
     }
   };
   
-  // Get competitors filtered by visible types
+  // Get competitors filtered by visible types (for map display)
   const getVisibleCompetitors = () => {
     return competitors.filter(c => visibleTypes.has(c.type));
   };
   
-  // Get selected competitors that are visible
+  // Get selected competitors that are visible (for buffer analysis)
   const getSelectedVisibleCompetitors = () => {
     return competitors.filter(c => selectedCompetitors.has(c.id) && visibleTypes.has(c.type));
+  };
+  
+  // Get all competitors for the checklist (not filtered by visible types)
+  const getAllCompetitors = () => {
+    return competitors;
   };
 
   // Initialize map
@@ -477,13 +482,16 @@ export function GISGrowthOpportunities({
                 Clear Selection
               </button>
               <div className="space-y-1">
-                {getVisibleCompetitors()
+                {getAllCompetitors()
                   .map((competitor) => (
-                  <label key={competitor.id} className="flex items-center gap-2 cursor-pointer hover:bg-gray-100 p-1 rounded">
+                  <label key={competitor.id} className={`flex items-center gap-2 cursor-pointer hover:bg-gray-100 p-1 rounded ${
+                    !visibleTypes.has(competitor.type) ? 'opacity-50' : ''
+                  }`}>
                     <input
                       type="checkbox"
                       checked={selectedCompetitors.has(competitor.id)}
                       onChange={() => toggleCompetitorSelection(competitor.id)}
+                      disabled={!visibleTypes.has(competitor.type)}
                       className="w-4 h-4"
                     />
                     <span className="text-xs text-gray-700 flex-1">
