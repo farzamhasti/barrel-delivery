@@ -101,11 +101,22 @@ export function AnalyticsSectionModalWithGIS({
   // State for competitor buffer analysis (only used for growth section)
   const [selectedCompetitorIds, setSelectedCompetitorIds] = useState<Set<number>>(new Set());
   const [bufferRadiusKm, setBufferRadiusKm] = useState<number>(1);
+  const [visibleCompetitorTypes, setVisibleCompetitorTypes] = useState<Set<string>>(new Set(['restaurant', 'cafe', 'fast_food']));
   
   // Helper function to get selected competitors
   const getSelectedCompetitors = () => {
     if (!selectedCompetitorIds || selectedCompetitorIds.size === 0) return [];
     return FORT_ERIE_COMPETITORS.filter((c) => selectedCompetitorIds.has(c.id));
+  };
+  
+  // Helper function to get visible competitors
+  const getVisibleCompetitors = () => {
+    return FORT_ERIE_COMPETITORS.filter((c) => visibleCompetitorTypes.has(c.type));
+  };
+  
+  // Helper function to get selected and visible competitors
+  const getSelectedVisibleCompetitors = () => {
+    return FORT_ERIE_COMPETITORS.filter((c) => selectedCompetitorIds.has(c.id) && visibleCompetitorTypes.has(c.type));
   };
 
   // Use tRPC query hook for fetching competitors
@@ -240,6 +251,8 @@ export function AnalyticsSectionModalWithGIS({
             onSelectedCompetitorsChange={setSelectedCompetitorIds}
             bufferRadiusKm={bufferRadiusKm}
             onBufferRadiusChange={setBufferRadiusKm}
+            visibleCompetitorTypes={visibleCompetitorTypes}
+            onVisibleCompetitorTypesChange={setVisibleCompetitorTypes}
           />
         );
       default:
@@ -400,10 +413,8 @@ export function AnalyticsSectionModalWithGIS({
           });
         }
         
-        // Get selected competitors
-        const selectedCompetitorsForAnalysis = selectedCompetitorIds && selectedCompetitorIds.size > 0
-          ? FORT_ERIE_COMPETITORS.filter((c) => selectedCompetitorIds.has(c.id))
-          : [];
+        // Get selected and visible competitors for analysis
+        const selectedCompetitorsForAnalysis = getSelectedVisibleCompetitors();
         
         // Analyze buffer
         const bufferAnalysis = analyzeCompetitorBuffers(
@@ -420,7 +431,7 @@ export function AnalyticsSectionModalWithGIS({
             <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-200">
               <h4 className="font-semibold text-blue-900 mb-3">📊 Competitor Buffer Analysis</h4>
               
-              {selectedCompetitorIds && selectedCompetitorIds.size > 0 ? (
+              {selectedCompetitorIds && selectedCompetitorIds.size > 0 && getSelectedVisibleCompetitors().length > 0 ? (
                 <div className="space-y-3">
                   <div className="grid grid-cols-2 gap-3">
                     <div className="bg-white p-3 rounded border border-blue-100">

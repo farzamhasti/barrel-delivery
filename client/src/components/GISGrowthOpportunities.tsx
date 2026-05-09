@@ -32,6 +32,8 @@ interface GISGrowthOpportunitiesProps {
   onSelectedCompetitorsChange?: (ids: Set<number>) => void;
   bufferRadiusKm?: number;
   onBufferRadiusChange?: (radius: number) => void;
+  visibleCompetitorTypes?: Set<string>;
+  onVisibleCompetitorTypesChange?: (types: Set<string>) => void;
 }
 
 const RESTAURANT_LOCATION = { lat: 42.90517, lng: -78.92295 };
@@ -120,28 +122,38 @@ export function GISGrowthOpportunities({
   onSelectedCompetitorsChange,
   bufferRadiusKm: parentBufferRadius,
   onBufferRadiusChange,
+  visibleCompetitorTypes: parentVisibleTypes,
+  onVisibleCompetitorTypesChange,
 }: GISGrowthOpportunitiesProps) {
   const competitors = FORT_ERIE_COMPETITORS;
   
   // Use parent state if provided, otherwise use local state
   const [radiusKm, setRadiusKm] = useState(parentBufferRadius ?? 1);
-  const [visibleTypes, setVisibleTypes] = useState<Set<string>>(new Set(['restaurant', 'cafe', 'fast_food']));
+  const [visibleTypes, setVisibleTypes] = useState<Set<string>>(parentVisibleTypes ?? new Set(['restaurant', 'cafe', 'fast_food']));
   const [selectedCompetitors, setSelectedCompetitors] = useState<Set<number>>(parentSelectedIds ?? new Set());
   const [showCompetitorList, setShowCompetitorList] = useState(false);
   const [showDeliveryOnly, setShowDeliveryOnly] = useState(false);
   
-  // Sync with parent state if callbacks are provided
+  // Sync radius with parent when it changes
   useEffect(() => {
-    if (onBufferRadiusChange && parentBufferRadius !== undefined) {
+    if (parentBufferRadius !== undefined) {
       setRadiusKm(parentBufferRadius);
     }
-  }, [parentBufferRadius, onBufferRadiusChange]);
+  }, [parentBufferRadius]);
   
+  // Sync selected competitors with parent when they change
   useEffect(() => {
-    if (onSelectedCompetitorsChange && parentSelectedIds !== undefined) {
-      setSelectedCompetitors(parentSelectedIds);
+    if (parentSelectedIds !== undefined) {
+      setSelectedCompetitors(new Set(parentSelectedIds));
     }
-  }, [parentSelectedIds, onSelectedCompetitorsChange]);
+  }, [parentSelectedIds]);
+  
+  // Sync visible types with parent when they change
+  useEffect(() => {
+    if (parentVisibleTypes !== undefined) {
+      setVisibleTypes(new Set(parentVisibleTypes));
+    }
+  }, [parentVisibleTypes]);
   
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<L.Map | null>(null);
@@ -156,6 +168,19 @@ export function GISGrowthOpportunities({
       newTypes.add(type);
     }
     setVisibleTypes(newTypes);
+    onVisibleCompetitorTypesChange?.(newTypes);
+    
+    // When toggling competitor types, update selected competitors
+    // Remove competitors whose type is no longer visible
+    const updatedSelected = new Set(selectedCompetitors);
+    competitors.forEach(c => {
+      if (!newTypes.has(c.type)) {
+        updatedSelected.delete(c.id);
+      }
+    });
+    
+    setSelectedCompetitors(updatedSelected);
+    onSelectedCompetitorsChange?.(updatedSelected);
   };
 
   const toggleCompetitorSelection = (competitorId: number) => {
@@ -166,17 +191,15 @@ export function GISGrowthOpportunities({
       newSelected.add(competitorId);
     }
     setSelectedCompetitors(newSelected);
-    if (onSelectedCompetitorsChange) {
-      onSelectedCompetitorsChange(newSelected);
-    }
+    // Always call parent callback to ensure state stays in sync
+    onSelectedCompetitorsChange?.(newSelected);
   };
 
   const clearCompetitorSelection = () => {
     const newSelected = new Set<number>();
     setSelectedCompetitors(newSelected);
-    if (onSelectedCompetitorsChange) {
-      onSelectedCompetitorsChange(newSelected);
-    }
+    // Always call parent callback to ensure state stays in sync
+    onSelectedCompetitorsChange?.(newSelected);
   };
   
   const handleRadiusChange = (newRadius: number) => {
@@ -184,6 +207,16 @@ export function GISGrowthOpportunities({
     if (onBufferRadiusChange) {
       onBufferRadiusChange(newRadius);
     }
+  };
+  
+  // Get competitors filtered by visible types
+  const getVisibleCompetitors = () => {
+    return competitors.filter(c => visibleTypes.has(c.type));
+  };
+  
+  // Get selected competitors that are visible
+  const getSelectedVisibleCompetitors = () => {
+    return competitors.filter(c => selectedCompetitors.has(c.id) && visibleTypes.has(c.type));
   };
 
   // Initialize map
@@ -233,11 +266,6 @@ export function GISGrowthOpportunities({
   // Update markers when data or settings change
   useEffect(() => {
     if (!map.current) return;
-    
-    // Sync radius with parent if it changed
-    if (parentBufferRadius !== undefined && parentBufferRadius !== radiusKm) {
-      setRadiusKm(parentBufferRadius);
-    }
 
     // Clear existing markers
     markersRef.current.forEach((marker) => {
@@ -357,12 +385,17 @@ export function GISGrowthOpportunities({
 
       circlesRef.current.push(circle);
     });
-  }, [gridCells, radiusKm, visibleTypes, selectedCompetitors, showDeliveryOnly]);
+  }, [gridCells, radiusKm, visibleTypes, selectedCompetitors, showDeliveryOnly, competitors]);
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h3 className="text-sm font-medium text-gray-700">Geographical Analysis of Competitors - GIS Map</h3>
+        {selectedCompetitors.size > 0 && (
+          <div className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+            {selectedCompetitors.size} competitor{selectedCompetitors.size !== 1 ? 's' : ''} selected
+          </div>
+        )}
       </div>
 
       {/* Control Panel */}
@@ -444,7 +477,7 @@ export function GISGrowthOpportunities({
                 Clear Selection
               </button>
               <div className="space-y-1">
-                {competitors
+                {getVisibleCompetitors()
                   .map((competitor) => (
                   <label key={competitor.id} className="flex items-center gap-2 cursor-pointer hover:bg-gray-100 p-1 rounded">
                     <input
