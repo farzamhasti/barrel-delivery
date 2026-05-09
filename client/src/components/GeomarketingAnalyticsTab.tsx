@@ -296,7 +296,7 @@ export function GeomarketingAnalyticsTab() {
           </CardContent>
         </Card>
 
-        {/* Section 5: Growth Opportunities */}
+        {/* Section 5: Geographical Analysis of Competitors */}
         <Card
           className="border-0 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
           onClick={() => setOpenSectionModal("growth")}
@@ -304,9 +304,9 @@ export function GeomarketingAnalyticsTab() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <MapIcon className="w-5 h-5" />
-              Growth Opportunities
+              Geographical Analysis of Competitors
             </CardTitle>
-            <CardDescription>Identify areas for expansion and optimization</CardDescription>
+            <CardDescription>Analyze competitor locations and market opportunities</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="bg-gray-100 rounded-lg h-48 flex items-center justify-center">
@@ -373,8 +373,8 @@ export function GeomarketingAnalyticsTab() {
       <AnalyticsSectionModalWithGIS
         isOpen={openSectionModal === "growth"}
         onClose={() => setOpenSectionModal(null)}
-        title="Growth Opportunities"
-        description="Identify areas for expansion and optimization"
+        title="Geographical Analysis of Competitors"
+        description="Analyze competitor locations and market opportunities"
         sectionType="growth"
         data={growthData}
       />

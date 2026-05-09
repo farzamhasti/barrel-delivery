@@ -36,27 +36,26 @@ export function AnalyticsSectionModalWithGIS({
 }: AnalyticsSectionModalWithGISProps) {
   const [activeView, setActiveView] = useState<ViewType>("gis");
   const [competitors, setCompetitors] = useState<any[]>([]);
-  const [isLoadingCompetitors, setIsLoadingCompetitors] = useState(false);
 
-  // Fetch competitors when modal opens for growth section
-  useEffect(() => {
-    if (isOpen && sectionType === "growth") {
-      setIsLoadingCompetitors(true);
-      trpc.analytics.fetchCompetitorsFromAPI
-        .query({
-          latitude: 42.90517,
-          longitude: -78.92295,
-          radiusKm: 2,
-        })
-        .then((result) => {
-          if (result.success && result.competitors) {
-            setCompetitors(result.competitors);
-          }
-          setIsLoadingCompetitors(false);
-        })
-        .catch(() => setIsLoadingCompetitors(false));
+  // Use tRPC query hook for fetching competitors
+  const { data: competitorData, isLoading: isLoadingCompetitors } = trpc.analytics.fetchCompetitorsFromAPI.useQuery(
+    {
+      latitude: 42.90517,
+      longitude: -78.92295,
+      radiusKm: 2,
+    },
+    {
+      enabled: isOpen && sectionType === "growth",
+      staleTime: 1000 * 60 * 5, // 5 minutes
     }
-  }, [isOpen, sectionType]);
+  );
+
+  // Update competitors when data changes
+  useEffect(() => {
+    if (competitorData?.success && competitorData?.competitors) {
+      setCompetitors(competitorData.competitors);
+    }
+  }, [competitorData]);
 
   // Transform backend data to GIS component format
   const transformGeographicData = () => {
@@ -318,7 +317,7 @@ export function AnalyticsSectionModalWithGIS({
       case "growth":
         return (
           <div className="space-y-4">
-            <h3 className="font-semibold text-lg">Growth Opportunities</h3>
+            <h3 className="font-semibold text-lg">Geographical Analysis of Competitors</h3>
             {data?.topGrowthZones && data.topGrowthZones.length > 0 ? (
               <div className="space-y-3">
                 <div className="bg-blue-50 p-3 rounded">

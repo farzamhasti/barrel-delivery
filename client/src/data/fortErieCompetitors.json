@@ -1,0 +1,256 @@
+{
+  "competitors": [
+    {
+      "id": 1172079406,
+      "name": "McDonald's",
+      "latitude": 42.9077128,
+      "longitude": -78.9190110,
+      "type": "fast_food"
+    },
+    {
+      "id": 1721210349,
+      "name": "Shake n' Dog",
+      "latitude": 42.8639661,
+      "longitude": -79.0683893,
+      "type": "restaurant"
+    },
+    {
+      "id": 2503413489,
+      "name": "Tim Hortons",
+      "latitude": 42.9076679,
+      "longitude": -78.9189208,
+      "type": "cafe"
+    },
+    {
+      "id": 5070173721,
+      "name": "335 on the Ridge",
+      "latitude": 42.8833677,
+      "longitude": -79.0524639,
+      "type": "restaurant"
+    },
+    {
+      "id": 6728537025,
+      "name": "Our Corner Cafe",
+      "latitude": 42.8859235,
+      "longitude": -79.0522642,
+      "type": "cafe"
+    },
+    {
+      "id": 7349691717,
+      "name": "Chuck's Roadhouse",
+      "latitude": 42.9048291,
+      "longitude": -78.9274862,
+      "type": "restaurant"
+    },
+    {
+      "id": 7349691731,
+      "name": "Pizza Pizza",
+      "latitude": 42.9047653,
+      "longitude": -78.9256173,
+      "type": "fast_food"
+    },
+    {
+      "id": 7349691783,
+      "name": "The Barrel",
+      "latitude": 42.9052194,
+      "longitude": -78.9232931,
+      "type": "restaurant"
+    },
+    {
+      "id": 7349692458,
+      "name": "Little Caesars",
+      "latitude": 42.9048874,
+      "longitude": -78.9308618,
+      "type": "fast_food"
+    },
+    {
+      "id": 7349692460,
+      "name": "M&J's",
+      "latitude": 42.9049739,
+      "longitude": -78.9301483,
+      "type": "fast_food"
+    },
+    {
+      "id": 7349731014,
+      "name": "Subway",
+      "latitude": 42.9058015,
+      "longitude": -78.9244808,
+      "type": "fast_food"
+    },
+    {
+      "id": 7349731015,
+      "name": "Pita Pit",
+      "latitude": 42.9058074,
+      "longitude": -78.9237995,
+      "type": "fast_food"
+    },
+    {
+      "id": 7349738505,
+      "name": "Yukiguni II",
+      "latitude": 42.9057459,
+      "longitude": -78.9396668,
+      "type": "restaurant"
+    },
+    {
+      "id": 7352994236,
+      "name": "Subway",
+      "latitude": 42.9501464,
+      "longitude": -79.0555546,
+      "type": "fast_food"
+    },
+    {
+      "id": 9989780584,
+      "name": "Shaggy's Pizza & Eats",
+      "latitude": 42.9445158,
+      "longitude": -79.0550848,
+      "type": "restaurant"
+    },
+    {
+      "id": 10172458516,
+      "name": "Mae's Place",
+      "latitude": 42.9448312,
+      "longitude": -79.0545588,
+      "type": "restaurant"
+    },
+    {
+      "id": 10278842509,
+      "name": "Bella Pizza",
+      "latitude": 42.8851377,
+      "longitude": -79.0579428,
+      "type": "fast_food"
+    },
+    {
+      "id": 10278852409,
+      "name": "Subway",
+      "latitude": 42.8850714,
+      "longitude": -79.0589701,
+      "type": "fast_food"
+    },
+    {
+      "id": 11979893866,
+      "name": "South Coast Cookhouse",
+      "latitude": 42.8638695,
+      "longitude": -79.0614649,
+      "type": "restaurant"
+    },
+    {
+      "id": 11992741406,
+      "name": "Amafli's Trattoria & Bar",
+      "latitude": 42.8639310,
+      "longitude": -79.0631738,
+      "type": "restaurant"
+    },
+    {
+      "id": 663169639,
+      "name": "McDonald's",
+      "latitude": 42.9060040,
+      "longitude": -78.9275090,
+      "type": "fast_food"
+    },
+    {
+      "id": 663169665,
+      "name": "Garrison Grill",
+      "latitude": 42.9051515,
+      "longitude": -78.9295640,
+      "type": "fast_food"
+    },
+    {
+      "id": 663171739,
+      "name": "Tim Hortons",
+      "latitude": 42.9044395,
+      "longitude": -78.9589475,
+      "type": "cafe"
+    },
+    {
+      "id": 663182520,
+      "name": "Tim Hortons",
+      "latitude": 42.9061340,
+      "longitude": -78.9182915,
+      "type": "cafe"
+    },
+    {
+      "id": 663182521,
+      "name": "Wendy's",
+      "latitude": 42.9060295,
+      "longitude": -78.9187955,
+      "type": "fast_food"
+    },
+    {
+      "id": 663182646,
+      "name": "Artemis",
+      "latitude": 42.9059780,
+      "longitude": -78.9210090,
+      "type": "restaurant"
+    },
+    {
+      "id": 663182691,
+      "name": "KFC",
+      "latitude": 42.9047770,
+      "longitude": -78.9253040,
+      "type": "fast_food"
+    },
+    {
+      "id": 663182734,
+      "name": "Vaticano Restaurant",
+      "latitude": 42.9110805,
+      "longitude": -78.9090575,
+      "type": "restaurant"
+    },
+    {
+      "id": 663182735,
+      "name": "Happy Jack's",
+      "latitude": 42.9113715,
+      "longitude": -78.9090245,
+      "type": "restaurant"
+    },
+    {
+      "id": 663182737,
+      "name": "Ming Teh",
+      "latitude": 42.9119595,
+      "longitude": -78.9089565,
+      "type": "restaurant"
+    },
+    {
+      "id": 663182827,
+      "name": "The Sicilian Chef",
+      "latitude": 42.9094398,
+      "longitude": -78.9145282,
+      "type": "restaurant"
+    },
+    {
+      "id": 663214348,
+      "name": "The Breakfast Beacon",
+      "latitude": 42.8644220,
+      "longitude": -79.0583545,
+      "type": "restaurant"
+    },
+    {
+      "id": 663299556,
+      "name": "The Scuttlebutt Tap & Eatery",
+      "latitude": 42.9455105,
+      "longitude": -79.0544950,
+      "type": "restaurant"
+    },
+    {
+      "id": 663299642,
+      "name": "Tim Hortons",
+      "latitude": 42.9506930,
+      "longitude": -79.0542615,
+      "type": "cafe"
+    },
+    {
+      "id": 1111892111,
+      "name": "Red's Takeout",
+      "latitude": 42.9460823,
+      "longitude": -79.0545900,
+      "type": "restaurant"
+    },
+    {
+      "id": 1469989685,
+      "name": "A&W",
+      "latitude": 42.9056188,
+      "longitude": -78.9380640,
+      "type": "fast_food"
+    }
+  ]
+}
