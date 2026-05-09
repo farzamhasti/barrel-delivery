@@ -82,6 +82,13 @@ const FORT_ERIE_COMPETITORS: Competitor[] = [
   { id: 9999999989, name: "Little Red Coffee & Catering", latitude: 42.9093891, longitude: -78.9118284, type: "restaurant" },
   { id: 9999999988, name: "Southsides Patio Bar & Grill", latitude: 42.9107045, longitude: -78.9091060, type: "cafe" },
   { id: 9999999987, name: "City Thai Restaurant", latitude: 42.9108257, longitude: -78.9095244, type: "restaurant" },
+  { id: 9999999986, name: "Quality Pizza Burgers Subs", latitude: 42.9196380, longitude: -78.9189240, type: "fast_food" },
+  { id: 9999999985, name: "Tito's Pizza and Wings Fort Erie", latitude: 42.9296855, longitude: -78.9181012, type: "fast_food" },
+  { id: 9999999984, name: "Kaizen Sushi & Ramen", latitude: 42.9297233, longitude: -78.9162130, type: "restaurant" },
+  { id: 9999999983, name: "Central Pizza", latitude: 42.9128035, longitude: -78.9189003, type: "fast_food" },
+  { id: 9999999982, name: "Zia's Pizzeria", latitude: 42.9046522, longitude: -78.9618237, type: "fast_food" },
+  { id: 9999999981, name: "Domino's Pizza 1", latitude: 42.9043651, longitude: -78.9630328, type: "fast_food" },
+  { id: 9999999980, name: "Domino's Pizza 2", latitude: 42.8850714, longitude: -79.0589701, type: "fast_food" },
 ];
 
 // Haversine distance calculation
