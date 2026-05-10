@@ -1913,3 +1913,15 @@ These features are documented for future enhancement but are not required for th
 - [x] Make analysis update dynamically when buffer radius changes
 - [x] Make analysis update dynamically when selected competitors change
 - [x] Ensure no regressions in existing dashboard functionality
+
+
+## Phase 29: Clickable Icons for Buffer Analysis Orders (COMPLETED)
+- [x] Create OrderDetailsModal component to display orders with customer details
+- [x] Add clickable icons to Inside Buffer and Outside Buffer metric cards
+- [x] Implement filtering to show orders inside competitor buffer
+- [x] Implement filtering to show orders outside competitor buffer
+- [x] Display order number, customer address, and phone number in tables
+- [x] Ensure tables update dynamically when buffer radius changes
+- [x] Ensure tables update dynamically when selected competitors change
+- [x] Test icon click functionality
+- [x] Verify no changes to other sections' appearance and functionality

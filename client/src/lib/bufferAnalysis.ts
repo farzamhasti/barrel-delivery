@@ -29,6 +29,8 @@ interface BufferAnalysisResult {
   percentageOutside: number;
   selectedCompetitorsCount: number;
   bufferRadiusKm: number;
+  ordersInsideList: Order[];
+  ordersOutsideList: Order[];
 }
 
 /**
@@ -95,6 +97,8 @@ export const analyzeCompetitorBuffers = (
       percentageOutside: 0,
       selectedCompetitorsCount: selectedCompetitors.length,
       bufferRadiusKm,
+      ordersInsideList: [],
+      ordersOutsideList: [],
     };
   }
 
@@ -107,18 +111,24 @@ export const analyzeCompetitorBuffers = (
       percentageOutside: 100,
       selectedCompetitorsCount: 0,
       bufferRadiusKm,
+      ordersInsideList: [],
+      ordersOutsideList: allOrders,
     };
   }
 
-  let ordersInsideBuffer = 0;
+  const ordersInsideList: Order[] = [];
+  const ordersOutsideList: Order[] = [];
 
   allOrders.forEach((order) => {
     if (isOrderInsideBuffer(order, selectedCompetitors, bufferRadiusKm)) {
-      ordersInsideBuffer++;
+      ordersInsideList.push(order);
+    } else {
+      ordersOutsideList.push(order);
     }
   });
 
-  const ordersOutsideBuffer = allOrders.length - ordersInsideBuffer;
+  const ordersInsideBuffer = ordersInsideList.length;
+  const ordersOutsideBuffer = ordersOutsideList.length;
   const percentageInside = (ordersInsideBuffer / allOrders.length) * 100;
   const percentageOutside = (ordersOutsideBuffer / allOrders.length) * 100;
 
@@ -130,5 +140,7 @@ export const analyzeCompetitorBuffers = (
     percentageOutside,
     selectedCompetitorsCount: selectedCompetitors.length,
     bufferRadiusKm,
+    ordersInsideList,
+    ordersOutsideList,
   };
 };

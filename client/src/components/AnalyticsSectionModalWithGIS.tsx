@@ -15,6 +15,8 @@ import { GISGrowthOpportunities } from "./GISGrowthOpportunities";
 import { GISTimeAnalysis } from "./GISTimeAnalysis";
 import { trpc } from "@/lib/trpc";
 import { analyzeCompetitorBuffers } from "@/lib/bufferAnalysis";
+import { OrderDetailsModal } from "./OrderDetailsModal";
+import { Eye } from "lucide-react";
 
 type ViewType = "gis" | "chart";
 
@@ -97,6 +99,9 @@ export function AnalyticsSectionModalWithGIS({
 }: AnalyticsSectionModalWithGISProps) {
   const [activeView, setActiveView] = useState<ViewType>("gis");
   const [competitors, setCompetitors] = useState<any[]>([]);
+  const [showOrdersModal, setShowOrdersModal] = useState(false);
+  const [selectedOrdersType, setSelectedOrdersType] = useState<"inside" | "outside">("inside");
+  const [selectedOrders, setSelectedOrders] = useState<any[]>([]);
   
   // State for competitor buffer analysis (only used for growth section)
   const [selectedCompetitorIds, setSelectedCompetitorIds] = useState<Set<number>>(new Set());
@@ -115,6 +120,12 @@ export function AnalyticsSectionModalWithGIS({
   };
   
   // Helper function to get selected and visible competitors
+  const handleViewOrders = (type: "inside" | "outside", orders: any[]) => {
+    setSelectedOrdersType(type);
+    setSelectedOrders(orders);
+    setShowOrdersModal(true);
+  };
+
   const getSelectedVisibleCompetitors = () => {
     return FORT_ERIE_COMPETITORS.filter((c) => selectedCompetitorIds.has(c.id) && visibleCompetitorTypes.has(c.type));
   };
@@ -444,19 +455,29 @@ export function AnalyticsSectionModalWithGIS({
                     </div>
                   </div>
                   
-                  <div className="grid grid-cols-3 gap-2">
-                    <div className="bg-white p-3 rounded border border-green-200">
-                      <p className="text-xs text-gray-600 mb-1">Inside Buffer</p>
-                      <p className="text-xl font-bold text-green-600">{bufferAnalysis.ordersInsideBuffer}</p>
-                      <p className="text-xs text-green-600 font-semibold">{bufferAnalysis.percentageInside.toFixed(1)}%</p>
-                      <p className="text-xs text-gray-500 mt-1">Loyal Customers</p>
-                    </div>
-                    <div className="bg-white p-3 rounded border border-orange-200">
-                      <p className="text-xs text-gray-600 mb-1">Outside Buffer</p>
-                      <p className="text-xl font-bold text-orange-600">{bufferAnalysis.ordersOutsideBuffer}</p>
-                      <p className="text-xs text-orange-600 font-semibold">{bufferAnalysis.percentageOutside.toFixed(1)}%</p>
-                      <p className="text-xs text-gray-500 mt-1">Growth Potential</p>
-                    </div>
+                   <div className="grid grid-cols-3 gap-2">
+                     <div className="bg-white p-3 rounded border border-green-200 cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleViewOrders("inside", bufferAnalysis.ordersInsideList)}>
+                       <div className="flex items-start justify-between">
+                         <div>
+                           <p className="text-xs text-gray-600 mb-1">Inside Buffer</p>
+                           <p className="text-xl font-bold text-green-600">{bufferAnalysis.ordersInsideBuffer}</p>
+                           <p className="text-xs text-green-600 font-semibold">{bufferAnalysis.percentageInside.toFixed(1)}%</p>
+                           <p className="text-xs text-gray-500 mt-1">Loyal Customers</p>
+                         </div>
+                         <Eye className="w-4 h-4 text-green-600 mt-1" />
+                       </div>
+                     </div>
+                     <div className="bg-white p-3 rounded border border-orange-200 cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleViewOrders("outside", bufferAnalysis.ordersOutsideList)}>
+                       <div className="flex items-start justify-between">
+                         <div>
+                           <p className="text-xs text-gray-600 mb-1">Outside Buffer</p>
+                           <p className="text-xl font-bold text-orange-600">{bufferAnalysis.ordersOutsideBuffer}</p>
+                           <p className="text-xs text-orange-600 font-semibold">{bufferAnalysis.percentageOutside.toFixed(1)}%</p>
+                           <p className="text-xs text-gray-500 mt-1">Growth Potential</p>
+                         </div>
+                         <Eye className="w-4 h-4 text-orange-600 mt-1" />
+                       </div>
+                     </div>
                     <div className="bg-white p-3 rounded border border-blue-200">
                       <p className="text-xs text-gray-600 mb-1">Total Orders</p>
                       <p className="text-xl font-bold text-blue-600">{bufferAnalysis.totalOrders}</p>
@@ -508,8 +529,44 @@ export function AnalyticsSectionModalWithGIS({
         );
 
       default:
-        return <div className="text-gray-500">No chart data available</div>;
+        return <div className="text-gray-500">No data available</div>;
     }
+  };
+
+  const getOrdersInsideBuffer = () => {
+    const allOrders: any[] = [];
+    if (data?.gridCells) {
+      Object.values(data.gridCells).forEach((cell: any) => {
+        if (cell.orders && Array.isArray(cell.orders)) {
+          allOrders.push(...cell.orders);
+        }
+      });
+    }
+    const selectedCompetitorsForAnalysis = getSelectedVisibleCompetitors();
+    const bufferAnalysis = analyzeCompetitorBuffers(
+      allOrders,
+      selectedCompetitorsForAnalysis,
+      bufferRadiusKm
+    );
+    return bufferAnalysis.ordersInsideList || [];
+  };
+
+  const getOrdersOutsideBuffer = () => {
+    const allOrders: any[] = [];
+    if (data?.gridCells) {
+      Object.values(data.gridCells).forEach((cell: any) => {
+        if (cell.orders && Array.isArray(cell.orders)) {
+          allOrders.push(...cell.orders);
+        }
+      });
+    }
+    const selectedCompetitorsForAnalysis = getSelectedVisibleCompetitors();
+    const bufferAnalysis = analyzeCompetitorBuffers(
+      allOrders,
+      selectedCompetitorsForAnalysis,
+      bufferRadiusKm
+    );
+    return bufferAnalysis.ordersOutsideList || [];
   };
 
   return (
@@ -559,6 +616,14 @@ export function AnalyticsSectionModalWithGIS({
             </div>
           )}
         </div>
+        
+        <OrderDetailsModal
+          isOpen={showOrdersModal}
+          onClose={() => setShowOrdersModal(false)}
+          title={selectedOrdersType === "inside" ? "Orders Inside Competitor Buffer" : "Orders Outside Competitor Buffer"}
+          orders={selectedOrders}
+          type={selectedOrdersType}
+        />
       </DialogContent>
     </Dialog>
   );
