@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+'use client';
+
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -47,13 +49,36 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
   const [filteredPoints, setFilteredPoints] = useState<DeliveryPoint[]>([]);
   const [isCalculating, setIsCalculating] = useState(false);
 
-  // Convert orders to delivery points
-  const deliveryPoints: DeliveryPoint[] = orders.map((order) => ({
-    id: order.id,
-    latitude: order.latitude,
-    longitude: order.longitude,
-    timestamp: order.createdAt.getTime(),
-  }));
+  // Memoize delivery points to prevent unnecessary recalculations
+  const deliveryPoints = useMemo(
+    () =>
+      orders.map((order) => ({
+        id: order.id,
+        latitude: order.latitude,
+        longitude: order.longitude,
+        timestamp: order.createdAt.getTime(),
+      })),
+    [orders]
+  );
+
+  // Memoize date range
+  const dateRange = useMemo(
+    () => getDateRange(selectedDate, periodType),
+    [selectedDate, periodType]
+  );
+
+  // Memoize filter options
+  const filterOptions = useMemo(
+    (): TimeFilterOptions => ({
+      periodType,
+      startDate: dateRange.start,
+      endDate: dateRange.end,
+      startHour,
+      endHour,
+      daysOfWeek: selectedDays.length > 0 ? selectedDays : undefined,
+    }),
+    [periodType, dateRange, startHour, endHour, selectedDays]
+  );
 
   // Calculate heatmap when filters change
   useEffect(() => {
@@ -64,19 +89,6 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
     }
 
     setIsCalculating(true);
-
-    // Get date range based on period type
-    const { start, end } = getDateRange(selectedDate, periodType);
-
-    // Build filter options
-    const filterOptions: TimeFilterOptions = {
-      periodType,
-      startDate: start,
-      endDate: end,
-      startHour,
-      endHour,
-      daysOfWeek: selectedDays.length > 0 ? selectedDays : undefined,
-    };
 
     // Apply temporal filters
     let filtered = applyTemporalFilters(deliveryPoints, filterOptions);
@@ -97,81 +109,106 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
     }
 
     setIsCalculating(false);
-  }, [
-    deliveryPoints,
-    periodType,
-    selectedDate,
-    startHour,
-    endHour,
-    selectedDays,
-    filterResidential,
-    gridResolution,
-  ]);
+  }, [deliveryPoints, filterOptions, filterResidential, gridResolution]);
 
-  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Memoize statistics calculation
+  const statistics = useMemo(
+    () =>
+      filteredPoints.length > 0
+        ? calculateTimeStatistics(filteredPoints, filterOptions)
+        : null,
+    [filteredPoints, filterOptions]
+  );
+
+  // Memoize event handlers with useCallback
+  const handleDateChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSelectedDate(new Date(e.target.value));
-  };
+  }, []);
 
-  const handleDayToggle = (day: number) => {
+  const handleDayToggle = useCallback((day: number) => {
     setSelectedDays((prev) =>
       prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]
     );
-  };
+  }, []);
 
-  const handleTimePreset = (preset: (typeof TIME_PRESETS)[keyof typeof TIME_PRESETS]) => {
-    setStartHour(preset.startHour);
-    setEndHour(preset.endHour);
-  };
+  const handleTimePreset = useCallback(
+    (preset: (typeof TIME_PRESETS)[keyof typeof TIME_PRESETS]) => {
+      setStartHour(preset.startHour);
+      setEndHour(preset.endHour);
+    },
+    []
+  );
 
-  const statistics = filteredPoints.length > 0 ? calculateTimeStatistics(filteredPoints, {
-    periodType,
-    startDate: getDateRange(selectedDate, periodType).start,
-    endDate: getDateRange(selectedDate, periodType).end,
-    startHour,
-    endHour,
-    daysOfWeek: selectedDays.length > 0 ? selectedDays : undefined,
-  }) : null;
+  const handlePeriodChange = useCallback((value: string) => {
+    setPeriodType(value as TimePeriodType);
+  }, []);
 
-  const handleMapReady = useCallback((map: any) => {
-    if (!heatmapData || !window.L) return;
+  const handleGridResolutionChange = useCallback((value: number[]) => {
+    setGridResolution(value[0]);
+  }, []);
 
-    // Create heatmap layer data
-    const heatmapLayerData = heatmapData.grid.map((cell) => [
-      cell.latitude,
-      cell.longitude,
-      cell.intensity,
-    ]);
+  const handleResidentialFilterChange = useCallback(() => {
+    setFilterResidential((prev) => !prev);
+  }, []);
 
-    // Add heatmap layer if leaflet-heat is available
-    if (window.L.heatLayer) {
-      window.L.heatLayer(heatmapLayerData, {
-        radius: 25,
-        blur: 15,
-        maxZoom: 17,
-        gradient: {
-          0.0: '#0000ff', // Blue
-          0.25: '#00ff00', // Green
-          0.5: '#ffff00', // Yellow
-          0.75: '#ff7f00', // Orange
-          1.0: '#ff0000', // Red
-        },
-      }).addTo(map);
-    } else {
-      // Fallback: Add circles for each heatmap cell
-      heatmapData.grid.forEach((cell) => {
-        const intensity = cell.intensity;
-        const color = intensity > 0.75 ? '#ff0000' : intensity > 0.5 ? '#ff7f00' : intensity > 0.25 ? '#ffff00' : '#00ff00';
-        window.L.circleMarker([cell.latitude, cell.longitude], {
-          radius: 5,
-          fillColor: color,
-          color: color,
-          weight: 1,
-          opacity: 0.7,
-          fillOpacity: 0.5,
+  const handleStartHourChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setStartHour(e.target.value ? parseInt(e.target.value) : undefined);
+  }, []);
+
+  const handleEndHourChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setEndHour(e.target.value ? parseInt(e.target.value) : undefined);
+  }, []);
+
+  const handleMapReady = useCallback(
+    (map: any) => {
+      if (!heatmapData || !window.L) return;
+
+      // Create heatmap layer data
+      const heatmapLayerData = heatmapData.grid.map((cell) => [
+        cell.latitude,
+        cell.longitude,
+        cell.intensity,
+      ]);
+
+      // Add heatmap layer if leaflet-heat is available
+      if (window.L.heatLayer) {
+        window.L.heatLayer(heatmapLayerData, {
+          radius: 25,
+          blur: 15,
+          maxZoom: 17,
+          gradient: {
+            0.0: '#0000ff', // Blue
+            0.25: '#00ff00', // Green
+            0.5: '#ffff00', // Yellow
+            0.75: '#ff7f00', // Orange
+            1.0: '#ff0000', // Red
+          },
         }).addTo(map);
-      });
-    }
-  }, [heatmapData]);
+      } else {
+        // Fallback: Add circles for each heatmap cell
+        heatmapData.grid.forEach((cell) => {
+          const intensity = cell.intensity;
+          const color =
+            intensity > 0.75
+              ? '#ff0000'
+              : intensity > 0.5
+                ? '#ff7f00'
+                : intensity > 0.25
+                  ? '#ffff00'
+                  : '#00ff00';
+          window.L.circleMarker([cell.latitude, cell.longitude], {
+            radius: 5,
+            fillColor: color,
+            color: color,
+            weight: 1,
+            opacity: 0.7,
+            fillOpacity: 0.5,
+          }).addTo(map);
+        });
+      }
+    },
+    [heatmapData]
+  );
 
   return (
     <div className="space-y-6">
@@ -191,7 +228,7 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium">Analysis Period</label>
-                <Select value={periodType} onValueChange={(value) => setPeriodType(value as TimePeriodType)}>
+                <Select value={periodType} onValueChange={handlePeriodChange}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -247,8 +284,7 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
                   min="0"
                   max="23"
                   value={startHour ?? ''}
-                  onChange={(e) => setStartHour(e.target.value ? parseInt(e.target.value) : undefined)}
-                  placeholder="All"
+                  onChange={handleStartHourChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 />
               </div>
@@ -259,8 +295,7 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
                   min="0"
                   max="23"
                   value={endHour ?? ''}
-                  onChange={(e) => setEndHour(e.target.value ? parseInt(e.target.value) : undefined)}
-                  placeholder="All"
+                  onChange={handleEndHourChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 />
               </div>
@@ -273,104 +308,92 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
             <div className="flex flex-wrap gap-2">
               {DAY_NAMES.map((day, index) => (
                 <Button
-                  key={day}
+                  key={index}
                   variant={selectedDays.includes(index) ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => handleDayToggle(index)}
                 >
-                  {day.slice(0, 3)}
+                  {day.substring(0, 3)}
                 </Button>
               ))}
             </div>
           </div>
 
-          {/* Filtering Options */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-medium">Filter to Residential Areas</label>
-              <input
-                type="checkbox"
-                checked={filterResidential}
-                onChange={(e) => setFilterResidential(e.target.checked)}
-                className="h-4 w-4"
-              />
-            </div>
+          {/* Grid Resolution */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">
+              Grid Resolution: {gridResolution}
+            </label>
+            <Slider
+              value={[gridResolution]}
+              onValueChange={handleGridResolutionChange}
+              min={10}
+              max={100}
+              step={10}
+              className="w-full"
+            />
+          </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Grid Resolution: {gridResolution}</label>
-              <Slider
-                value={[gridResolution]}
-                onValueChange={(value) => setGridResolution(value[0])}
-                min={20}
-                max={100}
-                step={10}
-                className="w-full"
-              />
-            </div>
+          {/* Residential Filter */}
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="residential-filter"
+              checked={filterResidential}
+              onChange={handleResidentialFilterChange}
+              className="w-4 h-4"
+            />
+            <label htmlFor="residential-filter" className="text-sm font-medium">
+              Filter to Residential Areas Only
+            </label>
           </div>
 
           {/* Statistics */}
           {statistics && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-2">
-              <div className="flex justify-between">
-                <span className="text-sm font-medium">Total Deliveries:</span>
-                <Badge variant="secondary">{statistics.totalPoints}</Badge>
+            <div className="grid grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
+              <div>
+                <p className="text-xs text-gray-600">Delivery Points</p>
+                <p className="text-lg font-semibold">{statistics.totalPoints}</p>
               </div>
-              <div className="flex justify-between">
-                <span className="text-sm font-medium">Date Range:</span>
-                <span className="text-sm text-gray-600">{statistics.dateRange}</span>
+              <div>
+                <p className="text-xs text-gray-600">Average Intensity</p>
+                <p className="text-lg font-semibold">
+                  {(statistics.averageIntensity * 100).toFixed(1)}%
+                </p>
               </div>
-              {statistics.hourRange && (
-                <div className="flex justify-between">
-                  <span className="text-sm font-medium">Hour Range:</span>
-                  <span className="text-sm text-gray-600">{statistics.hourRange}</span>
-                </div>
-              )}
-              <div className="flex justify-between">
-                <span className="text-sm font-medium">Avg per Day:</span>
-                <span className="text-sm text-gray-600">
-                  {statistics.averagePointsPerDay.toFixed(1)} deliveries
-                </span>
+              <div>
+                <p className="text-xs text-gray-600">Peak Hour</p>
+                <p className="text-lg font-semibold">
+                  {statistics.peakHour}:00
+                </p>
               </div>
             </div>
           )}
 
           {/* Loading State */}
-          {(isLoading || isCalculating) && (
-            <div className="flex items-center justify-center gap-2 text-gray-600">
+          {isCalculating && (
+            <div className="flex items-center gap-2 text-blue-600">
               <Loader2 className="h-4 w-4 animate-spin" />
-              <span>Calculating heatmap...</span>
+              <span className="text-sm">Calculating heatmap...</span>
             </div>
           )}
 
-          {/* Empty State */}
-          {!isLoading && !isCalculating && filteredPoints.length === 0 && (
-            <div className="flex items-center justify-center gap-2 text-gray-500 bg-gray-50 rounded-lg p-4">
+          {/* Error State */}
+          {filteredPoints.length === 0 && !isCalculating && (
+            <div className="flex items-center gap-2 text-yellow-600 p-3 bg-yellow-50 rounded-lg">
               <AlertCircle className="h-4 w-4" />
-              <span>No delivery data available for selected filters</span>
+              <span className="text-sm">No delivery data available for selected filters</span>
+            </div>
+          )}
+
+          {/* Map Display */}
+          {heatmapData && (
+            <div className="h-96 rounded-lg overflow-hidden border border-gray-200">
+              <GISMap onMapReady={handleMapReady} />
             </div>
           )}
         </CardContent>
       </Card>
-
-      {/* Heatmap Visualization */}
-      {heatmapData && filteredPoints.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Delivery Demand Heatmap</CardTitle>
-            <CardDescription>
-              Kernel Density Estimation showing delivery concentration intensity
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-96 rounded-lg overflow-hidden border border-gray-200">
-              <GISMap title="Delivery Heatmap" onMapReady={handleMapReady} />
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 };
-
-export default DeliveryHeatmapAnalysis;
