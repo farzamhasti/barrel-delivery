@@ -16,9 +16,10 @@ import { GISTimeAnalysis } from "./GISTimeAnalysis";
 import { trpc } from "@/lib/trpc";
 import { analyzeCompetitorBuffers } from "@/lib/bufferAnalysis";
 import { OrderDetailsModal } from "./OrderDetailsModal";
+import { DeliveryHeatmapAnalysis } from "./DeliveryHeatmapAnalysis";
 import { Eye } from "lucide-react";
 
-type ViewType = "gis" | "chart";
+type ViewType = "gis" | "chart" | "heatmap";
 
 interface AnalyticsSectionModalWithGISProps {
   isOpen: boolean;
@@ -98,6 +99,7 @@ export function AnalyticsSectionModalWithGIS({
   data,
 }: AnalyticsSectionModalWithGISProps) {
   const [activeView, setActiveView] = useState<ViewType>("gis");
+  const [heatmapOrders, setHeatmapOrders] = useState<any[]>([]);
   const [competitors, setCompetitors] = useState<any[]>([]);
   const [showOrdersModal, setShowOrdersModal] = useState(false);
   const [selectedOrdersType, setSelectedOrdersType] = useState<"inside" | "outside">("inside");
@@ -581,25 +583,33 @@ export function AnalyticsSectionModalWithGIS({
         </DialogHeader>
 
         {/* View Toggle */}
-        <div className="flex gap-2 border-b pb-4">
+        <div className="flex gap-2 mb-4">
           <Button
             variant={activeView === "gis" ? "default" : "outline"}
             onClick={() => setActiveView("gis")}
-            size="sm"
-            className="gap-2"
+            className="flex items-center gap-2"
           >
-            <Layers className="w-4 h-4" />
+            <MapIcon className="h-4 w-4" />
             GIS Map
           </Button>
           <Button
             variant={activeView === "chart" ? "default" : "outline"}
             onClick={() => setActiveView("chart")}
-            size="sm"
-            className="gap-2"
+            className="flex items-center gap-2"
           >
-            <BarChart3 className="w-4 h-4" />
+            <BarChart3 className="h-4 w-4" />
             Chart/Table
           </Button>
+          {sectionType === "growth" && (
+            <Button
+              variant={activeView === "heatmap" ? "default" : "outline"}
+              onClick={() => setActiveView("heatmap")}
+              className="flex items-center gap-2"
+            >
+              <Layers className="h-4 w-4" />
+              Heatmap
+            </Button>
+          )}
         </div>
 
         {/* Content */}
@@ -613,6 +623,24 @@ export function AnalyticsSectionModalWithGIS({
           {activeView === "chart" && (
             <div className="space-y-4">
               {data ? renderChartContent() : <p className="text-gray-500">Loading analytics data...</p>}
+            </div>
+          )}
+
+          {activeView === "heatmap" && sectionType === "growth" && (
+            <div className="space-y-4">
+              {data?.orders ? (
+                <DeliveryHeatmapAnalysis
+                  orders={data.orders.map((order: any) => ({
+                    id: order.id,
+                    latitude: order.customerLatitude,
+                    longitude: order.customerLongitude,
+                    createdAt: new Date(order.createdAt),
+                  }))}
+                  isLoading={false}
+                />
+              ) : (
+                <p className="text-gray-500">No delivery data available for heatmap analysis</p>
+              )}
             </div>
           )}
         </div>
