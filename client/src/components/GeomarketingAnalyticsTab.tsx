@@ -6,7 +6,7 @@ import { trpc } from "@/lib/trpc";
 import { useCallback } from "react";
 import { DatePickerModal } from "./DatePickerModal";
 import { AnalyticsSectionModalWithGIS } from "./AnalyticsSectionModalWithGIS";
-import { DeliveryHeatmapAnalysis } from "./DeliveryHeatmapAnalysis";
+
 
 type DateRange = "daily" | "monthly";
 type AreaFilter = "all" | "Downtown" | "Central Park" | "Both";
@@ -22,11 +22,7 @@ export function GeomarketingAnalyticsTab() {
   // Modal states
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [openSectionModal, setOpenSectionModal] = useState<string | null>(null);
-  const [showHeatmap, setShowHeatmap] = useState(false);
 
-  const handleToggleHeatmap = useCallback(() => {
-    setShowHeatmap(prev => !prev);
-  }, []);
 
   // Calculate date range for queries
   const getDateRangeForQuery = () => {
@@ -327,8 +323,6 @@ export function GeomarketingAnalyticsTab() {
           </CardContent>
         </Card>
       </div>
-
-      {/* Delivery Heatmap Analysis - Temporarily disabled for component optimization */}
 
       {/* Date Picker Modal */}
       <DatePickerModal
