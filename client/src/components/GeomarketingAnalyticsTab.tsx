@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { BarChart3, Map as MapIcon, Calendar } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import { useCallback } from "react";
 import { DatePickerModal } from "./DatePickerModal";
 import { AnalyticsSectionModalWithGIS } from "./AnalyticsSectionModalWithGIS";
 import { DeliveryHeatmapAnalysis } from "./DeliveryHeatmapAnalysis";
@@ -22,6 +23,10 @@ export function GeomarketingAnalyticsTab() {
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [openSectionModal, setOpenSectionModal] = useState<string | null>(null);
   const [showHeatmap, setShowHeatmap] = useState(false);
+
+  const handleToggleHeatmap = useCallback(() => {
+    setShowHeatmap(prev => !prev);
+  }, []);
 
   // Calculate date range for queries
   const getDateRangeForQuery = () => {
@@ -324,7 +329,7 @@ export function GeomarketingAnalyticsTab() {
       </div>
 
       {/* Delivery Heatmap Analysis Card */}
-      <Card className="border-0 shadow-sm cursor-pointer hover:shadow-md transition-shadow" onClick={() => setShowHeatmap(!showHeatmap)}>
+      <Card className="border-0 shadow-sm cursor-pointer hover:shadow-md transition-shadow" onClick={handleToggleHeatmap}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
             <MapIcon className="w-5 h-5" />
