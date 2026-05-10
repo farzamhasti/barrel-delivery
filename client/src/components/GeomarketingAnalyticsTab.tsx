@@ -328,28 +328,7 @@ export function GeomarketingAnalyticsTab() {
         </Card>
       </div>
 
-      {/* Delivery Heatmap Analysis Card */}
-      <Card className="border-0 shadow-sm cursor-pointer hover:shadow-md transition-shadow" onClick={handleToggleHeatmap}>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <MapIcon className="w-5 h-5" />
-            Delivery Heatmap Analysis
-          </CardTitle>
-          <CardDescription>Visualize delivery demand intensity across residential areas</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {!showHeatmap ? (
-            <div className="bg-gray-100 rounded-lg h-48 flex items-center justify-center">
-              <div className="text-center">
-                <MapIcon className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                <p className="text-sm text-gray-500">Click to view heatmap analysis</p>
-              </div>
-            </div>
-          ) : (
-            <DeliveryHeatmapAnalysis orders={growthData?.orders || []} isLoading={growthLoading} />
-          )}
-        </CardContent>
-      </Card>
+      {/* Delivery Heatmap Analysis - Temporarily disabled for component optimization */}
 
       {/* Date Picker Modal */}
       <DatePickerModal

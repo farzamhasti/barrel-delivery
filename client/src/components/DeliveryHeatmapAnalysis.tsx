@@ -112,16 +112,16 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
     setSelectedDate(new Date(e.target.value));
   };
 
-  const handleDayToggle = (day: number) => {
+  const handleDayToggle = useCallback((day: number) => {
     setSelectedDays((prev) =>
       prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]
     );
-  };
+  }, []);
 
-  const handleTimePreset = (preset: (typeof TIME_PRESETS)[keyof typeof TIME_PRESETS]) => {
+  const handleTimePreset = useCallback((preset: (typeof TIME_PRESETS)[keyof typeof TIME_PRESETS]) => {
     setStartHour(preset.startHour);
     setEndHour(preset.endHour);
-  };
+  }, []);
 
   const statistics = filteredPoints.length > 0 ? calculateTimeStatistics(filteredPoints, {
     periodType,
