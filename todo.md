@@ -1979,3 +1979,13 @@ These features are documented for future enhancement but are not required for th
 - [x] Verify legend displays correctly on all screen sizes (legend control positioned at bottom-right)
 - [x] Ensure no performance impact from polygon masking (caching implemented)
 - [x] Verify no regressions in existing functionality (all tests passing)
+
+## Phase 35: Fix Residential Area Filtering (COMPLETED)
+- [x] Move boundary fetching to server-side tRPC to avoid CORS errors
+- [x] Fix Overpass API query format and error handling
+- [x] Update DeliveryHeatmapAnalysis to filter points using residential boundary polygon
+- [x] Ensure heatmap is generated ONLY from residential area points
+- [x] Fit map view to residential boundary (not fixed rectangle)
+- [x] Display statistics showing residential delivery count
+- [x] Test filtering with real order data
+- [x] Verify all tests still passing (11/11 passing)

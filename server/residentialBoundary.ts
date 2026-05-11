@@ -37,23 +37,26 @@ export async function getResidentialBoundary(): Promise<any> {
   try {
     // Query Overpass API for residential areas in Fort Erie
     // Fort Erie approximate bounds: 42.88°N to 42.92°N, -79.00°W to -78.88°W
-    const query = `
-      [out:json];
-      [bbox:42.88,-79.00,42.92,-78.88];
-      (
-        way["landuse"="residential"];
-        relation["landuse"="residential"];
-      );
-      out geom;
-    `;
+    // Using compact query format without newlines
+    const query = '[out:json];[bbox:42.88,-79.00,42.92,-78.88];(way["landuse"="residential"];relation["landuse"="residential"];);out geom;';
 
+    console.log('[residentialBoundary] Fetching from Overpass API...');
     const response = await fetch('https://overpass-api.de/api/interpreter', {
       method: 'POST',
       body: query,
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
     });
 
     if (!response.ok) {
-      console.error('[residentialBoundary] API error:', response.statusText);
+      console.error('[residentialBoundary] API error:', response.status, response.statusText);
+      try {
+        const text = await response.text();
+        console.error('[residentialBoundary] Response body:', text.substring(0, 200));
+      } catch (e) {
+        // Ignore error reading response body
+      }
       return null;
     }
 
@@ -71,12 +74,14 @@ export async function getResidentialBoundary(): Promise<any> {
       return null;
     }
 
+    console.log(`[residentialBoundary] Found ${data.elements.length} elements`);
+
     // Find the largest polygon (main residential area)
     let largestPolygon = null;
     let largestArea = 0;
 
     for (const element of data.elements) {
-      if (element.type === 'way' && element.geometry) {
+      if ((element.type === 'way' || element.type === 'relation') && element.geometry) {
         const area = calculatePolygonArea(element.geometry);
         if (area > largestArea) {
           largestArea = area;
@@ -86,12 +91,26 @@ export async function getResidentialBoundary(): Promise<any> {
     }
 
     if (!largestPolygon || !largestPolygon.geometry) {
-      console.warn('[residentialBoundary] No valid residential polygon found');
+      console.warn('[residentialBoundary] No valid residential polygon found in OSM data');
       return null;
     }
 
+    console.log(`[residentialBoundary] Using polygon with ${largestPolygon.geometry.length} points`);
+
     // Convert geometry to GeoJSON coordinates
-    const coordinates = largestPolygon.geometry.map((point: any) => [point.lon, point.lat]);
+    const coordinates = largestPolygon.geometry
+      .map((point: any) => {
+        if (typeof point.lat === 'number' && typeof point.lon === 'number') {
+          return [point.lon, point.lat];
+        }
+        return null;
+      })
+      .filter((c: any) => c !== null);
+
+    if (coordinates.length < 3) {
+      console.warn('[residentialBoundary] Not enough valid coordinates in polygon');
+      return null;
+    }
 
     // Ensure polygon is closed
     if (
@@ -112,6 +131,7 @@ export async function getResidentialBoundary(): Promise<any> {
     };
 
     cachedBoundary = boundary;
+    console.log('[residentialBoundary] Successfully fetched and cached boundary');
     return boundary;
   } catch (error) {
     console.error('[residentialBoundary] Error:', error);
