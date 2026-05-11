@@ -6,13 +6,20 @@ import { AlertCircle, Loader2, TrendingUp } from 'lucide-react';
 import { GISMap } from './GISMap';
 import { trpc } from '@/lib/trpc';
 import {
-  generateKDEHeatmap,
+  generateKDEHeatmapResidential,
   HeatmapData,
   DeliveryPoint,
   convertToLeafletHeatmapFormat,
-} from '@/lib/heatmapCalculation';
-import { isPointInPolygon, createBoundaryLayer, getBoundaryLatLngs } from '@/lib/residentialBoundary';
+} from '@/lib/heatmapCalculationResidential';
+import { isPointInPolygon, createBoundaryLayer, getBoundaryLatLngs } from '@/lib/residentialBoundaryShared';
 import { addLegendToMap } from '@/lib/heatmapLegend';
+
+// Declare window.L for Leaflet library
+declare global {
+  interface Window {
+    L: any;
+  }
+}
 
 export interface DeliveryHeatmapAnalysisProps {
   dateRange: { startDate: Date; endDate: Date };
@@ -58,28 +65,30 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
 
   // Calculate heatmap when data changes - ONLY for residential areas
   useMemo(() => {
-    if (deliveryPoints.length === 0) {
+    if (deliveryPoints.length === 0 || !residentialBoundary) {
       setHeatmapData(null);
       setFilteredPoints([]);
       return;
     }
 
-    // CRITICAL: Filter to residential areas ONLY using boundary polygon
-    let filtered = deliveryPoints;
-    if (residentialBoundary && filterResidential) {
-      filtered = filtered.filter((point) =>
-        isPointInPolygon(
-          { lat: point.latitude, lng: point.longitude },
-          residentialBoundary
-        )
-      );
-    }
+    // Filter points to residential areas only
+    const filtered = deliveryPoints.filter((point) =>
+      isPointInPolygon(
+        { lat: point.latitude, lng: point.longitude },
+        residentialBoundary
+      )
+    );
 
     setFilteredPoints(filtered);
 
     // Generate KDE heatmap ONLY from residential points
-    if (filtered.length > 0) {
-      const heatmap = generateKDEHeatmap(filtered, 50);
+    // The heatmap grid is also constrained to residential boundary
+    if (filtered.length > 0 && filterResidential) {
+      const heatmap = generateKDEHeatmapResidential(filtered, residentialBoundary, 50);
+      setHeatmapData(heatmap);
+    } else if (!filterResidential) {
+      // If filter is disabled, show all points (for comparison)
+      const heatmap = generateKDEHeatmapResidential(deliveryPoints, residentialBoundary, 50);
       setHeatmapData(heatmap);
     } else {
       setHeatmapData(null);
@@ -172,7 +181,7 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
           Delivery Heatmap Analysis
         </CardTitle>
         <CardDescription>
-          Visualize delivery demand intensity across residential areas only
+          Visualize delivery demand intensity across residential areas only (OpenStreetMap land-use data)
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -207,7 +216,7 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
         {!isLoading && !residentialBoundary && (
           <div className="flex items-center gap-2 text-yellow-600 p-3 bg-yellow-50 rounded-lg">
             <AlertCircle className="h-4 w-4" />
-            <span className="text-sm">Unable to load residential area boundaries</span>
+            <span className="text-sm">Unable to load residential area boundaries from OpenStreetMap</span>
           </div>
         )}
 
@@ -222,16 +231,25 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
         {/* Map Display - Only shown if we have data and boundary */}
         {hasData && (
           <div className="h-96 rounded-lg overflow-hidden border border-gray-200">
-            <GISMap title="Delivery Heatmap - Residential Areas" onMapReady={handleMapReady} />
+            <GISMap title="Delivery Heatmap - Residential Areas Only" onMapReady={handleMapReady} />
           </div>
         )}
 
         {/* Statistics */}
         {hasData && (
-          <div className="text-xs text-gray-600 space-y-1">
-            <p>Total residential deliveries: <strong>{filteredPoints.length}</strong></p>
-            <p>Heatmap grid cells: <strong>{heatmapData.gridPoints.length}</strong></p>
-            <p>Max intensity: <strong>{(heatmapData.maxIntensity * 100).toFixed(1)}%</strong></p>
+          <div className="text-xs text-gray-600 space-y-1 p-2 bg-gray-50 rounded">
+            <p>
+              <strong>Residential deliveries:</strong> {filteredPoints.length}
+            </p>
+            <p>
+              <strong>Heatmap grid cells (residential only):</strong> {heatmapData.gridPoints.length}
+            </p>
+            <p>
+              <strong>Max intensity:</strong> {(heatmapData.maxIntensity * 100).toFixed(1)}%
+            </p>
+            <p className="text-xs text-gray-500 mt-2">
+              Heatmap generated only from delivery points within residential areas. Non-residential zones (industrial, parks, highways, waterways) are excluded from analysis.
+            </p>
           </div>
         )}
       </CardContent>
