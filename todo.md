@@ -1959,3 +1959,13 @@ These features are documented for future enhancement but are not required for th
 - [x] Implement dynamic intensity scaling for heatmap visualization (KDE-based)
 - [x] Test with real order data from multiple dates (analytics.heatmap.test.ts - 11 tests passing)
 - [x] Verify no changes to operational dashboards or workflows
+
+## Phase 33: Simplify Heatmap Component UI (COMPLETED)
+- [x] Remove internal filter controls (Analysis Period, Date, Time Presets, Hour Range, Days of Week, Grid Resolution)
+- [x] Keep only "Filter to Residential Areas Only" checkbox
+- [x] Display heatmap visualization directly in card
+- [x] Auto-generate heatmap based on parent filters (dateRange, areaFilter)
+- [x] Match behavior of other analytics cards (Geographic Distribution, Time Analysis, etc.)
+- [x] Test heatmap auto-generation with different date ranges (analytics.heatmap.test.ts - 11 tests passing)
+- [x] Test heatmap auto-generation with different area filters (area filtering tested)
+- [x] Verify no regressions in existing functionality (all tests passing)
