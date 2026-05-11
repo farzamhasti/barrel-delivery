@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertCircle, Loader2, TrendingUp } from 'lucide-react';
 import { GISMap } from './GISMap';
@@ -34,6 +34,7 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
   const [heatmapData, setHeatmapData] = useState<HeatmapData | null>(null);
   const [filteredPoints, setFilteredPoints] = useState<DeliveryPoint[]>([]);
   const [residentialBoundary, setResidentialBoundary] = useState<any>(null);
+  const mapRef = useRef<any>(null);
 
   // Fetch residential boundary from server via tRPC
   const { data: boundaryResponse, isLoading: isLoadingBoundary } = trpc.analytics.getResidentialBoundary.useQuery();
@@ -101,74 +102,113 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
 
   const handleMapReady = useCallback(
     (map: any) => {
-      if (!window.L) return;
-
-      // Add residential boundary layer and fit map to it
-      if (residentialBoundary) {
-        const boundaryLayer = createBoundaryLayer(residentialBoundary);
-        if (boundaryLayer) {
-          boundaryLayer.addTo(map);
-        }
-
-        // Fit map to residential boundary bounds
-        try {
-          const latLngs = getBoundaryLatLngs(residentialBoundary);
-          if (latLngs.length > 0) {
-            const bounds = window.L.latLngBounds(latLngs);
-            map.fitBounds(bounds, { padding: [50, 50] });
-          }
-        } catch (e) {
-          console.error('Error fitting map to boundary:', e);
-        }
+      if (!map || !window.L) {
+        console.warn('Map not ready or Leaflet not available');
+        return;
       }
 
-      // Add heatmap visualization if data exists
-      if (heatmapData) {
-        const heatmapLayerData = convertToLeafletHeatmapFormat(heatmapData);
+      mapRef.current = map;
 
-        // Add heatmap layer if leaflet-heat is available
-        if (window.L.heatLayer) {
-          window.L.heatLayer(heatmapLayerData, {
-            radius: 25,
-            blur: 15,
-            maxZoom: 17,
-            gradient: {
-              0.0: '#0000ff', // Blue - Very Low
-              0.25: '#00ff00', // Green - Low
-              0.5: '#ffff00', // Yellow - Medium
-              0.75: '#ff7f00', // Orange - High
-              1.0: '#ff0000', // Red - Very High
-            },
-          }).addTo(map);
-        } else {
-          // Fallback: Add circles for each heatmap cell
-          heatmapData.gridPoints.forEach((point) => {
-            const intensity = point.intensity;
-            const color =
-              intensity > 0.75
-                ? '#ff0000'
-                : intensity > 0.5
-                  ? '#ff7f00'
-                  : intensity > 0.25
-                    ? '#ffff00'
-                    : '#00ff00';
-            window.L.circleMarker([point.lat, point.lng], {
-              radius: 5,
-              fillColor: color,
-              color: color,
-              weight: 1,
-              opacity: 0.7,
-              fillOpacity: 0.5,
-            }).addTo(map);
-          });
+      // Add residential boundary layer
+      if (residentialBoundary) {
+        try {
+          const boundaryLayer = createBoundaryLayer(residentialBoundary);
+          if (boundaryLayer) {
+            boundaryLayer.addTo(map);
+          }
+        } catch (e) {
+          console.error('Error adding boundary layer:', e);
         }
       }
 
       // Add legend to map
-      addLegendToMap(map);
+      try {
+        addLegendToMap(map);
+      } catch (e) {
+        console.error('Error adding legend:', e);
+      }
     },
-    [heatmapData, residentialBoundary]
+    [residentialBoundary]
   );
+
+  // Separate effect to handle map bounds and heatmap layer
+  useEffect(() => {
+    if (!mapRef.current || !window.L || !residentialBoundary) {
+      return;
+    }
+
+    const map = mapRef.current;
+
+    // Fit map to residential boundary bounds
+    try {
+      const latLngs = getBoundaryLatLngs(residentialBoundary);
+      if (latLngs.length > 0) {
+        const bounds = window.L.latLngBounds(latLngs);
+        // Use setTimeout to ensure map is fully rendered
+        setTimeout(() => {
+          try {
+            map.fitBounds(bounds, { padding: [50, 50] });
+          } catch (e) {
+            console.error('Error fitting bounds:', e);
+          }
+        }, 100);
+      }
+    } catch (e) {
+      console.error('Error calculating bounds:', e);
+    }
+  }, [residentialBoundary]);
+
+  // Separate effect to handle heatmap layer
+  useEffect(() => {
+    if (!mapRef.current || !window.L || !heatmapData) {
+      return;
+    }
+
+    const map = mapRef.current;
+
+    try {
+      const heatmapLayerData = convertToLeafletHeatmapFormat(heatmapData);
+
+      // Add heatmap layer if leaflet-heat is available
+      if (window.L.heatLayer) {
+        window.L.heatLayer(heatmapLayerData, {
+          radius: 25,
+          blur: 15,
+          maxZoom: 17,
+          gradient: {
+            0.0: '#0000ff', // Blue - Very Low
+            0.25: '#00ff00', // Green - Low
+            0.5: '#ffff00', // Yellow - Medium
+            0.75: '#ff7f00', // Orange - High
+            1.0: '#ff0000', // Red - Very High
+          },
+        }).addTo(map);
+      } else {
+        // Fallback: Add circles for each heatmap cell
+        heatmapData.gridPoints.forEach((point) => {
+          const intensity = point.intensity;
+          const color =
+            intensity > 0.75
+              ? '#ff0000'
+              : intensity > 0.5
+                ? '#ff7f00'
+                : intensity > 0.25
+                  ? '#ffff00'
+                  : '#00ff00';
+          window.L.circleMarker([point.lat, point.lng], {
+            radius: 5,
+            fillColor: color,
+            color: color,
+            weight: 1,
+            opacity: 0.7,
+            fillOpacity: 0.5,
+          }).addTo(map);
+        });
+      }
+    } catch (e) {
+      console.error('Error adding heatmap layer:', e);
+    }
+  }, [heatmapData]);
 
   const isLoading = isDataLoading || isLoadingBoundary;
   const hasData = filteredPoints.length > 0 && heatmapData;
@@ -246,9 +286,6 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
             </p>
             <p>
               <strong>Max intensity:</strong> {(heatmapData.maxIntensity * 100).toFixed(1)}%
-            </p>
-            <p className="text-xs text-gray-500 mt-2">
-              Heatmap generated only from delivery points within residential areas. Non-residential zones (industrial, parks, highways, waterways) are excluded from analysis.
             </p>
           </div>
         )}
