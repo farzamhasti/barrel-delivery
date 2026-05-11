@@ -1,17 +1,18 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
-import { Badge } from '@/components/ui/badge';
 import { AlertCircle, Loader2, TrendingUp } from 'lucide-react';
 import { GISMap } from './GISMap';
+import { trpc } from '@/lib/trpc';
 import {
   generateKDEHeatmap,
   HeatmapData,
   DeliveryPoint,
+  convertToLeafletHeatmapFormat,
 } from '@/lib/heatmapCalculation';
 import {
   applyTemporalFilters,
@@ -25,18 +26,13 @@ import {
 import { filterToResidentialAreas } from '@/lib/osmResidentialFilter';
 
 export interface DeliveryHeatmapAnalysisProps {
-  orders: Array<{
-    id: number;
-    latitude: number;
-    longitude: number;
-    createdAt: Date;
-  }>;
-  isLoading?: boolean;
+  dateRange: { startDate: Date; endDate: Date };
+  areaFilter: 'all' | 'Downtown' | 'Central Park' | 'Both';
 }
 
 export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = ({
-  orders,
-  isLoading = false,
+  dateRange,
+  areaFilter,
 }) => {
   const [periodType, setPeriodType] = useState<TimePeriodType>('daily');
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -47,22 +43,27 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
   const [gridResolution, setGridResolution] = useState(50);
   const [heatmapData, setHeatmapData] = useState<HeatmapData | null>(null);
   const [filteredPoints, setFilteredPoints] = useState<DeliveryPoint[]>([]);
-  const [isCalculating, setIsCalculating] = useState(false);
 
-  // Memoize delivery points to prevent unnecessary recalculations
-  const deliveryPoints = useMemo(
-    () =>
-      orders.map((order) => ({
-        id: order.id,
-        latitude: order.latitude,
-        longitude: order.longitude,
-        timestamp: order.createdAt.getTime(),
-      })),
-    [orders]
-  );
+  // Fetch heatmap data from server
+  const { data: heatmapDataResponse, isLoading: isDataLoading } = trpc.analytics.getDeliveryHeatmapData.useQuery({
+    startDate: dateRange.startDate,
+    endDate: dateRange.endDate,
+    areaFilter: areaFilter,
+  });
 
-  // Memoize date range
-  const dateRange = useMemo(
+  // Convert server response to DeliveryPoint format
+  const deliveryPoints = useMemo(() => {
+    if (!heatmapDataResponse?.points) return [];
+    return heatmapDataResponse.points.map((point) => ({
+      id: point.orderId,
+      latitude: point.lat,
+      longitude: point.lng,
+      timestamp: point.timestamp,
+    }));
+  }, [heatmapDataResponse?.points]);
+
+  // Memoize date range for temporal filtering
+  const temporalDateRange = useMemo(
     () => getDateRange(selectedDate, periodType),
     [selectedDate, periodType]
   );
@@ -71,24 +72,22 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
   const filterOptions = useMemo(
     (): TimeFilterOptions => ({
       periodType,
-      startDate: dateRange.start,
-      endDate: dateRange.end,
+      startDate: temporalDateRange.start,
+      endDate: temporalDateRange.end,
       startHour,
       endHour,
       daysOfWeek: selectedDays.length > 0 ? selectedDays : undefined,
     }),
-    [periodType, dateRange, startHour, endHour, selectedDays]
+    [periodType, temporalDateRange, startHour, endHour, selectedDays]
   );
 
   // Calculate heatmap when filters change
-  useEffect(() => {
+  const isCalculating = useMemo(() => {
     if (deliveryPoints.length === 0) {
       setHeatmapData(null);
       setFilteredPoints([]);
-      return;
+      return false;
     }
-
-    setIsCalculating(true);
 
     // Apply temporal filters
     let filtered = applyTemporalFilters(deliveryPoints, filterOptions);
@@ -108,7 +107,7 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
       setHeatmapData(null);
     }
 
-    setIsCalculating(false);
+    return false;
   }, [deliveryPoints, filterOptions, filterResidential, gridResolution]);
 
   // Memoize statistics calculation
@@ -163,12 +162,8 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
     (map: any) => {
       if (!heatmapData || !window.L) return;
 
-      // Create heatmap layer data
-      const heatmapLayerData = heatmapData.grid.map((cell) => [
-        cell.latitude,
-        cell.longitude,
-        cell.intensity,
-      ]);
+      // Create heatmap layer data in Leaflet format
+      const heatmapLayerData = convertToLeafletHeatmapFormat(heatmapData);
 
       // Add heatmap layer if leaflet-heat is available
       if (window.L.heatLayer) {
@@ -186,8 +181,8 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
         }).addTo(map);
       } else {
         // Fallback: Add circles for each heatmap cell
-        heatmapData.grid.forEach((cell) => {
-          const intensity = cell.intensity;
+        heatmapData.gridPoints.forEach((point) => {
+          const intensity = point.intensity;
           const color =
             intensity > 0.75
               ? '#ff0000'
@@ -196,7 +191,7 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
                 : intensity > 0.25
                   ? '#ffff00'
                   : '#00ff00';
-          window.L.circleMarker([cell.latitude, cell.longitude], {
+          window.L.circleMarker([point.lat, point.lng], {
             radius: 5,
             fillColor: color,
             color: color,
@@ -356,30 +351,26 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
                 <p className="text-lg font-semibold">{statistics.totalPoints}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-600">Average Intensity</p>
-                <p className="text-lg font-semibold">
-                  {(statistics.averageIntensity * 100).toFixed(1)}%
-                </p>
+                <p className="text-xs text-gray-600">Total Orders</p>
+                <p className="text-lg font-semibold">{heatmapDataResponse?.totalOrders || 0}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-600">Peak Hour</p>
-                <p className="text-lg font-semibold">
-                  {statistics.peakHour}:00
-                </p>
+                <p className="text-xs text-gray-600">With Coordinates</p>
+                <p className="text-lg font-semibold">{heatmapDataResponse?.ordersWithCoordinates || 0}</p>
               </div>
             </div>
           )}
 
           {/* Loading State */}
-          {isCalculating && (
+          {(isDataLoading || isCalculating) && (
             <div className="flex items-center gap-2 text-blue-600">
               <Loader2 className="h-4 w-4 animate-spin" />
-              <span className="text-sm">Calculating heatmap...</span>
+              <span className="text-sm">Loading heatmap data...</span>
             </div>
           )}
 
           {/* Error State */}
-          {filteredPoints.length === 0 && !isCalculating && (
+          {!isDataLoading && filteredPoints.length === 0 && (
             <div className="flex items-center gap-2 text-yellow-600 p-3 bg-yellow-50 rounded-lg">
               <AlertCircle className="h-4 w-4" />
               <span className="text-sm">No delivery data available for selected filters</span>
@@ -389,7 +380,7 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
           {/* Map Display */}
           {heatmapData && (
             <div className="h-96 rounded-lg overflow-hidden border border-gray-200">
-              <GISMap onMapReady={handleMapReady} />
+              <GISMap title="Delivery Heatmap" onMapReady={handleMapReady} />
             </div>
           )}
         </CardContent>

@@ -341,7 +341,7 @@ export function GeomarketingAnalyticsTab() {
               </div>
             </div>
           ) : (
-            <DeliveryHeatmapAnalysis orders={growthData?.orders || []} isLoading={growthLoading} />
+            <DeliveryHeatmapAnalysis dateRange={dateRangeQuery} areaFilter={areaFilter} />
           )}
         </CardContent>
       </Card>

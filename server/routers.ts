@@ -13,6 +13,7 @@ import {
   calculateDeliveryPerformance,
   calculateDriverPerformance,
   calculateGrowthOpportunities,
+  getOrdersWithCoordinates,
 } from './geomarketing';
 import {
   refreshCompetitorData,
@@ -1082,6 +1083,57 @@ export const appRouter = router({
             success: false,
             competitorCount: 0,
             message: 'Failed to refresh competitors',
+          };
+        }
+      }),
+    
+    getDeliveryHeatmapData: publicProcedure
+      .input(z.object({
+        startDate: z.date(),
+        endDate: z.date(),
+        areaFilter: z.enum(['all', 'Downtown', 'Central Park', 'Both']).default('all'),
+      }))
+      .query(async ({ input }) => {
+        try {
+          // Use existing helper to fetch orders with coordinates and geocoding
+          const orders = await getOrdersWithCoordinates(input.startDate, input.endDate);
+          
+          // Filter by area if specified
+          let filteredOrders = orders;
+          if (input.areaFilter !== 'all') {
+            filteredOrders = orders.filter(order => {
+              if (input.areaFilter === 'Both') {
+                return order.area === 'Downtown' || order.area === 'Central Park';
+              }
+              return order.area === input.areaFilter;
+            });
+          }
+          
+          // Extract coordinates for heatmap (only orders with valid coordinates)
+          const heatmapPoints = filteredOrders
+            .filter(order => order.customerLatitude && order.customerLongitude)
+            .map(order => ({
+              lat: Number(order.customerLatitude),
+              lng: Number(order.customerLongitude),
+              orderId: order.id,
+              address: order.customerAddress,
+              timestamp: order.createdAt.getTime(),
+            }));
+          
+          return {
+            success: true,
+            points: heatmapPoints,
+            totalOrders: filteredOrders.length,
+            ordersWithCoordinates: heatmapPoints.length,
+          };
+        } catch (error) {
+          console.error('[analytics.getDeliveryHeatmapData] Error:', error);
+          return {
+            success: false,
+            points: [],
+            totalOrders: 0,
+            ordersWithCoordinates: 0,
+            message: 'Failed to fetch heatmap data',
           };
         }
       }),
