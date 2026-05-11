@@ -1969,3 +1969,13 @@ These features are documented for future enhancement but are not required for th
 - [x] Test heatmap auto-generation with different date ranges (analytics.heatmap.test.ts - 11 tests passing)
 - [x] Test heatmap auto-generation with different area filters (area filtering tested)
 - [x] Verify no regressions in existing functionality (all tests passing)
+
+## Phase 34: Heatmap Boundary Masking and Legend (COMPLETED)
+- [x] Fetch residential area polygon from OpenStreetMap (residentialBoundary.ts)
+- [x] Implement heatmap masking to crop to residential boundaries (point-in-polygon filtering)
+- [x] Add Leaflet legend control showing color gradient scale (heatmapLegend.ts)
+- [x] Display legend on map with intensity labels (Very Low, Low, Medium, High, Very High)
+- [x] Test heatmap masking with different date ranges (analytics.heatmap.test.ts - 11 tests passing)
+- [x] Verify legend displays correctly on all screen sizes (legend control positioned at bottom-right)
+- [x] Ensure no performance impact from polygon masking (caching implemented)
+- [x] Verify no regressions in existing functionality (all tests passing)

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertCircle, Loader2, TrendingUp } from 'lucide-react';
 import { GISMap } from './GISMap';
@@ -12,6 +12,8 @@ import {
   convertToLeafletHeatmapFormat,
 } from '@/lib/heatmapCalculation';
 import { filterToResidentialAreas } from '@/lib/osmResidentialFilter';
+import { getResidentialBoundary, isPointInPolygon, createBoundaryLayer } from '@/lib/residentialBoundary';
+import { addLegendToMap } from '@/lib/heatmapLegend';
 
 export interface DeliveryHeatmapAnalysisProps {
   dateRange: { startDate: Date; endDate: Date };
@@ -25,6 +27,25 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
   const [filterResidential, setFilterResidential] = useState(true);
   const [heatmapData, setHeatmapData] = useState<HeatmapData | null>(null);
   const [filteredPoints, setFilteredPoints] = useState<DeliveryPoint[]>([]);
+  const [residentialBoundary, setResidentialBoundary] = useState<any>(null);
+  const [isLoadingBoundary, setIsLoadingBoundary] = useState(false);
+
+  // Fetch residential boundary on component mount
+  useEffect(() => {
+    const fetchBoundary = async () => {
+      setIsLoadingBoundary(true);
+      try {
+        const boundary = await getResidentialBoundary();
+        setResidentialBoundary(boundary);
+      } catch (error) {
+        console.error('Error fetching residential boundary:', error);
+      } finally {
+        setIsLoadingBoundary(false);
+      }
+    };
+
+    fetchBoundary();
+  }, []);
 
   // Fetch heatmap data from server
   const { data: heatmapDataResponse, isLoading: isDataLoading } = trpc.analytics.getDeliveryHeatmapData.useQuery({
@@ -55,6 +76,16 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
     // Apply residential filtering if enabled
     let filtered = filterResidential ? filterToResidentialAreas(deliveryPoints) : deliveryPoints;
 
+    // Apply boundary masking if boundary is available
+    if (residentialBoundary && filterResidential) {
+      filtered = filtered.filter((point) =>
+        isPointInPolygon(
+          { lat: point.latitude, lng: point.longitude },
+          residentialBoundary
+        )
+      );
+    }
+
     setFilteredPoints(filtered);
 
     // Generate KDE heatmap
@@ -64,7 +95,7 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
     } else {
       setHeatmapData(null);
     }
-  }, [deliveryPoints, filterResidential]);
+  }, [deliveryPoints, filterResidential, residentialBoundary]);
 
   const handleResidentialFilterChange = useCallback(() => {
     setFilterResidential((prev) => !prev);
@@ -73,6 +104,14 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
   const handleMapReady = useCallback(
     (map: any) => {
       if (!heatmapData || !window.L) return;
+
+      // Add residential boundary layer if available
+      if (residentialBoundary) {
+        const boundaryLayer = createBoundaryLayer(residentialBoundary);
+        if (boundaryLayer) {
+          boundaryLayer.addTo(map);
+        }
+      }
 
       // Create heatmap layer data in Leaflet format
       const heatmapLayerData = convertToLeafletHeatmapFormat(heatmapData);
@@ -113,9 +152,14 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
           }).addTo(map);
         });
       }
+
+      // Add legend to map
+      addLegendToMap(map);
     },
-    [heatmapData]
+    [heatmapData, residentialBoundary]
   );
+
+  const isLoading = isDataLoading || isLoadingBoundary;
 
   return (
     <Card>
@@ -144,7 +188,7 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
         </div>
 
         {/* Loading State */}
-        {isDataLoading && (
+        {isLoading && (
           <div className="flex items-center gap-2 text-blue-600">
             <Loader2 className="h-4 w-4 animate-spin" />
             <span className="text-sm">Loading heatmap data...</span>
@@ -152,7 +196,7 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
         )}
 
         {/* Error State */}
-        {!isDataLoading && filteredPoints.length === 0 && (
+        {!isLoading && filteredPoints.length === 0 && (
           <div className="flex items-center gap-2 text-yellow-600 p-3 bg-yellow-50 rounded-lg">
             <AlertCircle className="h-4 w-4" />
             <span className="text-sm">No delivery data available for selected filters</span>
