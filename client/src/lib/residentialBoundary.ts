@@ -24,6 +24,7 @@ export async function getResidentialBoundary(): Promise<GeoJSON.Feature<GeoJSON.
     // Query Overpass API for residential areas in Fort Erie
     // Fort Erie approximate bounds: 42.88°N to 42.92°N, -79.00°W to -78.88°W
     const query = `
+      [out:json];
       [bbox:42.88,-79.00,42.92,-78.88];
       (
         way["landuse"="residential"];
@@ -42,7 +43,13 @@ export async function getResidentialBoundary(): Promise<GeoJSON.Feature<GeoJSON.
       return null;
     }
 
-    const data = await response.json();
+    let data;
+    try {
+      data = await response.json();
+    } catch (parseError) {
+      console.error('Failed to parse Overpass API response as JSON:', parseError);
+      return null;
+    }
 
     // Convert OSM data to GeoJSON polygon
     const boundary = convertOSMToGeoJSON(data);
