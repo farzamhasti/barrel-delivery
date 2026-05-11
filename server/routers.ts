@@ -15,6 +15,7 @@ import {
   calculateGrowthOpportunities,
   getOrdersWithCoordinates,
 } from './geomarketing';
+import { getResidentialBoundary } from './residentialBoundary';
 import {
   refreshCompetitorData,
   getCachedCompetitors,
@@ -1134,6 +1135,32 @@ export const appRouter = router({
             totalOrders: 0,
             ordersWithCoordinates: 0,
             message: 'Failed to fetch heatmap data',
+          };
+        }
+      }),
+    
+    getResidentialBoundary: publicProcedure
+      .query(async () => {
+        try {
+          const boundary = await getResidentialBoundary();
+          if (!boundary) {
+            return {
+              success: false,
+              boundary: null,
+              message: 'Failed to fetch residential boundary',
+            };
+          }
+          return {
+            success: true,
+            boundary,
+            message: 'Successfully fetched residential boundary',
+          };
+        } catch (error) {
+          console.error('[analytics.getResidentialBoundary] Error:', error);
+          return {
+            success: false,
+            boundary: null,
+            message: 'Error fetching residential boundary',
           };
         }
       }),

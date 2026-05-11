@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertCircle, Loader2, TrendingUp } from 'lucide-react';
 import { GISMap } from './GISMap';
@@ -12,7 +12,7 @@ import {
   convertToLeafletHeatmapFormat,
 } from '@/lib/heatmapCalculation';
 import { filterToResidentialAreas } from '@/lib/osmResidentialFilter';
-import { getResidentialBoundary, isPointInPolygon, createBoundaryLayer } from '@/lib/residentialBoundary';
+import { isPointInPolygon, createBoundaryLayer } from '@/lib/residentialBoundary';
 import { addLegendToMap } from '@/lib/heatmapLegend';
 
 export interface DeliveryHeatmapAnalysisProps {
@@ -28,24 +28,16 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
   const [heatmapData, setHeatmapData] = useState<HeatmapData | null>(null);
   const [filteredPoints, setFilteredPoints] = useState<DeliveryPoint[]>([]);
   const [residentialBoundary, setResidentialBoundary] = useState<any>(null);
-  const [isLoadingBoundary, setIsLoadingBoundary] = useState(false);
 
-  // Fetch residential boundary on component mount
-  useEffect(() => {
-    const fetchBoundary = async () => {
-      setIsLoadingBoundary(true);
-      try {
-        const boundary = await getResidentialBoundary();
-        setResidentialBoundary(boundary);
-      } catch (error) {
-        console.error('Error fetching residential boundary:', error);
-      } finally {
-        setIsLoadingBoundary(false);
-      }
-    };
+  // Fetch residential boundary from server via tRPC
+  const { data: boundaryResponse, isLoading: isLoadingBoundary } = trpc.analytics.getResidentialBoundary.useQuery();
 
-    fetchBoundary();
-  }, []);
+  // Update boundary when response arrives
+  useMemo(() => {
+    if (boundaryResponse?.success && boundaryResponse.boundary) {
+      setResidentialBoundary(boundaryResponse.boundary);
+    }
+  }, [boundaryResponse]);
 
   // Fetch heatmap data from server
   const { data: heatmapDataResponse, isLoading: isDataLoading } = trpc.analytics.getDeliveryHeatmapData.useQuery({
