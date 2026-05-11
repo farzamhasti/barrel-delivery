@@ -1989,3 +1989,13 @@ These features are documented for future enhancement but are not required for th
 - [x] Display statistics showing residential delivery count
 - [x] Test filtering with real order data
 - [x] Verify all tests still passing (11/11 passing)
+
+## Phase 36: Overpass API Fallback Boundary (COMPLETED)
+- [x] Add fallback hardcoded boundary for Fort Erie residential areas
+- [x] Improve error handling in Overpass API fetch
+- [x] Better logging for debugging API issues
+- [x] Graceful degradation when API is unavailable
+- [x] Polygon area calculation to find largest residential area
+- [x] Proper GeoJSON conversion from OSM data
+- [x] Verify heatmap works even when Overpass API is unavailable
+- [x] All 11 tests passing - no regressions
