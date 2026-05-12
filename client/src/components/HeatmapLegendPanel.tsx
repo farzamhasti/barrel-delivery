@@ -42,12 +42,8 @@ const LEGEND_ITEMS = [
 
 export const HeatmapLegendPanel: React.FC = () => {
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="text-base">How to Interpret the Colors</CardTitle>
-        <CardDescription>Delivery intensity legend for the heatmap</CardDescription>
-      </CardHeader>
-      <CardContent>
+    <div className="w-full overflow-x-auto">
+      <div className="min-w-min">
         <div className="space-y-3">
           {LEGEND_ITEMS.map((item, index) => (
             <div key={index} className="flex items-start gap-3 pb-3 border-b border-gray-200 last:border-b-0 last:pb-0">
@@ -67,7 +63,7 @@ export const HeatmapLegendPanel: React.FC = () => {
             </div>
           ))}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
