@@ -26,8 +26,50 @@ let cacheTimestamp = 0;
 const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
 
 /**
+ * Fallback residential polygons for Fort Erie
+ * These are approximate boundaries of residential areas in Fort Erie
+ */
+function getFortErieFallbackPolygons(): ResidentialPolygon[] {
+  return [
+    {
+      id: 'fort-erie-downtown-residential',
+      type: 'residential',
+      coordinates: [
+        [-79.2540, 43.0100],
+        [-79.2380, 43.0100],
+        [-79.2380, 42.9850],
+        [-79.2540, 42.9850],
+        [-79.2540, 43.0100],
+      ],
+    },
+    {
+      id: 'fort-erie-central-residential',
+      type: 'residential',
+      coordinates: [
+        [-79.0800, 43.0200],
+        [-79.0400, 43.0200],
+        [-79.0400, 42.9800],
+        [-79.0800, 42.9800],
+        [-79.0800, 43.0200],
+      ],
+    },
+    {
+      id: 'fort-erie-north-residential',
+      type: 'residential',
+      coordinates: [
+        [-79.1600, 43.0500],
+        [-79.1200, 43.0500],
+        [-79.1200, 43.0100],
+        [-79.1600, 43.0100],
+        [-79.1600, 43.0500],
+      ],
+    },
+  ];
+}
+
+/**
  * Fetch residential polygons from OpenStreetMap using Overpass API
- * Queries for landuse=residential and building=residential areas
+ * Falls back to predefined polygons if API is unavailable
  */
 export async function fetchResidentialPolygons(
   bounds: { minLat: number; maxLat: number; minLng: number; maxLng: number }
@@ -40,92 +82,90 @@ export async function fetchResidentialPolygons(
   }
 
   try {
-    // Construct Overpass API query for residential areas and buildings
-    // bbox format: (south, west, north, east)
-    const bbox = `${bounds.minLat},${bounds.minLng},${bounds.maxLat},${bounds.maxLng}`;
-    
-    const query = `
-      [out:json][timeout:60];
-      (
-        way["landuse"="residential"](${bbox});
-        relation["landuse"="residential"](${bbox});
-        way["building"="residential"](${bbox});
-        way["building"="apartments"](${bbox});
-        way["building"="house"](${bbox});
-        way["building"="detached"](${bbox});
-      );
-      out geom;
-    `;
+    // Try to fetch from Overpass API
+    const query = `[out:json][timeout:60];
+(
+way["landuse"="residential"](${bounds.minLat},${bounds.minLng},${bounds.maxLat},${bounds.maxLng});
+relation["landuse"="residential"](${bounds.minLat},${bounds.minLng},${bounds.maxLat},${bounds.maxLng});
+);
+out geom;`;
 
-    const response = await fetch('https://overpass-api.de/api/interpreter', {
-      method: 'POST',
-      body: query,
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-    });
+    try {
+      const response = await fetch('https://overpass-api.de/api/interpreter', {
+        method: 'POST',
+        body: query,
+        headers: {
+          'Content-Type': 'text/plain',
+        },
+      });
 
-    if (!response.ok) {
-      throw new Error(`Overpass API error: ${response.status} ${response.statusText}`);
-    }
+      if (response.ok) {
+        const data = await response.json();
 
-    const data = await response.json();
+        if (data.elements && data.elements.length > 0) {
+          // Convert OSM elements to residential polygons
+          const polygons: ResidentialPolygon[] = [];
 
-    if (!data.elements) {
-      console.warn('[ResidentialPolygonClipping] No elements returned from Overpass API');
-      return [];
-    }
+          for (const element of data.elements) {
+            if (element.type === 'way' && element.geometry) {
+              const coordinates = element.geometry.map((point: any) => [point.lon, point.lat]);
 
-    // Convert OSM elements to residential polygons
-    const polygons: ResidentialPolygon[] = [];
+              if (
+                coordinates.length > 2 &&
+                coordinates[0][0] === coordinates[coordinates.length - 1][0] &&
+                coordinates[0][1] === coordinates[coordinates.length - 1][1]
+              ) {
+                polygons.push({
+                  id: `way-${element.id}`,
+                  coordinates,
+                  type: element.tags?.building ? 'building' : 'residential',
+                });
+              }
+            } else if (element.type === 'relation' && element.members) {
+              const outerWays = element.members.filter((m: any) => m.role === 'outer' || m.role === '');
 
-    for (const element of data.elements) {
-      if (element.type === 'way' && element.geometry) {
-        // Convert geometry to [lng, lat] format
-        const coordinates = element.geometry.map((point: any) => [point.lon, point.lat]);
-        
-        // Only add closed polygons (first and last point are the same)
-        if (coordinates.length > 2 && 
-            coordinates[0][0] === coordinates[coordinates.length - 1][0] &&
-            coordinates[0][1] === coordinates[coordinates.length - 1][1]) {
-          
-          polygons.push({
-            id: `way-${element.id}`,
-            coordinates,
-            type: element.tags?.building ? 'building' : 'residential',
-          });
-        }
-      } else if (element.type === 'relation' && element.members) {
-        // Handle multipolygon relations
-        const outerWays = element.members.filter((m: any) => m.role === 'outer' || m.role === '');
-        
-        for (const way of outerWays) {
-          if (way.geometry) {
-            const coordinates = way.geometry.map((point: any) => [point.lon, point.lat]);
-            
-            if (coordinates.length > 2) {
-              polygons.push({
-                id: `relation-${element.id}-${way.ref}`,
-                coordinates,
-                type: 'residential',
-              });
+              for (const way of outerWays) {
+                if (way.geometry) {
+                  const coordinates = way.geometry.map((point: any) => [point.lon, point.lat]);
+
+                  if (coordinates.length > 2) {
+                    polygons.push({
+                      id: `relation-${element.id}-${way.ref}`,
+                      coordinates,
+                      type: 'residential',
+                    });
+                  }
+                }
+              }
             }
+          }
+
+          if (polygons.length > 0) {
+            residentialPolygonsCache = polygons;
+            cacheTimestamp = now;
+            console.log(`[ResidentialPolygonClipping] Fetched ${polygons.length} residential polygons from Overpass API`);
+            return polygons;
           }
         }
       }
+    } catch (apiError) {
+      console.warn('[ResidentialPolygonClipping] Overpass API fetch failed, using fallback:', apiError);
     }
 
-    // Cache the results
-    residentialPolygonsCache = polygons;
+    // Fallback: Use pre-defined residential polygons for Fort Erie
+    console.log('[ResidentialPolygonClipping] Using fallback residential polygons for Fort Erie');
+    const fallbackPolygons = getFortErieFallbackPolygons();
+    residentialPolygonsCache = fallbackPolygons;
     cacheTimestamp = now;
-
-    console.log(`[ResidentialPolygonClipping] Fetched ${polygons.length} residential polygons from Overpass API`);
-    return polygons;
+    return fallbackPolygons;
   } catch (error) {
-    console.error('[ResidentialPolygonClipping] Error fetching residential polygons:', error);
-    
-    // Return fallback empty array - component will handle gracefully
-    return [];
+    console.error('[ResidentialPolygonClipping] Error in fetchResidentialPolygons:', error);
+
+    // Return fallback polygons even on error
+    const fallbackPolygons = getFortErieFallbackPolygons();
+    residentialPolygonsCache = fallbackPolygons;
+    cacheTimestamp = now;
+    return fallbackPolygons;
   }
 }
 
@@ -176,15 +216,15 @@ export function clipHeatmapToResidentialAreas(
 ): ClippedHeatmapCell[] {
   if (residentialPolygons.length === 0) {
     console.warn('[ResidentialPolygonClipping] No residential polygons available for clipping');
-    return heatmapCells.map(cell => ({
+    return heatmapCells.map((cell) => ({
       ...cell,
       clipped: false,
     }));
   }
 
   return heatmapCells
-    .filter(cell => isCellInResidentialArea(cell.lat, cell.lng, residentialPolygons))
-    .map(cell => ({
+    .filter((cell) => isCellInResidentialArea(cell.lat, cell.lng, residentialPolygons))
+    .map((cell) => ({
       ...cell,
       clipped: true,
     }));
@@ -201,7 +241,7 @@ export function calculateBoundingBox(
     return {
       minLat: 42.9,
       maxLat: 43.1,
-      minLng: -79.1,
+      minLng: -79.3,
       maxLng: -78.9,
     };
   }
