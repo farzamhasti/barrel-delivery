@@ -3,6 +3,7 @@ import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertCircle, Loader2, TrendingUp, Info, ChevronDown } from 'lucide-react';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
+import { HeatmapAnalysisDashboard } from './HeatmapAnalysisDashboard';
 import { trpc } from '@/lib/trpc';
 import {
   generateClippedResidentialHeatmap,
@@ -356,27 +357,15 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
           </div>
         )}
 
-        {/* Statistics */}
-        {hasData && (
-          <div className="text-xs text-gray-600 space-y-1 p-3 bg-gray-50 rounded-lg border border-gray-200">
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <p className="text-gray-500 text-xs uppercase tracking-wide">Total Deliveries</p>
-                <p className="text-lg font-semibold text-gray-900">{deliveryPoints.length}</p>
-              </div>
-              <div>
-                <p className="text-gray-500 text-xs uppercase tracking-wide">Heatmap Cells</p>
-                <p className="text-lg font-semibold text-gray-900">{clippedPointCount}</p>
-              </div>
-              <div>
-                <p className="text-gray-500 text-xs uppercase tracking-wide">Max Intensity</p>
-                <p className="text-lg font-semibold text-gray-900">{(clippedHeatmapData.maxIntensity * 100).toFixed(1)}%</p>
-              </div>
-              <div>
-                <p className="text-gray-500 text-xs uppercase tracking-wide">Residential Zones</p>
-                <p className="text-lg font-semibold text-gray-900">{residentialPolygons.length}</p>
-              </div>
-            </div>
+        {/* Comprehensive Analysis Dashboard */}
+        {hasData && clippedHeatmapData && (
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            <h3 className="font-semibold text-lg mb-4">Heatmap Analysis Results</h3>
+            <HeatmapAnalysisDashboard
+              gridPoints={clippedHeatmapData.gridPoints || []}
+              deliveryPoints={deliveryPoints}
+              previousGridPoints={null}
+            />
           </div>
         )}
       </CardContent>
