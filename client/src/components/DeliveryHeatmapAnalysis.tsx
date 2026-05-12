@@ -6,12 +6,11 @@ import { AlertCircle, Loader2, TrendingUp } from 'lucide-react';
 import { GISMap } from './GISMap';
 import { trpc } from '@/lib/trpc';
 import {
-  generateKDEHeatmapResidential,
-  HeatmapData,
+  generateClippedResidentialHeatmap,
+  convertToLeafletFormat,
+  ResidentialPolygon,
   DeliveryPoint,
-  convertToLeafletHeatmapFormat,
-} from '@/lib/heatmapCalculationResidential';
-import { isPointInPolygon, createBoundaryLayer, getBoundaryLatLngs } from '@/lib/residentialBoundaryShared';
+} from '@/lib/heatmapClippedToResidential';
 import { addLegendToMap } from '@/lib/heatmapLegend';
 
 // Declare window.L for Leaflet library
@@ -31,20 +30,20 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
   areaFilter,
 }) => {
   const [filterResidential, setFilterResidential] = useState(true);
-  const [heatmapData, setHeatmapData] = useState<HeatmapData | null>(null);
-  const [filteredPoints, setFilteredPoints] = useState<DeliveryPoint[]>([]);
-  const [residentialBoundary, setResidentialBoundary] = useState<any>(null);
+  const [residentialPolygons, setResidentialPolygons] = useState<ResidentialPolygon[]>([]);
+  const [clippedHeatmapData, setClippedHeatmapData] = useState<any>(null);
+  const [clippedPointCount, setClippedPointCount] = useState(0);
   const mapRef = useRef<any>(null);
 
-  // Fetch residential boundary from server via tRPC
-  const { data: boundaryResponse, isLoading: isLoadingBoundary } = trpc.analytics.getResidentialBoundary.useQuery();
+  // Fetch residential polygons from server via tRPC
+  const { data: polygonsResponse, isLoading: isLoadingPolygons } = trpc.analytics.getResidentialPolygons.useQuery();
 
-  // Update boundary when response arrives
+  // Update polygons when response arrives
   useMemo(() => {
-    if (boundaryResponse?.success && boundaryResponse.boundary) {
-      setResidentialBoundary(boundaryResponse.boundary);
+    if (polygonsResponse?.success && polygonsResponse.polygons) {
+      setResidentialPolygons(polygonsResponse.polygons);
     }
-  }, [boundaryResponse]);
+  }, [polygonsResponse]);
 
   // Fetch heatmap data from server
   const { data: heatmapDataResponse, isLoading: isDataLoading } = trpc.analytics.getDeliveryHeatmapData.useQuery({
@@ -64,37 +63,25 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
     }));
   }, [heatmapDataResponse?.points]);
 
-  // Calculate heatmap when data changes - ONLY for residential areas
+  // Generate clipped heatmap when data changes
   useMemo(() => {
-    if (deliveryPoints.length === 0 || !residentialBoundary) {
-      setHeatmapData(null);
-      setFilteredPoints([]);
+    if (deliveryPoints.length === 0 || residentialPolygons.length === 0 || !filterResidential) {
+      setClippedHeatmapData(null);
+      setClippedPointCount(0);
       return;
     }
 
-    // Filter points to residential areas only
-    const filtered = deliveryPoints.filter((point) =>
-      isPointInPolygon(
-        { lat: point.latitude, lng: point.longitude },
-        residentialBoundary
-      )
-    );
-
-    setFilteredPoints(filtered);
-
-    // Generate KDE heatmap ONLY from residential points
-    // The heatmap grid is also constrained to residential boundary
-    if (filtered.length > 0 && filterResidential) {
-      const heatmap = generateKDEHeatmapResidential(filtered, residentialBoundary, 50);
-      setHeatmapData(heatmap);
-    } else if (!filterResidential) {
-      // If filter is disabled, show all points (for comparison)
-      const heatmap = generateKDEHeatmapResidential(deliveryPoints, residentialBoundary, 50);
-      setHeatmapData(heatmap);
-    } else {
-      setHeatmapData(null);
+    try {
+      // Generate KDE heatmap clipped to residential polygons
+      const clipped = generateClippedResidentialHeatmap(deliveryPoints, residentialPolygons, 50);
+      setClippedHeatmapData(clipped);
+      setClippedPointCount(clipped.gridPoints.length);
+    } catch (error) {
+      console.error('[DeliveryHeatmapAnalysis] Error generating clipped heatmap:', error);
+      setClippedHeatmapData(null);
+      setClippedPointCount(0);
     }
-  }, [deliveryPoints, filterResidential, residentialBoundary]);
+  }, [deliveryPoints, residentialPolygons, filterResidential]);
 
   const handleResidentialFilterChange = useCallback(() => {
     setFilterResidential((prev) => !prev);
@@ -109,15 +96,23 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
 
       mapRef.current = map;
 
-      // Add residential boundary layer
-      if (residentialBoundary) {
+      // Add residential polygon boundaries to map
+      if (residentialPolygons.length > 0) {
         try {
-          const boundaryLayer = createBoundaryLayer(residentialBoundary);
-          if (boundaryLayer) {
-            boundaryLayer.addTo(map);
-          }
+          residentialPolygons.forEach((polygon, index) => {
+            // Convert [lng, lat] to [lat, lng] for Leaflet
+            const latLngs = polygon.coordinates.map(([lng, lat]) => [lat, lng]);
+            
+            // Draw polygon boundary
+            window.L.polyline(latLngs, {
+              color: '#666',
+              weight: 1,
+              opacity: 0.5,
+              dashArray: '5, 5',
+            }).addTo(map);
+          });
         } catch (e) {
-          console.error('Error adding boundary layer:', e);
+          console.error('Error adding polygon boundaries:', e);
         }
       }
 
@@ -128,49 +123,50 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
         console.error('Error adding legend:', e);
       }
     },
-    [residentialBoundary]
+    [residentialPolygons]
   );
 
-  // Separate effect to handle map bounds and heatmap layer
+  // Separate effect to handle map bounds
   useEffect(() => {
-    if (!mapRef.current || !window.L || !residentialBoundary) {
+    if (!mapRef.current || !window.L || clippedHeatmapData === null) {
       return;
     }
 
     const map = mapRef.current;
+    const bounds = clippedHeatmapData.polygonBounds;
 
-    // Fit map to residential boundary bounds
     try {
-      const latLngs = getBoundaryLatLngs(residentialBoundary);
-      if (latLngs.length > 0) {
-        const bounds = window.L.latLngBounds(latLngs);
-        // Use setTimeout to ensure map is fully rendered
-        setTimeout(() => {
-          try {
-            map.fitBounds(bounds, { padding: [50, 50] });
-          } catch (e) {
-            console.error('Error fitting bounds:', e);
-          }
-        }, 100);
-      }
+      const latLngBounds = window.L.latLngBounds(
+        [bounds.south, bounds.west],
+        [bounds.north, bounds.east]
+      );
+
+      // Use setTimeout to ensure map is fully rendered
+      setTimeout(() => {
+        try {
+          map.fitBounds(latLngBounds, { padding: [50, 50] });
+        } catch (e) {
+          console.error('Error fitting bounds:', e);
+        }
+      }, 100);
     } catch (e) {
       console.error('Error calculating bounds:', e);
     }
-  }, [residentialBoundary]);
+  }, [clippedHeatmapData]);
 
-  // Separate effect to handle heatmap layer
+  // Separate effect to handle clipped heatmap layer
   useEffect(() => {
-    if (!mapRef.current || !window.L || !heatmapData) {
+    if (!mapRef.current || !window.L || !clippedHeatmapData) {
       return;
     }
 
     const map = mapRef.current;
 
     try {
-      const heatmapLayerData = convertToLeafletHeatmapFormat(heatmapData);
+      const heatmapLayerData = convertToLeafletFormat(clippedHeatmapData);
 
       // Add heatmap layer if leaflet-heat is available
-      if (window.L.heatLayer) {
+      if (window.L.heatLayer && heatmapLayerData.length > 0) {
         window.L.heatLayer(heatmapLayerData, {
           radius: 25,
           blur: 15,
@@ -183,9 +179,9 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
             1.0: '#ff0000', // Red - Very High
           },
         }).addTo(map);
-      } else {
-        // Fallback: Add circles for each heatmap cell
-        heatmapData.gridPoints.forEach((point) => {
+      } else if (heatmapLayerData.length > 0) {
+        // Fallback: Add circles for each clipped heatmap cell
+        clippedHeatmapData.gridPoints.forEach((point) => {
           const intensity = point.intensity;
           const color =
             intensity > 0.75
@@ -196,22 +192,22 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
                   ? '#ffff00'
                   : '#00ff00';
           window.L.circleMarker([point.lat, point.lng], {
-            radius: 5,
+            radius: 4,
             fillColor: color,
             color: color,
             weight: 1,
-            opacity: 0.7,
-            fillOpacity: 0.5,
+            opacity: 0.8,
+            fillOpacity: 0.6,
           }).addTo(map);
         });
       }
     } catch (e) {
-      console.error('Error adding heatmap layer:', e);
+      console.error('Error adding clipped heatmap layer:', e);
     }
-  }, [heatmapData]);
+  }, [clippedHeatmapData]);
 
-  const isLoading = isDataLoading || isLoadingBoundary;
-  const hasData = filteredPoints.length > 0 && heatmapData;
+  const isLoading = isDataLoading || isLoadingPolygons;
+  const hasData = clippedPointCount > 0 && clippedHeatmapData;
 
   return (
     <Card>
@@ -239,7 +235,7 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
           </label>
           {hasData && (
             <span className="text-xs text-gray-500">
-              ({filteredPoints.length} residential deliveries)
+              ({deliveryPoints.length} deliveries, {clippedPointCount} clipped cells)
             </span>
           )}
         </div>
@@ -252,26 +248,26 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
           </div>
         )}
 
-        {/* Error State - No Boundary */}
-        {!isLoading && !residentialBoundary && (
+        {/* Error State - No Polygons */}
+        {!isLoading && residentialPolygons.length === 0 && (
           <div className="flex items-center gap-2 text-yellow-600 p-3 bg-yellow-50 rounded-lg">
             <AlertCircle className="h-4 w-4" />
-            <span className="text-sm">Unable to load residential area boundaries from OpenStreetMap</span>
+            <span className="text-sm">Unable to load residential area polygons from OpenStreetMap</span>
           </div>
         )}
 
         {/* Error State - No Data */}
-        {!isLoading && residentialBoundary && filteredPoints.length === 0 && (
+        {!isLoading && residentialPolygons.length > 0 && deliveryPoints.length === 0 && (
           <div className="flex items-center gap-2 text-yellow-600 p-3 bg-yellow-50 rounded-lg">
             <AlertCircle className="h-4 w-4" />
-            <span className="text-sm">No delivery data available in residential areas for selected filters</span>
+            <span className="text-sm">No delivery data available for selected filters</span>
           </div>
         )}
 
-        {/* Map Display - Only shown if we have data and boundary */}
+        {/* Map Display - Only shown if we have clipped data */}
         {hasData && (
           <div className="h-96 rounded-lg overflow-hidden border border-gray-200">
-            <GISMap title="Delivery Heatmap - Residential Areas Only" onMapReady={handleMapReady} />
+            <GISMap title="Delivery Heatmap - Clipped to Residential Areas" onMapReady={handleMapReady} />
           </div>
         )}
 
@@ -279,13 +275,16 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
         {hasData && (
           <div className="text-xs text-gray-600 space-y-1 p-2 bg-gray-50 rounded">
             <p>
-              <strong>Residential deliveries:</strong> {filteredPoints.length}
+              <strong>Total deliveries:</strong> {deliveryPoints.length}
             </p>
             <p>
-              <strong>Heatmap grid cells (residential only):</strong> {heatmapData.gridPoints.length}
+              <strong>Heatmap cells (clipped to residential):</strong> {clippedPointCount}
             </p>
             <p>
-              <strong>Max intensity:</strong> {(heatmapData.maxIntensity * 100).toFixed(1)}%
+              <strong>Max intensity:</strong> {(clippedHeatmapData.maxIntensity * 100).toFixed(1)}%
+            </p>
+            <p>
+              <strong>Residential polygons:</strong> {residentialPolygons.length}
             </p>
           </div>
         )}

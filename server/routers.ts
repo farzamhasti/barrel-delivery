@@ -15,7 +15,13 @@ import {
   calculateGrowthOpportunities,
   getOrdersWithCoordinates,
 } from './geomarketing';
+
 import { getResidentialBoundary } from './residentialBoundary';
+import {
+  fetchResidentialPolygons,
+  calculateBoundingBox,
+  clipHeatmapToResidentialAreas,
+} from './residentialPolygonClipping';
 import {
   refreshCompetitorData,
   getCachedCompetitors,
@@ -1135,6 +1141,44 @@ export const appRouter = router({
             totalOrders: 0,
             ordersWithCoordinates: 0,
             message: 'Failed to fetch heatmap data',
+          };
+        }
+      }),
+    
+    getResidentialPolygons: publicProcedure
+      .input(z.object({
+        bounds: z.object({
+          minLat: z.number(),
+          maxLat: z.number(),
+          minLng: z.number(),
+          maxLng: z.number(),
+        }).optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        try {
+          // Use default Fort Erie bounds if not provided
+          const bounds = input?.bounds || {
+            minLat: 42.9,
+            maxLat: 43.1,
+            minLng: -79.1,
+            maxLng: -78.9,
+          };
+          
+          const polygons = await fetchResidentialPolygons(bounds);
+          
+          return {
+            success: true,
+            polygons,
+            count: polygons.length,
+            message: `Fetched ${polygons.length} residential polygons`,
+          };
+        } catch (error) {
+          console.error('[analytics.getResidentialPolygons] Error:', error);
+          return {
+            success: false,
+            polygons: [],
+            count: 0,
+            message: 'Failed to fetch residential polygons',
           };
         }
       }),

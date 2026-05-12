@@ -1999,3 +1999,14 @@ These features are documented for future enhancement but are not required for th
 - [x] Proper GeoJSON conversion from OSM data
 - [x] Verify heatmap works even when Overpass API is unavailable
 - [x] All 11 tests passing - no regressions
+
+## Phase 37: Polygon Clipping for Heatmap Masking (COMPLETED)
+- [x] Fetch detailed residential polygons from OpenStreetMap (landuse=residential)
+- [x] Implement polygon clipping algorithm to mask heatmap to residential areas
+- [x] Generate KDE heatmap and clip to residential polygon boundaries
+- [x] Update heatmap visualization to show only clipped cells
+- [x] Remove rectangular grid rendering - show organic polygon shapes
+- [x] Test polygon clipping with real OSM residential data
+- [x] Verify heatmap follows actual neighborhood boundaries
+- [x] Ensure no changes to operational dashboards
+- [x] All tests passing with new clipping implementation (11/11 passing)
