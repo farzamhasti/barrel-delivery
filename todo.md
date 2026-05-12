@@ -2147,3 +2147,12 @@ These features are documented for future enhancement but are not required for th
 - [x] Maintain collapsible/expandable behavior
 - [x] Grid layout: grid-cols-1 md:grid-cols-2 for responsive design
 - [x] TypeScript compilation: 0 errors
+
+
+## Phase 115: Heatmap Opens in Modal (COMPLETED)
+- [x] Remove inline expand/collapse behavior from heatmap card
+- [x] Add onClick handler to open heatmap in modal dialog
+- [x] Create modal with header, close button, and heatmap content
+- [x] Modal displays full DeliveryHeatmapAnalysis component
+- [x] Consistent with other analytics modals (geographic, time, performance, etc.)
+- [x] TypeScript compilation: 0 errors

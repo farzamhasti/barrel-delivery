@@ -323,26 +323,24 @@ export function GeomarketingAnalyticsTab() {
         </Card>
 
         {/* Delivery Heatmap Analysis Card */}
-        <Card className="border-0 shadow-sm hover:shadow-md transition-shadow">
-          <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => setShowHeatmap(!showHeatmap)}>
+        <Card
+          className="border-0 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => setOpenSectionModal("heatmap")}
+        >
+          <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <MapIcon className="w-5 h-5" />
               Delivery Heatmap Analysis
-              <span className="ml-auto text-gray-400">{showHeatmap ? '▼' : '▶'}</span>
             </CardTitle>
             <CardDescription>Visualize delivery demand intensity across residential areas</CardDescription>
           </CardHeader>
           <CardContent>
-            {!showHeatmap ? (
-              <div className="bg-gray-100 rounded-lg h-48 flex items-center justify-center">
-                <div className="text-center">
-                  <MapIcon className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                  <p className="text-sm text-gray-500">Click to view heatmap analysis</p>
-                </div>
+            <div className="bg-gray-100 rounded-lg h-48 flex items-center justify-center">
+              <div className="text-center">
+                <MapIcon className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                <p className="text-sm text-gray-500">Click to view heatmap analysis</p>
               </div>
-            ) : (
-              <DeliveryHeatmapAnalysis dateRange={dateRangeQuery} areaFilter={areaFilter} />
-            )}
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -404,6 +402,29 @@ export function GeomarketingAnalyticsTab() {
         sectionType="growth"
         data={growthData}
       />
+
+      {/* Delivery Heatmap Analysis Modal */}
+      {openSectionModal === "heatmap" && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-lg max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b p-6 flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold">Delivery Heatmap Analysis</h2>
+                <p className="text-gray-600 mt-1">Visualize delivery demand intensity across residential areas</p>
+              </div>
+              <button
+                onClick={() => setOpenSectionModal(null)}
+                className="text-gray-400 hover:text-gray-600 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+            <div className="p-6">
+              <DeliveryHeatmapAnalysis dateRange={dateRangeQuery} areaFilter={areaFilter} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
