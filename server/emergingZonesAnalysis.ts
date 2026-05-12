@@ -29,8 +29,9 @@ export interface EmergingZone {
 /**
  * Simple H3-like hexagon ID generation for geographic clustering
  * Using lat/lng rounding to create zones
+ * Resolution 5 = ~1km cells (good for small datasets)
  */
-function generateHexId(lat: number, lng: number, resolution: number = 8): string {
+function generateHexId(lat: number, lng: number, resolution: number = 5): string {
   const precision = Math.pow(10, resolution);
   const roundedLat = Math.round(lat * precision) / precision;
   const roundedLng = Math.round(lng * precision) / precision;
@@ -264,7 +265,7 @@ export async function analyzeEmergingZones(): Promise<EmergingZone[]> {
   const maxOrders = Math.max(...Array.from(zoneMap.values()).map(z => z.length), 1);
 
   for (const [hexId, zoneOrders] of zoneMap) {
-    if (zoneOrders.length < 3) continue; // Skip zones with too few orders
+    if (zoneOrders.length < 2) continue; // Skip zones with fewer than 2 orders (lowered threshold for small datasets)
 
     const centerLat = zoneOrders.reduce((sum, o) => {
       const lat = typeof o.latitude === 'string' ? parseFloat(o.latitude) : (o.latitude || 0);

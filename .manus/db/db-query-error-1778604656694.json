@@ -1,0 +1,8 @@
+{
+  "query": "SELECT \n  COUNT(*) as total_orders,\n  COUNT(DISTINCT customer_address) as unique_addresses,\n  COUNT(DISTINCT DATE(created_at)) as days_with_orders,\n  MIN(created_at) as earliest_order,\n  MAX(created_at) as latest_order,\n  COUNT(CASE WHEN latitude IS NOT NULL AND longitude IS NOT NULL THEN 1 END) as orders_with_coords\nFROM orders;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3vEgeGHWz6yFd3X.root --database GArd6gSmf3RbAbT5WtHac3 --execute SELECT \n  COUNT(*) as total_orders,\n  COUNT(DISTINCT customer_address) as unique_addresses,\n  COUNT(DISTINCT DATE(created_at)) as days_with_orders,\n  MIN(created_at) as earliest_order,\n  MAX(created_at) as latest_order,\n  COUNT(CASE WHEN latitude IS NOT NULL AND longitude IS NOT NULL THEN 1 END) as orders_with_coords\nFROM orders;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 'created_at' in ''"
+  ]
+}

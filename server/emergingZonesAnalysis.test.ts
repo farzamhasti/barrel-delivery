@@ -195,7 +195,7 @@ describe('Emerging Zones Analysis', () => {
     }
   });
 
-  it('should skip zones with fewer than 3 orders', async () => {
+  it('should skip zones with fewer than 2 orders', async () => {
     const mockGetDb = vi.mocked(db.getDb);
     
     // Create mock data with only 2 orders
@@ -228,8 +228,9 @@ describe('Emerging Zones Analysis', () => {
 
     const result = await analyzeEmergingZones();
     
-    // Should return empty array since no zone has 3+ orders
-    expect(result.length).toBe(0);
+    // Should return 1 zone since we now accept zones with 2+ orders (lowered threshold)
+    expect(result.length).toBe(1);
+    expect(result[0].totalOrders).toBe(2);
   });
 
   it('should return top 10 zones sorted by score', async () => {
