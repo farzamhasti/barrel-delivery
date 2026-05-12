@@ -267,12 +267,20 @@ export async function analyzeEmergingZones(
     startDate = new Date(Date.now() - 12 * 7 * 24 * 60 * 60 * 1000);
   }
   
+  // Ensure startDate is at beginning of day (00:00:00) and endDate is at end of day (23:59:59)
+  // This handles timezone issues when dates are created in browser local time
+  const adjustedStartDate = new Date(startDate);
+  adjustedStartDate.setUTCHours(0, 0, 0, 0);
+  
+  const adjustedEndDate = new Date(endDate);
+  adjustedEndDate.setUTCHours(23, 59, 59, 999);
+  
   // Build where conditions
   const conditions = [
     sql`customer_latitude IS NOT NULL`,
     sql`customer_longitude IS NOT NULL`,
-    gte(orders.createdAt, startDate),
-    lte(orders.createdAt, endDate),
+    gte(orders.createdAt, adjustedStartDate),
+    lte(orders.createdAt, adjustedEndDate),
   ];
   
   // Add area filter if specified and not 'All'
