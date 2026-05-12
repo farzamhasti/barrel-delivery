@@ -28,6 +28,7 @@ import {
   getCacheStatus,
   getCompetitorsFromAPI,
 } from './competitors';
+import { analyzeEmergingZones } from './emergingZonesAnalysis';
 
 export const appRouter = router({
   places: router({
@@ -1228,6 +1229,26 @@ export const appRouter = router({
           return {
             success: false,
             competitors: [],
+            count: 0,
+            error: error instanceof Error ? error.message : 'Unknown error',
+          };
+        }
+      }),
+    
+    analyzeEmergingZones: publicProcedure
+      .query(async () => {
+        try {
+          const zones = await analyzeEmergingZones();
+          return {
+            success: true,
+            zones,
+            count: zones.length,
+          };
+        } catch (error) {
+          console.error('[analytics.analyzeEmergingZones] Error:', error);
+          return {
+            success: false,
+            zones: [],
             count: 0,
             error: error instanceof Error ? error.message : 'Unknown error',
           };

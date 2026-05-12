@@ -6,6 +6,8 @@ import { trpc } from "@/lib/trpc";
 import { DatePickerModal } from "./DatePickerModal";
 import { AnalyticsSectionModalWithGIS } from "./AnalyticsSectionModalWithGIS";
 import { DeliveryHeatmapAnalysis } from "./DeliveryHeatmapAnalysis";
+import { EmergingZonesCard } from "./EmergingZonesCard";
+import { EmergingZonesModal } from "./EmergingZonesModal";
 
 type DateRange = "daily" | "monthly";
 type AreaFilter = "all" | "Downtown" | "Central Park" | "Both";
@@ -22,6 +24,7 @@ export function GeomarketingAnalyticsTab() {
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [openSectionModal, setOpenSectionModal] = useState<string | null>(null);
   const [showHeatmap, setShowHeatmap] = useState(false);
+  const [showEmergingZones, setShowEmergingZones] = useState(false);
 
   // Calculate date range for queries
   const getDateRangeForQuery = () => {
@@ -343,6 +346,9 @@ export function GeomarketingAnalyticsTab() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Emerging Demand Zones Card */}
+        <EmergingZonesCard onClick={() => setShowEmergingZones(true)} />
       </div>
 
       {/* Date Picker Modal */}
@@ -425,6 +431,9 @@ export function GeomarketingAnalyticsTab() {
           </div>
         </div>
       )}
+
+      {/* Emerging Zones Modal */}
+      <EmergingZonesModal isOpen={showEmergingZones} onClose={() => setShowEmergingZones(false)} />
     </div>
   );
 }
