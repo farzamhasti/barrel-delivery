@@ -324,11 +324,12 @@ export function GeomarketingAnalyticsTab() {
       </div>
 
       {/* Delivery Heatmap Analysis Card */}
-      <Card className="border-0 shadow-sm cursor-pointer hover:shadow-md transition-shadow" onClick={() => setShowHeatmap(!showHeatmap)}>
-        <CardHeader>
+      <Card className="border-0 shadow-sm hover:shadow-md transition-shadow">
+        <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => setShowHeatmap(!showHeatmap)}>
           <CardTitle className="flex items-center gap-2 text-lg">
             <MapIcon className="w-5 h-5" />
             Delivery Heatmap Analysis
+            <span className="ml-auto text-gray-400">{showHeatmap ? '▼' : '▶'}</span>
           </CardTitle>
           <CardDescription>Visualize delivery demand intensity across residential areas</CardDescription>
         </CardHeader>

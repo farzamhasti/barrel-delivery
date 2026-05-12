@@ -2066,3 +2066,11 @@ These features are documented for future enhancement but are not required for th
 - [x] Ensure no regressions in existing heatmap functionality
 - [x] TypeScript compilation: 0 errors
 - [x] Dev server: Running successfully
+
+## Phase 106: Fix Heatmap Card Click Behavior (COMPLETED)
+- [x] Remove onClick from entire Card wrapper
+- [x] Move onClick to CardHeader only (header now toggles expand/collapse)
+- [x] Add visual expand/collapse indicator (▶/▼ arrow)
+- [x] Prevent accidental collapse when clicking on checkboxes and content
+- [x] Add hover effect to header to indicate it's clickable
+- [x] Verify all internal elements work without triggering collapse
