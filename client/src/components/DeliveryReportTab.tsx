@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar, TrendingUp, Truck, CheckCircle2, BarChart3 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import { skipToken } from "@tanstack/react-query";
 import { DeliveryMetricsTable } from "@/components/DeliveryMetricsTable";
 import { DeliveryMetricsModal } from "@/components/DeliveryMetricsModal";
 import { DriverStatsTable } from "@/components/DriverStatsTable";
@@ -20,7 +21,7 @@ export function DeliveryReportTab() {
     dateRange ? {
       startDate: dateRange.startDate,
       endDate: dateRange.endDate,
-    } : undefined,
+    } : skipToken,
     {
       enabled: !!dateRange,
     }

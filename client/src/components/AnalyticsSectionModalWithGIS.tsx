@@ -167,15 +167,19 @@ export function AnalyticsSectionModalWithGIS({
   const transformTimeData = () => {
     if (!data?.hourlyData) return undefined;
     // Convert hourly record to array format for rendering
-    const hourlyArray = Object.entries(data.hourlyData).map(([hour, count]: [string, any]) => ({
-      hour: parseInt(hour),
-      total: count,
-      areaBreakdown: data.areaTimeData ? {
-        Downtown: data.areaTimeData["Downtown"]?.hourly?.[parseInt(hour)] || 0,
-        "Central Park": data.areaTimeData["Central Park"]?.hourly?.[parseInt(hour)] || 0,
-        Both: data.areaTimeData["Both"]?.hourly?.[parseInt(hour)] || 0,
-      } : {},
-    }));
+    const hourlyArray = Object.entries(data.hourlyData).map(([hour, count]: [string, any]) => {
+      const areaBreakdown: Record<string, number> = {};
+      if (data.areaTimeData) {
+        areaBreakdown["Downtown"] = Number(data.areaTimeData["Downtown"]?.hourly?.[parseInt(hour)] || 0);
+        areaBreakdown["Central Park"] = Number(data.areaTimeData["Central Park"]?.hourly?.[parseInt(hour)] || 0);
+        areaBreakdown["Both"] = Number(data.areaTimeData["Both"]?.hourly?.[parseInt(hour)] || 0);
+      }
+      return {
+        hour: parseInt(hour),
+        total: Number(count),
+        areaBreakdown: Object.keys(areaBreakdown).length > 0 ? areaBreakdown : undefined,
+      };
+    });
     return {
       hourlyData: hourlyArray,
       orders: data.orders,

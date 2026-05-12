@@ -22,25 +22,25 @@ interface GISGeographicDistributionProps {
 const RESTAURANT_LOCATION = { lat: 42.90517, lng: -78.92295 };
 
 // Approximate area boundaries for Fort Erie
-const AREA_BOUNDARIES = {
+const AREA_BOUNDARIES: Record<string, L.LatLngTuple[]> = {
   downtown: [
     [42.98, -79.06],
     [42.99, -79.06],
     [42.99, -79.04],
     [42.98, -79.04],
-  ],
+  ] as L.LatLngTuple[],
   centralPark: [
     [42.97, -79.06],
     [42.98, -79.06],
     [42.98, -79.04],
     [42.97, -79.04],
-  ],
+  ] as L.LatLngTuple[],
   both: [
     [42.99, -79.06],
     [43.0, -79.06],
     [43.0, -79.04],
     [42.99, -79.04],
-  ],
+  ] as L.LatLngTuple[],
 };
 
 export function GISGeographicDistribution({ data }: GISGeographicDistributionProps) {

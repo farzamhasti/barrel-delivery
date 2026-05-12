@@ -259,7 +259,7 @@ export function GISGrowthOpportunities({
       { autoClose: false, closeButton: true }
     );
 
-    restaurantMarker.on('click', function() {
+    restaurantMarker.on('click', function(this: L.Marker) {
       this.openPopup();
     });
 
@@ -317,7 +317,7 @@ export function GISGrowthOpportunities({
         Date: ${order.createdAt ? new Date(order.createdAt).toLocaleDateString() : "N/A"}`;
 
       marker.bindPopup(popupText, { autoClose: false, closeButton: true });
-      marker.on('click', function() {
+      marker.on('click', function(this: L.Marker) {
         this.openPopup();
       });
 
@@ -372,7 +372,7 @@ export function GISGrowthOpportunities({
       );
 
       // Open popup on click
-      marker.on('click', function() {
+      marker.on('click', function(this: L.Marker) {
         this.openPopup();
       });
 

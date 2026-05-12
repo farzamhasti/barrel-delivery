@@ -49,7 +49,7 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
   // Update polygons when response arrives
   useEffect(() => {
     if (polygonsResponse?.success && polygonsResponse.polygons && polygonsResponse.polygons.length > 0) {
-      setResidentialPolygons(polygonsResponse.polygons);
+      setResidentialPolygons(polygonsResponse.polygons as any);
       setError(null);
     } else if (polygonsResponse && !polygonsResponse.success) {
       setError(polygonsResponse.message || 'Failed to load residential polygons');
@@ -67,7 +67,7 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
   const deliveryPoints = useMemo(() => {
     if (!heatmapDataResponse?.points) return [];
     return heatmapDataResponse.points.map((point) => ({
-      id: point.orderId,
+      id: String(point.orderId),
       latitude: point.lat,
       longitude: point.lng,
       timestamp: point.timestamp,
@@ -189,7 +189,7 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
         }).addTo(map);
       } else if (heatmapLayerData.length > 0) {
         // Fallback: Add circles for each clipped heatmap cell
-        clippedHeatmapData.gridPoints.forEach((point) => {
+        clippedHeatmapData.gridPoints.forEach((point: any) => {
           const intensity = point.intensity;
           const color =
             intensity > 0.75

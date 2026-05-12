@@ -79,33 +79,36 @@ export const CompetitorLayer: React.FC<CompetitorLayerProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   // Fetch competitors from API
-  const { mutate: fetchCompetitors } = trpc.analytics.fetchCompetitorsFromAPI.useMutation({
-    onSuccess: (data) => {
-      if (data.success && data.competitors) {
-        setCompetitors(data.competitors);
-        onCompetitorsLoaded?.(data.competitors);
-      } else {
-        setError(data.error || 'Failed to fetch competitors');
-      }
-      setIsLoading(false);
+  const { data, isLoading: queryLoading, error: queryError } = trpc.analytics.fetchCompetitorsFromAPI.useQuery(
+    {
+      latitude: 42.90517,
+      longitude: -78.92295,
+      radiusKm: 2,
     },
-    onError: (err) => {
-      setError(err.message);
-      setIsLoading(false);
-    },
-  });
-
-  // Load competitors on mount
-  useEffect(() => {
-    if (visible) {
-      setIsLoading(true);
-      fetchCompetitors({
-        latitude: 42.90517,
-        longitude: -78.92295,
-        radiusKm: 2,
-      });
+    {
+      enabled: visible,
     }
-  }, [visible, fetchCompetitors]);
+  );
+
+  // Update loading and error states
+  useEffect(() => {
+    setIsLoading(queryLoading);
+    if (queryError) {
+      setError((queryError as any).message || 'Failed to fetch competitors');
+    }
+  }, [queryLoading, queryError]);
+
+  // Handle successful data fetch
+  useEffect(() => {
+    if (data?.success && data.competitors) {
+      setCompetitors(data.competitors);
+      onCompetitorsLoaded?.(data.competitors);
+    } else if (data && !data.success) {
+      setError(data.error || 'Failed to fetch competitors');
+    }
+  }, [data, onCompetitorsLoaded]);
+
+
 
   // Add markers to map
   useEffect(() => {
