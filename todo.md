@@ -2010,3 +2010,15 @@ These features are documented for future enhancement but are not required for th
 - [x] Verify heatmap follows actual neighborhood boundaries
 - [x] Ensure no changes to operational dashboards
 - [x] All tests passing with new clipping implementation (11/11 passing)
+- [x] Implement fallback residential polygons for Fort Erie (residentialPolygonClipping.ts)
+- [x] Add point-in-polygon filtering using ray casting algorithm
+- [x] Graceful degradation when Overpass API is unavailable
+- [x] All 11 tests passing - no regressions
+
+## Phase 38: Fix Fort Erie Heatmap Location and Map Click Issue (COMPLETED)
+- [x] Fix fallback polygon coordinates to match actual Fort Erie residential areas
+- [x] Update polygon bounds to center on Fort Erie (not Niagara Falls)
+- [x] Prevent map click event propagation to parent collapse handler
+- [x] Test heatmap displays in correct Fort Erie location
+- [x] Test map interactions don't close the heatmap section
+- [x] Verify all 11 tests still passing

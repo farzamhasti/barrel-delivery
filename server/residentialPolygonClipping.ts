@@ -28,40 +28,44 @@ const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
 /**
  * Fallback residential polygons for Fort Erie
  * These are approximate boundaries of residential areas in Fort Erie
+ * Fort Erie coordinates: approximately 43.0°N, 79.05°W
  */
 function getFortErieFallbackPolygons(): ResidentialPolygon[] {
   return [
     {
       id: 'fort-erie-downtown-residential',
       type: 'residential',
+      // Downtown Fort Erie residential area (around Queen St / Garrison Rd)
       coordinates: [
-        [-79.2540, 43.0100],
-        [-79.2380, 43.0100],
-        [-79.2380, 42.9850],
-        [-79.2540, 42.9850],
-        [-79.2540, 43.0100],
+        [-79.0620, 43.0050],
+        [-79.0450, 43.0050],
+        [-79.0450, 42.9900],
+        [-79.0620, 42.9900],
+        [-79.0620, 43.0050],
       ],
     },
     {
       id: 'fort-erie-central-residential',
       type: 'residential',
+      // Central Fort Erie residential area (around Dominion Rd)
       coordinates: [
-        [-79.0800, 43.0200],
-        [-79.0400, 43.0200],
-        [-79.0400, 42.9800],
-        [-79.0800, 42.9800],
-        [-79.0800, 43.0200],
+        [-79.0750, 43.0150],
+        [-79.0500, 43.0150],
+        [-79.0500, 42.9950],
+        [-79.0750, 42.9950],
+        [-79.0750, 43.0150],
       ],
     },
     {
       id: 'fort-erie-north-residential',
       type: 'residential',
+      // North Fort Erie residential area (around Ridgeway Rd)
       coordinates: [
-        [-79.1600, 43.0500],
-        [-79.1200, 43.0500],
-        [-79.1200, 43.0100],
-        [-79.1600, 43.0100],
-        [-79.1600, 43.0500],
+        [-79.0800, 43.0300],
+        [-79.0500, 43.0300],
+        [-79.0500, 43.0100],
+        [-79.0800, 43.0100],
+        [-79.0800, 43.0300],
       ],
     },
   ];
@@ -239,10 +243,10 @@ export function calculateBoundingBox(
   if (residentialPolygons.length === 0) {
     // Default to Fort Erie area
     return {
-      minLat: 42.9,
-      maxLat: 43.1,
-      minLng: -79.3,
-      maxLng: -78.9,
+      minLat: 42.98,
+      maxLat: 43.04,
+      minLng: -79.09,
+      maxLng: -79.03,
     };
   }
 

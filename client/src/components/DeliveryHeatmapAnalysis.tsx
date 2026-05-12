@@ -1,5 +1,3 @@
-'use client';
-
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertCircle, Loader2, TrendingUp } from 'lucide-react';
@@ -34,6 +32,7 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
   const [clippedHeatmapData, setClippedHeatmapData] = useState<any>(null);
   const [clippedPointCount, setClippedPointCount] = useState(0);
   const mapRef = useRef<any>(null);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
 
   // Fetch residential polygons from server via tRPC
   const { data: polygonsResponse, isLoading: isLoadingPolygons } = trpc.analytics.getResidentialPolygons.useQuery();
@@ -98,61 +97,57 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
 
       // Add residential polygon boundaries to map
       if (residentialPolygons.length > 0) {
-        try {
-          residentialPolygons.forEach((polygon, index) => {
-            // Convert [lng, lat] to [lat, lng] for Leaflet
-            const latLngs = polygon.coordinates.map(([lng, lat]) => [lat, lng]);
-            
-            // Draw polygon boundary
-            window.L.polyline(latLngs, {
-              color: '#666',
-              weight: 1,
-              opacity: 0.5,
+        residentialPolygons.forEach((polygon) => {
+          if (polygon.coordinates && polygon.coordinates.length > 0) {
+            const leafletCoords = polygon.coordinates.map((coord) => [coord[1], coord[0]]);
+
+            window.L.polyline(leafletCoords, {
+              color: '#8b5cf6',
+              weight: 2,
+              opacity: 0.7,
               dashArray: '5, 5',
             }).addTo(map);
-          });
-        } catch (e) {
-          console.error('Error adding polygon boundaries:', e);
-        }
+          }
+        });
       }
 
       // Add legend to map
       try {
         addLegendToMap(map);
       } catch (e) {
-        console.error('Error adding legend:', e);
+        console.warn('Could not add legend to map:', e);
       }
+
+      // Fit bounds to residential polygons with delay to ensure map is ready
+      setTimeout(() => {
+        try {
+          if (residentialPolygons.length > 0 && mapRef.current) {
+            let minLat = Infinity;
+            let maxLat = -Infinity;
+            let minLng = Infinity;
+            let maxLng = -Infinity;
+
+            residentialPolygons.forEach((polygon) => {
+              polygon.coordinates.forEach((coord) => {
+                minLat = Math.min(minLat, coord[1]);
+                maxLat = Math.max(maxLat, coord[1]);
+                minLng = Math.min(minLng, coord[0]);
+                maxLng = Math.max(maxLng, coord[0]);
+              });
+            });
+
+            if (minLat !== Infinity && maxLat !== -Infinity && minLng !== Infinity && maxLng !== -Infinity) {
+              const bounds = window.L.latLngBounds([minLat, minLng], [maxLat, maxLng]);
+              mapRef.current.fitBounds(bounds, { padding: [50, 50] });
+            }
+          }
+        } catch (e) {
+          console.error('Error calculating bounds:', e);
+        }
+      }, 100);
     },
     [residentialPolygons]
   );
-
-  // Separate effect to handle map bounds
-  useEffect(() => {
-    if (!mapRef.current || !window.L || clippedHeatmapData === null) {
-      return;
-    }
-
-    const map = mapRef.current;
-    const bounds = clippedHeatmapData.polygonBounds;
-
-    try {
-      const latLngBounds = window.L.latLngBounds(
-        [bounds.south, bounds.west],
-        [bounds.north, bounds.east]
-      );
-
-      // Use setTimeout to ensure map is fully rendered
-      setTimeout(() => {
-        try {
-          map.fitBounds(latLngBounds, { padding: [50, 50] });
-        } catch (e) {
-          console.error('Error fitting bounds:', e);
-        }
-      }, 100);
-    } catch (e) {
-      console.error('Error calculating bounds:', e);
-    }
-  }, [clippedHeatmapData]);
 
   // Separate effect to handle clipped heatmap layer
   useEffect(() => {
@@ -208,6 +203,11 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
 
   const isLoading = isDataLoading || isLoadingPolygons;
   const hasData = clippedPointCount > 0 && clippedHeatmapData;
+
+  // Prevent click events on map from propagating to parent
+  const handleMapContainerClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+  }, []);
 
   return (
     <Card>
@@ -266,7 +266,13 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
 
         {/* Map Display - Only shown if we have clipped data */}
         {hasData && (
-          <div className="h-96 rounded-lg overflow-hidden border border-gray-200">
+          <div
+            ref={mapContainerRef}
+            className="h-96 rounded-lg overflow-hidden border border-gray-200"
+            onClick={handleMapContainerClick}
+            onMouseDown={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
+          >
             <GISMap title="Delivery Heatmap - Clipped to Residential Areas" onMapReady={handleMapReady} />
           </div>
         )}
