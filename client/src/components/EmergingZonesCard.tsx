@@ -1,7 +1,8 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, MapPin } from "lucide-react";
+import { TrendingUp, MapPin, Calendar, ChevronDown } from "lucide-react";
 import { trpc } from "@/lib/trpc";
-
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
 
 interface EmergingZonesCardProps {
   onClick: () => void;
@@ -10,9 +11,16 @@ interface EmergingZonesCardProps {
 }
 
 export function EmergingZonesCard({ onClick, dateRange, areaFilter }: EmergingZonesCardProps) {
+  // Independent time filter for Emerging Zones (separate from global filters)
+  const [independentDateRange, setIndependentDateRange] = useState<{ startDate: Date; endDate: Date } | null>(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
+  // Use independent date range if set, otherwise use global date range
+  const effectiveDateRange = independentDateRange || dateRange;
+
   const { data: zonesData, isLoading } = trpc.analytics.analyzeEmergingZones.useQuery({
-    startDate: dateRange?.startDate?.toISOString(),
-    endDate: dateRange?.endDate?.toISOString(),
+    startDate: effectiveDateRange?.startDate?.toISOString(),
+    endDate: effectiveDateRange?.endDate?.toISOString(),
     areaFilter: areaFilter,
   });
 
@@ -40,20 +48,142 @@ export function EmergingZonesCard({ onClick, dateRange, areaFilter }: EmergingZo
     }
   };
 
+  const handleSetDateRange = (startDate: Date, endDate: Date) => {
+    setIndependentDateRange({ startDate, endDate });
+    setShowDatePicker(false);
+  };
+
+  const handleSetSingleDate = (date: Date) => {
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+    setIndependentDateRange({ startDate: date, endDate: endOfDay });
+    setShowDatePicker(false);
+  };
+
+  const formatDateDisplay = () => {
+    if (!independentDateRange) return "Using global filters";
+    const start = independentDateRange.startDate.toLocaleDateString();
+    const end = independentDateRange.endDate.toLocaleDateString();
+    return start === end ? start : `${start} to ${end}`;
+  };
+
   return (
-    <Card
-      className="border-0 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
-      onClick={onClick}
-    >
+    <Card className="border-0 shadow-sm hover:shadow-md transition-shadow">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg">
           <TrendingUp className="w-5 h-5" />
           Emerging Demand Zones
         </CardTitle>
         <CardDescription>Identify high-growth delivery areas and market opportunities</CardDescription>
+
+        {/* Independent Time Filter */}
+        <div className="mt-4 pt-4 border-t">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm">
+              <Calendar className="w-4 h-4 text-gray-600" />
+              <span className="text-gray-600">Analysis Period:</span>
+              <span className="font-medium text-gray-900">{formatDateDisplay()}</span>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowDatePicker(!showDatePicker)}
+              className="gap-1"
+            >
+              <Calendar className="w-4 h-4" />
+              Change
+              <ChevronDown className="w-3 h-3" />
+            </Button>
+          </div>
+
+          {/* Date Picker Dropdown */}
+          {showDatePicker && (
+            <div className="mt-3 p-3 bg-gray-50 rounded border">
+              <div className="space-y-2 text-sm">
+                <p className="font-medium text-gray-700">Quick Select:</p>
+                <div className="space-y-1">
+                  <button
+                    onClick={() => handleSetSingleDate(new Date())}
+                    className="block w-full text-left px-2 py-1 rounded hover:bg-gray-200 text-gray-700"
+                  >
+                    Today
+                  </button>
+                  <button
+                    onClick={() => {
+                      const today = new Date();
+                      const yesterday = new Date(today);
+                      yesterday.setDate(yesterday.getDate() - 1);
+                      handleSetDateRange(yesterday, today);
+                    }}
+                    className="block w-full text-left px-2 py-1 rounded hover:bg-gray-200 text-gray-700"
+                  >
+                    Last 2 Days
+                  </button>
+                  <button
+                    onClick={() => {
+                      const today = new Date();
+                      const weekAgo = new Date(today);
+                      weekAgo.setDate(weekAgo.getDate() - 7);
+                      handleSetDateRange(weekAgo, today);
+                    }}
+                    className="block w-full text-left px-2 py-1 rounded hover:bg-gray-200 text-gray-700"
+                  >
+                    Last 7 Days
+                  </button>
+                  <button
+                    onClick={() => {
+                      const today = new Date();
+                      const monthAgo = new Date(today);
+                      monthAgo.setDate(monthAgo.getDate() - 30);
+                      handleSetDateRange(monthAgo, today);
+                    }}
+                    className="block w-full text-left px-2 py-1 rounded hover:bg-gray-200 text-gray-700"
+                  >
+                    Last 30 Days
+                  </button>
+                </div>
+                <p className="font-medium text-gray-700 pt-2">Custom Range:</p>
+                <div className="flex gap-2">
+                  <input
+                    type="date"
+                    id="startDate"
+                    className="flex-1 px-2 py-1 border rounded text-sm"
+                    onChange={(e) => {
+                      if (independentDateRange && e.target.value) {
+                        const newStart = new Date(e.target.value);
+                        setIndependentDateRange({ ...independentDateRange, startDate: newStart });
+                      }
+                    }}
+                    value={independentDateRange?.startDate?.toISOString().split('T')[0] || ''}
+                  />
+                  <input
+                    type="date"
+                    id="endDate"
+                    className="flex-1 px-2 py-1 border rounded text-sm"
+                    onChange={(e) => {
+                      if (independentDateRange && e.target.value) {
+                        const newEnd = new Date(e.target.value);
+                        setIndependentDateRange({ ...independentDateRange, endDate: newEnd });
+                      }
+                    }}
+                    value={independentDateRange?.endDate?.toISOString().split('T')[0] || ''}
+                  />
+                </div>
+                <Button
+                  size="sm"
+                  variant="default"
+                  onClick={() => setShowDatePicker(false)}
+                  className="w-full mt-2"
+                >
+                  Apply
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
       </CardHeader>
       <CardContent>
-        <div className="bg-gray-100 rounded-lg h-48 flex items-center justify-center mb-4">
+        <div className="bg-gray-100 rounded-lg h-48 flex items-center justify-center mb-4 cursor-pointer hover:bg-gray-200 transition-colors" onClick={onClick}>
           <div className="text-center">
             <MapPin className="w-8 h-8 text-gray-400 mx-auto mb-2" />
             <p className="text-sm text-gray-500">
@@ -65,7 +195,7 @@ export function EmergingZonesCard({ onClick, dateRange, areaFilter }: EmergingZo
         {!isLoading && topZones.length > 0 ? (
           <div className="space-y-2">
             {topZones.map((zone, idx) => (
-              <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+              <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 rounded cursor-pointer hover:bg-gray-100" onClick={onClick}>
                 <div className="flex-1">
                   <p className="text-sm font-medium text-gray-900">
                     Zone {idx + 1}

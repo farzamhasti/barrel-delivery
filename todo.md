@@ -2229,3 +2229,23 @@ These features are documented for future enhancement but are not required for th
 - [x] Test with May 7th data to ensure zones and orders appear correctly (26/26 tests passing)
 - [x] TypeScript compilation: 0 errors
 - [x] Dev server: Running successfully
+
+
+## Phase 121: Independent Time Filter for Emerging Demand Zones (IN PROGRESS)
+- [ ] Add time filter UI to EmergingZonesCard (date range picker with single date and range options)
+- [ ] Update EmergingZonesModal to include integrated time filter
+- [ ] Modify analyzeEmergingZones to accept custom date ranges independent of global filters
+- [ ] Add trend analysis calculations for demand forecasting within selected period
+- [ ] Calculate growth velocity based on trend data from selected date range
+- [ ] Use scheduling tables (ready_at, picked_up_at, delivered_at) for delivery time analysis
+- [ ] Incorporate competitor locations into trend-based zone analysis
+- [ ] Add ability to select single date (e.g., May 7) for specific day analysis
+- [ ] Add ability to select date range (e.g., May 7 to May 12) for trend analysis
+- [ ] Perform zone analysis based on order locations, scheduling data, and competitor locations
+- [ ] Test with May 7 single date selection
+- [ ] Test with May 7 to May 12 date range
+- [ ] Test with various date ranges and verify forecasts
+- [ ] Write tests for trend analysis and forecasting functions
+- [ ] Verify forecasts are accurate based on selected date ranges
+- [ ] TypeScript compilation: 0 errors
+- [ ] Dev server: Running successfully

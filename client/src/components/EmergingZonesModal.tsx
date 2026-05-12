@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MapPin, TrendingUp, Users, Zap, AlertCircle, BarChart3 } from "lucide-react";
+import { MapPin, TrendingUp, Users, Zap, AlertCircle, BarChart3, Calendar, ChevronDown } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { EmergingZonesMapOSM } from './EmergingZonesMapOSM';
 
@@ -30,9 +30,15 @@ interface EmergingZonesModalProps {
 
 export function EmergingZonesModal({ isOpen, onClose, dateRange, areaFilter }: EmergingZonesModalProps) {
   const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
+  const [independentDateRange, setIndependentDateRange] = useState<{ startDate: Date; endDate: Date } | null>(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
+  // Use independent date range if set, otherwise use global date range
+  const effectiveDateRange = independentDateRange || dateRange;
+
   const { data: zonesData, isLoading } = trpc.analytics.analyzeEmergingZones.useQuery({
-    startDate: dateRange?.startDate?.toISOString(),
-    endDate: dateRange?.endDate?.toISOString(),
+    startDate: effectiveDateRange?.startDate?.toISOString(),
+    endDate: effectiveDateRange?.endDate?.toISOString(),
     areaFilter: areaFilter,
   });
 
