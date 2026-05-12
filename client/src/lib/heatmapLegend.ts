@@ -65,16 +65,16 @@ export function createHeatmapLegend(): any {
     div.style.fontSize = '12px';
     div.style.fontFamily = 'system-ui, -apple-system, sans-serif';
     div.style.zIndex = '1000';
-    div.style.maxWidth = '340px';
-    div.style.overflowY = 'auto';
-    div.style.maxHeight = '600px';
+    div.style.maxWidth = '360px';
+    div.style.overflowY = 'visible';
+    div.style.minHeight = 'auto';
 
     // Add title
     const title = document.createElement('div');
     title.style.fontWeight = 'bold';
-    title.style.marginBottom = '12px';
+    title.style.marginBottom = '10px';
     title.style.borderBottom = '2px solid #e5e7eb';
-    title.style.paddingBottom = '8px';
+    title.style.paddingBottom = '6px';
     title.style.fontSize = '13px';
     title.style.color = '#1f2937';
     title.textContent = 'How to Interpret the Colors';
@@ -83,8 +83,8 @@ export function createHeatmapLegend(): any {
     // Add legend items with descriptions
     HEATMAP_LEGEND_ITEMS.forEach((item, index) => {
       const itemContainer = document.createElement('div');
-      itemContainer.style.marginBottom = '8px';
-      itemContainer.style.paddingBottom = '8px';
+      itemContainer.style.marginBottom = '6px';
+      itemContainer.style.paddingBottom = '6px';
       if (index < HEATMAP_LEGEND_ITEMS.length - 1) {
         itemContainer.style.borderBottom = '1px solid #f0f0f0';
       }
@@ -93,17 +93,17 @@ export function createHeatmapLegend(): any {
       const row = document.createElement('div');
       row.style.display = 'flex';
       row.style.alignItems = 'flex-start';
-      row.style.gap = '10px';
+      row.style.gap = '8px';
 
       // Color box
       const colorBox = document.createElement('div');
-      colorBox.style.width = '20px';
-      colorBox.style.height = '20px';
+      colorBox.style.width = '18px';
+      colorBox.style.height = '18px';
       colorBox.style.backgroundColor = item.color;
       colorBox.style.borderRadius = '3px';
       colorBox.style.border = '1px solid rgba(0,0,0,0.15)';
       colorBox.style.flexShrink = '0';
-      colorBox.style.marginTop = '2px';
+      colorBox.style.marginTop = '1px';
 
       // Label container
       const labelContainer = document.createElement('div');
@@ -115,8 +115,8 @@ export function createHeatmapLegend(): any {
       const mainLabel = document.createElement('div');
       mainLabel.style.fontWeight = '600';
       mainLabel.style.color = '#1f2937';
-      mainLabel.style.fontSize = '12px';
-      mainLabel.style.lineHeight = '1.4';
+      mainLabel.style.fontSize = '11px';
+      mainLabel.style.lineHeight = '1.35';
       mainLabel.style.wordWrap = 'break-word';
       mainLabel.textContent = `${item.label} (${item.intensity}): ${item.description}`;
 
