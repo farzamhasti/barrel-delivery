@@ -1,7 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, AlertCircle, ArrowUpRight, ArrowDownLeft, Layers, Maximize2, Minimize2, Download } from "lucide-react";
+import { MapPin, AlertCircle, ArrowUpRight, ArrowDownLeft, Maximize2, Minimize2 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useState, useEffect } from "react";
 import { EmergingZonesMapOSM } from "./EmergingZonesMapOSM";
@@ -55,23 +55,6 @@ export function EmergingZonesModal({
     }
   };
 
-  const getClusterStatusIcon = (status: string) => {
-    switch (status) {
-      case "new":
-        return "🆕";
-      case "growing":
-        return "📈";
-      case "stable":
-        return "➡️";
-      case "shrinking":
-        return "📉";
-      case "disappearing":
-        return "❌";
-      default:
-        return "•";
-    }
-  };
-
   const getClusterStatusLabel = (status: string) => {
     switch (status) {
       case "new":
@@ -95,35 +78,35 @@ export function EmergingZonesModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className={`overflow-hidden flex flex-col ${
         isFullScreen 
-          ? "fixed inset-0 max-w-none max-h-none rounded-none" 
+          ? "fixed inset-0 max-w-none max-h-none rounded-none p-0" 
           : "max-w-[95vw] max-h-[92vh]"
       }`}>
-        <DialogHeader className="flex-shrink-0 border-b pb-4">
+        {/* Header */}
+        <DialogHeader className={`flex-shrink-0 border-b ${isFullScreen ? "px-6 py-4" : ""}`}>
           <div className="flex items-center justify-between">
             <div>
-              <DialogTitle className="flex items-center gap-2 text-xl">
+              <DialogTitle className="flex items-center gap-2 text-2xl font-bold">
                 <MapPin className="w-6 h-6 text-blue-600" />
-                Delivery Heatmap Analysis
+                Spatial-Temporal Geographic Demand Shift Analysis
               </DialogTitle>
               <p className="text-sm text-gray-600 mt-1">Visualize delivery demand intensity across residential areas</p>
             </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setIsFullScreen(!isFullScreen)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                title={isFullScreen ? "Exit full-screen" : "Enter full-screen"}
-              >
-                {isFullScreen ? (
-                  <Minimize2 className="w-5 h-5" />
-                ) : (
-                  <Maximize2 className="w-5 h-5" />
-                )}
-              </button>
-            </div>
+            <button
+              onClick={() => setIsFullScreen(!isFullScreen)}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
+              title={isFullScreen ? "Exit full-screen" : "Enter full-screen"}
+            >
+              {isFullScreen ? (
+                <Minimize2 className="w-5 h-5" />
+              ) : (
+                <Maximize2 className="w-5 h-5" />
+              )}
+            </button>
           </div>
         </DialogHeader>
 
-        <div className={`flex-1 overflow-hidden flex flex-col ${isFullScreen ? "p-6" : "p-4"}`}>
+        {/* Main Content */}
+        <div className={`flex-1 overflow-hidden flex flex-col ${isFullScreen ? "px-6 pb-6" : ""}`}>
           {isLoading ? (
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
@@ -140,35 +123,13 @@ export function EmergingZonesModal({
             </div>
           ) : (
             <div className="flex flex-col h-full gap-4">
-              {/* Top Control Bar */}
-              <div className="flex items-center justify-between bg-gray-50 p-4 rounded-lg border border-gray-200">
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-2">
-                    <Layers className="w-4 h-4 text-gray-600" />
-                    <span className="text-sm font-medium">Delivery Heatmap Analysis</span>
-                  </div>
-                  <span className="text-xs text-gray-500">Visualize delivery demand intensity across residential areas only (OpenStreetMap land-use data)</span>
-                </div>
-                <button
-                  onClick={() => {/* Export functionality */}}
-                  className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-200 rounded transition-colors"
-                  title="Export as PNG"
-                >
-                  <Download className="w-4 h-4" />
-                  Export PNG
-                </button>
-              </div>
-
-              {/* Main Heatmap Section */}
+              {/* Top Row: Large Map + Right Sidebar */}
               <div className="flex-1 flex gap-4 min-h-0">
-                {/* Map Container */}
-                <div className="flex-1 flex flex-col">
-                  <Card className="border-0 shadow-sm flex-1 flex flex-col">
+                {/* Left: Map (Main Focus) */}
+                <div className="flex-1 flex flex-col min-w-0">
+                  <Card className="h-full border-0 shadow-sm flex flex-col">
                     <CardHeader className="flex-shrink-0">
-                      <CardTitle className="text-sm flex items-center gap-2">
-                        <Layers className="w-4 h-4" />
-                        Delivery Heatmap - Clipped to Residential Areas - GIS Map
-                      </CardTitle>
+                      <CardTitle className="text-base">Delivery Heatmap - Geographic Distribution</CardTitle>
                     </CardHeader>
                     <CardContent className="flex-1 overflow-hidden p-0">
                       <div className="h-full w-full rounded-lg overflow-hidden border border-gray-200">
@@ -178,53 +139,55 @@ export function EmergingZonesModal({
                   </Card>
                 </div>
 
-                {/* Right Sidebar - Legend and Zone Details */}
-                <div className="w-80 flex flex-col gap-4 overflow-y-auto">
-                  {/* Map Legend */}
+                {/* Right Sidebar */}
+                <div className="w-72 flex flex-col gap-4 overflow-y-auto pr-2">
+                  {/* Legend Card */}
                   <Card className="border-0 shadow-sm flex-shrink-0">
-                    <CardHeader>
-                      <CardTitle className="text-sm">Map Legend</CardTitle>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm font-semibold">Map Legend</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3 text-xs">
                       <div className="space-y-2">
+                        <p className="font-semibold text-gray-700 mb-2">Zone Classification</p>
                         <div className="flex items-center gap-2">
-                          <div className="w-4 h-4 rounded-full bg-green-500"></div>
+                          <div className="w-3 h-3 rounded-full bg-green-500"></div>
                           <span>Strong Growth</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <div className="w-4 h-4 rounded-full bg-blue-500"></div>
+                          <div className="w-3 h-3 rounded-full bg-blue-500"></div>
                           <span>Moderate Growth</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <div className="w-4 h-4 rounded-full bg-gray-500"></div>
+                          <div className="w-3 h-3 rounded-full bg-gray-500"></div>
                           <span>Stable</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <div className="w-4 h-4 rounded-full bg-orange-500"></div>
+                          <div className="w-3 h-3 rounded-full bg-orange-500"></div>
                           <span>Decline</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <div className="w-4 h-4 rounded-full bg-red-500"></div>
+                          <div className="w-3 h-3 rounded-full bg-red-500"></div>
                           <span>Rapid Shift</span>
                         </div>
                       </div>
-                      <div className="border-t pt-2 mt-2">
-                        <p className="font-semibold mb-2">Competitor Types</p>
+
+                      <div className="border-t pt-3">
+                        <p className="font-semibold text-gray-700 mb-2">Competitor Types</p>
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 rounded-full bg-red-600"></div>
+                            <div className="w-2.5 h-2.5 rounded-full bg-red-600"></div>
                             <span>Restaurant</span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 rounded-full bg-orange-500"></div>
+                            <div className="w-2.5 h-2.5 rounded-full bg-orange-500"></div>
                             <span>Cafe</span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 rounded-full bg-blue-600"></div>
+                            <div className="w-2.5 h-2.5 rounded-full bg-blue-600"></div>
                             <span>Fast Food</span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                            <div className="w-2.5 h-2.5 rounded-full bg-red-500"></div>
                             <span>Pizza</span>
                           </div>
                         </div>
@@ -232,109 +195,109 @@ export function EmergingZonesModal({
                     </CardContent>
                   </Card>
 
-                  {/* Spatial Zones List */}
+                  {/* Zones List */}
                   <Card className="border-0 shadow-sm flex-1 flex flex-col overflow-hidden">
-                    <CardHeader className="flex-shrink-0">
-                      <CardTitle className="text-sm">Spatial Zones ({zones.length})</CardTitle>
+                    <CardHeader className="pb-3 flex-shrink-0">
+                      <CardTitle className="text-sm font-semibold">Spatial Zones ({zones.length})</CardTitle>
                     </CardHeader>
-                    <CardContent className="flex-1 overflow-y-auto space-y-2">
+                    <CardContent className="flex-1 overflow-y-auto space-y-2 pr-2">
                       {zones.map((zone, idx) => (
                         <button
                           key={zone.hexId}
                           onClick={() => setSelectedZoneIndex(idx)}
-                          className={`w-full text-left p-3 rounded-lg border-2 transition-all text-sm ${
+                          className={`w-full text-left p-2.5 rounded-lg border-2 transition-all text-xs ${
                             selectedZoneIndex === idx
                               ? `${getClassificationColor(zone.classification).border} ${getClassificationColor(zone.classification).bg}`
-                              : "border-gray-200 hover:border-gray-300"
+                              : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
                           }`}
                         >
                           <div className="flex items-center justify-between mb-1">
                             <span className="font-semibold">Zone {idx + 1}</span>
-                            <Badge className={`text-xs ${getClassificationColor(zone.classification).badge}`}>{zone.classification}</Badge>
+                            <Badge className={`text-xs px-1.5 py-0.5 ${getClassificationColor(zone.classification).badge}`}>
+                              {zone.classification}
+                            </Badge>
                           </div>
-                          <p className="text-xs text-gray-600">
+                          <p className="text-gray-600">
                             Growth: {zone.growthPercentage > 0 ? '+' : ''}{zone.growthPercentage.toFixed(1)}%
                           </p>
                         </button>
                       ))}
                     </CardContent>
                   </Card>
-
-                  {/* Selected Zone Details */}
-                  {selectedZone && (
-                    <Card className={`border-2 flex-shrink-0 ${selectedZone ? getClassificationColor(selectedZone.classification).border : ''} ${selectedZone ? getClassificationColor(selectedZone.classification).bg : ''}`}>
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-base flex items-center gap-2">
-                          {selectedZone.growthPercentage > 0 ? (
-                            <ArrowUpRight className="w-4 h-4" />
-                          ) : (
-                            <ArrowDownLeft className="w-4 h-4" />
-                          )}
-                          {selectedZone.classification}
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-3 text-sm">
-                        <div>
-                          <p className="text-xs text-gray-600 mb-1">Cluster Status</p>
-                          <p className="font-semibold">
-                            {getClusterStatusIcon(selectedZone.clusterStatus)} {getClusterStatusLabel(selectedZone.clusterStatus)}
-                          </p>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <p className="text-xs text-gray-600 mb-1">Previous Density</p>
-                            <p className="font-semibold text-sm">{selectedZone.previousDensity}</p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-gray-600 mb-1">Current Density</p>
-                            <p className="font-semibold text-sm">{selectedZone.currentDensity}</p>
-                          </div>
-                        </div>
-
-                        <div>
-                          <p className="text-xs text-gray-600 mb-2">Spatial Growth Rate</p>
-                          <div className="flex items-center gap-2">
-                            <div className="flex-1 bg-gray-200 rounded-full h-3">
-                              <div
-                                className={`h-3 rounded-full ${
-                                  selectedZone.growthPercentage > 0 ? "bg-green-500" : "bg-red-500"
-                                }`}
-                                style={{
-                                  width: `${Math.min(Math.abs(selectedZone.growthPercentage), 100)}%`,
-                                }}
-                              ></div>
-                            </div>
-                            <span className="font-semibold text-sm whitespace-nowrap">
-                              {selectedZone.growthPercentage > 0 ? '+' : ''}{selectedZone.growthPercentage.toFixed(1)}%
-                            </span>
-                          </div>
-                        </div>
-
-                        <div>
-                          <p className="text-xs text-gray-600 mb-1">Orders in Zone</p>
-                          <p className="font-semibold text-sm">{selectedZone.orderCount}</p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
                 </div>
               </div>
 
-              {/* Bottom Section - Analysis Summary */}
-              {!isLoading && spatialData?.spatialInterpretation && (
-                <Card className="bg-blue-50 border-blue-200 flex-shrink-0">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm flex items-center gap-2">
-                      <AlertCircle className="w-4 h-4" />
-                      Spatial Analysis Summary
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-blue-900">{spatialData.spatialInterpretation}</p>
-                  </CardContent>
-                </Card>
-              )}
+              {/* Bottom Row: Zone Details + Spatial Interpretation */}
+              <div className="flex gap-4 h-48 flex-shrink-0">
+                {/* Zone Details */}
+                {selectedZone && (
+                  <Card className={`flex-1 border-2 ${getClassificationColor(selectedZone.classification).border} ${getClassificationColor(selectedZone.classification).bg}`}>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm flex items-center gap-2">
+                        {selectedZone.growthPercentage > 0 ? (
+                          <ArrowUpRight className="w-4 h-4 text-green-600" />
+                        ) : (
+                          <ArrowDownLeft className="w-4 h-4 text-red-600" />
+                        )}
+                        Zone {selectedZoneIndex + 1}: {selectedZone.classification}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2 text-xs">
+                      <div className="grid grid-cols-4 gap-3">
+                        <div>
+                          <p className="text-gray-600 mb-0.5">Cluster Status</p>
+                          <p className="font-semibold text-sm">{getClusterStatusLabel(selectedZone.clusterStatus)}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-600 mb-0.5">Previous Density</p>
+                          <p className="font-semibold text-sm">{selectedZone.previousDensity}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-600 mb-0.5">Current Density</p>
+                          <p className="font-semibold text-sm">{selectedZone.currentDensity}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-600 mb-0.5">Orders</p>
+                          <p className="font-semibold text-sm">{selectedZone.orderCount}</p>
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-gray-600 mb-1">Growth Rate</p>
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 bg-gray-200 rounded-full h-2">
+                            <div
+                              className={`h-2 rounded-full ${
+                                selectedZone.growthPercentage > 0 ? "bg-green-500" : "bg-red-500"
+                              }`}
+                              style={{
+                                width: `${Math.min(Math.abs(selectedZone.growthPercentage), 100)}%`,
+                              }}
+                            ></div>
+                          </div>
+                          <span className="font-semibold text-xs whitespace-nowrap">
+                            {selectedZone.growthPercentage > 0 ? '+' : ''}{selectedZone.growthPercentage.toFixed(1)}%
+                          </span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Spatial Interpretation */}
+                {!isLoading && spatialData?.spatialInterpretation && (
+                  <Card className="flex-1 bg-blue-50 border-blue-200 border-2">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm flex items-center gap-2">
+                        <AlertCircle className="w-4 h-4" />
+                        Spatial Analysis Summary
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-xs text-blue-900 line-clamp-4">{spatialData.spatialInterpretation}</p>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
             </div>
           )}
         </div>
