@@ -1,4 +1,6 @@
-import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+'use client';
+
+import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertCircle, Loader2, TrendingUp } from 'lucide-react';
 import { GISMap } from './GISMap';
@@ -31,16 +33,26 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
   const [residentialPolygons, setResidentialPolygons] = useState<ResidentialPolygon[]>([]);
   const [clippedHeatmapData, setClippedHeatmapData] = useState<any>(null);
   const [clippedPointCount, setClippedPointCount] = useState(0);
+  const [error, setError] = useState<string | null>(null);
   const mapRef = useRef<any>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
 
   // Fetch residential polygons from server via tRPC
-  const { data: polygonsResponse, isLoading: isLoadingPolygons } = trpc.analytics.getResidentialPolygons.useQuery();
+  const { data: polygonsResponse, isLoading: isLoadingPolygons, error: polygonsError } = trpc.analytics.getResidentialPolygons.useQuery(
+    undefined,
+    {
+      retry: 3,
+      retryDelay: 1000,
+    }
+  );
 
   // Update polygons when response arrives
-  useMemo(() => {
-    if (polygonsResponse?.success && polygonsResponse.polygons) {
+  useEffect(() => {
+    if (polygonsResponse?.success && polygonsResponse.polygons && polygonsResponse.polygons.length > 0) {
       setResidentialPolygons(polygonsResponse.polygons);
+      setError(null);
+    } else if (polygonsResponse && !polygonsResponse.success) {
+      setError(polygonsResponse.message || 'Failed to load residential polygons');
     }
   }, [polygonsResponse]);
 
@@ -63,7 +75,7 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
   }, [heatmapDataResponse?.points]);
 
   // Generate clipped heatmap when data changes
-  useMemo(() => {
+  useEffect(() => {
     if (deliveryPoints.length === 0 || residentialPolygons.length === 0 || !filterResidential) {
       setClippedHeatmapData(null);
       setClippedPointCount(0);
@@ -75,10 +87,11 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
       const clipped = generateClippedResidentialHeatmap(deliveryPoints, residentialPolygons, 50);
       setClippedHeatmapData(clipped);
       setClippedPointCount(clipped.gridPoints.length);
-    } catch (error) {
-      console.error('[DeliveryHeatmapAnalysis] Error generating clipped heatmap:', error);
+    } catch (err) {
+      console.error('[DeliveryHeatmapAnalysis] Error generating clipped heatmap:', err);
       setClippedHeatmapData(null);
       setClippedPointCount(0);
+      setError('Error generating heatmap');
     }
   }, [deliveryPoints, residentialPolygons, filterResidential]);
 
@@ -203,6 +216,7 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
 
   const isLoading = isDataLoading || isLoadingPolygons;
   const hasData = clippedPointCount > 0 && clippedHeatmapData;
+  const hasPolygons = residentialPolygons.length > 0;
 
   // Prevent click events on map from propagating to parent
   const handleMapContainerClick = useCallback((e: React.MouseEvent) => {
@@ -249,7 +263,7 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
         )}
 
         {/* Error State - No Polygons */}
-        {!isLoading && residentialPolygons.length === 0 && (
+        {!isLoading && !hasPolygons && (
           <div className="flex items-center gap-2 text-yellow-600 p-3 bg-yellow-50 rounded-lg">
             <AlertCircle className="h-4 w-4" />
             <span className="text-sm">Unable to load residential area polygons from OpenStreetMap</span>
@@ -257,15 +271,15 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
         )}
 
         {/* Error State - No Data */}
-        {!isLoading && residentialPolygons.length > 0 && deliveryPoints.length === 0 && (
+        {!isLoading && hasPolygons && deliveryPoints.length === 0 && (
           <div className="flex items-center gap-2 text-yellow-600 p-3 bg-yellow-50 rounded-lg">
             <AlertCircle className="h-4 w-4" />
             <span className="text-sm">No delivery data available for selected filters</span>
           </div>
         )}
 
-        {/* Map Display - Only shown if we have clipped data */}
-        {hasData && (
+        {/* Map Display - Show if we have polygons (even without clipped data) */}
+        {!isLoading && hasPolygons && (
           <div
             ref={mapContainerRef}
             className="h-96 rounded-lg overflow-hidden border border-gray-200"
