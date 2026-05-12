@@ -1,5 +1,5 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, MapPin, Calendar, ChevronDown } from "lucide-react";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { TrendingUp, MapPin, Calendar, ChevronDown, ArrowUpRight, ArrowDownLeft } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -19,40 +19,53 @@ export function EmergingZonesCard({ onClick, dateRange, areaFilter }: EmergingZo
     return { startDate: today, endDate: endOfDay };
   };
 
-  // Independent time filter for Emerging Zones (separate from global filters)
+  // Independent time filter for Spatial Demand Shift (separate from global filters)
   const [independentDateRange, setIndependentDateRange] = useState<{ startDate: Date; endDate: Date }>(getInitialDateRange());
   const [showDatePicker, setShowDatePicker] = useState(false);
 
   // Use independent date range (always set now)
   const effectiveDateRange = independentDateRange;
 
-  const { data: zonesData, isLoading } = trpc.analytics.analyzeEmergingZones.useQuery({
-    startDate: effectiveDateRange?.startDate?.toISOString(),
-    endDate: effectiveDateRange?.endDate?.toISOString(),
+  const { data: spatialData, isLoading } = trpc.analytics.analyzeSpatialDemandShift.useQuery({
+    startDate: effectiveDateRange.startDate,
+    endDate: effectiveDateRange.endDate,
     areaFilter: areaFilter,
   });
 
   const getTopZones = () => {
-    if (!zonesData?.zones) return [];
-    return zonesData.zones.slice(0, 3);
+    if (!spatialData?.zones) return [];
+    return spatialData.zones.slice(0, 3);
   };
 
   const topZones = getTopZones();
 
   const getClassificationColor = (classification: string) => {
     switch (classification) {
-      case "rapid_emerging":
-        return "bg-green-50 text-green-700";
-      case "early_growth":
-        return "bg-blue-50 text-blue-700";
-      case "stable":
-        return "bg-gray-50 text-gray-700";
-      case "saturated":
-        return "bg-orange-50 text-orange-700";
-      case "declining":
-        return "bg-red-50 text-red-700";
+      case "Strong Growth":
+        return "bg-green-50 text-green-700 border-green-200";
+      case "Moderate Growth":
+        return "bg-lime-50 text-lime-700 border-lime-200";
+      case "Stable":
+        return "bg-yellow-50 text-yellow-700 border-yellow-200";
+      case "Decline":
+        return "bg-orange-50 text-orange-700 border-orange-200";
+      case "Rapid Shift":
+        return "bg-red-50 text-red-700 border-red-200";
       default:
-        return "bg-gray-50 text-gray-700";
+        return "bg-gray-50 text-gray-700 border-gray-200";
+    }
+  };
+
+  const getClassificationIcon = (classification: string) => {
+    switch (classification) {
+      case "Strong Growth":
+      case "Moderate Growth":
+        return <ArrowUpRight className="w-4 h-4" />;
+      case "Decline":
+      case "Rapid Shift":
+        return <ArrowDownLeft className="w-4 h-4" />;
+      default:
+        return null;
     }
   };
 
@@ -74,112 +87,121 @@ export function EmergingZonesCard({ onClick, dateRange, areaFilter }: EmergingZo
     return start === end ? start : `${start} to ${end}`;
   };
 
+  const handleViewFullAnalysis = () => {
+    onClick(independentDateRange);
+  };
+
   return (
     <Card className="border-0 shadow-sm hover:shadow-md transition-shadow">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg">
-          <TrendingUp className="w-5 h-5" />
-          Emerging Demand Zones
+          <MapPin className="w-5 h-5 text-blue-600" />
+          Spatial-Temporal Demand Shift Analysis
         </CardTitle>
-        <CardDescription>Identify high-growth delivery areas and market opportunities</CardDescription>
-
-        {/* Independent Time Filter */}
-        <div className="mt-4 pt-4 border-t">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm">
-              <Calendar className="w-4 h-4 text-gray-600" />
-              <span className="text-gray-600">Analysis Period:</span>
-              <span className="font-medium text-gray-900">{formatDateDisplay()}</span>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowDatePicker(!showDatePicker)}
-              className="gap-1"
-            >
-              <Calendar className="w-4 h-4" />
-              Change
-              <ChevronDown className="w-3 h-3" />
-            </Button>
-          </div>
-
-          {/* Date Picker Dropdown */}
-          {showDatePicker && (
-            <div className="mt-3 p-3 bg-gray-50 rounded border">
-              <div className="space-y-2 text-sm">
-                <p className="font-medium text-gray-700">Date Range:</p>
-                <div className="flex gap-2">
-                  <input
-                    type="date"
-                    id="startDate"
-                    className="flex-1 px-2 py-1 border rounded text-sm"
-                    onChange={(e) => {
-                      if (e.target.value) {
-                        const newStart = new Date(e.target.value);
-                        setIndependentDateRange({ ...independentDateRange, startDate: newStart });
-                      }
-                    }}
-                    value={independentDateRange?.startDate?.toISOString().split('T')[0] || ''}
-                  />
-                  <input
-                    type="date"
-                    id="endDate"
-                    className="flex-1 px-2 py-1 border rounded text-sm"
-                    onChange={(e) => {
-                      if (e.target.value) {
-                        const newEnd = new Date(e.target.value);
-                        setIndependentDateRange({ ...independentDateRange, endDate: newEnd });
-                      }
-                    }}
-                    value={independentDateRange?.endDate?.toISOString().split('T')[0] || ''}
-                  />
-                </div>
-                <Button
-                  size="sm"
-                  variant="default"
-                  onClick={() => setShowDatePicker(false)}
-                  className="w-full mt-2"
-                >
-                  Apply
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
+        <p className="text-sm text-gray-600 mt-2">
+          Geographic movement patterns of delivery demand over time
+        </p>
       </CardHeader>
-      <CardContent>
-        <div className="bg-gray-100 rounded-lg h-48 flex items-center justify-center mb-4 cursor-pointer hover:bg-gray-200 transition-colors" onClick={() => onClick(independentDateRange)}>
-          <div className="text-center">
-            <MapPin className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-            <p className="text-sm text-gray-500">
-              {isLoading ? "Loading zones..." : `${zonesData?.count || 0} zones detected`}
-            </p>
+
+      <CardContent className="space-y-4">
+        {/* Date Range Filter */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-gray-700">Analysis Period</label>
+          <div className="flex gap-2 items-center">
+            <div className="flex-1 relative">
+              <input
+                type="date"
+                value={independentDateRange.startDate.toISOString().split('T')[0]}
+                onChange={(e) => {
+                  const newDate = new Date(e.target.value);
+                  setIndependentDateRange({
+                    ...independentDateRange,
+                    startDate: newDate,
+                  });
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+              />
+            </div>
+            <span className="text-gray-500">to</span>
+            <div className="flex-1 relative">
+              <input
+                type="date"
+                value={independentDateRange.endDate.toISOString().split('T')[0]}
+                onChange={(e) => {
+                  const newDate = new Date(e.target.value);
+                  newDate.setHours(23, 59, 59, 999);
+                  setIndependentDateRange({
+                    ...independentDateRange,
+                    endDate: newDate,
+                  });
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+              />
+            </div>
           </div>
         </div>
 
-        {!isLoading && topZones.length > 0 ? (
-          <div className="space-y-2">
-            {topZones.map((zone, idx) => (
-              <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 rounded cursor-pointer hover:bg-gray-100" onClick={() => onClick(independentDateRange)}>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900">Zone {idx + 1}</p>
-                  <p className="text-xs text-gray-600">{zone.totalOrders} orders</p>
-                </div>
-                <span className={`text-xs font-semibold px-2 py-1 rounded ${getClassificationColor(zone.classification)}`}>
-                  {(zone.emergingScore * 100).toFixed(0)}%
-                </span>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-4 text-gray-500">
-            <p className="text-sm">No zones detected yet</p>
+        {/* Loading State */}
+        {isLoading && (
+          <div className="text-center py-8">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <p className="text-sm text-gray-600 mt-2">Analyzing spatial demand patterns...</p>
           </div>
         )}
 
-        <Button onClick={() => onClick(independentDateRange)} variant="outline" className="w-full mt-4">
-          View Full Analysis
-        </Button>
+        {/* No Data State */}
+        {!isLoading && (!spatialData?.zones || spatialData.zones.length === 0) && (
+          <div className="text-center py-8 text-gray-500">
+            <MapPin className="w-8 h-8 mx-auto mb-2 opacity-50" />
+            <p className="text-sm">No spatial demand patterns detected for this period</p>
+          </div>
+        )}
+
+        {/* Top Zones Display */}
+        {!isLoading && topZones.length > 0 && (
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold text-gray-700">Top Spatial Shifts</h3>
+            {topZones.map((zone, idx) => (
+              <div key={zone.hexId} className={`p-3 rounded-lg border ${getClassificationColor(zone.classification)}`}>
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs font-semibold">Zone {idx + 1}</span>
+                      {getClassificationIcon(zone.classification)}
+                      <span className="text-xs font-medium">{zone.classification}</span>
+                    </div>
+                    <p className="text-xs opacity-75 mb-2">
+                      {zone.orderCount} orders | Growth: {zone.growthPercentage > 0 ? '+' : ''}{zone.growthPercentage.toFixed(1)}%
+                    </p>
+                    <div className="text-xs space-y-1">
+                      <p>Previous Density: {zone.previousDensity} | Current: {zone.currentDensity}</p>
+                      <p>Status: {zone.clusterStatus === 'new' ? '🆕 New Cluster' : zone.clusterStatus === 'growing' ? '📈 Expanding' : zone.clusterStatus === 'stable' ? '➡️ Stable' : zone.clusterStatus === 'shrinking' ? '📉 Shrinking' : '❌ Disappearing'}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Spatial Interpretation */}
+        {!isLoading && spatialData?.spatialInterpretation && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <p className="text-xs text-blue-800">
+              <strong>Spatial Insight:</strong> {spatialData.spatialInterpretation}
+            </p>
+          </div>
+        )}
+
+        {/* View Full Analysis Button */}
+        {!isLoading && spatialData?.zones && spatialData.zones.length > 0 && (
+          <Button
+            onClick={handleViewFullAnalysis}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            View Full Spatial Analysis
+          </Button>
+        )}
       </CardContent>
     </Card>
   );

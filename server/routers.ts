@@ -29,6 +29,7 @@ import {
   getCompetitorsFromAPI,
 } from './competitors';
 import { analyzeEmergingZones } from './emergingZonesAnalysis';
+import { analyzeSpatialDemandShift } from './spatialDemandShift';
 
 export const appRouter = router({
   places: router({
@@ -1265,6 +1266,31 @@ export const appRouter = router({
             zones: [],
             count: 0,
             error: error instanceof Error ? error.message : 'Unknown error',
+          };
+        }
+      }),
+    
+    analyzeSpatialDemandShift: publicProcedure
+      .input(z.object({
+        startDate: z.date(),
+        endDate: z.date(),
+        areaFilter: z.string().optional(),
+      }))
+      .query(async ({ input }) => {
+        try {
+          const result = await analyzeSpatialDemandShift(
+            input.startDate,
+            input.endDate,
+            input.areaFilter
+          );
+          return result;
+        } catch (error) {
+          console.error('[analytics.analyzeSpatialDemandShift] Error:', error);
+          return {
+            zones: [],
+            temporalSnapshots: [],
+            spatialInterpretation: 'Error analyzing spatial demand patterns.',
+            success: false,
           };
         }
       }),

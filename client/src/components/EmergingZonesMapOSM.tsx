@@ -2,6 +2,21 @@ import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
+interface SpatialZone {
+  hexId: string;
+  latitude: number;
+  longitude: number;
+  previousDensity: number;
+  currentDensity: number;
+  densityChange: number;
+  growthPercentage: number;
+  classification: string;
+  hotspotMovementDirection?: string;
+  clusterStatus: string;
+  orderCount: number;
+  orderLocations: Array<{ lat: number; lon: number; orderId: string }>;
+}
+
 interface EmergingZone {
   zoneId: string;
   hexId: string;
@@ -23,10 +38,36 @@ interface CompetitorLocation {
 }
 
 interface EmergingZonesMapOSMProps {
-  zones: EmergingZone[];
-  competitors: CompetitorLocation[];
+  zones: (SpatialZone | EmergingZone)[];
+  competitors?: CompetitorLocation[];
   selectedZoneId?: string;
+  selectedZoneIndex?: number;
   onZoneClick?: (zoneId: string) => void;
+}
+
+/**
+ * Get color for classification
+ */
+function getClassificationColor(classification: string): string {
+  switch (classification) {
+    case "Strong Growth":
+    case "rapid_emerging":
+      return '#22C55E'; // Green
+    case "Moderate Growth":
+    case "early_growth":
+      return '#3B82F6'; // Blue
+    case "Stable":
+    case "stable":
+      return '#6B7280'; // Gray
+    case "Decline":
+    case "saturated":
+      return '#F59E0B'; // Orange
+    case "Rapid Shift":
+    case "declining":
+      return '#EF4444'; // Red
+    default:
+      return '#6B7280'; // Gray
+  }
 }
 
 /**
@@ -80,10 +121,18 @@ function createCompetitorIcon(color: string): L.DivIcon {
   });
 }
 
+/**
+ * Check if zone is SpatialZone
+ */
+function isSpatialZone(zone: SpatialZone | EmergingZone): zone is SpatialZone {
+  return 'hexId' in zone && 'latitude' in zone && 'longitude' in zone && 'growthPercentage' in zone;
+}
+
 export function EmergingZonesMapOSM({
   zones,
-  competitors,
+  competitors = [],
   selectedZoneId,
+  selectedZoneIndex = 0,
   onZoneClick,
 }: EmergingZonesMapOSMProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
@@ -137,51 +186,74 @@ export function EmergingZonesMapOSM({
     const bounds = new L.LatLngBounds([]);
 
     // Add zone circles and markers
-    zones.forEach((zone) => {
+    zones.forEach((zone, idx) => {
       if (!map.current) return;
-      const isSelected = zone.zoneId === selectedZoneId;
+      
+      const isSpatial = isSpatialZone(zone);
+      const isSelected = isSpatial 
+        ? idx === selectedZoneIndex 
+        : zone.zoneId === selectedZoneId;
+      
+      const centerLat = isSpatial ? zone.latitude : zone.centerLat;
+      const centerLng = isSpatial ? zone.longitude : zone.centerLng;
+      const color = getClassificationColor(zone.classification);
       const radiusMeters = 500; // 500m radius
 
       // Draw circle
-      const circle = L.circle([zone.centerLat, zone.centerLng], {
+      const circle = L.circle([centerLat, centerLng], {
         radius: radiusMeters,
-        color: zone.color,
+        color: color,
         weight: isSelected ? 3 : 2,
         opacity: 1,
         fill: true,
-        fillColor: zone.color,
+        fillColor: color,
         fillOpacity: isSelected ? 0.6 : 0.3,
       }).addTo(map.current);
 
       layersRef.current.circles.push(circle);
-      bounds.extend([zone.centerLat, zone.centerLng]);
+      bounds.extend([centerLat, centerLng]);
 
       // Add marker
-      const marker = L.marker([zone.centerLat, zone.centerLng], {
-        icon: createZoneIcon(zone.color, isSelected),
-        title: `Zone: ${zone.classification} (${(zone.emergingScore * 100).toFixed(0)}%)`,
+      const title = isSpatial 
+        ? `${zone.classification} (${zone.growthPercentage.toFixed(1)}%)`
+        : `${zone.classification} (${(zone.emergingScore * 100).toFixed(0)}%)`;
+      
+      const marker = L.marker([centerLat, centerLng], {
+        icon: createZoneIcon(color, isSelected),
+        title: title,
       })
         .bindPopup(
           `<div style="padding: 8px; font-size: 12px;">
-            <strong>${zone.classification.replace(/_/g, ' ').toUpperCase()}</strong><br/>
-            Score: ${(zone.emergingScore * 100).toFixed(0)}%<br/>
-            Orders: ${zone.totalOrders}
+            <strong>${zone.classification}</strong><br/>
+            ${isSpatial 
+              ? `Growth: ${zone.growthPercentage.toFixed(1)}%<br/>Orders: ${zone.orderCount}`
+              : `Score: ${(zone.emergingScore * 100).toFixed(0)}%<br/>Orders: ${zone.totalOrders}`
+            }
           </div>`
         )
         .addTo(map.current);
 
       marker.on('click', () => {
-        onZoneClick?.(zone.zoneId);
+        if (!isSpatial) {
+          onZoneClick?.(zone.zoneId);
+        }
       });
 
       layersRef.current.zones.push(marker);
 
       // Add order location markers within this zone
-      if (zone.orderLocations && zone.orderLocations.length > 0) {
-        zone.orderLocations.forEach((order) => {
-          const orderMarker = L.circleMarker([order.lat, order.lng], {
+      const orderLocations = isSpatial 
+        ? zone.orderLocations 
+        : zone.orderLocations;
+      
+      if (orderLocations && orderLocations.length > 0) {
+        orderLocations.forEach((order: any) => {
+          const lat = order.lat;
+          const lng = order.lon || order.lng;
+          
+          const orderMarker = L.circleMarker([lat, lng], {
             radius: 4,
-            fillColor: zone.color,
+            fillColor: color,
             color: '#fff',
             weight: 1,
             opacity: 0.8,
@@ -219,7 +291,7 @@ export function EmergingZonesMapOSM({
     if (bounds.isValid()) {
       map.current.fitBounds(bounds, { padding: [50, 50] });
     }
-  }, [zones, competitors, selectedZoneId, onZoneClick]);
+  }, [zones, competitors, selectedZoneId, selectedZoneIndex, onZoneClick]);
 
   return (
     <div className="w-full h-full flex flex-col">
@@ -231,11 +303,11 @@ export function EmergingZonesMapOSM({
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded-full" style={{ backgroundColor: '#22C55E' }}></div>
-            <span>Rapid Emerging</span>
+            <span>Strong Growth</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded-full" style={{ backgroundColor: '#3B82F6' }}></div>
-            <span>Early Growth</span>
+            <span>Moderate Growth</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded-full" style={{ backgroundColor: '#6B7280' }}></div>
@@ -243,11 +315,11 @@ export function EmergingZonesMapOSM({
           </div>
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded-full" style={{ backgroundColor: '#F59E0B' }}></div>
-            <span>Saturated</span>
+            <span>Decline</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded-full" style={{ backgroundColor: '#EF4444' }}></div>
-            <span>Declining</span>
+            <span>Rapid Shift</span>
           </div>
           <hr className="my-2" />
           <div className="flex items-center gap-2">
