@@ -20,7 +20,7 @@ export function EmergingZonesModal({
   areaFilter,
 }: EmergingZonesModalProps) {
   const [selectedZoneIndex, setSelectedZoneIndex] = useState(0);
-  const [isFullScreen, setIsFullScreen] = useState(false);
+  const [isFullScreen, setIsFullScreen] = useState(true);
 
   const { data: spatialData, isLoading } = trpc.analytics.analyzeSpatialDemandShift.useQuery(
     {
@@ -76,13 +76,9 @@ export function EmergingZonesModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className={`overflow-hidden flex flex-col ${
-        isFullScreen 
-          ? "fixed inset-0 max-w-none max-h-none rounded-none p-0" 
-          : "max-w-[98vw] max-h-[96vh]"
-      }`}>
+       <DialogContent className={`overflow-hidden flex flex-col fixed inset-0 max-w-none max-h-none rounded-none p-0`}>
         {/* Header */}
-        <DialogHeader className={`flex-shrink-0 border-b ${isFullScreen ? "px-6 py-4" : "px-4 py-3"}`}>
+        <DialogHeader className={`flex-shrink-0 border-b px-6 py-4`}>
           <div className="flex items-center justify-between">
             <div>
               <DialogTitle className="flex items-center gap-2 text-xl font-bold">
@@ -94,19 +90,15 @@ export function EmergingZonesModal({
             <button
               onClick={() => setIsFullScreen(!isFullScreen)}
               className="p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
-              title={isFullScreen ? "Exit full-screen" : "Enter full-screen"}
+              title="Exit full-screen"
             >
-              {isFullScreen ? (
-                <Minimize2 className="w-5 h-5" />
-              ) : (
-                <Maximize2 className="w-5 h-5" />
-              )}
+              <Minimize2 className="w-5 h-5" />
             </button>
           </div>
         </DialogHeader>
 
         {/* Main Content - Landscape Layout */}
-        <div className={`flex-1 overflow-hidden flex gap-4 ${isFullScreen ? "px-6 pb-6" : "px-4 pb-4"}`}>
+        <div className={`flex-1 overflow-hidden flex gap-4 px-6 pb-6`}>
           {isLoading ? (
             <div className="flex items-center justify-center w-full">
               <div className="text-center">
