@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { AlertCircle, Loader2, TrendingUp, Info, ChevronDown } from 'lucide-react';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
 import { HeatmapAnalysisDashboard } from './HeatmapAnalysisDashboard';
+import { HeatmapLegendPanel } from './HeatmapLegendPanel';
 import { trpc } from '@/lib/trpc';
 import {
   generateClippedResidentialHeatmap,
@@ -255,33 +256,8 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
                 <AccordionTrigger className="text-sm font-medium hover:no-underline">
                   <span>How to Interpret the Colors</span>
                 </AccordionTrigger>
-                <AccordionContent className="text-sm text-gray-700 space-y-2">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-3">
-                      <div className="w-6 h-6 bg-blue-600 rounded border border-gray-300"></div>
-                      <span><strong>Blue (0-16.7%):</strong> Very low delivery density - minimal orders in this area</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="w-6 h-6 bg-cyan-400 rounded border border-gray-300"></div>
-                      <span><strong>Cyan (16.7-33.3%):</strong> Low density - occasional delivery clusters</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="w-6 h-6 bg-green-500 rounded border border-gray-300"></div>
-                      <span><strong>Green (33.3-50%):</strong> Medium density - moderate delivery activity</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="w-6 h-6 bg-yellow-400 rounded border border-gray-300"></div>
-                      <span><strong>Yellow (50-66.7%):</strong> High density - significant delivery concentration</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="w-6 h-6 bg-orange-500 rounded border border-gray-300"></div>
-                      <span><strong>Orange (66.7-83.3%):</strong> Very high density - major delivery hotspots</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="w-6 h-6 bg-red-600 rounded border border-gray-300"></div>
-                      <span><strong>Red (83.3-100%):</strong> Critical density - your peak delivery zones</span>
-                    </div>
-                  </div>
+                <AccordionContent className="text-sm text-gray-700">
+                  <HeatmapLegendPanel />
                 </AccordionContent>
               </AccordionItem>
               
