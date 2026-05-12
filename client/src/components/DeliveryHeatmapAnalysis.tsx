@@ -1,9 +1,8 @@
-'use client';
 
 import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertCircle, Loader2, TrendingUp } from 'lucide-react';
-import { GISMap } from './GISMap';
+import { AlertCircle, Loader2, TrendingUp, Info, ChevronDown } from 'lucide-react';
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
 import { trpc } from '@/lib/trpc';
 import {
   generateClippedResidentialHeatmap,
@@ -34,6 +33,7 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
   const [clippedHeatmapData, setClippedHeatmapData] = useState<any>(null);
   const [clippedPointCount, setClippedPointCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [showMethodology, setShowMethodology] = useState(false);
   const mapRef = useRef<any>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
 
@@ -95,122 +95,82 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
     }
   }, [deliveryPoints, residentialPolygons, filterResidential]);
 
-  const handleResidentialFilterChange = useCallback(() => {
-    setFilterResidential((prev) => !prev);
-  }, []);
+  const handleResidentialFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFilterResidential(e.target.checked);
+  };
 
-  const handleMapReady = useCallback(
-    (map: any) => {
-      if (!map || !window.L) {
-        console.warn('Map not ready or Leaflet not available');
-        return;
-      }
+  const handleMapReady = useCallback((map: any) => {
+    mapRef.current = map;
 
-      mapRef.current = map;
+    if (!map || !window.L) return;
 
-      // Add residential polygon boundaries to map
-      if (residentialPolygons.length > 0) {
-        residentialPolygons.forEach((polygon) => {
-          if (polygon.coordinates && polygon.coordinates.length > 0) {
-            const leafletCoords = polygon.coordinates.map((coord) => [coord[1], coord[0]]);
-
-            window.L.polyline(leafletCoords, {
-              color: '#8b5cf6',
-              weight: 2,
-              opacity: 0.7,
-              dashArray: '5, 5',
-            }).addTo(map);
-          }
-        });
-      }
-
-      // Add legend to map
-      try {
-        addLegendToMap(map);
-      } catch (e) {
-        console.warn('Could not add legend to map:', e);
-      }
-
-      // Fit bounds to residential polygons with delay to ensure map is ready
-      setTimeout(() => {
+    // Clear existing layers
+    map.eachLayer((layer: any) => {
+      if (layer instanceof window.L.TileLayer || layer instanceof window.L.Marker) {
+        // Keep base tiles and markers
+      } else if (layer instanceof window.L.FeatureGroup || layer.options?.pane === 'overlayPane') {
         try {
-          if (residentialPolygons.length > 0 && mapRef.current) {
-            let minLat = Infinity;
-            let maxLat = -Infinity;
-            let minLng = Infinity;
-            let maxLng = -Infinity;
-
-            residentialPolygons.forEach((polygon) => {
-              polygon.coordinates.forEach((coord) => {
-                minLat = Math.min(minLat, coord[1]);
-                maxLat = Math.max(maxLat, coord[1]);
-                minLng = Math.min(minLng, coord[0]);
-                maxLng = Math.max(maxLng, coord[0]);
-              });
-            });
-
-            if (minLat !== Infinity && maxLat !== -Infinity && minLng !== Infinity && maxLng !== -Infinity) {
-              const bounds = window.L.latLngBounds([minLat, minLng], [maxLat, maxLng]);
-              mapRef.current.fitBounds(bounds, { padding: [50, 50] });
-            }
-          }
-        } catch (e) {
-          console.error('Error calculating bounds:', e);
-        }
-      }, 100);
-    },
-    [residentialPolygons]
-  );
-
-  // Separate effect to handle clipped heatmap layer
-  useEffect(() => {
-    if (!mapRef.current || !window.L || !clippedHeatmapData) {
-      return;
-    }
-
-    const map = mapRef.current;
-
-    try {
-      const heatmapLayerData = convertToLeafletFormat(clippedHeatmapData);
-
-      // Add heatmap layer if leaflet-heat is available
-      if (window.L.heatLayer && heatmapLayerData.length > 0) {
-        window.L.heatLayer(heatmapLayerData, {
-          radius: 25,
-          blur: 15,
-          maxZoom: 17,
-          gradient: {
-            0.0: '#0000ff', // Blue - Very Low
-            0.25: '#00ff00', // Green - Low
-            0.5: '#ffff00', // Yellow - Medium
-            0.75: '#ff7f00', // Orange - High
-            1.0: '#ff0000', // Red - Very High
-          },
-        }).addTo(map);
-      } else if (heatmapLayerData.length > 0) {
-        // Fallback: Add circles for each clipped heatmap cell
-        clippedHeatmapData.gridPoints.forEach((point: any) => {
-          const intensity = point.intensity;
-          const color =
-            intensity > 0.75
-              ? '#ff0000'
-              : intensity > 0.5
-                ? '#ff7f00'
-                : intensity > 0.25
-                  ? '#ffff00'
-                  : '#00ff00';
-          window.L.circleMarker([point.lat, point.lng], {
-            radius: 4,
-            fillColor: color,
-            color: color,
-            weight: 1,
-            opacity: 0.8,
-            fillOpacity: 0.6,
-          }).addTo(map);
-        });
+          map.removeLayer(layer);
+        } catch (e) {}
       }
-    } catch (e) {
-      console.error('Error adding clipped heatmap layer:', e);
+    });
+
+    // Add legend
+    addLegendToMap(map);
+
+    // Add heatmap visualization
+    if (clippedHeatmapData && clippedHeatmapData.gridPoints.length > 0) {
+      try {
+        // Use Leaflet.heat if available, otherwise use circle markers
+        const heatmapLayerData = clippedHeatmapData.gridPoints.map((point: any) => [
+          point.lat,
+          point.lng,
+          point.intensity,
+        ]);
+
+        if (window.L.heatLayer) {
+          window.L.heatLayer(heatmapLayerData, {
+            radius: 25,
+            blur: 15,
+            maxZoom: 17,
+            gradient: {
+              0.0: '#0000ff',
+              0.167: '#00bfff',
+              0.333: '#00ff00',
+              0.5: '#ffff00',
+              0.667: '#ff7f00',
+              1.0: '#ff0000',
+            },
+          }).addTo(map);
+        } else if (heatmapLayerData.length > 0) {
+          // Fallback: Add circles for each clipped heatmap cell
+          clippedHeatmapData.gridPoints.forEach((point: any) => {
+            const intensity = point.intensity;
+            const color =
+              intensity > 0.833
+                ? '#ff0000'
+                : intensity > 0.667
+                  ? '#ff7f00'
+                  : intensity > 0.5
+                    ? '#ffff00'
+                    : intensity > 0.333
+                      ? '#00ff00'
+                      : intensity > 0.167
+                        ? '#00bfff'
+                        : '#0000ff';
+            window.L.circleMarker([point.lat, point.lng], {
+              radius: 4,
+              fillColor: color,
+              color: color,
+              weight: 1,
+              opacity: 0.8,
+              fillOpacity: 0.6,
+            }).addTo(map);
+          });
+        }
+      } catch (e) {
+        console.error('Error adding clipped heatmap layer:', e);
+      }
     }
   }, [clippedHeatmapData]);
 
@@ -226,15 +186,120 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <TrendingUp className="h-5 w-5" />
-          Delivery Heatmap Analysis
-        </CardTitle>
-        <CardDescription>
-          Visualize delivery demand intensity across residential areas only (OpenStreetMap land-use data)
-        </CardDescription>
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              Delivery Heatmap Analysis
+            </CardTitle>
+            <CardDescription>
+              Visualize delivery demand intensity across residential areas only (OpenStreetMap land-use data)
+            </CardDescription>
+          </div>
+          <button
+            onClick={() => setShowMethodology(!showMethodology)}
+            className="ml-2 p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            title="View methodology and analysis details"
+          >
+            <Info className="h-5 w-5 text-blue-600" />
+          </button>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Advanced Methodology Panel */}
+        {showMethodology && (
+          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg space-y-3">
+            <h3 className="font-semibold text-sm text-blue-900 flex items-center gap-2">
+              <Info className="h-4 w-4" />
+              How This Heatmap Works
+            </h3>
+            
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="methodology">
+                <AccordionTrigger className="text-sm font-medium hover:no-underline">
+                  <span>Methodology: Kernel Density Estimation (KDE)</span>
+                </AccordionTrigger>
+                <AccordionContent className="text-sm text-gray-700 space-y-2">
+                  <p>
+                    This heatmap uses <strong>Kernel Density Estimation</strong>, an advanced statistical technique that transforms individual delivery points into a smooth, continuous intensity surface. Here's how it works:
+                  </p>
+                  <ol className="list-decimal list-inside space-y-1 ml-2">
+                    <li>Each delivery location is treated as a data point on the map</li>
+                    <li>A Gaussian (bell-shaped) kernel is placed at each delivery point</li>
+                    <li>The kernels overlap and sum together to create a smooth intensity gradient</li>
+                    <li>Areas with many nearby deliveries show higher intensity (red/orange)</li>
+                    <li>Isolated deliveries show lower intensity (blue/cyan)</li>
+                  </ol>
+                  <p className="text-xs text-gray-600 mt-2">
+                    The bandwidth is automatically calculated using Scott's rule to balance smoothing and detail preservation.
+                  </p>
+                </AccordionContent>
+              </AccordionItem>
+              
+              <AccordionItem value="data-sources">
+                <AccordionTrigger className="text-sm font-medium hover:no-underline">
+                  <span>Data Sources & Filtering</span>
+                </AccordionTrigger>
+                <AccordionContent className="text-sm text-gray-700 space-y-2">
+                  <p><strong>Delivery Orders:</strong> All successfully delivered orders within your selected date range are included in the analysis.</p>
+                  <p><strong>Residential Areas:</strong> The heatmap is clipped to residential zones only using OpenStreetMap land-use data. This filters out commercial, industrial, and non-residential areas.</p>
+                  <p><strong>Coordinates:</strong> Delivery locations are geocoded from customer addresses using Google Maps API. Cached results ensure consistent analysis.</p>
+                  <p className="text-xs text-gray-600">
+                    Only cells that fall within residential polygons are displayed, ensuring your analysis focuses on actual customer areas.
+                  </p>
+                </AccordionContent>
+              </AccordionItem>
+              
+              <AccordionItem value="interpretation">
+                <AccordionTrigger className="text-sm font-medium hover:no-underline">
+                  <span>How to Interpret the Colors</span>
+                </AccordionTrigger>
+                <AccordionContent className="text-sm text-gray-700 space-y-2">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-3">
+                      <div className="w-6 h-6 bg-blue-600 rounded border border-gray-300"></div>
+                      <span><strong>Blue (0-16.7%):</strong> Very low delivery density - minimal orders in this area</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-6 h-6 bg-cyan-400 rounded border border-gray-300"></div>
+                      <span><strong>Cyan (16.7-33.3%):</strong> Low density - occasional delivery clusters</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-6 h-6 bg-green-500 rounded border border-gray-300"></div>
+                      <span><strong>Green (33.3-50%):</strong> Medium density - moderate delivery activity</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-6 h-6 bg-yellow-400 rounded border border-gray-300"></div>
+                      <span><strong>Yellow (50-66.7%):</strong> High density - significant delivery concentration</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-6 h-6 bg-orange-500 rounded border border-gray-300"></div>
+                      <span><strong>Orange (66.7-83.3%):</strong> Very high density - major delivery hotspots</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-6 h-6 bg-red-600 rounded border border-gray-300"></div>
+                      <span><strong>Red (83.3-100%):</strong> Critical density - your peak delivery zones</span>
+                    </div>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+              
+              <AccordionItem value="insights">
+                <AccordionTrigger className="text-sm font-medium hover:no-underline">
+                  <span>Key Insights & Use Cases</span>
+                </AccordionTrigger>
+                <AccordionContent className="text-sm text-gray-700 space-y-2">
+                  <p><strong>Identify High-Demand Zones:</strong> Red and orange areas represent your most profitable delivery zones. Consider prioritizing marketing and resources here.</p>
+                  <p><strong>Optimize Delivery Routes:</strong> Use the heatmap to plan efficient delivery routes that cluster nearby orders together.</p>
+                  <p><strong>Expansion Planning:</strong> Green and cyan areas show emerging markets with growth potential. These are opportunities for targeted promotions.</p>
+                  <p><strong>Service Coverage:</strong> Blue areas indicate underserved regions. Evaluate whether expanding service to these areas is strategically valuable.</p>
+                  <p><strong>Driver Allocation:</strong> Assign more drivers to red/orange zones during peak hours to minimize delivery times.</p>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </div>
+        )}
+
         {/* Residential Filter Toggle */}
         <div className="flex items-center gap-2">
           <input
@@ -293,22 +358,31 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
 
         {/* Statistics */}
         {hasData && (
-          <div className="text-xs text-gray-600 space-y-1 p-2 bg-gray-50 rounded">
-            <p>
-              <strong>Total deliveries:</strong> {deliveryPoints.length}
-            </p>
-            <p>
-              <strong>Heatmap cells (clipped to residential):</strong> {clippedPointCount}
-            </p>
-            <p>
-              <strong>Max intensity:</strong> {(clippedHeatmapData.maxIntensity * 100).toFixed(1)}%
-            </p>
-            <p>
-              <strong>Residential polygons:</strong> {residentialPolygons.length}
-            </p>
+          <div className="text-xs text-gray-600 space-y-1 p-3 bg-gray-50 rounded-lg border border-gray-200">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <p className="text-gray-500 text-xs uppercase tracking-wide">Total Deliveries</p>
+                <p className="text-lg font-semibold text-gray-900">{deliveryPoints.length}</p>
+              </div>
+              <div>
+                <p className="text-gray-500 text-xs uppercase tracking-wide">Heatmap Cells</p>
+                <p className="text-lg font-semibold text-gray-900">{clippedPointCount}</p>
+              </div>
+              <div>
+                <p className="text-gray-500 text-xs uppercase tracking-wide">Max Intensity</p>
+                <p className="text-lg font-semibold text-gray-900">{(clippedHeatmapData.maxIntensity * 100).toFixed(1)}%</p>
+              </div>
+              <div>
+                <p className="text-gray-500 text-xs uppercase tracking-wide">Residential Zones</p>
+                <p className="text-lg font-semibold text-gray-900">{residentialPolygons.length}</p>
+              </div>
+            </div>
           </div>
         )}
       </CardContent>
     </Card>
   );
 };
+
+// Import GISMap
+import { GISMap } from './GISMap';
