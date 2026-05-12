@@ -100,49 +100,7 @@ export function EmergingZonesCard({ onClick, dateRange, areaFilter }: EmergingZo
           {showDatePicker && (
             <div className="mt-3 p-3 bg-gray-50 rounded border">
               <div className="space-y-2 text-sm">
-                <p className="font-medium text-gray-700">Quick Select:</p>
-                <div className="space-y-1">
-                  <button
-                    onClick={() => handleSetSingleDate(new Date())}
-                    className="block w-full text-left px-2 py-1 rounded hover:bg-gray-200 text-gray-700"
-                  >
-                    Today
-                  </button>
-                  <button
-                    onClick={() => {
-                      const today = new Date();
-                      const yesterday = new Date(today);
-                      yesterday.setDate(yesterday.getDate() - 1);
-                      handleSetDateRange(yesterday, today);
-                    }}
-                    className="block w-full text-left px-2 py-1 rounded hover:bg-gray-200 text-gray-700"
-                  >
-                    Last 2 Days
-                  </button>
-                  <button
-                    onClick={() => {
-                      const today = new Date();
-                      const weekAgo = new Date(today);
-                      weekAgo.setDate(weekAgo.getDate() - 7);
-                      handleSetDateRange(weekAgo, today);
-                    }}
-                    className="block w-full text-left px-2 py-1 rounded hover:bg-gray-200 text-gray-700"
-                  >
-                    Last 7 Days
-                  </button>
-                  <button
-                    onClick={() => {
-                      const today = new Date();
-                      const monthAgo = new Date(today);
-                      monthAgo.setDate(monthAgo.getDate() - 30);
-                      handleSetDateRange(monthAgo, today);
-                    }}
-                    className="block w-full text-left px-2 py-1 rounded hover:bg-gray-200 text-gray-700"
-                  >
-                    Last 30 Days
-                  </button>
-                </div>
-                <p className="font-medium text-gray-700 pt-2">Custom Range:</p>
+                <p className="font-medium text-gray-700">Date Range:</p>
                 <div className="flex gap-2">
                   <input
                     type="date"
