@@ -6,15 +6,46 @@ export interface LegendItem {
   color: string;
   label: string;
   intensity: string;
+  description: string;
 }
 
 export const HEATMAP_LEGEND_ITEMS: LegendItem[] = [
-  { color: '#0000ff', label: 'Very Low', intensity: '0-16.7%' },
-  { color: '#00bfff', label: 'Low', intensity: '16.7-33.3%' },
-  { color: '#00ff00', label: 'Medium', intensity: '33.3-50%' },
-  { color: '#ffff00', label: 'High', intensity: '50-66.7%' },
-  { color: '#ff7f00', label: 'Very High', intensity: '66.7-83.3%' },
-  { color: '#ff0000', label: 'Critical', intensity: '83.3-100%' },
+  {
+    color: '#0000ff',
+    label: 'Blue',
+    intensity: '0-16.7%',
+    description: 'Very low delivery density - minimal orders in this area',
+  },
+  {
+    color: '#00bfff',
+    label: 'Cyan',
+    intensity: '16.7-33.3%',
+    description: 'Low density - occasional delivery clusters',
+  },
+  {
+    color: '#00ff00',
+    label: 'Green',
+    intensity: '33.3-50%',
+    description: 'Medium density - moderate delivery activity',
+  },
+  {
+    color: '#ffff00',
+    label: 'Yellow',
+    intensity: '50-66.7%',
+    description: 'High density - significant delivery concentration',
+  },
+  {
+    color: '#ff7f00',
+    label: 'Orange',
+    intensity: '66.7-83.3%',
+    description: 'Very high density - major delivery hotspots',
+  },
+  {
+    color: '#ff0000',
+    label: 'Red',
+    intensity: '83.3-100%',
+    description: 'Critical density - your peak delivery zones',
+  },
 ];
 
 /**
@@ -28,63 +59,67 @@ export function createHeatmapLegend(): any {
   legend.onAdd = function () {
     const div = window.L.DomUtil.create('div', 'heatmap-legend');
     div.style.backgroundColor = 'white';
-    div.style.padding = '12px';
+    div.style.padding = '14px';
     div.style.borderRadius = '6px';
     div.style.boxShadow = '0 2px 12px rgba(0,0,0,0.15)';
     div.style.fontSize = '12px';
     div.style.fontFamily = 'system-ui, -apple-system, sans-serif';
     div.style.zIndex = '1000';
-    div.style.maxWidth = '220px';
+    div.style.maxWidth = '280px';
 
     // Add title
     const title = document.createElement('div');
     title.style.fontWeight = 'bold';
-    title.style.marginBottom = '10px';
+    title.style.marginBottom = '12px';
     title.style.borderBottom = '2px solid #e5e7eb';
     title.style.paddingBottom = '8px';
     title.style.fontSize = '13px';
     title.style.color = '#1f2937';
-    title.textContent = 'Delivery Intensity';
+    title.textContent = 'How to Interpret the Colors';
     div.appendChild(title);
 
-    // Add legend items with improved styling
+    // Add legend items with descriptions
     HEATMAP_LEGEND_ITEMS.forEach((item, index) => {
+      const itemContainer = document.createElement('div');
+      itemContainer.style.marginBottom = '10px';
+      itemContainer.style.paddingBottom = '10px';
+      if (index < HEATMAP_LEGEND_ITEMS.length - 1) {
+        itemContainer.style.borderBottom = '1px solid #f0f0f0';
+      }
+
+      // Row with color box and label
       const row = document.createElement('div');
       row.style.display = 'flex';
-      row.style.alignItems = 'center';
-      row.style.marginBottom = '7px';
-      row.style.padding = '4px 0';
+      row.style.alignItems = 'flex-start';
+      row.style.gap = '10px';
 
-      // Color box with gradient effect
+      // Color box
       const colorBox = document.createElement('div');
-      colorBox.style.width = '24px';
-      colorBox.style.height = '24px';
+      colorBox.style.width = '20px';
+      colorBox.style.height = '20px';
       colorBox.style.backgroundColor = item.color;
-      colorBox.style.marginRight = '10px';
-      colorBox.style.borderRadius = '4px';
-      colorBox.style.border = '1px solid rgba(0,0,0,0.2)';
-      colorBox.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+      colorBox.style.borderRadius = '3px';
+      colorBox.style.border = '1px solid rgba(0,0,0,0.15)';
       colorBox.style.flexShrink = '0';
+      colorBox.style.marginTop = '2px';
 
-      // Label with intensity
-      const label = document.createElement('span');
-      label.textContent = item.label;
-      label.style.flex = '1';
-      label.style.fontWeight = index === 0 || index === HEATMAP_LEGEND_ITEMS.length - 1 ? '600' : '500';
-      label.style.color = '#374151';
+      // Label container
+      const labelContainer = document.createElement('div');
+      labelContainer.style.flex = '1';
 
-      // Intensity percentage
-      const intensity = document.createElement('span');
-      intensity.textContent = item.intensity;
-      intensity.style.fontSize = '11px';
-      intensity.style.color = '#6b7280';
-      intensity.style.marginLeft = '8px';
-      intensity.style.whiteSpace = 'nowrap';
+      // Main label: "Color (intensity%): Description"
+      const mainLabel = document.createElement('div');
+      mainLabel.style.fontWeight = '600';
+      mainLabel.style.color = '#1f2937';
+      mainLabel.style.fontSize = '12px';
+      mainLabel.style.lineHeight = '1.4';
+      mainLabel.textContent = `${item.label} (${item.intensity}): ${item.description}`;
 
+      labelContainer.appendChild(mainLabel);
       row.appendChild(colorBox);
-      row.appendChild(label);
-      row.appendChild(intensity);
-      div.appendChild(row);
+      row.appendChild(labelContainer);
+      itemContainer.appendChild(row);
+      div.appendChild(itemContainer);
     });
 
     return div;
