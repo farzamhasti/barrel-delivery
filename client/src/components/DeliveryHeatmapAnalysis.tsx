@@ -1,8 +1,10 @@
 
 import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertCircle, Loader2, TrendingUp, Info, ChevronDown } from 'lucide-react';
+import { AlertCircle, Loader2, TrendingUp, Info, ChevronDown, Map } from 'lucide-react';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import { HeatmapAnalysisDashboard } from './HeatmapAnalysisDashboard';
 import { HeatmapLegendPanel } from './HeatmapLegendPanel';
 import { trpc } from '@/lib/trpc';
@@ -36,6 +38,7 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
   const [clippedPointCount, setClippedPointCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [showMethodology, setShowMethodology] = useState(false);
+  const [showMapGuide, setShowMapGuide] = useState(false);
   const mapRef = useRef<any>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
 
@@ -117,8 +120,7 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
       }
     });
 
-    // Add legend
-    addLegendToMap(map);
+    // Legend is now shown in a dialog via Map Guide button, not on map
 
     // Add heatmap visualization
     if (clippedHeatmapData && clippedHeatmapData.gridPoints.length > 0) {
@@ -278,22 +280,47 @@ export const DeliveryHeatmapAnalysis: React.FC<DeliveryHeatmapAnalysisProps> = (
         )}
 
         {/* Residential Filter Toggle */}
-        <div className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            id="residential-filter"
-            checked={filterResidential}
-            onChange={handleResidentialFilterChange}
-            className="w-4 h-4"
-          />
-          <label htmlFor="residential-filter" className="text-sm font-medium">
-            Filter to Residential Areas Only
-          </label>
-          {hasData && (
-            <span className="text-xs text-gray-500">
-              ({deliveryPoints.length} deliveries, {clippedPointCount} clipped cells)
-            </span>
-          )}
+        <div className="flex items-center gap-3 justify-between">
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="residential-filter"
+              checked={filterResidential}
+              onChange={handleResidentialFilterChange}
+              className="w-4 h-4"
+            />
+            <label htmlFor="residential-filter" className="text-sm font-medium">
+              Filter to Residential Areas Only
+            </label>
+            {hasData && (
+              <span className="text-xs text-gray-500">
+                ({deliveryPoints.length} deliveries, {clippedPointCount} clipped cells)
+              </span>
+            )}
+          </div>
+          
+          {/* Map Legend Dialog Button */}
+          <Dialog open={showMapGuide} onOpenChange={setShowMapGuide}>
+            <DialogTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2"
+                title="View map color legend and intensity guide"
+              >
+                <Map className="h-4 w-4" />
+                Map Legend
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>How to Interpret the Colors</DialogTitle>
+              </DialogHeader>
+              <div className="mt-4">
+                <HeatmapLegendPanel />
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
 
         {/* Loading State */}

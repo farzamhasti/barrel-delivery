@@ -2130,3 +2130,12 @@ These features are documented for future enhancement but are not required for th
 - [x] Add maxWidth to label container (320px)
 - [x] Ensure all 6 colors display without cutoff on map legend
 - [x] TypeScript compilation: 0 errors
+
+
+## Phase 113: Add Map Legend Button (COMPLETED)
+- [x] Remove legend from Leaflet map itself
+- [x] Add "Map Legend" button next to "Filter to Residential Areas Only" checkbox
+- [x] Button opens dialog showing HeatmapLegendPanel with all 6 colors
+- [x] Dialog displays "How to Interpret the Colors" title
+- [x] Button has Map icon and label
+- [x] TypeScript compilation: 0 errors
