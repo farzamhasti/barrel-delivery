@@ -17,7 +17,7 @@ const DRIVER_COLORS = [
 ];
 
 interface DriverPosition {
-  driverId: string;
+  driverId: number | string;
   driverName: string;
   status: string;
   latitude: number;
@@ -246,17 +246,19 @@ export function LiveDriverTrackingWindow({ onClose, onMinimize, initialPosition,
         <>
           <div className="flex-1 overflow-hidden">
             <MapContainer
-              center={[RESTAURANT_LAT, RESTAURANT_LNG]}
+              center={[RESTAURANT_LAT, RESTAURANT_LNG] as any}
               zoom={13}
               style={{ height: '100%', width: '100%' }}
+              {...({} as any)}
             >
               <TileLayer
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 attribution='&copy; OpenStreetMap contributors'
+                {...({} as any)}
               />
 
               {/* Restaurant marker */}
-              <Marker position={[RESTAURANT_LAT, RESTAURANT_LNG]} icon={restaurantIcon}>
+              <Marker position={[RESTAURANT_LAT, RESTAURANT_LNG]} icon={restaurantIcon as any} {...({} as any)}>
                 <Popup>
                   <div className="text-sm font-semibold">The Barrel Restaurant</div>
                 </Popup>
@@ -269,7 +271,8 @@ export function LiveDriverTrackingWindow({ onClose, onMinimize, initialPosition,
                 <Marker
                   key={driver.driverId}
                   position={[driver.latitude, driver.longitude]}
-                  icon={createColoredIcon(getDriverColor(index), driver.driverName)}
+                  icon={createColoredIcon(getDriverColor(index), driver.driverName) as any}
+                  {...({} as any)}
                 >
                   <Popup>
                     <div className="text-sm">

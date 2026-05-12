@@ -50,7 +50,9 @@ export default function DriverManagement() {
       if (editingId) {
         await updateDriverMutation.mutateAsync({
           id: editingId,
-          ...formData,
+                  name: formData.name,
+                  phone: formData.phone,
+                  licenseNumber: formData.licenseNumber,
         });
         toast.success("Driver updated successfully!");
         setEditingId(null);
@@ -76,7 +78,6 @@ export default function DriverManagement() {
       name: driver.name,
       phone: driver.phone || "",
       licenseNumber: driver.licenseNumber || "",
-      vehicleType: driver.vehicleType || "",
     });
     setShowForm(true);
   };
@@ -182,7 +183,6 @@ export default function DriverManagement() {
                     name: "",
                     phone: "",
                     licenseNumber: "",
-                    vehicleType: "",
                   });
                 }}
               >
