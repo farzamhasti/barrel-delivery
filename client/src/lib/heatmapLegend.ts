@@ -65,9 +65,11 @@ export function createHeatmapLegend(): any {
     div.style.fontSize = '12px';
     div.style.fontFamily = 'system-ui, -apple-system, sans-serif';
     div.style.zIndex = '1000';
-    div.style.maxWidth = '360px';
-    div.style.overflowY = 'visible';
+    div.style.maxWidth = '380px';
     div.style.minHeight = 'auto';
+    div.style.maxHeight = 'none';
+    div.style.overflow = 'visible';
+    div.style.whiteSpace = 'normal';
 
     // Add title
     const title = document.createElement('div');
@@ -83,8 +85,10 @@ export function createHeatmapLegend(): any {
     // Add legend items with descriptions
     HEATMAP_LEGEND_ITEMS.forEach((item, index) => {
       const itemContainer = document.createElement('div');
-      itemContainer.style.marginBottom = '6px';
-      itemContainer.style.paddingBottom = '6px';
+      itemContainer.style.marginBottom = '5px';
+      itemContainer.style.paddingBottom = '5px';
+      itemContainer.style.display = 'block';
+      itemContainer.style.visibility = 'visible';
       if (index < HEATMAP_LEGEND_ITEMS.length - 1) {
         itemContainer.style.borderBottom = '1px solid #f0f0f0';
       }
@@ -110,14 +114,17 @@ export function createHeatmapLegend(): any {
       labelContainer.style.flex = '1';
       labelContainer.style.wordWrap = 'break-word';
       labelContainer.style.overflow = 'visible';
+      labelContainer.style.maxWidth = '320px';
 
       // Main label: "Color (intensity%): Description"
       const mainLabel = document.createElement('div');
       mainLabel.style.fontWeight = '600';
       mainLabel.style.color = '#1f2937';
-      mainLabel.style.fontSize = '11px';
-      mainLabel.style.lineHeight = '1.35';
+      mainLabel.style.fontSize = '10px';
+      mainLabel.style.lineHeight = '1.3';
       mainLabel.style.wordWrap = 'break-word';
+      mainLabel.style.whiteSpace = 'normal';
+      mainLabel.style.display = 'block';
       mainLabel.textContent = `${item.label} (${item.intensity}): ${item.description}`;
 
       labelContainer.appendChild(mainLabel);

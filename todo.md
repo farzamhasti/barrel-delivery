@@ -2119,3 +2119,14 @@ These features are documented for future enhancement but are not required for th
 - [x] Ensure all 6 colors display without cutoff
 - [x] TypeScript compilation: 0 errors
 - [x] Dev server: Running successfully
+
+
+## Phase 112: Fix Leaflet Map Legend Display (COMPLETED)
+- [x] Increase maxWidth to 380px for better layout
+- [x] Set maxHeight to 'none' and overflow to 'visible'
+- [x] Add whiteSpace: 'normal' to prevent text truncation
+- [x] Reduce margins and padding for compact spacing
+- [x] Reduce font size to 10px and line-height to 1.3
+- [x] Add maxWidth to label container (320px)
+- [x] Ensure all 6 colors display without cutoff on map legend
+- [x] TypeScript compilation: 0 errors
