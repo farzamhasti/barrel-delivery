@@ -3,7 +3,23 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { MapPin, TrendingUp, Users, Zap, AlertCircle, BarChart3 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
-import { EmergingZonesMap } from "./EmergingZonesMap";
+import { EmergingZonesMapOSM } from './EmergingZonesMapOSM';
+
+const competitorLocations = [
+  { name: 'Red Swan Pizza', address: '315 Garrison Rd Unit 8', latitude: 42.9187, longitude: -78.9182, type: 'pizza' as const },
+  { name: 'Crafted 1885', address: '1318 Dominion Rd', latitude: 42.9128, longitude: -78.9354, type: 'restaurant' as const },
+  { name: 'Take 2 Restaurant & Bar', address: '1882 Garrison Rd', latitude: 42.9256, longitude: -78.9156, type: 'restaurant' as const },
+  { name: 'Rizzo\'s House of Parm', address: '2 Ridgeway Rd', latitude: 42.9341, longitude: -78.9456, type: 'restaurant' as const },
+  { name: 'Rina\'s Place', address: '1206 Dominion Rd', latitude: 42.9145, longitude: -78.9367, type: 'restaurant' as const },
+  { name: 'Tahini\'s', address: '450 Garrison Rd Unit #103', latitude: 42.9201, longitude: -78.9165, type: 'fast_food' as const },
+  { name: 'Osmow\'s Shawarma', address: '385 Garrison Rd', latitude: 42.9189, longitude: -78.9172, type: 'fast_food' as const },
+  { name: 'The Plaice Bar & Grill', address: '981 Garrison Rd', latitude: 42.9234, longitude: -78.9134, type: 'restaurant' as const },
+  { name: 'Pizza Hut', address: '450 Garrison Rd Unit # 130', latitude: 42.9201, longitude: -78.9165, type: 'pizza' as const },
+  { name: 'Arby\'s', address: '199 Garrison Rd', latitude: 42.9145, longitude: -78.9189, type: 'fast_food' as const },
+  { name: 'Little Red Coffee & Catering (Fort Erie)', address: '46 Queen St', latitude: 42.9089, longitude: -78.9234, type: 'cafe' as const },
+  { name: 'Southsides Patio Bar & Grill', address: '80 Niagara Blvd', latitude: 42.9056, longitude: -78.9301, type: 'restaurant' as const },
+  { name: 'City Thai Restaurant', address: '93 Niagara Blvd', latitude: 42.9062, longitude: -78.9295, type: 'restaurant' as const },
+];
 
 interface EmergingZonesModalProps {
   isOpen: boolean;
@@ -99,8 +115,9 @@ export function EmergingZonesModal({ isOpen, onClose, dateRange, areaFilter }: E
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
               {/* Map View */}
               <div className="lg:col-span-2 h-[500px] rounded-lg overflow-hidden border border-gray-200">
-                <EmergingZonesMap
+                <EmergingZonesMapOSM
                   zones={zones}
+                  competitors={competitorLocations}
                   selectedZoneId={selectedZoneId || zones[0]?.zoneId}
                   onZoneClick={setSelectedZoneId}
                 />

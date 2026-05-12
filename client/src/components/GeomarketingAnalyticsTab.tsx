@@ -348,7 +348,11 @@ export function GeomarketingAnalyticsTab() {
         </Card>
 
         {/* Emerging Demand Zones Card */}
-        <EmergingZonesCard onClick={() => setShowEmergingZones(true)} />
+        <EmergingZonesCard
+          onClick={() => setShowEmergingZones(true)}
+          dateRange={dateRangeQuery}
+          areaFilter={areaFilter === 'all' ? 'All' : areaFilter}
+        />
       </div>
 
       {/* Date Picker Modal */}
@@ -433,7 +437,12 @@ export function GeomarketingAnalyticsTab() {
       )}
 
       {/* Emerging Zones Modal */}
-      <EmergingZonesModal isOpen={showEmergingZones} onClose={() => setShowEmergingZones(false)} />
+      <EmergingZonesModal
+        isOpen={showEmergingZones}
+        onClose={() => setShowEmergingZones(false)}
+        dateRange={dateRangeQuery}
+        areaFilter={areaFilter === 'all' ? 'All' : areaFilter}
+      />
     </div>
   );
 }
