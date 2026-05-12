@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { MapPin, TrendingUp, Users, Zap, AlertCircle, BarChart3 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import { EmergingZonesMap } from "./EmergingZonesMap";
 
 interface EmergingZonesModalProps {
   isOpen: boolean;
@@ -95,41 +96,50 @@ export function EmergingZonesModal({ isOpen, onClose, dateRange, areaFilter }: E
               <p className="text-gray-600">No emerging zones detected yet. More data needed for analysis.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Zone List */}
-              <div className="lg:col-span-1">
-                <h3 className="text-lg font-semibold mb-4">Detected Zones</h3>
-                <div className="space-y-2 max-h-[500px] overflow-y-auto">
-                  {zones.map((zone, idx) => (
-                    <button
-                      key={zone.zoneId}
-                      onClick={() => setSelectedZoneId(zone.zoneId)}
-                      className={`w-full text-left p-3 rounded-lg border-2 transition-colors ${
-                        selectedZoneId === zone.zoneId || (!selectedZoneId && idx === 0)
-                          ? "border-blue-500 bg-blue-50"
-                          : "border-gray-200 hover:border-gray-300"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-medium text-sm">Zone {idx + 1}</p>
-                          <p className="text-xs text-gray-600">
-                            {zone.totalOrders} orders
-                          </p>
-                        </div>
-                        <span className={`text-xs font-semibold px-2 py-1 rounded ${getClassificationBadgeColor(zone.classification)}`}>
-                          {(zone.emergingScore * 100).toFixed(0)}%
-                        </span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+              {/* Map View */}
+              <div className="lg:col-span-2 h-[500px] rounded-lg overflow-hidden border border-gray-200">
+                <EmergingZonesMap
+                  zones={zones}
+                  selectedZoneId={selectedZoneId || zones[0]?.zoneId}
+                  onZoneClick={setSelectedZoneId}
+                />
               </div>
+              {/* Zone List and Details */}
+              <div className="lg:col-span-2">
+                {/* Zone List */}
+                <div className="mb-4">
+                  <h3 className="text-lg font-semibold mb-4">Detected Zones</h3>
+                  <div className="space-y-2 max-h-[500px] overflow-y-auto">
+                    {zones.map((zone, idx) => (
+                      <button
+                        key={zone.zoneId}
+                        onClick={() => setSelectedZoneId(zone.zoneId)}
+                        className={`w-full text-left p-3 rounded-lg border-2 transition-colors ${
+                          selectedZoneId === zone.zoneId || (!selectedZoneId && idx === 0)
+                            ? "border-blue-500 bg-blue-50"
+                            : "border-gray-200 hover:border-gray-300"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium text-sm">Zone {idx + 1}</p>
+                            <p className="text-xs text-gray-600">
+                              {zone.totalOrders} orders
+                            </p>
+                          </div>
+                          <span className={`text-xs font-semibold px-2 py-1 rounded ${getClassificationBadgeColor(zone.classification)}`}>
+                            {(zone.emergingScore * 100).toFixed(0)}%
+                          </span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
-              {/* Zone Details */}
-              <div className="lg:col-span-2 space-y-4">
+                {/* Zone Details */}
                 {selectedZone && (
-                  <>
+                  <div className="space-y-4">
                     {/* Classification Card */}
                     <Card className="border-0 shadow-sm">
                       <CardHeader>
@@ -270,7 +280,7 @@ export function EmergingZonesModal({ isOpen, onClose, dateRange, areaFilter }: E
                         </div>
                       </CardContent>
                     </Card>
-                  </>
+                  </div>
                 )}
               </div>
             </div>
