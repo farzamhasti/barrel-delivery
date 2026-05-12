@@ -1,5 +1,7 @@
 import { getDb } from "./db";
 import * as h3 from "h3-js";
+import { orders } from '../drizzle/schema';
+import { eq, and, gte, lte, isNotNull } from 'drizzle-orm';
 
 export interface SpatialZone {
   hexId: string;
@@ -49,23 +51,26 @@ export async function analyzeSpatialDemandShift(
     }
 
     // Get all completed orders within date range
-    const orders = await (db as any).query.orders.findMany({
-      where: (orders: any, { and, gte, lt, eq }: any) => {
-        const conditions = [
-          gte(orders.createdAt, startDate.getTime()),
-          lt(orders.createdAt, endDate.getTime()),
-          eq(orders.status, "Delivered"),
-        ];
+    const adjustedEndDate = new Date(endDate);
+    adjustedEndDate.setDate(adjustedEndDate.getDate() + 1);
+    adjustedEndDate.setHours(0, 0, 0, 0);
 
-        if (areaFilter && areaFilter !== "All") {
-          conditions.push(eq(orders.area, areaFilter));
-        }
+    const baseConditions: any[] = [
+      gte(orders.createdAt, startDate),
+      lte(orders.createdAt, adjustedEndDate),
+      isNotNull(orders.deliveredAt),
+    ];
 
-        return and(...conditions);
-      },
-    });
+    if (areaFilter && areaFilter !== "All") {
+      baseConditions.push(eq(orders.area, areaFilter as any));
+    }
 
-    if (orders.length === 0) {
+    const ordersData = await db
+      .select()
+      .from(orders)
+      .where(and(...baseConditions));
+
+    if (ordersData.length === 0) {
       return {
         zones: [],
         temporalSnapshots: [],
@@ -76,11 +81,11 @@ export async function analyzeSpatialDemandShift(
 
     // Split data into two equal time periods for comparison
     const midpoint = new Date((startDate.getTime() + endDate.getTime()) / 2);
-    const previousPeriodOrders = orders.filter(
-      (o: any) => (o.createdAt as number) < midpoint.getTime()
+    const previousPeriodOrders = ordersData.filter(
+      (o: any) => o.createdAt.getTime() < midpoint.getTime()
     );
-    const currentPeriodOrders = orders.filter(
-      (o: any) => (o.createdAt as number) >= midpoint.getTime()
+    const currentPeriodOrders = ordersData.filter(
+      (o: any) => o.createdAt.getTime() >= midpoint.getTime()
     );
 
     // Aggregate orders into H3 hexagons (resolution 5 for ~1km cells)
@@ -191,7 +196,7 @@ export async function analyzeSpatialDemandShift(
     zones.sort((a, b) => Math.abs(b.densityChange) - Math.abs(a.densityChange));
 
     // Generate temporal snapshots (weekly breakdown)
-    const temporalSnapshots = generateTemporalSnapshots(orders, startDate, endDate);
+    const temporalSnapshots = generateTemporalSnapshots(ordersData, startDate, endDate);
 
     // Generate AI-based spatial interpretation
     const spatialInterpretation = generateSpatialInterpretation(zones, startDate, endDate);
