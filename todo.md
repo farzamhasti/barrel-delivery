@@ -2139,3 +2139,11 @@ These features are documented for future enhancement but are not required for th
 - [x] Dialog displays "How to Interpret the Colors" title
 - [x] Button has Map icon and label
 - [x] TypeScript compilation: 0 errors
+
+
+## Phase 114: Move Heatmap Card to Grid Layout (COMPLETED)
+- [x] Move Delivery Heatmap Analysis card into the 2-column grid with other analytics cards
+- [x] Heatmap now displays alongside Geographical Analysis of Competitors
+- [x] Maintain collapsible/expandable behavior
+- [x] Grid layout: grid-cols-1 md:grid-cols-2 for responsive design
+- [x] TypeScript compilation: 0 errors
