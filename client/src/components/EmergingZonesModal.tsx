@@ -1,7 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, TrendingUp, TrendingDown, AlertCircle, ArrowUpRight, ArrowDownLeft, Layers } from "lucide-react";
+import { MapPin, TrendingUp, TrendingDown, AlertCircle, ArrowUpRight, ArrowDownLeft, Layers, Maximize2, Minimize2 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useState, useEffect } from "react";
 import { EmergingZonesMapOSM } from "./EmergingZonesMapOSM";
@@ -20,6 +20,7 @@ export function EmergingZonesModal({
   areaFilter,
 }: EmergingZonesModalProps) {
   const [selectedZoneIndex, setSelectedZoneIndex] = useState(0);
+  const [isFullScreen, setIsFullScreen] = useState(false);
 
   const { data: spatialData, isLoading } = trpc.analytics.analyzeSpatialDemandShift.useQuery(
     {
@@ -92,15 +93,32 @@ export function EmergingZonesModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-7xl max-h-[95vh] overflow-hidden flex flex-col">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <MapPin className="w-5 h-5 text-blue-600" />
-            Spatial-Temporal Geographic Demand Shift Analysis
-          </DialogTitle>
+      <DialogContent className={`overflow-hidden flex flex-col ${
+        isFullScreen 
+          ? "fixed inset-0 max-w-none max-h-none rounded-none" 
+          : "max-w-7xl max-h-[95vh]"
+      }`}>
+        <DialogHeader className="flex-shrink-0">
+          <div className="flex items-center justify-between">
+            <DialogTitle className="flex items-center gap-2">
+              <MapPin className="w-5 h-5 text-blue-600" />
+              Spatial-Temporal Geographic Demand Shift Analysis
+            </DialogTitle>
+            <button
+              onClick={() => setIsFullScreen(!isFullScreen)}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors ml-2"
+              title={isFullScreen ? "Exit full-screen" : "Enter full-screen"}
+            >
+              {isFullScreen ? (
+                <Minimize2 className="w-5 h-5" />
+              ) : (
+                <Maximize2 className="w-5 h-5" />
+              )}
+            </button>
+          </div>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto pr-4">
+        <div className={`flex-1 overflow-y-auto ${isFullScreen ? "pr-6" : "pr-4"}`}>
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
@@ -259,7 +277,7 @@ export function EmergingZonesModal({
         </div>
 
         {/* Bottom Section - Spatial Interpretation and Temporal Snapshots */}
-        <div className="border-t pt-4 mt-4 space-y-4 max-h-[35%] overflow-y-auto pr-4">
+        <div className={`border-t pt-4 mt-4 space-y-4 max-h-[35%] overflow-y-auto ${isFullScreen ? "pr-6" : "pr-4"}`}>
           {/* Spatial Interpretation */}
           {!isLoading && spatialData?.spatialInterpretation && (
             <Card className="bg-blue-50 border-blue-200">
