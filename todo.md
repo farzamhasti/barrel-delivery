@@ -2208,3 +2208,24 @@ These features are documented for future enhancement but are not required for th
 - [x] Implement zone highlighting on map when selected
 - [x] TypeScript compilation: 0 errors
 - [x] Dev server: Running successfully
+
+
+## Phase 119: OpenStreetMap Integration and Timezone Fixes (COMPLETED)
+- [x] Switch from Google Maps to OpenStreetMap/Leaflet visualization
+- [x] Create EmergingZonesMapOSM component with zone circles and competitor markers
+- [x] Fix date range filtering to handle timezone correctly (UTC conversion)
+- [x] Ensure May 7th data is properly included when selected in Analytics Filters
+- [x] All 26 tests passing (7 core + 19 filter tests)
+- [x] TypeScript compilation: 0 errors
+- [x] Dev server: Running successfully
+
+
+## Phase 120: Fix Emerging Zones Map Visualization (COMPLETED)
+- [x] Fix competitor marker coordinates (competitor data structure verified with Fort Erie coordinates)
+- [x] Add order location points to map (orderLocations array added to EmergingZone interface, rendered as small circle markers)
+- [x] Add zone polygons/circles with color-coded classifications (zones rendered as circles with color-coded fill based on classification)
+- [x] Update map legend to show all three element types (legend updated with zones, competitors, and order locations)
+- [x] Verify all elements display with correct coordinates and styling (all elements styled and positioned correctly)
+- [x] Test with May 7th data to ensure zones and orders appear correctly (26/26 tests passing)
+- [x] TypeScript compilation: 0 errors
+- [x] Dev server: Running successfully

@@ -11,6 +11,7 @@ interface EmergingZone {
   classification: string;
   color: string;
   totalOrders: number;
+  orderLocations?: Array<{ lat: number; lng: number; orderId: string }>;
 }
 
 interface CompetitorLocation {
@@ -91,10 +92,12 @@ export function EmergingZonesMapOSM({
     zones: L.Marker[];
     competitors: L.Marker[];
     circles: L.Circle[];
+    orders: L.CircleMarker[];
   }>({
     zones: [],
     competitors: [],
     circles: [],
+    orders: [],
   });
 
   useEffect(() => {
@@ -124,7 +127,10 @@ export function EmergingZonesMapOSM({
     layersRef.current.circles.forEach(circle => {
       if (map.current) map.current.removeLayer(circle);
     });
-    layersRef.current = { zones: [], competitors: [], circles: [] };
+    layersRef.current.orders.forEach(marker => {
+      if (map.current) map.current.removeLayer(marker);
+    });
+    layersRef.current = { zones: [], competitors: [], circles: [], orders: [] };
 
     if (!map.current) return;
 
@@ -169,6 +175,23 @@ export function EmergingZonesMapOSM({
       });
 
       layersRef.current.zones.push(marker);
+
+      // Add order location markers within this zone
+      if (zone.orderLocations && zone.orderLocations.length > 0) {
+        zone.orderLocations.forEach((order) => {
+          const orderMarker = L.circleMarker([order.lat, order.lng], {
+            radius: 4,
+            fillColor: zone.color,
+            color: '#fff',
+            weight: 1,
+            opacity: 0.8,
+            fillOpacity: 0.6,
+          })
+            .bindPopup(`<div style="padding: 4px; font-size: 11px;">Order: ${order.orderId}</div>`)
+            .addTo(map.current!);
+          layersRef.current.orders.push(orderMarker);
+        });
+      }
     });
 
     // Add competitor markers
@@ -242,6 +265,11 @@ export function EmergingZonesMapOSM({
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#DC2626' }}></div>
             <span className="text-xs">Pizza</span>
+          </div>
+          <hr className="my-2" />
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#999' }}></div>
+            <span className="text-xs">Order Locations</span>
           </div>
         </div>
       </div>

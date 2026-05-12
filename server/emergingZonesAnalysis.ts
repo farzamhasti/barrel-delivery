@@ -25,6 +25,7 @@ export interface EmergingZone {
   monthlyOrders: number[];
   growthVelocity: number;
   calculatedAt: Date;
+  orderLocations?: Array<{ lat: number; lng: number; orderId: string }>;
 }
 
 /**
@@ -404,6 +405,12 @@ export async function analyzeEmergingZones(
       ? (currentWeekOrders - previousWeekOrders) / previousWeekOrders
       : 0;
 
+    const orderLocations = zoneOrders.map((o: typeof zoneOrders[0]) => ({
+      lat: typeof o.latitude === 'string' ? parseFloat(o.latitude) : (o.latitude || 0),
+      lng: typeof o.longitude === 'string' ? parseFloat(o.longitude) : (o.longitude || 0),
+      orderId: String(o.id),
+    }));
+
     emergingZones.push({
       zoneId: `zone_${hexId}`,
       hexId,
@@ -420,12 +427,13 @@ export async function analyzeEmergingZones(
       totalOrders: zoneOrders.length,
       newCustomerCount,
       repeatCustomerCount,
-      competitorCount: 0, // Placeholder
+      competitorCount: 0,
       avgDeliveryDuration,
       weeklyOrders,
       monthlyOrders,
       growthVelocity,
       calculatedAt: new Date(),
+      orderLocations,
     });
   }
 
