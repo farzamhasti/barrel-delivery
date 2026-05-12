@@ -92,7 +92,7 @@ export function EmergingZonesModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-7xl max-h-[95vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <MapPin className="w-5 h-5 text-blue-600" />
@@ -100,6 +100,7 @@ export function EmergingZonesModal({
           </DialogTitle>
         </DialogHeader>
 
+        <div className="flex-1 overflow-y-auto pr-4">
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
@@ -113,9 +114,9 @@ export function EmergingZonesModal({
             <p>No spatial demand patterns detected for this period</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 pr-4">
             {/* Map Section */}
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-2.5">
               <Card className="border-0 shadow-sm">
                 <CardHeader>
                   <CardTitle className="text-sm flex items-center gap-2">
@@ -124,7 +125,7 @@ export function EmergingZonesModal({
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-96 rounded-lg overflow-hidden border border-gray-200">
+                  <div className="h-full min-h-96 rounded-lg overflow-hidden border border-gray-200">
                     <EmergingZonesMapOSM zones={zones} selectedZoneIndex={selectedZoneIndex} />
                   </div>
                 </CardContent>
@@ -132,29 +133,29 @@ export function EmergingZonesModal({
             </div>
 
             {/* Zones List and Details */}
-            <div className="space-y-4">
+            <div className="space-y-4 lg:col-span-1.5">
               {/* Zone List */}
               <Card className="border-0 shadow-sm">
                 <CardHeader>
                   <CardTitle className="text-sm">Spatial Zones ({zones.length})</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-2 max-h-64 overflow-y-auto">
+                  <div className="space-y-2 max-h-96 overflow-y-auto">
                     {zones.map((zone, idx) => (
                       <button
                         key={zone.hexId}
                         onClick={() => setSelectedZoneIndex(idx)}
-                        className={`w-full text-left p-2 rounded-lg border-2 transition-all ${
+                        className={`w-full text-left p-3 rounded-lg border-2 transition-all text-sm ${
                           selectedZoneIndex === idx
                             ? `${getClassificationColor(zone.classification).border} ${getClassificationColor(zone.classification).bg}`
                             : "border-gray-200 hover:border-gray-300"
                         }`}
                       >
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-semibold">Zone {idx + 1}</span>
-                          <Badge className={getClassificationColor(zone.classification).badge}>{zone.classification}</Badge>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="font-semibold">Zone {idx + 1}</span>
+                          <Badge className={`text-xs ${getClassificationColor(zone.classification).badge}`}>{zone.classification}</Badge>
                         </div>
-                        <p className="text-xs text-gray-600 mt-1">
+                        <p className="text-xs text-gray-600">
                           Growth: {zone.growthPercentage > 0 ? '+' : ''}{zone.growthPercentage.toFixed(1)}%
                         </p>
                       </button>
@@ -168,8 +169,8 @@ export function EmergingZonesModal({
                 <>
                   {/* Classification Card */}
                   <Card className={`border-2 ${selectedZone ? getClassificationColor(selectedZone.classification).border : ''} ${selectedZone ? getClassificationColor(selectedZone.classification).bg : ''}`}>
-                    <CardHeader>
-                      <CardTitle className="text-sm flex items-center gap-2">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base flex items-center gap-2">
                         {selectedZone.growthPercentage > 0 ? (
                           <ArrowUpRight className="w-4 h-4" />
                         ) : (
@@ -178,31 +179,31 @@ export function EmergingZonesModal({
                         {selectedZone.classification}
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-3">
+                    <CardContent className="space-y-3 text-sm">
                       <div>
-                        <p className="text-xs text-gray-600">Cluster Status</p>
-                        <p className="text-sm font-semibold">
+                        <p className="text-xs text-gray-600 mb-1">Cluster Status</p>
+                        <p className="font-semibold">
                           {getClusterStatusIcon(selectedZone.clusterStatus)} {getClusterStatusLabel(selectedZone.clusterStatus)}
                         </p>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <p className="text-gray-600">Previous Density</p>
-                          <p className="font-semibold">{selectedZone.previousDensity}</p>
+                          <p className="text-xs text-gray-600 mb-1">Previous Density</p>
+                          <p className="font-semibold text-sm">{selectedZone.previousDensity}</p>
                         </div>
                         <div>
-                          <p className="text-gray-600">Current Density</p>
-                          <p className="font-semibold">{selectedZone.currentDensity}</p>
+                          <p className="text-xs text-gray-600 mb-1">Current Density</p>
+                          <p className="font-semibold text-sm">{selectedZone.currentDensity}</p>
                         </div>
                       </div>
 
                       <div>
-                        <p className="text-gray-600">Spatial Growth Rate</p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <div className="flex-1 bg-gray-200 rounded-full h-2">
+                        <p className="text-xs text-gray-600 mb-2">Spatial Growth Rate</p>
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 bg-gray-200 rounded-full h-3">
                             <div
-                              className={`h-2 rounded-full ${
+                              className={`h-3 rounded-full ${
                                 selectedZone.growthPercentage > 0 ? "bg-green-500" : "bg-red-500"
                               }`}
                               style={{
@@ -210,22 +211,22 @@ export function EmergingZonesModal({
                               }}
                             ></div>
                           </div>
-                          <span className="text-xs font-semibold">
+                          <span className="font-semibold text-sm whitespace-nowrap">
                             {selectedZone.growthPercentage > 0 ? '+' : ''}{selectedZone.growthPercentage.toFixed(1)}%
                           </span>
                         </div>
                       </div>
 
                       <div>
-                        <p className="text-gray-600">Orders in Zone</p>
-                        <p className="font-semibold">{selectedZone.orderCount}</p>
+                        <p className="text-xs text-gray-600 mb-1">Orders in Zone</p>
+                        <p className="font-semibold text-sm">{selectedZone.orderCount}</p>
                       </div>
                     </CardContent>
                   </Card>
 
                   {/* Spatial Metrics */}
                   <Card className="border-0 shadow-sm">
-                    <CardHeader>
+                    <CardHeader className="pb-3">
                       <CardTitle className="text-sm">Spatial Metrics</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-2 text-xs">
@@ -242,9 +243,9 @@ export function EmergingZonesModal({
                         <span className="font-mono text-xs truncate">{selectedZone.hexId}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-600">Center Coordinates</span>
+                        <span className="text-gray-600">Coordinates</span>
                         <span className="font-mono text-xs">
-                          {selectedZone.latitude.toFixed(4)}, {selectedZone.longitude.toFixed(4)}
+                          {selectedZone.latitude.toFixed(3)}, {selectedZone.longitude.toFixed(3)}
                         </span>
                       </div>
                     </CardContent>
@@ -255,42 +256,47 @@ export function EmergingZonesModal({
           </div>
         )}
 
-        {/* Spatial Interpretation */}
-        {!isLoading && spatialData?.spatialInterpretation && (
-          <Card className="bg-blue-50 border-blue-200 mt-4">
-            <CardHeader>
-              <CardTitle className="text-sm flex items-center gap-2">
-                <AlertCircle className="w-4 h-4" />
-                Spatial Analysis Summary
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-blue-900">{spatialData.spatialInterpretation}</p>
-            </CardContent>
-          </Card>
-        )}
+        </div>
 
-        {/* Temporal Snapshots */}
-        {!isLoading && spatialData?.temporalSnapshots && spatialData.temporalSnapshots.length > 0 && (
-          <Card className="border-0 shadow-sm mt-4">
-            <CardHeader>
-              <CardTitle className="text-sm">Temporal Density Evolution</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {spatialData.temporalSnapshots.map((snapshot, idx) => (
-                  <div key={idx} className="flex items-center justify-between text-xs p-2 bg-gray-50 rounded">
-                    <span className="font-medium">{snapshot.period}</span>
-                    <div className="flex gap-4">
-                      <span>Orders: {snapshot.density}</span>
-                      <span>Hotspots: {snapshot.hotspotCount}</span>
+        {/* Bottom Section - Spatial Interpretation and Temporal Snapshots */}
+        <div className="border-t pt-4 mt-4 space-y-4 max-h-[35%] overflow-y-auto pr-4">
+          {/* Spatial Interpretation */}
+          {!isLoading && spatialData?.spatialInterpretation && (
+            <Card className="bg-blue-50 border-blue-200">
+              <CardHeader>
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4" />
+                  Spatial Analysis Summary
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-blue-900">{spatialData.spatialInterpretation}</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Temporal Snapshots */}
+          {!isLoading && spatialData?.temporalSnapshots && spatialData.temporalSnapshots.length > 0 && (
+            <Card className="border-0 shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-sm">Temporal Density Evolution</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {spatialData.temporalSnapshots.map((snapshot, idx) => (
+                    <div key={idx} className="flex items-center justify-between text-xs p-2 bg-gray-50 rounded">
+                      <span className="font-medium">{snapshot.period}</span>
+                      <div className="flex gap-4">
+                        <span>Orders: {snapshot.density}</span>
+                        <span>Hotspots: {snapshot.hotspotCount}</span>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   );
