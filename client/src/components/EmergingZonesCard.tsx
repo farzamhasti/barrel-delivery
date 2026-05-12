@@ -2,12 +2,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { TrendingUp, MapPin } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 
+
 interface EmergingZonesCardProps {
   onClick: () => void;
+  dateRange?: { startDate: Date; endDate: Date };
+  areaFilter?: string;
 }
 
-export function EmergingZonesCard({ onClick }: EmergingZonesCardProps) {
-  const { data: zonesData, isLoading } = trpc.analytics.analyzeEmergingZones.useQuery();
+export function EmergingZonesCard({ onClick, dateRange, areaFilter }: EmergingZonesCardProps) {
+  const { data: zonesData, isLoading } = trpc.analytics.analyzeEmergingZones.useQuery({
+    startDate: dateRange?.startDate?.toISOString(),
+    endDate: dateRange?.endDate?.toISOString(),
+    areaFilter: areaFilter,
+  });
 
   const getTopZones = () => {
     if (!zonesData?.zones) return [];

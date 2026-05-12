@@ -1,6 +1,7 @@
 import { getDb } from './db';
 import { orders } from '../drizzle/schema';
 import { sql, and, gte, lte } from 'drizzle-orm';
+import { getCompetitorsWithinRadius, calculateDistance } from './competitorLocations';
 
 export interface EmergingZone {
   zoneId: string;
@@ -104,6 +105,30 @@ function calculateCompetitorSaturation(
   const saturation = Math.min(demandPerCompetitor / 10, 1.0); // Normalize
   
   return saturation;
+}
+
+/**
+ * Calculate competitor proximity score for a zone
+ * Higher score = fewer/farther competitors (better opportunity)
+ */
+function calculateCompetitorProximityScore(
+  centerLat: number,
+  centerLng: number,
+  radiusKm: number = 1.0
+): number {
+  const competitors = getCompetitorsWithinRadius(centerLat, centerLng, radiusKm);
+  
+  if (competitors.length === 0) return 1.0; // High score if no competitors nearby
+  
+  // Calculate average distance to competitors
+  const avgDistance = competitors.reduce((sum, comp) => {
+    return sum + calculateDistance(centerLat, centerLng, comp.latitude, comp.longitude);
+  }, 0) / competitors.length;
+  
+  // Normalize: 0km = 0 score, 1km = 0.5 score, 2km+ = 1.0 score
+  const proximityScore = Math.min(avgDistance / radiusKm, 1.0);
+  
+  return proximityScore;
 }
 
 /**
@@ -221,11 +246,39 @@ async function getMonthlyOrders(
 }
 
 /**
- * Analyze emerging demand zones
+ * Analyze emerging demand zones with optional filters
+ * @param dateRange - { startDate: Date, endDate: Date } or undefined for last 12 weeks
+ * @param areaFilter - 'All' | 'Downtown' | 'Central Park' | 'Both' or undefined for all areas
  */
-export async function analyzeEmergingZones(): Promise<EmergingZone[]> {
+export async function analyzeEmergingZones(
+  dateRange?: { startDate: Date; endDate: Date },
+  areaFilter?: string
+): Promise<EmergingZone[]> {
   const db = await getDb();
   if (!db) return [];
+  
+  // Determine date range
+  let startDate = dateRange?.startDate;
+  let endDate = dateRange?.endDate;
+  
+  if (!startDate || !endDate) {
+    // Default to last 12 weeks if not specified
+    endDate = new Date();
+    startDate = new Date(Date.now() - 12 * 7 * 24 * 60 * 60 * 1000);
+  }
+  
+  // Build where conditions
+  const conditions = [
+    sql`customer_latitude IS NOT NULL`,
+    sql`customer_longitude IS NOT NULL`,
+    gte(orders.createdAt, startDate),
+    lte(orders.createdAt, endDate),
+  ];
+  
+  // Add area filter if specified and not 'All'
+  if (areaFilter && areaFilter !== 'All') {
+    conditions.push(sql`area = ${areaFilter}`);
+  }
   
   // Get all orders with location data
   const allOrders = await db
@@ -238,16 +291,10 @@ export async function analyzeEmergingZones(): Promise<EmergingZone[]> {
       driverId: orders.driverId,
     })
     .from(orders)
-    .where(
-      and(
-        sql`customer_latitude IS NOT NULL`,
-        sql`customer_longitude IS NOT NULL`,
-        gte(orders.createdAt, new Date(Date.now() - 12 * 7 * 24 * 60 * 60 * 1000)) // Last 12 weeks
-      )
-    );
+    .where(and(...conditions));
 
   // Group orders by hex zone
-  type OrderType = typeof allOrders[0];
+  type OrderType = (typeof allOrders)[0];
   const zoneMap = new Map<string, OrderType[]>();
   
   for (const order of allOrders) {
@@ -324,13 +371,20 @@ export async function analyzeEmergingZones(): Promise<EmergingZone[]> {
     const deliveryFeasibility = calculateDeliveryFeasibility(avgDeliveryDuration);
     const competitorSaturation = calculateCompetitorSaturation(zoneOrders.length, 0); // Placeholder
 
+    // Calculate competitor proximity score
+    const competitorProximityScore = calculateCompetitorProximityScore(centerLat, centerLng, 1.0);
+    
+    // Count competitors in 1km radius
+    const competitorsNearby = getCompetitorsWithinRadius(centerLat, centerLng, 1.0);
+    const competitorCountInRadius = competitorsNearby.length;
+    
     const emergingScore = calculateEmergingScore(
       demandAcceleration,
       newCustomerGrowth,
       residentialExpansion,
       deliveryFeasibility,
       competitorSaturation
-    );
+    ) + (competitorProximityScore * 0.1); // Boost score for zones with fewer nearby competitors
 
     const { classification, color } = classifyZone(emergingScore);
 
@@ -367,14 +421,20 @@ export async function analyzeEmergingZones(): Promise<EmergingZone[]> {
     });
   }
 
-  // Sort by emerging score descending
-  return emergingZones.sort((a, b) => b.emergingScore - a.emergingScore);
+  // Sort by emerging score descending and return top 10
+  return emergingZones
+    .sort((a, b) => b.emergingScore - a.emergingScore)
+    .slice(0, 10);
 }
 
 /**
- * Get top emerging zones
+ * Get top emerging zones with optional filters
  */
-export async function getTopEmergingZones(limit: number = 10): Promise<EmergingZone[]> {
-  const zones = await analyzeEmergingZones();
+export async function getTopEmergingZones(
+  limit: number = 10,
+  dateRange?: { startDate: Date; endDate: Date },
+  areaFilter?: string
+): Promise<EmergingZone[]> {
+  const zones = await analyzeEmergingZones(dateRange, areaFilter);
   return zones.filter(z => z.classification === 'rapid_emerging' || z.classification === 'early_growth').slice(0, limit);
 }

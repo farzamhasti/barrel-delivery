@@ -7,11 +7,17 @@ import { trpc } from "@/lib/trpc";
 interface EmergingZonesModalProps {
   isOpen: boolean;
   onClose: () => void;
+  dateRange?: { startDate: Date; endDate: Date };
+  areaFilter?: string;
 }
 
-export function EmergingZonesModal({ isOpen, onClose }: EmergingZonesModalProps) {
+export function EmergingZonesModal({ isOpen, onClose, dateRange, areaFilter }: EmergingZonesModalProps) {
   const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
-  const { data: zonesData, isLoading } = trpc.analytics.analyzeEmergingZones.useQuery();
+  const { data: zonesData, isLoading } = trpc.analytics.analyzeEmergingZones.useQuery({
+    startDate: dateRange?.startDate?.toISOString(),
+    endDate: dateRange?.endDate?.toISOString(),
+    areaFilter: areaFilter,
+  });
 
   if (!isOpen) return null;
 

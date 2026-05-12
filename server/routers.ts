@@ -1236,9 +1236,23 @@ export const appRouter = router({
       }),
     
     analyzeEmergingZones: publicProcedure
-      .query(async () => {
+      .input(z.object({
+        startDate: z.string().optional(),
+        endDate: z.string().optional(),
+        areaFilter: z.string().optional(),
+      }))
+      .query(async ({ input }) => {
         try {
-          const zones = await analyzeEmergingZones();
+          // Parse date range if provided
+          let dateRange: { startDate: Date; endDate: Date } | undefined;
+          if (input.startDate && input.endDate) {
+            dateRange = {
+              startDate: new Date(input.startDate),
+              endDate: new Date(input.endDate),
+            };
+          }
+          
+          const zones = await analyzeEmergingZones(dateRange, input.areaFilter);
           return {
             success: true,
             zones,
