@@ -25,6 +25,7 @@ export function GeomarketingAnalyticsTab() {
   const [openSectionModal, setOpenSectionModal] = useState<string | null>(null);
   const [showHeatmap, setShowHeatmap] = useState(false);
   const [showEmergingZones, setShowEmergingZones] = useState(false);
+  const [emergingZonesDateRange, setEmergingZonesDateRange] = useState<{ startDate: Date; endDate: Date } | null>(null);
 
   // Calculate date range for queries
   const getDateRangeForQuery = () => {
@@ -349,7 +350,10 @@ export function GeomarketingAnalyticsTab() {
 
         {/* Emerging Demand Zones Card */}
         <EmergingZonesCard
-          onClick={() => setShowEmergingZones(true)}
+          onClick={(independentDateRange) => {
+            setEmergingZonesDateRange(independentDateRange);
+            setShowEmergingZones(true);
+          }}
           dateRange={dateRangeQuery}
           areaFilter={areaFilter === 'all' ? 'All' : areaFilter}
         />
@@ -440,7 +444,7 @@ export function GeomarketingAnalyticsTab() {
       <EmergingZonesModal
         isOpen={showEmergingZones}
         onClose={() => setShowEmergingZones(false)}
-        dateRange={dateRangeQuery}
+        dateRange={emergingZonesDateRange || dateRangeQuery}
         areaFilter={areaFilter === 'all' ? 'All' : areaFilter}
       />
     </div>

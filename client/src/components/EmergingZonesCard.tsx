@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
 interface EmergingZonesCardProps {
-  onClick: () => void;
+  onClick: (independentDateRange: { startDate: Date; endDate: Date }) => void;
   dateRange?: { startDate: Date; endDate: Date };
   areaFilter?: string;
 }
@@ -148,7 +148,7 @@ export function EmergingZonesCard({ onClick, dateRange, areaFilter }: EmergingZo
         </div>
       </CardHeader>
       <CardContent>
-        <div className="bg-gray-100 rounded-lg h-48 flex items-center justify-center mb-4 cursor-pointer hover:bg-gray-200 transition-colors" onClick={onClick}>
+        <div className="bg-gray-100 rounded-lg h-48 flex items-center justify-center mb-4 cursor-pointer hover:bg-gray-200 transition-colors" onClick={() => onClick(independentDateRange)}>
           <div className="text-center">
             <MapPin className="w-8 h-8 text-gray-400 mx-auto mb-2" />
             <p className="text-sm text-gray-500">
@@ -160,7 +160,7 @@ export function EmergingZonesCard({ onClick, dateRange, areaFilter }: EmergingZo
         {!isLoading && topZones.length > 0 ? (
           <div className="space-y-2">
             {topZones.map((zone, idx) => (
-              <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 rounded cursor-pointer hover:bg-gray-100" onClick={onClick}>
+              <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 rounded cursor-pointer hover:bg-gray-100" onClick={() => onClick(independentDateRange)}>
                 <div className="flex-1">
                   <p className="text-sm font-medium text-gray-900">Zone {idx + 1}</p>
                   <p className="text-xs text-gray-600">{zone.totalOrders} orders</p>
@@ -177,7 +177,7 @@ export function EmergingZonesCard({ onClick, dateRange, areaFilter }: EmergingZo
           </div>
         )}
 
-        <Button onClick={onClick} variant="outline" className="w-full mt-4">
+        <Button onClick={() => onClick(independentDateRange)} variant="outline" className="w-full mt-4">
           View Full Analysis
         </Button>
       </CardContent>
