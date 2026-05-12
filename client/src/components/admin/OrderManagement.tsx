@@ -11,7 +11,7 @@ export default function OrderManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
-  const { data: orders = [] } = trpc.orders.list.useQuery();
+  const { data: orders = [] } = trpc.orders.getAll.useQuery();
   const { data: drivers = [] } = trpc.drivers.list.useQuery();
   const assignMutation = trpc.orders.assignDriver.useMutation();
 
@@ -97,7 +97,7 @@ export default function OrderManagement() {
                                 { orderId: order.id, driverId: parseInt(e.target.value) },
                                 {
                                   onSuccess: () => {
-                                    trpc.useUtils().orders.list.invalidate();
+                                    trpc.useUtils().orders.getAll.invalidate();
                                   },
                                 }
                               );

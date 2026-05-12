@@ -32,7 +32,7 @@ export default function DriverPanel() {
   
   // Fetch selected order with items
   const { data: selectedOrderData } = trpc.orders.getWithItems.useQuery(
-    { orderId: selectedOrder! },
+    { id: selectedOrder! },
     { enabled: !!selectedOrder }
   );
   
@@ -56,7 +56,7 @@ export default function DriverPanel() {
     return () => clearInterval(interval);
   }, [refetch, driverId]);
 
-  const handleStatusUpdate = (orderId: number, newStatus: "Pending" | "Ready" | "On the Way" | "Delivered") => {
+  const handleStatusUpdate = (orderId: number, newStatus: "Pending" | "Confirmed" | "Preparing" | "Ready" | "Out for Delivery" | "Delivered" | "Cancelled") => {
     updateStatusMutation.mutate({
       orderId: orderId,
       status: newStatus,
@@ -74,13 +74,18 @@ export default function DriverPanel() {
     switch (status) {
       case "Pending":
         return "bg-yellow-100 text-yellow-800";
+      case "Confirmed":
+        return "bg-blue-100 text-blue-800";
+      case "Preparing":
+        return "bg-orange-100 text-orange-800";
       case "Ready":
         return "bg-blue-100 text-blue-800";
-      case "On the Way":
+      case "Out for Delivery":
         return "bg-purple-100 text-purple-800";
       case "Delivered":
         return "bg-green-100 text-green-800";
-
+      case "Cancelled":
+        return "bg-red-100 text-red-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -182,13 +187,13 @@ export default function DriverPanel() {
                           </Button>
                           <Button
                             size="sm"
-                            variant={order.status === "On the Way" ? "default" : "outline"}
+                            variant={order.status === "Out for Delivery" ? "default" : "outline"}
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleStatusUpdate(order.id, "On the Way");
+                              handleStatusUpdate(order.id, "Out for Delivery");
                             }}
                           >
-                            On the Way
+                            Out for Delivery
                           </Button>
                           <Button
                             size="sm"

@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
 
 export default function AdminMapView() {
-  const { data: orders = [] } = trpc.orders.list.useQuery();
+  const { data: orders = [] } = trpc.orders.getAll.useQuery();
   const { data: drivers = [] } = trpc.drivers.list.useQuery();
 
   const activeOrders = orders.filter((o: any) => o.status !== "Delivered");

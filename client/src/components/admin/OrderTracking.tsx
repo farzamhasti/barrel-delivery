@@ -13,7 +13,7 @@ export default function OrderTracking() {
   const [showLiveTracking, setShowLiveTracking] = useState(false);
 
   // Fetch all orders and filter on client side
-  const { data: allOrders = [], isLoading, refetch } = trpc.orders.list.useQuery();
+  const { data: allOrders = [], isLoading, refetch } = trpc.orders.getAll.useQuery();
   
   // Filter to active orders (On the Way and Delivered)
   const orders = allOrders.filter((o: any) => 

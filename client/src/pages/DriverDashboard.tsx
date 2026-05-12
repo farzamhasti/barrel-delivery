@@ -143,12 +143,19 @@ export default function DriverDashboard() {
     console.log('[DriverDashboard] Orders updated:', assignedOrders.length, 'orders');
   }, [assignedOrders]);
 
+
   // Get delivered orders count for selected date
+  const dateString = selectedStatisticsDate
+    ? typeof selectedStatisticsDate === 'string'
+      ? selectedStatisticsDate
+      : (selectedStatisticsDate as any)?.toISOString?.()?.split?.('T')?.[0]
+      : undefined;
+
   const { data: deliveredCountData } = trpc.drivers.getDeliveredOrdersCountByDate.useQuery(
-    currentDriverId && selectedStatisticsDate
-      ? { driverId: currentDriverId, date: selectedStatisticsDate }
-      : undefined,
-    { enabled: !!currentDriverId && !!selectedStatisticsDate, retry: 2, retryDelay: 1000 }
+    currentDriverId && dateString && typeof dateString === 'string'
+      ? { driverId: currentDriverId, date: dateString }
+      : (undefined as any),
+    { enabled: !!currentDriverId && !!dateString, retry: 2, retryDelay: 1000 }
   );
 
   // Save return time mutation
