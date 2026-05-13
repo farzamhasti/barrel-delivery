@@ -73,8 +73,7 @@ export async function getOrdersWithCoordinates(startDate: Date, endDate: Date) {
     .where(
       and(
         gte(orders.createdAt, startDate),
-        lte(orders.createdAt, adjustedEndDate),
-        isNotNull(orders.deliveredAt)
+        lte(orders.createdAt, adjustedEndDate)
       )
     );
 

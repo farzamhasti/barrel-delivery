@@ -1,0 +1,8 @@
+{
+  "query": "SELECT id, check_number, customer_address, customer_latitude, customer_longitude, created_at, area FROM orders WHERE DATE(created_at) IN ('2026-05-07', '2026-05-13') LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3vEgeGHWz6yFd3X.root --database GArd6gSmf3RbAbT5WtHac3 --execute SELECT id, check_number, customer_address, customer_latitude, customer_longitude, created_at, area FROM orders WHERE DATE(created_at) IN ('2026-05-07', '2026-05-13') LIMIT 20;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 'created_at' in 'where clause'"
+  ]
+}

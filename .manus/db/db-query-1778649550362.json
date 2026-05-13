@@ -1,0 +1,109 @@
+{
+  "query": "SELECT id, order_number, customer_address, customer_latitude, customer_longitude, createdAt, area FROM orders WHERE DATE(createdAt) IN ('2026-05-07', '2026-05-13') LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3vEgeGHWz6yFd3X.root --database GArd6gSmf3RbAbT5WtHac3 --execute SELECT id, order_number, customer_address, customer_latitude, customer_longitude, createdAt, area FROM orders WHERE DATE(createdAt) IN ('2026-05-07', '2026-05-13') LIMIT 20;",
+  "rows": [
+    {
+      "id": "690022",
+      "order_number": "50035",
+      "customer_address": "1637 Pettit Rd, Fort Erie, ON L2A 5M4, Canada",
+      "customer_latitude": "42.922195",
+      "customer_longitude": "-78.967388",
+      "createdAt": "2026-05-07 01:58:59",
+      "area": "Central Park"
+    },
+    {
+      "id": "870007",
+      "order_number": "40083",
+      "customer_address": "81 Robinson St, Fort Erie, ON L2A 4B2, Canada",
+      "customer_latitude": "42.933561",
+      "customer_longitude": "-78.924561",
+      "createdAt": "2026-05-13 04:26:31",
+      "area": "Downtown"
+    },
+    {
+      "id": "870008",
+      "order_number": "40069",
+      "customer_address": "249 Douglas St, Fort Erie, ON L2A 3X3, Canada",
+      "customer_latitude": "42.910558",
+      "customer_longitude": "-78.919856",
+      "createdAt": "2026-05-13 04:27:04",
+      "area": "Downtown"
+    },
+    {
+      "id": "870009",
+      "order_number": "50033",
+      "customer_address": "323 Niagara 21, Fort Erie, ON L2A 2V7, Canada",
+      "customer_latitude": "42.931189",
+      "customer_longitude": "-78.925708",
+      "createdAt": "2026-05-13 04:28:03",
+      "area": "Downtown"
+    },
+    {
+      "id": "870010",
+      "order_number": "40075",
+      "customer_address": "202 Highland Ave, Fort Erie, ON L2A 2X7, Canada",
+      "customer_latitude": "42.934331",
+      "customer_longitude": "-78.919741",
+      "createdAt": "2026-05-13 04:28:42",
+      "area": "Downtown"
+    },
+    {
+      "id": "870011",
+      "order_number": "40073",
+      "customer_address": "239 Phipps St, Fort Erie, ON L2A 2V4, Canada",
+      "customer_latitude": "42.931286",
+      "customer_longitude": "-78.922371",
+      "createdAt": "2026-05-13 04:29:09",
+      "area": "Downtown"
+    },
+    {
+      "id": "870012",
+      "order_number": "40054",
+      "customer_address": "448 Buffalo Rd, Fort Erie, ON L2A 5G5, Canada",
+      "customer_latitude": "42.887931",
+      "customer_longitude": "-78.969902",
+      "createdAt": "2026-05-13 04:29:55",
+      "area": "Central Park"
+    },
+    {
+      "id": "870013",
+      "order_number": "50008",
+      "customer_address": "1111 Sunset Dr, Fort Erie, ON L2A 5M4, Canada",
+      "customer_latitude": "42.905800",
+      "customer_longitude": "-78.978022",
+      "createdAt": "2026-05-13 04:30:31",
+      "area": "Central Park"
+    },
+    {
+      "id": "870014",
+      "order_number": "50033",
+      "customer_address": "323 Niagara Blvd, Fort Erie, ON L2A 3H1, Canada",
+      "customer_latitude": "42.918842",
+      "customer_longitude": "-78.912347",
+      "createdAt": "2026-05-13 04:31:08",
+      "area": "Downtown"
+    },
+    {
+      "id": "870015",
+      "order_number": "40056",
+      "customer_address": "120 Torrance Crescent, Fort Erie, ON L2A 2C2, Canada",
+      "customer_latitude": "42.914962",
+      "customer_longitude": "-78.927383",
+      "createdAt": "2026-05-13 04:31:45",
+      "area": "Downtown"
+    },
+    {
+      "id": "870016",
+      "order_number": "40023",
+      "customer_address": "1 Municipal Centre Dr, Fort Erie, ON L2A 2S6, Canada",
+      "customer_latitude": "42.903896",
+      "customer_longitude": "-78.974552",
+      "createdAt": "2026-05-13 04:32:29",
+      "area": "Central Park"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\torder_number\tcustomer_address\tcustomer_latitude\tcustomer_longitude\tcreatedAt\tarea\n690022\t50035\t1637 Pettit Rd, Fort Erie, ON L2A 5M4, Canada\t42.922195\t-78.967388\t2026-05-07 01:58:59\tCentral Park\n870007\t40083\t81 Robinson St, Fort Erie, ON L2A 4B2, Canada\t42.933561\t-78.924561\t2026-05-13 04:26:31\tDowntown\n870008\t40069\t249 Douglas St, Fort Erie, ON L2A 3X3, Canada\t42.910558\t-78.919856\t2026-05-13 04:27:04\tDowntown\n870009\t50033\t323 Niagara 21, Fort Erie, ON L2A 2V7, Canada\t42.931189\t-78.925708\t2026-05-13 04:28:03\tDowntown\n870010\t40075\t202 Highland Ave, Fort Erie, ON L2A 2X7, Canada\t42.934331\t-78.919741\t2026-05-13 04:28:42\tDowntown\n870011\t40073\t239 Phipps St, Fort Erie, ON L2A 2V4, Canada\t42.931286\t-78.922371\t2026-05-13 04:29:09\tDowntown\n870012\t40054\t448 Buffalo Rd, Fort Erie, ON L2A 5G5, Canada\t42.887931\t-78.969902\t2026-05-13 04:29:55\tCentral Park\n870013\t50008\t1111 Sunset Dr, Fort Erie, ON L2A 5M4, Canada\t42.905800\t-78.978022\t2026-05-13 04:30:31\tCentral Park\n870014\t50033\t323 Niagara Blvd, Fort Erie, ON L2A 3H1, Canada\t42.918842\t-78.912347\t2026-05-13 04:31:08\tDowntown\n870015\t40056\t120 Torrance Crescent, Fort Erie, ON L2A 2C2, Canada\t42.914962\t-78.927383\t2026-05-13 04:31:45\tDowntown\n870016\t40023\t1 Municipal Centre Dr, Fort Erie, ON L2A 2S6, Canada\t42.903896\t-78.974552\t2026-05-13 04:32:29\tCentral Park\n",
+  "stderr": "",
+  "execution_time_ms": 257
+}
