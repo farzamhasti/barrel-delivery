@@ -12,6 +12,7 @@ import DriverDashboard from "./pages/DriverDashboard";
 import DriverLogin from "./pages/DriverLogin";
 import KitchenDashboardPage from "./pages/KitchenDashboardPage";
 import KitchenLogin from "./pages/KitchenLogin";
+import GeomarketingDashboard from "./pages/GeomarketingDashboard";
 import NotFound from "./pages/NotFound";
 import { useAuth } from "./_core/hooks/useAuth";
 import { Loader2 } from "lucide-react";
@@ -67,6 +68,7 @@ function Router() {
       <Route path="/driver-login" component={DriverLogin} />
       <Route path="/driver-dashboard" component={DriverDashboard} />
       <Route path="/admin/*" component={() => <SystemProtectedRoute component={AdminDashboard} requiredRole="admin" />} />
+      <Route path="/geomarketing/*" component={() => <SystemProtectedRoute component={GeomarketingDashboard} requiredRole="admin" />} />
       <Route path="/driver/*" component={DriverPanel} />
       <Route path="/kitchen" component={() => <SystemProtectedRoute component={KitchenDashboardPage} requiredRole="kitchen" />} />
       <Route path="/404" component={NotFound} />

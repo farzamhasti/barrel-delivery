@@ -2348,3 +2348,16 @@ These features are documented for future enhancement but are not required for th
 - [x] Test: Verify TypeScript compilation clean (VERIFIED: 0 errors)
 - [x] Test: Verify dev server hot-reload working (VERIFIED: HMR update detected)
 - [x] Production ready: Frontend now properly passes date ranges to backend (READY)
+
+
+## Phase 128: Refactor Geomarketing into Separate Dashboard (COMPLETED)
+- [x] Extract GeomarketingAnalyticsTab into standalone GeomarketingDashboard component (DONE)
+- [x] Create new route /geomarketing/* for standalone dashboard (DONE)
+- [x] Copy admin dashboard shell structure (sidebar, header, navigation) (DONE)
+- [x] Update App.tsx to add /geomarketing route with system protection (DONE)
+- [x] Remove Geomarketing Analytics from admin sidebar (DONE)
+- [x] Add navigation link to Geomarketing Dashboard from admin dashboard (DONE)
+- [x] Verify all geomarketing functionality works in new dashboard (VERIFIED)
+- [x] Test navigation between admin and geomarketing dashboards (VERIFIED)
+- [x] TypeScript compilation: 0 errors (VERIFIED)
+- [x] All existing tests still pass (VERIFIED)

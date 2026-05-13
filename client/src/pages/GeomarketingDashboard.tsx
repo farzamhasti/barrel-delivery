@@ -4,30 +4,11 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/useMobile";
 import { DeveloperCredit } from "@/components/DeveloperCredit";
-
-import { Menu, Package2, Truck, LogOut, Settings, Plus, Map, X, Calendar, Gift, MessageSquare } from "lucide-react";
-
-import { Orders } from "@/pages/Orders";
-import DriverManagement from "@/components/admin/DriverManagement";
-import { HeaderDriversTable } from "@/components/admin/HeaderDriversTable";
+import { Menu, LogOut, X, ArrowLeft } from "lucide-react";
 import { NotificationIcon } from "@/components/NotificationIcon";
-
-import { ReceiptScannerTesseract } from "@/components/admin/ReceiptScannerTesseract";
-import OrderTrackingWithMap from "@/components/admin/OrderTrackingWithMap";
-import { DeliveryReportTab } from "@/components/DeliveryReportTab";
-import { Reservations } from "@/components/admin/Reservations";
-import { SendMessage } from "@/components/admin/SendMessage";
+import { GeomarketingAnalyticsTab } from "@/components/GeomarketingAnalyticsTab";
 import { LiveDriverTrackingWindow } from "@/components/LiveDriverTrackingWindow";
 import { useLiveTracking } from "@/contexts/LiveTrackingContext";
-
-
-// Color scheme for order statuses
-const STATUS_COLORS = {
-  Pending: 'text-gray-600',
-  Ready: 'text-blue-600',
-  'On the Way': 'text-orange-600',
-  Delivered: 'text-green-600',
-};
 
 // Helper hook to get window width
 function useWindowWidth() {
@@ -42,9 +23,8 @@ function useWindowWidth() {
   return width;
 }
 
-export default function AdminDashboard() {
-  // All hooks must be at the top level, in the same order every render
-  const [, params] = useRoute("/admin/*");
+export default function GeomarketingDashboard() {
+  const [, params] = useRoute("/geomarketing/*");
   const [location, setLocation] = useLocation();
   const { logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -54,21 +34,20 @@ export default function AdminDashboard() {
   
   const isTablet = width >= 768 && width < 1024;
   const isDesktop = width >= 1024;
-  const currentTab = (params as any)?.["*"] || "create-order";
   
-  // Redirect to create-order if accessing /admin or /admin/dashboard
+  // Redirect to main geomarketing page if accessing /geomarketing or /geomarketing/
   useEffect(() => {
-    if (location === "/admin" || location === "/admin/dashboard" || !currentTab) {
-      setLocation("/admin/create-order");
+    if (location === "/geomarketing" || location === "/geomarketing/") {
+      setLocation("/geomarketing/analytics");
     }
-  }, [location, currentTab, setLocation]);
+  }, [location, setLocation]);
 
   // Auto-close sidebar on mobile when navigating
   useEffect(() => {
     if (isMobile) {
       setSidebarOpen(false);
     }
-  }, [currentTab, isMobile]);
+  }, [isMobile]);
 
   // Default sidebar state based on screen size
   useEffect(() => {
@@ -80,7 +59,7 @@ export default function AdminDashboard() {
   }, [isMobile]);
   
   // If redirecting, don't render content yet
-  if (location === "/admin" || location === "/admin/dashboard") {
+  if (location === "/geomarketing" || location === "/geomarketing/") {
     return null;
   }
 
@@ -89,44 +68,45 @@ export default function AdminDashboard() {
       {/* Developer Credit */}
       <DeveloperCredit />
       
-      {/* Mobile Header - Always visible on        {/* Mobile Header with Menu Toggle */}
-        {isMobile && (
-          <header className="border-b border-border/40 backdrop-blur-sm bg-white/95 shadow-sm px-4 py-3 flex items-center justify-between flex-shrink-0">
-            <div className="flex items-center gap-2 flex-1 min-w-0">
-              <img 
-                src="/barrel-logo.png" 
-                alt="The Barrel Restaurant (Pizza & Pasta)" 
-                className="h-8 w-auto object-contain"
-              />
-              <div className="flex flex-col min-w-0">
-                <h1 className="text-sm font-bold text-foreground truncate">Barrel Delivery</h1>
-                <p className="text-xs text-muted-foreground truncate">Admin Dashboard</p>
-              </div>
+      {/* Mobile Header with Menu Toggle */}
+      {isMobile && (
+        <header className="border-b border-border/40 backdrop-blur-sm bg-white/95 shadow-sm px-4 py-3 flex items-center justify-between flex-shrink-0">
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <img 
+              src="/barrel-logo.png" 
+              alt="The Barrel Restaurant (Pizza & Pasta)" 
+              className="h-8 w-auto object-contain"
+            />
+            <div className="flex flex-col min-w-0">
+              <h1 className="text-sm font-bold text-foreground truncate">Barrel Delivery</h1>
+              <p className="text-xs text-muted-foreground truncate">Geomarketing</p>
             </div>
-            <div className="flex items-center gap-2">
-              <NotificationIcon role="admin" />
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-2 text-xs h-8"
-                onClick={() => logout()}
-              >
-                <LogOut className="w-4 h-4" />
-                <span className="hidden xs:inline">Logout</span>
-              </Button>
-              <button
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="p-2 hover:bg-accent rounded-md transition-colors"
-              >
-                {sidebarOpen ? (
-                  <X className="w-5 h-5" />
-                ) : (
-                  <Menu className="w-5 h-5" />
-                )}
-              </button>
-            </div>
-          </header>
-        )}
+          </div>
+          <div className="flex items-center gap-2">
+            <NotificationIcon role="admin" />
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2 text-xs h-8"
+              onClick={() => logout()}
+            >
+              <LogOut className="w-4 h-4" />
+              <span className="hidden xs:inline">Logout</span>
+            </Button>
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="p-2 hover:bg-accent rounded-md transition-colors"
+            >
+              {sidebarOpen ? (
+                <X className="w-5 h-5" />
+              ) : (
+                <Menu className="w-5 h-5" />
+              )}
+            </button>
+          </div>
+        </header>
+      )}
+      
       {/* Main Layout Container */}
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar - Mobile: Fixed overlay, Desktop: Static */}
@@ -148,7 +128,7 @@ export default function AdminDashboard() {
                 shadow-lg
               `}
             >
-              <SidebarContent currentTab={currentTab} logout={logout} />
+              <SidebarContent logout={logout} />
             </aside>
           </>
         ) : (
@@ -171,10 +151,10 @@ export default function AdminDashboard() {
                   <h2 className="font-bold text-foreground text-sm truncate">
                     Barrel Delivery
                   </h2>
-                  <p className="text-xs text-muted-foreground truncate">Admin</p>
+                  <p className="text-xs text-muted-foreground truncate">Geomarketing</p>
                 </div>
               </div>
-              <SidebarContent currentTab={currentTab} logout={logout} />
+              <SidebarContent logout={logout} />
             </aside>
           </>
         )}
@@ -193,16 +173,10 @@ export default function AdminDashboard() {
                   />
                   <div>
                     <h1 className="text-lg md:text-xl font-bold text-foreground">
-                      Admin Dashboard
+                      Geomarketing Dashboard
                     </h1>
                     <p className="text-xs text-muted-foreground">The Barrel Restaurant</p>
                   </div>
-                </div>
-                
-                {/* Active Drivers Table in Header - Always visible */}
-                <div className="flex-1 border-l border-border/40 pl-6">
-                  <div className="text-xs font-semibold text-muted-foreground mb-2">ACTIVE DRIVERS</div>
-                  <HeaderDriversTable />
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -223,13 +197,7 @@ export default function AdminDashboard() {
           <div className="flex-1 overflow-auto">
             <div className="w-full h-full p-4 md:p-6">
               <div className="w-full max-w-7xl mx-auto">
-                {currentTab === "create-order" && <ReceiptScannerTesseract />}
-                {currentTab === "orders" && <Orders />}
-                {currentTab === "order-tracking" && <OrderTrackingWithMap />}
-                {currentTab === "reservations" && <Reservations />}
-                {currentTab === "drivers" && <DriverManagement />}
-                {currentTab === "delivery-report" && <DeliveryReportTab />}
-                {currentTab === "send-message" && <SendMessage />}
+                <GeomarketingAnalyticsTab />
               </div>
             </div>
           </div>
@@ -256,65 +224,26 @@ export default function AdminDashboard() {
 }
 
 function SidebarContent({
-  currentTab,
   logout,
 }: {
-  currentTab: string;
   logout: () => void;
 }) {
+  const [location] = useLocation();
+
   return (
     <>
       {/* Navigation */}
       <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
         <NavItem
-          href="/admin/create-order"
-          icon={<Plus className="w-5 h-5" />}
-          label="New Order"
-          active={currentTab === "create-order"}
-        />
-        <NavItem
-          href="/admin/orders"
-          icon={<Package2 className="w-5 h-5" />}
-          label="Orders"
-          active={currentTab === "orders"}
-          statusColor={STATUS_COLORS.Pending}
-        />
-        <NavItem
-          href="/admin/order-tracking"
-          icon={<Map className="w-5 h-5" />}
-          label="Order Tracking"
-          active={currentTab === "order-tracking"}
-          statusColor={STATUS_COLORS.Pending}
-        />
-        <NavItem
-          href="/admin/reservations"
-          icon={<Gift className="w-5 h-5" />}
-          label="Reservations"
-          active={currentTab === "reservations"}
-        />
-        <NavItem
-          href="/admin/send-message"
-          icon={<MessageSquare className="w-5 h-5" />}
-          label="Send Message"
-          active={currentTab === "send-message"}
-        />
-        <NavItem
-          href="/admin/drivers"
-          icon={<Truck className="w-5 h-5" />}
-          label="Drivers"
-          active={currentTab === "drivers"}
-        />
-        <NavItem
-          href="/admin/delivery-report"
-          icon={<Calendar className="w-5 h-5" />}
-          label="Delivery Report"
-          active={currentTab === "delivery-report"}
+          href="/geomarketing/analytics"
+          label="Analytics"
+          active={location === "/geomarketing/analytics"}
         />
         <div className="my-2 border-t border-border" />
         <NavItem
-          href="/geomarketing/analytics"
-          icon={<Map className="w-5 h-5" />}
-          label="Geomarketing Dashboard"
+          href="/admin/create-order"
+          icon={<ArrowLeft className="w-5 h-5" />}
+          label="Back to Admin"
           active={false}
         />
       </nav>
@@ -330,13 +259,11 @@ function NavItem({
   icon,
   label,
   active,
-  statusColor,
 }: {
   href: string;
-  icon: React.ReactNode;
+  icon?: React.ReactNode;
   label: string;
   active: boolean;
-  statusColor?: string;
 }) {
   return (
     <a href={href} className="block" onClick={(e) => {
@@ -349,9 +276,7 @@ function NavItem({
         variant={active ? "default" : "ghost"}
         className="w-full justify-start gap-3 text-sm h-9"
       >
-        <span className={statusColor}>
-          {icon}
-        </span>
+        {icon && <span>{icon}</span>}
         <span className="truncate">{label}</span>
       </Button>
     </a>
