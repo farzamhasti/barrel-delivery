@@ -2381,3 +2381,15 @@ These features are documented for future enhancement but are not required for th
 - [x] Test: TypeScript compilation: 0 errors (VERIFIED)
 - [x] Test: Dev server running successfully (VERIFIED)
 - [x] Production ready: Spatial analysis now correctly queries orders in specified date range (READY)
+
+
+## Phase 131: CRITICAL BUG FIX - Boundary Filtering Excluding All Zones (COMPLETED)
+- [x] Identified: filterZonesByBoundary was checking only zone center, not actual order locations
+- [x] Root cause: Zone centers were outside Fort Erie boundary, but orders within zones were inside
+- [x] Fixed: Updated filterZonesByBoundary to check if ANY orders in zone are inside boundary
+- [x] Logic: If zone center is inside, include it; if outside, check individual order locations
+- [x] Test: All 27 geographic boundary filter tests passing (VERIFIED)
+- [x] Test: All 14 spatial demand shift tests passing (VERIFIED)
+- [x] Test: TypeScript compilation: 0 errors (VERIFIED)
+- [x] Browser test: Zones now display correctly for May 7-13 date range (VERIFIED)
+- [x] Production ready: Spatial analysis now displays zones with proper boundary checking (READY)

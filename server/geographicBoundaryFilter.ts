@@ -138,12 +138,27 @@ export function findNearestBoundaryPoint(
  * @param zones - Array of zones with location data
  * @returns Filtered zones that are within the Fort Erie boundary
  */
-export function filterZonesByBoundary<T extends { latitude: number; longitude: number }>(
+export function filterZonesByBoundary<T extends { latitude: number; longitude: number; orderLocations?: Array<{ lat: number; lon: number }> }>(
   zones: T[]
 ): T[] {
   return zones.filter((zone) => {
-    const result = isPointInBoundary(zone.longitude, zone.latitude);
-    return result.isInside;
+    // First check if zone center is inside boundary
+    const centerResult = isPointInBoundary(zone.longitude, zone.latitude);
+    if (centerResult.isInside) {
+      return true;
+    }
+    
+    // If zone center is outside, check if any order locations are inside
+    if (zone.orderLocations && zone.orderLocations.length > 0) {
+      const hasOrdersInside = zone.orderLocations.some((order) => {
+        const orderResult = isPointInBoundary(order.lon, order.lat);
+        return orderResult.isInside;
+      });
+      return hasOrdersInside;
+    }
+    
+    // If no orders or center is outside, exclude the zone
+    return false;
   });
 }
 
