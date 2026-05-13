@@ -29,6 +29,7 @@ import {
   getCompetitorsFromAPI,
 } from './competitors';
 import { analyzeEmergingZones } from './emergingZonesAnalysis';
+import { analyzeDemandChange } from './demandChangeAnalysis';
 
 export const appRouter = router({
   places: router({
@@ -1270,7 +1271,35 @@ export const appRouter = router({
         }
       }),
     
-
+    analyzeDemandChange: publicProcedure
+      .input(z.object({
+        previousStartDate: z.date(),
+        previousEndDate: z.date(),
+        currentStartDate: z.date(),
+        currentEndDate: z.date(),
+      }))
+      .query(async ({ input }) => {
+        try {
+          const result = await analyzeDemandChange(
+            input.previousStartDate,
+            input.previousEndDate,
+            input.currentStartDate,
+            input.currentEndDate
+          );
+          return result;
+        } catch (error) {
+          console.error('[analytics.analyzeDemandChange] Error:', error);
+          return {
+            zones: [],
+            periodComparison: {
+              previousPeriod: { startDate: input.previousStartDate, endDate: input.previousEndDate, totalOrders: 0 },
+              currentPeriod: { startDate: input.currentStartDate, endDate: input.currentEndDate, totalOrders: 0 },
+            },
+            spatialInterpretation: 'Error analyzing demand changes.',
+            success: false,
+          };
+        }
+      }),
 
   }),
   gps: router({

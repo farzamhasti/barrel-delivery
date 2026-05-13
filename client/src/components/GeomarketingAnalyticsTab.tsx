@@ -6,6 +6,7 @@ import { trpc } from "@/lib/trpc";
 import { DatePickerModal } from "./DatePickerModal";
 import { AnalyticsSectionModalWithGIS } from "./AnalyticsSectionModalWithGIS";
 import { DeliveryHeatmapAnalysis } from "./DeliveryHeatmapAnalysis";
+import { DemandChangeAnalysisCard } from "./DemandChangeAnalysisCard";
 
 
 type DateRange = "daily" | "monthly";
@@ -182,6 +183,9 @@ export function GeomarketingAnalyticsTab() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Demand Change Analysis - Full Width */}
+      <DemandChangeAnalysisCard />
 
       {/* Analytics Sections Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
