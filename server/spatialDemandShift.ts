@@ -1,8 +1,6 @@
-import { getDb } from "./db";
 import * as h3 from "h3-js";
-import { orders } from '../drizzle/schema';
-import { eq, and, gte, lte, isNotNull } from 'drizzle-orm';
 import { filterZonesByBoundary } from './geographicBoundaryFilter';
+import { getOrdersWithCoordinates } from './geomarketing';
 
 export interface SpatialZone {
   hexId: string;
@@ -40,54 +38,38 @@ export async function analyzeSpatialDemandShift(
   areaFilter?: string
 ): Promise<SpatialAnalysisResult> {
   try {
-    const db = await getDb();
-
-    if (!db) {
-      return {
-        zones: [],
-        temporalSnapshots: [],
-        spatialInterpretation: "Database connection unavailable.",
-        success: false,
-      };
-    }
-
-    // Get all completed orders within date range
-    const adjustedEndDate = new Date(endDate);
-    adjustedEndDate.setDate(adjustedEndDate.getDate() + 1);
-    adjustedEndDate.setHours(0, 0, 0, 0);
-
-    const baseConditions: any[] = [
-      gte(orders.createdAt, startDate),
-      lte(orders.createdAt, adjustedEndDate),
-      isNotNull(orders.deliveredAt),
-    ];
-
+    // Get all completed orders within date range with geocoding
+    let ordersData = await getOrdersWithCoordinates(startDate, endDate);
+    
+    // Apply area filter if specified
     if (areaFilter && areaFilter !== "All") {
-      baseConditions.push(eq(orders.area, areaFilter as any));
+      ordersData = ordersData.filter((o: any) => o.area === areaFilter);
     }
+    
+    // Log for debugging
+    console.log(`[analyzeSpatialDemandShift] Total orders fetched: ${ordersData.length}`);
+    const ordersWithCoords = ordersData.filter((o: any) => o.customerLatitude && o.customerLongitude);
+    console.log(`[analyzeSpatialDemandShift] Orders with coordinates: ${ordersWithCoords.length}`);
 
-    const ordersData = await db
-      .select()
-      .from(orders)
-      .where(and(...baseConditions));
-
-    if (ordersData.length === 0) {
+    if (ordersWithCoords.length === 0) {
       return {
         zones: [],
         temporalSnapshots: [],
-        spatialInterpretation: "No delivery data available for the selected period.",
+        spatialInterpretation: "No delivery data available with valid coordinates for the selected period.",
         success: false,
       };
     }
 
     // Split data into two equal time periods for comparison
     const midpoint = new Date((startDate.getTime() + endDate.getTime()) / 2);
-    const previousPeriodOrders = ordersData.filter(
+    const previousPeriodOrders = ordersWithCoords.filter(
       (o: any) => o.createdAt.getTime() < midpoint.getTime()
     );
-    const currentPeriodOrders = ordersData.filter(
+    const currentPeriodOrders = ordersWithCoords.filter(
       (o: any) => o.createdAt.getTime() >= midpoint.getTime()
     );
+    
+    console.log(`[analyzeSpatialDemandShift] Previous period orders: ${previousPeriodOrders.length}, Current period orders: ${currentPeriodOrders.length}`);
 
     // Aggregate orders into H3 hexagons (resolution 5 for ~1km cells)
     const hexResolution = 5;
@@ -197,7 +179,7 @@ export async function analyzeSpatialDemandShift(
     zones.sort((a, b) => Math.abs(b.densityChange) - Math.abs(a.densityChange));
 
     // Generate temporal snapshots (weekly breakdown)
-    const temporalSnapshots = generateTemporalSnapshots(ordersData, startDate, endDate);
+    const temporalSnapshots = generateTemporalSnapshots(ordersWithCoords, startDate, endDate);
 
     // Filter zones by Fort Erie boundary
     const boundaryFilteredZones = filterZonesByBoundary(zones);
@@ -238,7 +220,7 @@ function generateTemporalSnapshots(
   while (currentWeekStart < endDate) {
     const weekEnd = new Date(currentWeekStart.getTime() + weekMs);
     const weekOrders = orders.filter(
-      (o: any) => (o.createdAt as number) >= currentWeekStart.getTime() && (o.createdAt as number) < weekEnd.getTime()
+      (o: any) => o.createdAt.getTime() >= currentWeekStart.getTime() && o.createdAt.getTime() < weekEnd.getTime()
     );
 
     // Calculate spatial density for this week
