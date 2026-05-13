@@ -65,7 +65,7 @@ export default function GeomarketingLogin() {
     loginMutation.mutate({
       username,
       password,
-      role: "admin",
+      role: "geomarketing",
     });
   };
 

@@ -41,14 +41,16 @@ function ProtectedRoute({ component: Component, requiredRole }: { component: any
   return <Component />;
 }
 
-function SystemProtectedRoute({ component: Component, requiredRole }: { component: any; requiredRole: "admin" | "kitchen" }) {
+function SystemProtectedRoute({ component: Component, requiredRole }: { component: any; requiredRole: "admin" | "kitchen" | "geomarketing" }) {
   // Check if user has a valid system session token stored locally
   const sessionToken = localStorage.getItem('systemSessionToken');
   const storedRole = localStorage.getItem('systemRole');
   
   // If no session token, show login page
   if (!sessionToken || !storedRole) {
-    return requiredRole === "admin" ? <AdminLogin /> : <KitchenLogin />;
+    if (requiredRole === "admin") return <AdminLogin />;
+    if (requiredRole === "kitchen") return <KitchenLogin />;
+    if (requiredRole === "geomarketing") return <GeomarketingLogin />;
   }
   
   // If role doesn't match, show not found
@@ -70,7 +72,7 @@ function Router() {
       <Route path="/driver-login" component={DriverLogin} />
       <Route path="/driver-dashboard" component={DriverDashboard} />
       <Route path="/admin/*" component={() => <SystemProtectedRoute component={AdminDashboard} requiredRole="admin" />} />
-      <Route path="/geomarketing/*" component={() => <SystemProtectedRoute component={GeomarketingDashboard} requiredRole="admin" />} />
+      <Route path="/geomarketing/*" component={() => <SystemProtectedRoute component={GeomarketingDashboard} requiredRole="geomarketing" />} />
       <Route path="/driver/*" component={DriverPanel} />
       <Route path="/kitchen" component={() => <SystemProtectedRoute component={KitchenDashboardPage} requiredRole="kitchen" />} />
       <Route path="/404" component={NotFound} />

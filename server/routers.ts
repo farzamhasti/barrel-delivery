@@ -634,7 +634,7 @@ export const appRouter = router({
         const validCredentials = [
           { username: 'barrel_admin', password: 'Barrel_1981@', role: 'admin' },
           { username: 'barrel_kitchen', password: '1111', role: 'kitchen' },
-          { username: 'barrel_manager', password: 'Barrel_geo@', role: 'admin' },
+          { username: 'barrel_manager', password: 'Barrel_geo@', role: 'geomarketing' },
         ];
         
         const user = validCredentials.find(

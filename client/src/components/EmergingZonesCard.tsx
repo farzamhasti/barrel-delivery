@@ -1,7 +1,7 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { TrendingUp, MapPin, Calendar, ChevronDown, ArrowUpRight, ArrowDownLeft } from "lucide-react";
 import { trpc } from "@/lib/trpc";
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 
 interface EmergingZonesCardProps {
@@ -26,10 +26,29 @@ export function EmergingZonesCard({ onClick, dateRange, areaFilter }: EmergingZo
   // Use independent date range (always set now)
   const effectiveDateRange = independentDateRange;
 
-  const { data: spatialData, isLoading } = trpc.analytics.analyzeSpatialDemandShift.useQuery({
+  // Memoize query parameters using timestamps to ensure stable references
+  const queryParams = useMemo(() => ({
     startDate: effectiveDateRange.startDate,
     endDate: effectiveDateRange.endDate,
-    areaFilter: areaFilter,
+    areaFilter: areaFilter || '',
+  }), [
+    effectiveDateRange.startDate.getTime(),
+    effectiveDateRange.endDate.getTime(),
+    areaFilter,
+  ]);
+
+  // Debug: Log when query parameters change
+  useEffect(() => {
+    console.log('[EmergingZonesCard] Query params changed:', {
+      startDate: queryParams.startDate.toISOString(),
+      endDate: queryParams.endDate.toISOString(),
+      areaFilter: queryParams.areaFilter,
+    });
+  }, [queryParams]);
+
+  const { data: spatialData, isLoading } = trpc.analytics.analyzeSpatialDemandShift.useQuery(queryParams, {
+    // Always refetch to get fresh data
+    staleTime: 0,
   });
 
   const getTopZones = () => {
@@ -114,6 +133,7 @@ export function EmergingZonesCard({ onClick, dateRange, areaFilter }: EmergingZo
                 value={independentDateRange.startDate.toISOString().split('T')[0]}
                 onChange={(e) => {
                   const newDate = new Date(e.target.value);
+                  newDate.setHours(0, 0, 0, 0);
                   setIndependentDateRange({
                     ...independentDateRange,
                     startDate: newDate,
@@ -131,7 +151,7 @@ export function EmergingZonesCard({ onClick, dateRange, areaFilter }: EmergingZo
                   const newDate = new Date(e.target.value);
                   newDate.setHours(23, 59, 59, 999);
                   setIndependentDateRange({
-                    ...independentDateRange,
+                    startDate: independentDateRange.startDate,
                     endDate: newDate,
                   });
                 }}
