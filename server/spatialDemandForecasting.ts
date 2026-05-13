@@ -7,6 +7,7 @@
  */
 
 import { SpatialZone } from './spatialDemandShift';
+import { filterZonesByBoundary } from './geographicBoundaryFilter';
 
 export interface DemandTrend {
   hexId: string;
@@ -50,7 +51,10 @@ export interface SpatialForecastResult {
  * Calculates growth rates and trend directions
  */
 export function analyzeDemandTrends(zones: SpatialZone[]): DemandTrend[] {
-  return zones.map(zone => {
+  // Filter zones by Fort Erie boundary
+  const boundaryFilteredZones = filterZonesByBoundary(zones);
+  
+  return boundaryFilteredZones.map(zone => {
     const densityChange = zone.currentDensity - zone.previousDensity;
     const growthRate = zone.previousDensity > 0 
       ? (densityChange / zone.previousDensity) * 100 

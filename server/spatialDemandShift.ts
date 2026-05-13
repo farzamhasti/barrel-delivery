@@ -2,6 +2,7 @@ import { getDb } from "./db";
 import * as h3 from "h3-js";
 import { orders } from '../drizzle/schema';
 import { eq, and, gte, lte, isNotNull } from 'drizzle-orm';
+import { filterZonesByBoundary } from './geographicBoundaryFilter';
 
 export interface SpatialZone {
   hexId: string;
@@ -198,11 +199,14 @@ export async function analyzeSpatialDemandShift(
     // Generate temporal snapshots (weekly breakdown)
     const temporalSnapshots = generateTemporalSnapshots(ordersData, startDate, endDate);
 
+    // Filter zones by Fort Erie boundary
+    const boundaryFilteredZones = filterZonesByBoundary(zones);
+
     // Generate AI-based spatial interpretation
-    const spatialInterpretation = generateSpatialInterpretation(zones, startDate, endDate);
+    const spatialInterpretation = generateSpatialInterpretation(boundaryFilteredZones, startDate, endDate);
 
     return {
-      zones: zones.slice(0, 10), // Return top 10 zones
+      zones: boundaryFilteredZones.slice(0, 10), // Return top 10 zones within boundary
       temporalSnapshots,
       spatialInterpretation,
       success: true,

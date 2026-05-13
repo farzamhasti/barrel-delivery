@@ -7,6 +7,11 @@ vi.mock("./db", () => ({
   getDb: vi.fn(),
 }));
 
+// Mock the boundary filter to return all zones (for testing)
+vi.mock("./geographicBoundaryFilter", () => ({
+  filterZonesByBoundary: (zones: any[]) => zones,
+}));
+
 import { getDb } from "./db";
 
 describe("Spatial Demand Shift Analysis", () => {
@@ -35,8 +40,8 @@ describe("Spatial Demand Shift Analysis", () => {
   it("should return empty zones when no orders exist in date range", async () => {
     // Mock the new Drizzle query pattern
     const mockDb = {
-      select: vi.fn().mockReturnThis(),
-      from: vi.fn().mockReturnThis(),
+      select: vi.fn(function() { return this; }),
+      from: vi.fn(function() { return this; }),
       where: vi.fn().mockResolvedValueOnce([]),
     };
 
@@ -63,8 +68,8 @@ describe("Spatial Demand Shift Analysis", () => {
       // Previous period orders (before midpoint)
       {
         id: 1,
-        customerLatitude: 42.9849,
-        customerLongitude: -79.0204,
+        customerLatitude: 42.9,
+        customerLongitude: -78.95,
         createdAt: new Date(startDate.getTime() + 1000),
         status: "Delivered",
         area: "Downtown",
@@ -72,8 +77,8 @@ describe("Spatial Demand Shift Analysis", () => {
       },
       {
         id: 2,
-        customerLatitude: 42.9849,
-        customerLongitude: -79.0204,
+        customerLatitude: 42.9,
+        customerLongitude: -78.95,
         createdAt: new Date(startDate.getTime() + 2000),
         status: "Delivered",
         area: "Downtown",
@@ -82,8 +87,8 @@ describe("Spatial Demand Shift Analysis", () => {
       // Current period orders (after midpoint) - same location, more orders
       {
         id: 3,
-        customerLatitude: 42.9849,
-        customerLongitude: -79.0204,
+        customerLatitude: 42.9,
+        customerLongitude: -78.95,
         createdAt: new Date(midpoint.getTime() + 1000),
         status: "Delivered",
         area: "Downtown",
@@ -91,8 +96,8 @@ describe("Spatial Demand Shift Analysis", () => {
       },
       {
         id: 4,
-        customerLatitude: 42.9849,
-        customerLongitude: -79.0204,
+        customerLatitude: 42.9,
+        customerLongitude: -78.95,
         createdAt: new Date(midpoint.getTime() + 2000),
         status: "Delivered",
         area: "Downtown",
@@ -100,8 +105,8 @@ describe("Spatial Demand Shift Analysis", () => {
       },
       {
         id: 5,
-        customerLatitude: 42.9849,
-        customerLongitude: -79.0204,
+        customerLatitude: 42.9,
+        customerLongitude: -78.95,
         createdAt: new Date(midpoint.getTime() + 3000),
         status: "Delivered",
         area: "Downtown",
@@ -110,8 +115,8 @@ describe("Spatial Demand Shift Analysis", () => {
     ];
 
     const mockDb = {
-      select: vi.fn().mockReturnThis(),
-      from: vi.fn().mockReturnThis(),
+      select: vi.fn(function() { return this; }),
+      from: vi.fn(function() { return this; }),
       where: vi.fn().mockResolvedValueOnce(mockOrders),
     };
 
@@ -144,8 +149,8 @@ describe("Spatial Demand Shift Analysis", () => {
       // Current period: new orders at location A
       {
         id: 1,
-        customerLatitude: 42.9849,
-        customerLongitude: -79.0204,
+        customerLatitude: 42.9,
+        customerLongitude: -78.95,
         createdAt: new Date(midpoint.getTime() + 1000),
         status: "Delivered",
         area: "Downtown",
@@ -153,8 +158,8 @@ describe("Spatial Demand Shift Analysis", () => {
       },
       {
         id: 2,
-        customerLatitude: 42.9849,
-        customerLongitude: -79.0204,
+        customerLatitude: 42.9,
+        customerLongitude: -78.95,
         createdAt: new Date(midpoint.getTime() + 2000),
         status: "Delivered",
         area: "Downtown",
@@ -163,8 +168,8 @@ describe("Spatial Demand Shift Analysis", () => {
     ];
 
     const mockDb = {
-      select: vi.fn().mockReturnThis(),
-      from: vi.fn().mockReturnThis(),
+      select: vi.fn(function() { return this; }),
+      from: vi.fn(function() { return this; }),
       where: vi.fn().mockResolvedValueOnce(mockOrders),
     };
 
@@ -191,8 +196,8 @@ describe("Spatial Demand Shift Analysis", () => {
       // Previous period: orders at location
       {
         id: 1,
-        customerLatitude: 42.9849,
-        customerLongitude: -79.0204,
+        customerLatitude: 42.9,
+        customerLongitude: -78.95,
         createdAt: new Date(startDate.getTime() + 1000),
         status: "Delivered",
         area: "Downtown",
@@ -200,8 +205,8 @@ describe("Spatial Demand Shift Analysis", () => {
       },
       {
         id: 2,
-        customerLatitude: 42.9849,
-        customerLongitude: -79.0204,
+        customerLatitude: 42.9,
+        customerLongitude: -78.95,
         createdAt: new Date(startDate.getTime() + 2000),
         status: "Delivered",
         area: "Downtown",
@@ -220,8 +225,8 @@ describe("Spatial Demand Shift Analysis", () => {
     ];
 
     const mockDb = {
-      select: vi.fn().mockReturnThis(),
-      from: vi.fn().mockReturnThis(),
+      select: vi.fn(function() { return this; }),
+      from: vi.fn(function() { return this; }),
       where: vi.fn().mockResolvedValueOnce(mockOrders),
     };
 
@@ -245,8 +250,8 @@ describe("Spatial Demand Shift Analysis", () => {
       // Previous period: 2 orders
       {
         id: 1,
-        customerLatitude: 42.9849,
-        customerLongitude: -79.0204,
+        customerLatitude: 42.9,
+        customerLongitude: -78.95,
         createdAt: new Date(startDate.getTime() + 1000),
         status: "Delivered",
         area: "Downtown",
@@ -254,8 +259,8 @@ describe("Spatial Demand Shift Analysis", () => {
       },
       {
         id: 2,
-        customerLatitude: 42.9849,
-        customerLongitude: -79.0204,
+        customerLatitude: 42.9,
+        customerLongitude: -78.95,
         createdAt: new Date(startDate.getTime() + 2000),
         status: "Delivered",
         area: "Downtown",
@@ -264,8 +269,8 @@ describe("Spatial Demand Shift Analysis", () => {
       // Current period: 2 orders (same density)
       {
         id: 3,
-        customerLatitude: 42.9849,
-        customerLongitude: -79.0204,
+        customerLatitude: 42.9,
+        customerLongitude: -78.95,
         createdAt: new Date(midpoint.getTime() + 1000),
         status: "Delivered",
         area: "Downtown",
@@ -273,8 +278,8 @@ describe("Spatial Demand Shift Analysis", () => {
       },
       {
         id: 4,
-        customerLatitude: 42.9849,
-        customerLongitude: -79.0204,
+        customerLatitude: 42.9,
+        customerLongitude: -78.95,
         createdAt: new Date(midpoint.getTime() + 2000),
         status: "Delivered",
         area: "Downtown",
@@ -283,8 +288,8 @@ describe("Spatial Demand Shift Analysis", () => {
     ];
 
     const mockDb = {
-      select: vi.fn().mockReturnThis(),
-      from: vi.fn().mockReturnThis(),
+      select: vi.fn(function() { return this; }),
+      from: vi.fn(function() { return this; }),
       where: vi.fn().mockResolvedValueOnce(mockOrders),
     };
 
@@ -311,8 +316,8 @@ describe("Spatial Demand Shift Analysis", () => {
     const mockOrders = [
       {
         id: 1,
-        customerLatitude: 42.9849,
-        customerLongitude: -79.0204,
+        customerLatitude: 42.9,
+        customerLongitude: -78.95,
         createdAt: new Date(startDate.getTime() + 1000),
         status: "Delivered",
         area: "Downtown",
@@ -320,8 +325,8 @@ describe("Spatial Demand Shift Analysis", () => {
       },
       {
         id: 2,
-        customerLatitude: 42.9849,
-        customerLongitude: -79.0204,
+        customerLatitude: 42.9,
+        customerLongitude: -78.95,
         createdAt: new Date(midpoint.getTime() + 1000),
         status: "Delivered",
         area: "Downtown",
@@ -330,8 +335,8 @@ describe("Spatial Demand Shift Analysis", () => {
     ];
 
     const mockDb = {
-      select: vi.fn().mockReturnThis(),
-      from: vi.fn().mockReturnThis(),
+      select: vi.fn(function() { return this; }),
+      from: vi.fn(function() { return this; }),
       where: vi.fn().mockResolvedValueOnce(mockOrders),
     };
 
@@ -353,8 +358,8 @@ describe("Spatial Demand Shift Analysis", () => {
     const mockOrders = [
       {
         id: 1,
-        customerLatitude: 42.9849,
-        customerLongitude: -79.0204,
+        customerLatitude: 42.9,
+        customerLongitude: -78.95,
         createdAt: new Date(startDate.getTime() + 1000),
         status: "Delivered",
         area: "Downtown",
@@ -362,8 +367,8 @@ describe("Spatial Demand Shift Analysis", () => {
       },
       {
         id: 2,
-        customerLatitude: 42.9849,
-        customerLongitude: -79.0204,
+        customerLatitude: 42.9,
+        customerLongitude: -78.95,
         createdAt: new Date(midpoint.getTime() + 1000),
         status: "Delivered",
         area: "Downtown",
@@ -372,8 +377,8 @@ describe("Spatial Demand Shift Analysis", () => {
     ];
 
     const mockDb = {
-      select: vi.fn().mockReturnThis(),
-      from: vi.fn().mockReturnThis(),
+      select: vi.fn(function() { return this; }),
+      from: vi.fn(function() { return this; }),
       where: vi.fn().mockResolvedValueOnce(mockOrders),
     };
 
@@ -397,8 +402,8 @@ describe("Spatial Demand Shift Analysis", () => {
     const mockOrders = [
       {
         id: 1,
-        customerLatitude: 42.9849,
-        customerLongitude: -79.0204,
+        customerLatitude: 42.9,
+        customerLongitude: -78.95,
         createdAt: new Date(startDate.getTime() + 1000),
         status: "Delivered",
         area: "Downtown",
@@ -406,8 +411,8 @@ describe("Spatial Demand Shift Analysis", () => {
       },
       {
         id: 2,
-        customerLatitude: 42.9849,
-        customerLongitude: -79.0204,
+        customerLatitude: 42.9,
+        customerLongitude: -78.95,
         createdAt: new Date(midpoint.getTime() + 1000),
         status: "Delivered",
         area: "Downtown",
@@ -416,8 +421,8 @@ describe("Spatial Demand Shift Analysis", () => {
     ];
 
     const mockDb = {
-      select: vi.fn().mockReturnThis(),
-      from: vi.fn().mockReturnThis(),
+      select: vi.fn(function() { return this; }),
+      from: vi.fn(function() { return this; }),
       where: vi.fn().mockResolvedValueOnce(mockOrders),
     };
 
@@ -465,8 +470,8 @@ describe("Spatial Demand Shift Analysis", () => {
     }
 
     const mockDb = {
-      select: vi.fn().mockReturnThis(),
-      from: vi.fn().mockReturnThis(),
+      select: vi.fn(function() { return this; }),
+      from: vi.fn(function() { return this; }),
       where: vi.fn().mockResolvedValueOnce(mockOrders),
     };
 
@@ -488,8 +493,8 @@ describe("Spatial Demand Shift Analysis", () => {
       // Order with valid coordinates
       {
         id: 1,
-        customerLatitude: 42.9849,
-        customerLongitude: -79.0204,
+        customerLatitude: 42.9,
+        customerLongitude: -78.95,
         createdAt: new Date(startDate.getTime() + 1000),
         status: "Delivered",
         area: "Downtown",
@@ -508,8 +513,8 @@ describe("Spatial Demand Shift Analysis", () => {
       // Order with valid coordinates in current period
       {
         id: 3,
-        customerLatitude: 42.9849,
-        customerLongitude: -79.0204,
+        customerLatitude: 42.9,
+        customerLongitude: -78.95,
         createdAt: new Date(midpoint.getTime() + 1000),
         status: "Delivered",
         area: "Downtown",
@@ -518,8 +523,8 @@ describe("Spatial Demand Shift Analysis", () => {
     ];
 
     const mockDb = {
-      select: vi.fn().mockReturnThis(),
-      from: vi.fn().mockReturnThis(),
+      select: vi.fn(function() { return this; }),
+      from: vi.fn(function() { return this; }),
       where: vi.fn().mockResolvedValueOnce(mockOrders),
     };
 
@@ -542,8 +547,8 @@ describe("Spatial Demand Shift Analysis", () => {
       // Previous period: 2 orders
       {
         id: 1,
-        customerLatitude: 42.9849,
-        customerLongitude: -79.0204,
+        customerLatitude: 42.9,
+        customerLongitude: -78.95,
         createdAt: new Date(startDate.getTime() + 1000),
         status: "Delivered",
         area: "Downtown",
@@ -551,8 +556,8 @@ describe("Spatial Demand Shift Analysis", () => {
       },
       {
         id: 2,
-        customerLatitude: 42.9849,
-        customerLongitude: -79.0204,
+        customerLatitude: 42.9,
+        customerLongitude: -78.95,
         createdAt: new Date(startDate.getTime() + 2000),
         status: "Delivered",
         area: "Downtown",
@@ -561,8 +566,8 @@ describe("Spatial Demand Shift Analysis", () => {
       // Current period: 5 orders (150% growth)
       {
         id: 3,
-        customerLatitude: 42.9849,
-        customerLongitude: -79.0204,
+        customerLatitude: 42.9,
+        customerLongitude: -78.95,
         createdAt: new Date(midpoint.getTime() + 1000),
         status: "Delivered",
         area: "Downtown",
@@ -570,8 +575,8 @@ describe("Spatial Demand Shift Analysis", () => {
       },
       {
         id: 4,
-        customerLatitude: 42.9849,
-        customerLongitude: -79.0204,
+        customerLatitude: 42.9,
+        customerLongitude: -78.95,
         createdAt: new Date(midpoint.getTime() + 2000),
         status: "Delivered",
         area: "Downtown",
@@ -579,8 +584,8 @@ describe("Spatial Demand Shift Analysis", () => {
       },
       {
         id: 5,
-        customerLatitude: 42.9849,
-        customerLongitude: -79.0204,
+        customerLatitude: 42.9,
+        customerLongitude: -78.95,
         createdAt: new Date(midpoint.getTime() + 3000),
         status: "Delivered",
         area: "Downtown",
@@ -588,8 +593,8 @@ describe("Spatial Demand Shift Analysis", () => {
       },
       {
         id: 6,
-        customerLatitude: 42.9849,
-        customerLongitude: -79.0204,
+        customerLatitude: 42.9,
+        customerLongitude: -78.95,
         createdAt: new Date(midpoint.getTime() + 4000),
         status: "Delivered",
         area: "Downtown",
@@ -597,8 +602,8 @@ describe("Spatial Demand Shift Analysis", () => {
       },
       {
         id: 7,
-        customerLatitude: 42.9849,
-        customerLongitude: -79.0204,
+        customerLatitude: 42.9,
+        customerLongitude: -78.95,
         createdAt: new Date(midpoint.getTime() + 5000),
         status: "Delivered",
         area: "Downtown",
@@ -607,8 +612,8 @@ describe("Spatial Demand Shift Analysis", () => {
     ];
 
     const mockDb = {
-      select: vi.fn().mockReturnThis(),
-      from: vi.fn().mockReturnThis(),
+      select: vi.fn(function() { return this; }),
+      from: vi.fn(function() { return this; }),
       where: vi.fn().mockResolvedValueOnce(mockOrders),
     };
 
@@ -635,8 +640,8 @@ describe("Spatial Demand Shift Analysis", () => {
       // Previous period: 10 orders
       ...Array.from({ length: 10 }, (_, i) => ({
         id: i,
-        customerLatitude: 42.9849,
-        customerLongitude: -79.0204,
+        customerLatitude: 42.9,
+        customerLongitude: -78.95,
         createdAt: new Date(startDate.getTime() + i * 1000),
         status: "Delivered",
         area: "Downtown",
@@ -645,8 +650,8 @@ describe("Spatial Demand Shift Analysis", () => {
       // Current period: 12 orders (20% growth)
       ...Array.from({ length: 12 }, (_, i) => ({
         id: 10 + i,
-        customerLatitude: 42.9849,
-        customerLongitude: -79.0204,
+        customerLatitude: 42.9,
+        customerLongitude: -78.95,
         createdAt: new Date(midpoint.getTime() + i * 1000),
         status: "Delivered",
         area: "Downtown",
@@ -655,8 +660,8 @@ describe("Spatial Demand Shift Analysis", () => {
     ];
 
     const mockDb = {
-      select: vi.fn().mockReturnThis(),
-      from: vi.fn().mockReturnThis(),
+      select: vi.fn(function() { return this; }),
+      from: vi.fn(function() { return this; }),
       where: vi.fn().mockResolvedValueOnce(mockOrders),
     };
 
@@ -683,8 +688,8 @@ describe("Spatial Demand Shift Analysis", () => {
       // Previous period: 10 orders
       ...Array.from({ length: 10 }, (_, i) => ({
         id: i,
-        customerLatitude: 42.9849,
-        customerLongitude: -79.0204,
+        customerLatitude: 42.9,
+        customerLongitude: -78.95,
         createdAt: new Date(startDate.getTime() + i * 1000),
         status: "Delivered",
         area: "Downtown",
@@ -693,8 +698,8 @@ describe("Spatial Demand Shift Analysis", () => {
       // Current period: 8 orders (20% decline)
       ...Array.from({ length: 8 }, (_, i) => ({
         id: 10 + i,
-        customerLatitude: 42.9849,
-        customerLongitude: -79.0204,
+        customerLatitude: 42.9,
+        customerLongitude: -78.95,
         createdAt: new Date(midpoint.getTime() + i * 1000),
         status: "Delivered",
         area: "Downtown",
@@ -703,8 +708,8 @@ describe("Spatial Demand Shift Analysis", () => {
     ];
 
     const mockDb = {
-      select: vi.fn().mockReturnThis(),
-      from: vi.fn().mockReturnThis(),
+      select: vi.fn(function() { return this; }),
+      from: vi.fn(function() { return this; }),
       where: vi.fn().mockResolvedValueOnce(mockOrders),
     };
 

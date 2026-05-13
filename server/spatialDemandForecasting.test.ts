@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
   analyzeDemandTrends,
   projectFutureDensity,
@@ -11,6 +11,11 @@ import {
   DemandTrend,
   ForecastedZone,
 } from './spatialDemandForecasting';
+
+// Mock the boundary filter to return all zones (for testing)
+vi.mock("./geographicBoundaryFilter", () => ({
+  filterZonesByBoundary: (zones: any[]) => zones,
+}));
 
 // Mock data
 const mockZones: SpatialZone[] = [
