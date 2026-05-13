@@ -99,10 +99,12 @@ export function EmergingZonesModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
         ref={contentRef}
-        className={`overflow-hidden flex flex-col fixed inset-0 max-w-none max-h-none rounded-none p-0`}
+        className={`overflow-hidden flex flex-col fixed max-w-[95vw] max-h-[95vh] rounded-lg p-0`}
         style={{
-          transform: `translate(${position.x}px, ${position.y}px)`,
-          transition: isDragging ? 'none' : 'transform 0.2s ease-out',
+          left: `calc(50% + ${position.x}px)`,
+          top: `calc(50% + ${position.y}px)`,
+          transform: 'translate(-50%, -50%)',
+          transition: isDragging ? 'none' : 'all 0.2s ease-out',
         }}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
