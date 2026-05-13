@@ -2361,3 +2361,12 @@ These features are documented for future enhancement but are not required for th
 - [x] Test navigation between admin and geomarketing dashboards (VERIFIED)
 - [x] TypeScript compilation: 0 errors (VERIFIED)
 - [x] All existing tests still pass (VERIFIED)
+
+## Phase 129: Move Geomarketing Dashboard to Home Page (COMPLETED)
+- [x] Add Geomarketing Dashboard card to Home page with Map icon (DONE)
+- [x] Create GeomarketingLogin.tsx page for authentication (DONE)
+- [x] Update App.tsx to add /geomarketing-login route (DONE)
+- [x] Remove Geomarketing Dashboard link from AdminDashboard sidebar (DONE)
+- [x] Verify navigation from Home → Geomarketing Login → Geomarketing Dashboard (VERIFIED)
+- [x] TypeScript compilation: 0 errors (VERIFIED)
+- [x] Dev server hot-reload working (VERIFIED)

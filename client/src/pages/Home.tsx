@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Package2, Truck, ChefHat } from "lucide-react";
+import { Package2, Truck, ChefHat, Map } from "lucide-react";
 import { DeveloperCredit } from "@/components/DeveloperCredit";
 
 export default function Home() {
@@ -97,6 +97,23 @@ export default function Home() {
                 onClick={() => setLocation("/kitchen-login")}
               >
                 Open Kitchen Dashboard
+              </Button>
+            </div>
+
+            <div className="bg-card rounded-xl border border-border p-6 hover:border-accent/50 transition-all hover:shadow-md">
+              <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
+                <Map className="w-5 h-5 text-accent" />
+                Geomarketing
+              </h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Analyze geographic demand patterns and spatial delivery trends.
+              </p>
+              <Button
+                className="w-full"
+                size="lg"
+                onClick={() => setLocation("/geomarketing-login")}
+              >
+                Open Geomarketing Dashboard
               </Button>
             </div>
           </div>

@@ -310,13 +310,6 @@ function SidebarContent({
           label="Delivery Report"
           active={currentTab === "delivery-report"}
         />
-        <div className="my-2 border-t border-border" />
-        <NavItem
-          href="/geomarketing/analytics"
-          icon={<Map className="w-5 h-5" />}
-          label="Geomarketing Dashboard"
-          active={false}
-        />
       </nav>
 
       {/* Footer */}
