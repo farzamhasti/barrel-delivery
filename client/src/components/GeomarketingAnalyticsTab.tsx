@@ -6,9 +6,7 @@ import { trpc } from "@/lib/trpc";
 import { DatePickerModal } from "./DatePickerModal";
 import { AnalyticsSectionModalWithGIS } from "./AnalyticsSectionModalWithGIS";
 import { DeliveryHeatmapAnalysis } from "./DeliveryHeatmapAnalysis";
-import { EmergingZonesCard } from "./EmergingZonesCard";
-import { EmergingZonesModal } from "./EmergingZonesModal";
-import { ZoneMapVisualization } from "./ZoneMapVisualization";
+
 
 type DateRange = "daily" | "monthly";
 type AreaFilter = "all" | "Downtown" | "Central Park" | "Both";
@@ -25,8 +23,6 @@ export function GeomarketingAnalyticsTab() {
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [openSectionModal, setOpenSectionModal] = useState<string | null>(null);
   const [showHeatmap, setShowHeatmap] = useState(false);
-  const [showEmergingZones, setShowEmergingZones] = useState(false);
-  const [emergingZonesDateRange, setEmergingZonesDateRange] = useState<{ startDate: Date; endDate: Date } | null>(null);
 
   // Calculate date range for queries
   const getDateRangeForQuery = () => {
@@ -349,15 +345,7 @@ export function GeomarketingAnalyticsTab() {
           </CardContent>
         </Card>
 
-        {/* Emerging Demand Zones Card */}
-        <EmergingZonesCard
-          onClick={(independentDateRange) => {
-            setEmergingZonesDateRange(independentDateRange);
-            setShowEmergingZones(true);
-          }}
-          dateRange={dateRangeQuery}
-          areaFilter={areaFilter === 'all' ? 'All' : areaFilter}
-        />
+
       </div>
 
       {/* Date Picker Modal */}
@@ -441,13 +429,7 @@ export function GeomarketingAnalyticsTab() {
         </div>
       )}
 
-      {/* Emerging Zones Modal */}
-      <EmergingZonesModal
-        isOpen={showEmergingZones}
-        onClose={() => setShowEmergingZones(false)}
-        dateRange={emergingZonesDateRange || dateRangeQuery}
-        areaFilter={areaFilter === 'all' ? 'All' : areaFilter}
-      />
+
     </div>
   );
 }

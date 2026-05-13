@@ -2404,3 +2404,14 @@ These features are documented for future enhancement but are not required for th
 - [x] Add legend showing color scheme and classifications
 - [x] Test interactive zone selection and detail display
 - [x] Verify map renders correctly for all zone types
+
+
+## Phase 133: REMOVE SPATIAL-TEMPORAL DEMAND SHIFT ANALYSIS
+- [x] Remove EmergingZonesCard and ZoneMapVisualization components from UI
+- [x] Remove analyzeSpatialDemandShift tRPC procedure from backend
+- [x] Remove forecastSpatialDemand tRPC procedure from backend
+- [x] Delete spatialDemandShift.ts and related test files
+- [x] Delete spatialDemandForecasting.ts and related test files
+- [x] Delete all EmergingZones* component files
+- [x] Clean up imports from routers.ts
+- [x] Verify TypeScript compilation is clean
