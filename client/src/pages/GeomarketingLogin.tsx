@@ -86,13 +86,6 @@ export default function GeomarketingLogin() {
 
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
-            {/* Demo Credentials Info */}
-            <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-              <p className="text-xs font-medium text-green-800 mb-2">Demo Credentials:</p>
-              <p className="text-xs text-green-700"><span className="font-semibold">Username:</span> barrel_manager</p>
-              <p className="text-xs text-green-700"><span className="font-semibold">Password:</span> Barrel_geo@</p>
-            </div>
-
             {/* Username Field */}
             <div className="space-y-2">
               <Label htmlFor="username" className="text-sm font-medium">
