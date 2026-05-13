@@ -8,9 +8,14 @@ vi.mock("./db", () => ({
 }));
 
 // Mock the boundary filter to return all zones (for testing)
-vi.mock("./geographicBoundaryFilter", () => ({
-  filterZonesByBoundary: (zones: any[]) => zones,
-}));
+vi.mock("./geographicBoundaryFilter", async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    filterZonesByBoundary: (zones: any[]) => zones,
+    isPointInBoundary: () => true,
+  };
+});
 
 // Mock the geomarketing module
 vi.mock("./geomarketing", () => ({
