@@ -2370,3 +2370,14 @@ These features are documented for future enhancement but are not required for th
 - [x] Verify navigation from Home → Geomarketing Login → Geomarketing Dashboard (VERIFIED)
 - [x] TypeScript compilation: 0 errors (VERIFIED)
 - [x] Dev server hot-reload working (VERIFIED)
+
+
+## Phase 130: CRITICAL BUG FIX - Date Range Query in Spatial Analysis (COMPLETED)
+- [x] Identified: getOrdersWithCoordinates was adding 1 day to endDate and setting to midnight (ROOT CAUSE)
+- [x] Root cause: Query range was shifted too far forward, missing all orders in date range
+- [x] Fixed: Removed date adjustment, now uses endDate as-is (frontend already sets to 23:59:59.999)
+- [x] Added logging: Query range now logged for debugging purposes
+- [x] Test: All 14 spatial demand shift tests passing (VERIFIED)
+- [x] Test: TypeScript compilation: 0 errors (VERIFIED)
+- [x] Test: Dev server running successfully (VERIFIED)
+- [x] Production ready: Spatial analysis now correctly queries orders in specified date range (READY)

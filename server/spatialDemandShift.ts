@@ -38,6 +38,9 @@ export async function analyzeSpatialDemandShift(
   areaFilter?: string
 ): Promise<SpatialAnalysisResult> {
   try {
+    // Log the received dates for debugging
+    console.log(`[analyzeSpatialDemandShift] Received dates: startDate=${new Date(startDate).toISOString()}, endDate=${new Date(endDate).toISOString()}`);
+    
     // Get all completed orders within date range with geocoding
     let ordersData = await getOrdersWithCoordinates(startDate, endDate);
     
@@ -177,12 +180,19 @@ export async function analyzeSpatialDemandShift(
 
     // Sort by density change (most significant shifts first)
     zones.sort((a, b) => Math.abs(b.densityChange) - Math.abs(a.densityChange));
+    console.log(`[analyzeSpatialDemandShift] Total zones created: ${zones.length}`);
+    
+    // Log zone details for debugging
+    zones.forEach((zone, idx) => {
+      console.log(`[analyzeSpatialDemandShift] Zone ${idx}: lat=${zone.latitude.toFixed(4)}, lon=${zone.longitude.toFixed(4)}, orders=${zone.orderCount}, classification=${zone.classification}`);
+    });
 
     // Generate temporal snapshots (weekly breakdown)
     const temporalSnapshots = generateTemporalSnapshots(ordersWithCoords, startDate, endDate);
 
     // Filter zones by Fort Erie boundary
     const boundaryFilteredZones = filterZonesByBoundary(zones);
+    console.log(`[analyzeSpatialDemandShift] Zones after boundary filter: ${boundaryFilteredZones.length}`);
 
     // Generate AI-based spatial interpretation
     const spatialInterpretation = generateSpatialInterpretation(boundaryFilteredZones, startDate, endDate);

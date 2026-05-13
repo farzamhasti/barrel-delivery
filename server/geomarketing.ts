@@ -63,9 +63,8 @@ export async function getOrdersWithCoordinates(startDate: Date, endDate: Date) {
   const db = await getDb();
   if (!db) return [];
 
-  const adjustedEndDate = new Date(endDate);
-  adjustedEndDate.setDate(adjustedEndDate.getDate() + 1);
-  adjustedEndDate.setHours(0, 0, 0, 0);
+  // Use dates as-is: frontend already sets endDate to 23:59:59.999
+  console.log(`[getOrdersWithCoordinates] Query range: ${startDate.toISOString()} to ${endDate.toISOString()}`);
 
   const results = await db
     .select()
@@ -73,7 +72,7 @@ export async function getOrdersWithCoordinates(startDate: Date, endDate: Date) {
     .where(
       and(
         gte(orders.createdAt, startDate),
-        lte(orders.createdAt, adjustedEndDate)
+        lte(orders.createdAt, endDate)
       )
     );
 
