@@ -30,6 +30,7 @@ import {
 } from './competitors';
 import { analyzeEmergingZones } from './emergingZonesAnalysis';
 import { analyzeSpatialDemandShift } from './spatialDemandShift';
+import { forecastSpatialDemand } from './spatialDemandForecasting';
 
 export const appRouter = router({
   places: router({
@@ -1291,6 +1292,53 @@ export const appRouter = router({
             temporalSnapshots: [],
             spatialInterpretation: 'Error analyzing spatial demand patterns.',
             success: false,
+          };
+        }
+      }),
+    
+    forecastSpatialDemand: publicProcedure
+      .input(z.object({
+        startDate: z.date(),
+        endDate: z.date(),
+      }))
+      .query(async ({ input }) => {
+        try {
+          const spatialAnalysis = await analyzeSpatialDemandShift(
+            input.startDate,
+            input.endDate
+          );
+          
+          if (!spatialAnalysis.success || spatialAnalysis.zones.length === 0) {
+            return {
+              trends: [],
+              forecasts: [],
+              forecastPeriod: {
+                startDate: input.startDate,
+                endDate: input.endDate,
+                daysAnalyzed: Math.ceil(
+                  (input.endDate.getTime() - input.startDate.getTime()) / (1000 * 60 * 60 * 24)
+                ),
+              },
+              forecastSummary: 'Insufficient data for forecasting.',
+            };
+          }
+          
+          const result = forecastSpatialDemand(spatialAnalysis.zones, {
+            startDate: input.startDate,
+            endDate: input.endDate,
+          });
+          return result;
+        } catch (error) {
+          console.error('[analytics.forecastSpatialDemand] Error:', error);
+          return {
+            trends: [],
+            forecasts: [],
+            forecastPeriod: {
+              startDate: input.startDate,
+              endDate: input.endDate,
+              daysAnalyzed: 0,
+            },
+            forecastSummary: 'Error generating spatial demand forecasts.',
           };
         }
       }),

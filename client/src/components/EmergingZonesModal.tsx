@@ -46,6 +46,14 @@ export function EmergingZonesModal({ isOpen, onClose }: EmergingZonesModalProps)
     { enabled: isOpen }
   );
 
+  const { data: forecastData, isLoading: isForecastLoading } = trpc.analytics.forecastSpatialDemand.useQuery(
+    {
+      startDate: new Date(startDate),
+      endDate: new Date(endDate),
+    },
+    { enabled: isOpen && !!spatialData }
+  );
+
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     if ((e.target as HTMLElement).closest('button')) return;
     setIsDragging(true);
@@ -297,6 +305,49 @@ export function EmergingZonesModal({ isOpen, onClose }: EmergingZonesModalProps)
                     </div>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {/* Predicted Zones */}
+            {forecastData?.forecasts && forecastData.forecasts.length > 0 && (
+              <div className="bg-white border border-gray-200 rounded-lg p-4">
+                <h3 className="font-semibold text-gray-900 mb-3">Predicted Zones ({forecastData.forecasts.length})</h3>
+                <div className="space-y-2 max-h-40 overflow-y-auto">
+                  {forecastData.forecasts.slice(0, 5).map((forecast: any, idx: number) => {
+                    const colors = getClassificationColor(forecast.forecastedClassification);
+                    const projectionChange = forecast.projectedDensity30d - forecast.currentDensity;
+                    return (
+                      <div
+                        key={idx}
+                        className={`p-3 rounded-lg border-2 ${colors.bg} ${colors.border}`}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <div className="font-semibold text-sm text-gray-900">Predicted Zone {idx + 1}</div>
+                            <Badge className={`text-xs mt-1 ${colors.badge}`}>{forecast.forecastedClassification}</Badge>
+                            <div className="text-xs text-gray-600 mt-1">Confidence: {(forecast.predictionConfidence * 100).toFixed(0)}%</div>
+                          </div>
+                          <div className="text-right">
+                            <div className={`text-sm font-semibold ${
+                              projectionChange > 0 ? 'text-green-600' : 'text-red-600'
+                            }`}>
+                              {projectionChange > 0 ? '+' : ''}{projectionChange.toFixed(1)}
+                            </div>
+                            <div className="text-xs text-gray-600">30-day projection</div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Forecast Summary */}
+            {forecastData?.forecastSummary && (
+              <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                <h3 className="font-semibold text-purple-900 mb-2">Demand Forecast Summary</h3>
+                <p className="text-sm text-purple-800 leading-relaxed">{forecastData.forecastSummary}</p>
               </div>
             )}
 
