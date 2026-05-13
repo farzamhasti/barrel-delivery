@@ -8,6 +8,7 @@ import { AnalyticsSectionModalWithGIS } from "./AnalyticsSectionModalWithGIS";
 import { DeliveryHeatmapAnalysis } from "./DeliveryHeatmapAnalysis";
 import { EmergingZonesCard } from "./EmergingZonesCard";
 import { EmergingZonesModal } from "./EmergingZonesModal";
+import { ZoneMapVisualization } from "./ZoneMapVisualization";
 
 type DateRange = "daily" | "monthly";
 type AreaFilter = "all" | "Downtown" | "Central Park" | "Both";

@@ -2,6 +2,7 @@ import { TrendingUp, MapPin, Calendar, ChevronDown, ArrowUpRight, ArrowDownLeft 
 import { trpc } from "@/lib/trpc";
 import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
+import { ZoneMapVisualization } from "./ZoneMapVisualization";
 
 interface EmergingZonesCardProps {
   onClick: (independentDateRange: { startDate: Date; endDate: Date }) => void;
@@ -26,7 +27,7 @@ export function EmergingZonesCard({ onClick, dateRange, areaFilter }: EmergingZo
     start.setHours(0, 0, 0, 0);
     const end = new Date(endDateStr);
     end.setHours(23, 59, 59, 999);
-    console.log('[EmergingZonesCard] Query params updated:', { startDateStr, endDateStr, startDate: start, endDate: end });
+
     return {
       startDate: start,
       endDate: end,
@@ -39,8 +40,7 @@ export function EmergingZonesCard({ onClick, dateRange, areaFilter }: EmergingZo
     staleTime: 0,
   });
   
-  // Log query execution
-  console.log('[EmergingZonesCard] Query executed:', { isLoading, hasData: !!spatialData, zonesCount: spatialData?.zones?.length || 0 });
+
 
   const getTopZones = () => {
     if (!spatialData?.zones) return [];
@@ -103,20 +103,14 @@ export function EmergingZonesCard({ onClick, dateRange, areaFilter }: EmergingZo
             <input
               type="date"
               value={startDateStr}
-              onChange={(e) => {
-                console.log('[EmergingZonesCard] Start date changed:', e.target.value);
-                setStartDateStr(e.target.value);
-              }}
+              onChange={(e) => setStartDateStr(e.target.value)}
               className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm"
             />
             <span className="text-gray-500">to</span>
             <input
               type="date"
               value={endDateStr}
-              onChange={(e) => {
-                console.log('[EmergingZonesCard] End date changed:', e.target.value);
-                setEndDateStr(e.target.value);
-              }}
+              onChange={(e) => setEndDateStr(e.target.value)}
               className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm"
             />
           </div>
@@ -161,6 +155,13 @@ export function EmergingZonesCard({ onClick, dateRange, areaFilter }: EmergingZo
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Zone Map Visualization */}
+        {!isLoading && spatialData?.zones && spatialData.zones.length > 0 && (
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            <ZoneMapVisualization zones={spatialData.zones} isLoading={isLoading} />
           </div>
         )}
 
