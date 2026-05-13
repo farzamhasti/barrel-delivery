@@ -29,10 +29,26 @@ interface EmergingZonesModalProps {
   areaFilter?: string;
 }
 
-export function EmergingZonesModal({ isOpen, onClose }: EmergingZonesModalProps) {
+export function EmergingZonesModal({ isOpen, onClose, dateRange }: EmergingZonesModalProps) {
   const [selectedZone, setSelectedZone] = useState<SpatialZone | null>(null);
-  const [startDate, setStartDate] = useState(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
-  const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
+  
+  // Initialize with passed dateRange or default to last 7 days
+  const getInitialStartDate = () => {
+    if (dateRange?.startDate) {
+      return dateRange.startDate.toISOString().split('T')[0];
+    }
+    return new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+  };
+  
+  const getInitialEndDate = () => {
+    if (dateRange?.endDate) {
+      return dateRange.endDate.toISOString().split('T')[0];
+    }
+    return new Date().toISOString().split('T')[0];
+  };
+  
+  const [startDate, setStartDate] = useState(getInitialStartDate());
+  const [endDate, setEndDate] = useState(getInitialEndDate());
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -41,7 +57,11 @@ export function EmergingZonesModal({ isOpen, onClose }: EmergingZonesModalProps)
   const { data: spatialData, isLoading } = trpc.analytics.analyzeSpatialDemandShift.useQuery(
     {
       startDate: new Date(startDate),
-      endDate: new Date(endDate),
+      endDate: (() => {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        return end;
+      })(),
     },
     { enabled: isOpen }
   );
@@ -49,7 +69,11 @@ export function EmergingZonesModal({ isOpen, onClose }: EmergingZonesModalProps)
   const { data: forecastData, isLoading: isForecastLoading } = trpc.analytics.forecastSpatialDemand.useQuery(
     {
       startDate: new Date(startDate),
-      endDate: new Date(endDate),
+      endDate: (() => {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        return end;
+      })(),
     },
     { enabled: isOpen && !!spatialData }
   );
