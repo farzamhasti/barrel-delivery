@@ -239,13 +239,6 @@ function SidebarContent({
           label="Analytics"
           active={location === "/geomarketing/analytics"}
         />
-        <div className="my-2 border-t border-border" />
-        <NavItem
-          href="/admin/create-order"
-          icon={<ArrowLeft className="w-5 h-5" />}
-          label="Back to Admin"
-          active={false}
-        />
       </nav>
 
       {/* Footer */}
