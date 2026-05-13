@@ -1,0 +1,40 @@
+{
+  "query": "SELECT id, order_number, customer_latitude, customer_longitude FROM orders LIMIT 5",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3vEgeGHWz6yFd3X.root --database GArd6gSmf3RbAbT5WtHac3 --execute SELECT id, order_number, customer_latitude, customer_longitude FROM orders LIMIT 5",
+  "rows": [
+    {
+      "id": "690022",
+      "order_number": "50035",
+      "customer_latitude": "42.922195",
+      "customer_longitude": "-78.967388"
+    },
+    {
+      "id": "750001",
+      "order_number": "50035",
+      "customer_latitude": "42.922195",
+      "customer_longitude": "-78.967388"
+    },
+    {
+      "id": "750002",
+      "order_number": "40098",
+      "customer_latitude": "42.886875",
+      "customer_longitude": "-78.928791"
+    },
+    {
+      "id": "750003",
+      "order_number": "40109",
+      "customer_latitude": "42.932854",
+      "customer_longitude": "-78.930205"
+    },
+    {
+      "id": "750004",
+      "order_number": "50031",
+      "customer_latitude": "42.933219",
+      "customer_longitude": "-78.917822"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\torder_number\tcustomer_latitude\tcustomer_longitude\n690022\t50035\t42.922195\t-78.967388\n750001\t50035\t42.922195\t-78.967388\n750002\t40098\t42.886875\t-78.928791\n750003\t40109\t42.932854\t-78.930205\n750004\t50031\t42.933219\t-78.917822\n",
+  "stderr": "",
+  "execution_time_ms": 260
+}

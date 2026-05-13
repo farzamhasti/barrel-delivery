@@ -1,0 +1,9 @@
+{
+  "query": "DELETE FROM order_status_history WHERE order_id IN (810001, 810002, 840004, 840005, 840007, 840008); DELETE FROM orders WHERE id IN (810001, 810002, 840004, 840005, 840007, 840008)",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3vEgeGHWz6yFd3X.root --database GArd6gSmf3RbAbT5WtHac3 --execute DELETE FROM order_status_history WHERE order_id IN (810001, 810002, 840004, 840005, 840007, 840008); DELETE FROM orders WHERE id IN (810001, 810002, 840004, 840005, 840007, 840008)",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 284
+}

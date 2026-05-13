@@ -1,5 +1,5 @@
 import * as h3 from "h3-js";
-import { filterZonesByBoundary } from './geographicBoundaryFilter';
+import { filterZonesByBoundary, isPointInBoundary } from './geographicBoundaryFilter';
 import { getOrdersWithCoordinates } from './geomarketing';
 
 export interface SpatialZone {
@@ -190,8 +190,13 @@ export async function analyzeSpatialDemandShift(
     // Generate temporal snapshots (weekly breakdown)
     const temporalSnapshots = generateTemporalSnapshots(ordersWithCoords, startDate, endDate);
 
-    // Filter zones by Fort Erie boundary
-    const boundaryFilteredZones = filterZonesByBoundary(zones);
+    // Filter zones by geographic boundary
+    console.log(`[analyzeSpatialDemandShift] Checking ${zones.length} zones against Fort Erie boundary...`);
+    for (const zone of zones) {
+      const isInside = isPointInBoundary(zone.longitude, zone.latitude).isInside;
+      console.log(`[analyzeSpatialDemandShift]   Zone lat=${zone.latitude.toFixed(4)}, lon=${zone.longitude.toFixed(4)} -> ${isInside ? 'INSIDE' : 'OUTSIDE'}`);
+    }
+    let boundaryFilteredZones = filterZonesByBoundary(zones);
     console.log(`[analyzeSpatialDemandShift] Zones after boundary filter: ${boundaryFilteredZones.length}`);
 
     // Generate AI-based spatial interpretation

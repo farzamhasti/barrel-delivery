@@ -1,0 +1,166 @@
+{
+  "query": "SELECT id, order_number, customer_latitude, customer_longitude FROM orders WHERE createdAt >= '2026-05-07 00:00:00' AND createdAt <= '2026-05-13 23:59:59' ORDER BY id",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3vEgeGHWz6yFd3X.root --database GArd6gSmf3RbAbT5WtHac3 --execute SELECT id, order_number, customer_latitude, customer_longitude FROM orders WHERE createdAt >= '2026-05-07 00:00:00' AND createdAt <= '2026-05-13 23:59:59' ORDER BY id",
+  "rows": [
+    {
+      "id": "690022",
+      "order_number": "50035",
+      "customer_latitude": "42.922195",
+      "customer_longitude": "-78.967388"
+    },
+    {
+      "id": "750001",
+      "order_number": "50035",
+      "customer_latitude": "42.922195",
+      "customer_longitude": "-78.967388"
+    },
+    {
+      "id": "750002",
+      "order_number": "40098",
+      "customer_latitude": "42.886875",
+      "customer_longitude": "-78.928791"
+    },
+    {
+      "id": "750003",
+      "order_number": "40109",
+      "customer_latitude": "42.932854",
+      "customer_longitude": "-78.930205"
+    },
+    {
+      "id": "750004",
+      "order_number": "50031",
+      "customer_latitude": "42.933219",
+      "customer_longitude": "-78.917822"
+    },
+    {
+      "id": "750005",
+      "order_number": "40115",
+      "customer_latitude": "42.901777",
+      "customer_longitude": "-78.931782"
+    },
+    {
+      "id": "750006",
+      "order_number": "40134",
+      "customer_latitude": "42.918842",
+      "customer_longitude": "-78.912347"
+    },
+    {
+      "id": "750007",
+      "order_number": "50037",
+      "customer_latitude": "42.900842",
+      "customer_longitude": "-78.923932"
+    },
+    {
+      "id": "750008",
+      "order_number": "40096",
+      "customer_latitude": "42.934326",
+      "customer_longitude": "-78.928868"
+    },
+    {
+      "id": "750009",
+      "order_number": "40091",
+      "customer_latitude": "42.909552",
+      "customer_longitude": "-78.930685"
+    },
+    {
+      "id": "810001",
+      "order_number": "TEST-1778557663430",
+      "customer_latitude": "NULL",
+      "customer_longitude": "NULL"
+    },
+    {
+      "id": "810002",
+      "order_number": "TEST-ERROR-1778557663517",
+      "customer_latitude": "NULL",
+      "customer_longitude": "NULL"
+    },
+    {
+      "id": "840004",
+      "order_number": "TEST-1778608803633",
+      "customer_latitude": "NULL",
+      "customer_longitude": "NULL"
+    },
+    {
+      "id": "840005",
+      "order_number": "TEST-ERROR-1778608804127",
+      "customer_latitude": "NULL",
+      "customer_longitude": "NULL"
+    },
+    {
+      "id": "840007",
+      "order_number": "TEST-1778609674011",
+      "customer_latitude": "NULL",
+      "customer_longitude": "NULL"
+    },
+    {
+      "id": "840008",
+      "order_number": "TEST-ERROR-1778609674494",
+      "customer_latitude": "NULL",
+      "customer_longitude": "NULL"
+    },
+    {
+      "id": "870007",
+      "order_number": "40083",
+      "customer_latitude": "42.933561",
+      "customer_longitude": "-78.924561"
+    },
+    {
+      "id": "870008",
+      "order_number": "40069",
+      "customer_latitude": "42.910558",
+      "customer_longitude": "-78.919856"
+    },
+    {
+      "id": "870009",
+      "order_number": "50033",
+      "customer_latitude": "42.931189",
+      "customer_longitude": "-78.925708"
+    },
+    {
+      "id": "870010",
+      "order_number": "40075",
+      "customer_latitude": "42.934331",
+      "customer_longitude": "-78.919741"
+    },
+    {
+      "id": "870011",
+      "order_number": "40073",
+      "customer_latitude": "42.931286",
+      "customer_longitude": "-78.922371"
+    },
+    {
+      "id": "870012",
+      "order_number": "40054",
+      "customer_latitude": "42.887931",
+      "customer_longitude": "-78.969902"
+    },
+    {
+      "id": "870013",
+      "order_number": "50008",
+      "customer_latitude": "42.905800",
+      "customer_longitude": "-78.978022"
+    },
+    {
+      "id": "870014",
+      "order_number": "50033",
+      "customer_latitude": "42.918842",
+      "customer_longitude": "-78.912347"
+    },
+    {
+      "id": "870015",
+      "order_number": "40056",
+      "customer_latitude": "42.914962",
+      "customer_longitude": "-78.927383"
+    },
+    {
+      "id": "870016",
+      "order_number": "40023",
+      "customer_latitude": "42.903896",
+      "customer_longitude": "-78.974552"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\torder_number\tcustomer_latitude\tcustomer_longitude\n690022\t50035\t42.922195\t-78.967388\n750001\t50035\t42.922195\t-78.967388\n750002\t40098\t42.886875\t-78.928791\n750003\t40109\t42.932854\t-78.930205\n750004\t50031\t42.933219\t-78.917822\n750005\t40115\t42.901777\t-78.931782\n750006\t40134\t42.918842\t-78.912347\n750007\t50037\t42.900842\t-78.923932\n750008\t40096\t42.934326\t-78.928868\n750009\t40091\t42.909552\t-78.930685\n810001\tTEST-1778557663430\tNULL\tNULL\n810002\tTEST-ERROR-1778557663517\tNULL\tNULL\n840004\tTEST-1778608803633\tNULL\tNULL\n840005\tTEST-ERROR-1778608804127\tNULL\tNULL\n840007\tTEST-1778609674011\tNULL\tNULL\n840008\tTEST-ERROR-1778609674494\tNULL\tNULL\n870007\t40083\t42.933561\t-78.924561\n870008\t40069\t42.910558\t-78.919856\n870009\t50033\t42.931189\t-78.925708\n870010\t40075\t42.934331\t-78.919741\n870011\t40073\t42.931286\t-78.922371\n870012\t40054\t42.887931\t-78.969902\n870013\t50008\t42.905800\t-78.978022\n870014\t50033\t42.918842\t-78.912347\n870015\t40056\t42.914962\t-78.927383\n870016\t40023\t42.903896\t-78.974552\n",
+  "stderr": "",
+  "execution_time_ms": 261
+}
