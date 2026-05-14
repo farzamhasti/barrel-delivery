@@ -31,6 +31,7 @@ import {
 import { analyzeEmergingZones } from './emergingZonesAnalysis';
 import { analyzeDemandChange } from './demandChangeAnalysis';
 import { analyzeRelativeDemand } from './relativeDemandAnalysis';
+import { analyzeGridHeatmap } from './gridHeatmapAnalysis';
 
 export const appRouter = router({
   places: router({
@@ -1270,8 +1271,30 @@ export const appRouter = router({
             error: error instanceof Error ? error.message : 'Unknown error',
           };
         }
+           }),
+    analyzeGridHeatmap: publicProcedure
+      .input(z.object({
+        startDate: z.date(),
+        endDate: z.date(),
+      }))
+      .query(async ({ input }) => {
+        try {
+          const result = await analyzeGridHeatmap(input.startDate, input.endDate);
+          return result;
+        } catch (error) {
+          console.error('[analytics.analyzeGridHeatmap] Error:', error);
+          return {
+            cells: [],
+            cityStats: {
+              totalOrders: 0,
+              avgDeliveryTime: 0,
+              avgWaitingTime: 0,
+              avgDemandScore: 0,
+            },
+            interpretation: 'Error analyzing grid heatmap',
+          };
+        }
       }),
-    
     analyzeDemandChange: publicProcedure
       .input(z.object({
         previousStartDate: z.date(),

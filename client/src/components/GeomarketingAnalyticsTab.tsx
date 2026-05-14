@@ -8,6 +8,7 @@ import { AnalyticsSectionModalWithGIS } from "./AnalyticsSectionModalWithGIS";
 import { DeliveryHeatmapAnalysis } from "./DeliveryHeatmapAnalysis";
 import { DemandChangeAnalysisCard } from "./DemandChangeAnalysisCard";
 import { RelativeDemandAnalysisCard } from "./RelativeDemandAnalysisCard";
+import GridHeatmapAnalysisCard from "./GridHeatmapAnalysisCard";
 
 
 type DateRange = "daily" | "monthly";
@@ -411,6 +412,11 @@ export function GeomarketingAnalyticsTab() {
           </CardContent>
         </Card>
       )}
+
+      {/* Grid Heatmap Analysis */}
+      <div className="mt-6">
+        <GridHeatmapAnalysisCard dateRangeQuery={dateRangeQuery} />
+      </div>
 
       {/* Date Picker Modal */}
       <DatePickerModal

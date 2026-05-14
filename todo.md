@@ -2480,3 +2480,15 @@ These features are documented for future enhancement but are not required for th
 - [x] Migrate from Google Maps to OpenStreetMap (Leaflet) visualization
 - [x] Fix type coercion for numeric values from SQL aggregates
 - [x] Verify month navigation updates data correctly
+
+
+## Phase 33: Voronoi/Grid-Based Heatmap Redesign (COMPLETED)
+- [x] Redesign backend to create grid overlay of entire Fort Erie area (2,440 grid cells at 0.005° resolution)
+- [x] Calculate demand density for each grid cell (adaptive density calculation)
+- [x] Implement grid-based classification system (5-tier classification: Very High → Underperforming)
+- [x] Assign demand classifications to each cell with color mapping (Red → Gray gradient)
+- [x] Build heatmap visualization with colored regions covering full area (Leaflet rectangles)
+- [x] Render on Leaflet map as complete area coverage (entire Fort Erie divided into zones)
+- [x] Fix TiDB SQL compatibility (TIMESTAMPDIFF instead of EXTRACT EPOCH)
+- [x] Test complete area visualization and verify all zones display correctly (browser verified)
+- [x] Verify month navigation updates heatmap data correctly
