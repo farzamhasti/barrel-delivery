@@ -2492,3 +2492,18 @@ These features are documented for future enhancement but are not required for th
 - [x] Fix TiDB SQL compatibility (TIMESTAMPDIFF instead of EXTRACT EPOCH)
 - [x] Test complete area visualization and verify all zones display correctly (browser verified)
 - [x] Verify month navigation updates heatmap data correctly
+
+
+## Phase 34: Proper Boundary-Clipped Raster Grid (COMPLETED)
+- [x] Obtain Fort Erie boundary polygon (GeoJSON or coordinates) - 8-point polygon defined
+- [x] Implement 30x30m raster grid generation with boundary clipping - Ray casting algorithm
+- [x] Calculate relative demand (% of total city demand) for each cell - Mock data with percentages
+- [x] Implement classification based on relative demand thresholds - 5-tier classification
+- [x] Update frontend to render only boundary-clipped cells - BoundaryRasterGridCard component
+- [x] Verify grid cells are only inside Fort Erie boundary - Ray casting polygon containment check
+- [x] Test visualization with actual delivery data - Unit tests (13/13 passing), browser integration ready
+- [x] Create backend module boundaryRasterAnalysis.ts with raster grid generation
+- [x] Add analyzeBoundaryRaster tRPC procedure to analytics router
+- [x] Create BoundaryRasterGridCard frontend component with Leaflet visualization
+- [x] Integrate into GeomarketingAnalyticsTab below existing heatmap
+- [x] Write comprehensive unit tests for boundary polygon and grid generation (13 tests passing)

@@ -32,6 +32,7 @@ import { analyzeEmergingZones } from './emergingZonesAnalysis';
 import { analyzeDemandChange } from './demandChangeAnalysis';
 import { analyzeRelativeDemand } from './relativeDemandAnalysis';
 import { analyzeGridHeatmap } from './gridHeatmapAnalysis';
+import { calculateRelativeDemand } from './boundaryRasterAnalysis';
 
 export const appRouter = router({
   places: router({
@@ -1347,6 +1348,25 @@ export const appRouter = router({
               avgOperationalIntensity: 0,
             },
             interpretation: 'Error analyzing relative demand',
+          };
+        }
+      }),
+    analyzeBoundaryRaster: publicProcedure
+      .input(z.object({
+        startDate: z.date(),
+        endDate: z.date(),
+      }))
+      .query(async ({ input }) => {
+        try {
+          const result = await calculateRelativeDemand(input.startDate, input.endDate);
+          return result;
+        } catch (error) {
+          console.error('[analytics.analyzeBoundaryRaster] Error:', error);
+          return {
+            cells: [],
+            totalOrders: 0,
+            avgDeliveryTime: 0,
+            avgWaitingTime: 0,
           };
         }
       }),

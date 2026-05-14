@@ -9,6 +9,7 @@ import { DeliveryHeatmapAnalysis } from "./DeliveryHeatmapAnalysis";
 import { DemandChangeAnalysisCard } from "./DemandChangeAnalysisCard";
 import { RelativeDemandAnalysisCard } from "./RelativeDemandAnalysisCard";
 import GridHeatmapAnalysisCard from "./GridHeatmapAnalysisCard";
+import BoundaryRasterGridCard from "./BoundaryRasterGridCard";
 
 
 type DateRange = "daily" | "monthly";
@@ -416,6 +417,11 @@ export function GeomarketingAnalyticsTab() {
       {/* Grid Heatmap Analysis */}
       <div className="mt-6">
         <GridHeatmapAnalysisCard dateRangeQuery={dateRangeQuery} />
+      </div>
+
+      {/* Boundary-Clipped Raster Grid Analysis */}
+      <div className="mt-6">
+        <BoundaryRasterGridCard dateRangeQuery={dateRangeQuery} />
       </div>
 
       {/* Date Picker Modal */}
