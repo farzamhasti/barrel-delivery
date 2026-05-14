@@ -105,10 +105,10 @@ function metersToDegreesLat(meters: number): number {
 }
 
 /**
- * Generate 30x30m raster grid cells clipped to Fort Erie boundary
+ * Generate 200x200m raster grid cells clipped to Fort Erie boundary
  */
 function generateRasterGrid(
-  cellSizeMeters: number = 30
+  cellSizeMeters: number = 200
 ): Array<{ lat: number; lon: number; id: string }> {
   const latStep = metersToDegreesLat(cellSizeMeters);
   const lonStep = metersToDegreesLon(cellSizeMeters, 42.9);
@@ -163,7 +163,7 @@ async function calculateRelativeDemand(
 
   // For now, return mock data since we don't have actual order data
   // In production, this would query the database
-  const cells = generateRasterGrid(30);
+  const cells = generateRasterGrid(); // Uses default 200x200m cell size
   const totalOrders = 0;
   const avgDeliveryTime = 0;
   const avgWaitingTime = 0;

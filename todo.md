@@ -2511,3 +2511,12 @@ These features are documented for future enhancement but are not required for th
 - [x] Verify ray casting algorithm works correctly with new boundary
 - [x] Update tests to use coordinates inside accurate boundary
 - [x] Generate 67,819 grid cells within accurate Fort Erie boundary
+
+## Phase 35: Raster Grid Cell Size Optimization (COMPLETED)
+- [x] Resize raster grid cells from 30x30m to 200x200m
+- [x] Update generateRasterGrid default parameter from 30 to 200
+- [x] Update calculateRelativeDemand to use default 200m cell size
+- [x] Update test expectations for larger cell size
+- [x] Verify all 13 boundary raster analysis tests pass with new cell size
+- [x] Confirm grid generates fewer cells (~1,250 cells vs 67,819 with 30m)
+- [x] TypeScript: 0 errors, Dev server running
