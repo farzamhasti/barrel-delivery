@@ -2507,3 +2507,7 @@ These features are documented for future enhancement but are not required for th
 - [x] Create BoundaryRasterGridCard frontend component with Leaflet visualization
 - [x] Integrate into GeomarketingAnalyticsTab below existing heatmap
 - [x] Write comprehensive unit tests for boundary polygon and grid generation (13 tests passing)
+- [x] Fix boundary polygon with accurate GeoJSON coordinates (51 points, matches official boundary)
+- [x] Verify ray casting algorithm works correctly with new boundary
+- [x] Update tests to use coordinates inside accurate boundary
+- [x] Generate 67,819 grid cells within accurate Fort Erie boundary
