@@ -24,6 +24,7 @@ export function GeomarketingAnalyticsTab() {
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [openSectionModal, setOpenSectionModal] = useState<string | null>(null);
   const [showHeatmap, setShowHeatmap] = useState(false);
+  const [expandedDemandAnalysis, setExpandedDemandAnalysis] = useState(false);
 
   // Calculate date range for queries
   const getDateRangeForQuery = () => {
@@ -184,10 +185,33 @@ export function GeomarketingAnalyticsTab() {
         </CardContent>
       </Card>
 
-      {/* Demand Change Analysis - Full Width */}
-      <DemandChangeAnalysisCard />
+      {/* Analytics Sections Grid */}
+      {expandedDemandAnalysis ? (
+        <div className="space-y-4">
+          <Button 
+            variant="outline" 
+            onClick={() => setExpandedDemandAnalysis(false)}
+            className="mb-4"
+          >
+            ← Back to Grid View
+          </Button>
+          <DemandChangeAnalysisCard isCompact={false} />
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Demand Change Analysis Card */}
+          <DemandChangeAnalysisCard 
+            isCompact={true} 
+            onOpenExpanded={() => setExpandedDemandAnalysis(true)}
+          />
+
+          {/* Placeholder to maintain grid alignment */}
+          <div />
+        </div>
+      )}
 
       {/* Analytics Sections Grid */}
+      {!expandedDemandAnalysis && (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Section 1: Geographic Distribution */}
         <Card
@@ -347,10 +371,9 @@ export function GeomarketingAnalyticsTab() {
               </div>
             </div>
           </CardContent>
-        </Card>
-
-
+         </Card>
       </div>
+      )}
 
       {/* Date Picker Modal */}
       <DatePickerModal

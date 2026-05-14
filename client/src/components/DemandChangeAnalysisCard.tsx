@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { AlertCircle, TrendingUp, TrendingDown, Minus, Calendar } from 'lucide-react';
+import { AlertCircle, TrendingUp, TrendingDown, Minus, Calendar, ChevronDown } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
 import { DemandChangeMap } from './DemandChangeMap';
 import { DemandChangeDetailsModal } from './DemandChangeDetailsModal';
@@ -27,7 +27,12 @@ interface DemandZone {
 
 type ComparisonMode = 'previous-month' | 'previous-year';
 
-export function DemandChangeAnalysisCard() {
+interface DemandChangeAnalysisCardProps {
+  isCompact?: boolean;
+  onOpenExpanded?: () => void;
+}
+
+export function DemandChangeAnalysisCard({ isCompact = false, onOpenExpanded }: DemandChangeAnalysisCardProps) {
   const [selectedZone, setSelectedZone] = useState<DemandZone | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   
@@ -136,6 +141,103 @@ export function DemandChangeAnalysisCard() {
     }
   };
 
+  // Compact view - for grid layout
+  if (isCompact) {
+    const totalOrders = (analysisData?.periodComparison.currentPeriod.totalOrders || 0);
+    const previousOrders = (analysisData?.periodComparison.previousPeriod.totalOrders || 0);
+    const growth = previousOrders > 0 ? ((totalOrders - previousOrders) / previousOrders) * 100 : (totalOrders > 0 ? 100 : 0);
+
+    return (
+      <>
+        <Card className="border-0 shadow-sm cursor-pointer hover:shadow-md transition-shadow" onClick={onOpenExpanded}>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <TrendingUp className="w-5 h-5" />
+              Demand Change Analysis
+            </CardTitle>
+            <CardDescription>Geographic demand evolution over time</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {/* Month Display */}
+            <div className="flex items-center justify-between mb-4 p-3 bg-gray-50 rounded-lg">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-gray-600" />
+                <span className="font-semibold text-sm">{currentMonthLabel}</span>
+              </div>
+              <span className="text-xs text-gray-600">
+                {comparisonMode === 'previous-month' ? 'vs Prev Month' : 'vs Last Year'}
+              </span>
+            </div>
+
+            {/* Key Metrics */}
+            <div className="grid grid-cols-2 gap-2 mb-4">
+              <div className="bg-blue-50 p-3 rounded">
+                <p className="text-xs text-blue-700 font-medium">Comparison</p>
+                <p className="text-lg font-bold text-blue-600">{previousOrders}</p>
+              </div>
+              <div className="bg-green-50 p-3 rounded">
+                <p className="text-xs text-green-700 font-medium">Current</p>
+                <p className="text-lg font-bold text-green-600">{totalOrders}</p>
+              </div>
+            </div>
+
+            {/* Growth Indicator */}
+            <div className="bg-gradient-to-r from-blue-50 to-green-50 p-3 rounded-lg mb-4">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-gray-700">Growth</span>
+                <span className={`text-sm font-bold ${growth > 0 ? 'text-green-600' : growth < 0 ? 'text-red-600' : 'text-gray-600'}`}>
+                  {growth > 0 ? '+' : ''}{growth.toFixed(1)}%
+                </span>
+              </div>
+            </div>
+
+            {/* Zones Summary */}
+            {isLoading ? (
+              <p className="text-xs text-gray-500 text-center py-2">Loading...</p>
+            ) : zones.length > 0 ? (
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-gray-700">{zones.length} zones detected</p>
+                <div className="flex flex-wrap gap-1">
+                  {zones.slice(0, 3).map((zone) => (
+                    <Badge key={zone.zoneId} className={`text-xs ${getClassificationColor(zone.classification)}`}>
+                      {zone.classification}
+                    </Badge>
+                  ))}
+                  {zones.length > 3 && (
+                    <Badge variant="outline" className="text-xs">
+                      +{zones.length - 3} more
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <p className="text-xs text-gray-500 text-center py-2">No demand changes detected</p>
+            )}
+
+            {/* Click to expand hint */}
+            <div className="flex items-center justify-center gap-1 mt-4 pt-3 border-t border-gray-200 text-gray-500">
+              <span className="text-xs">Click to expand</span>
+              <ChevronDown className="w-3 h-3" />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Details Modal */}
+        {selectedZone && (
+          <DemandChangeDetailsModal
+            zone={selectedZone}
+            isOpen={isModalOpen}
+            onClose={() => {
+              setIsModalOpen(false);
+              setSelectedZone(null);
+            }}
+          />
+        )}
+      </>
+    );
+  }
+
+  // Full view - expanded
   return (
     <>
       <Card className="w-full">
