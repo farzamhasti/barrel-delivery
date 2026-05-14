@@ -2579,3 +2579,13 @@ These features are documented for future enhancement but are not required for th
 - [x] Verify all 13 boundary raster analysis tests passing
 - [x] Raster grid now integrated as part of Relative Demand Analysis card
 - [x] Users can toggle between demand zones and raster grid views
+
+## Phase 41: Fix API Error - Null Pointer in calculateRelativeDemand (COMPLETED)
+- [x] Identified HTML response error indicating tRPC endpoint crash
+- [x] Found null pointer issue when calling .getTime() on null dates
+- [x] Added null checks and Date type conversions for pickedUpAt, deliveredAt, createdAt, readyAt
+- [x] Added NaN validation for calculated delivery and wait times
+- [x] Fixed handling of both Date objects and string date values from database
+- [x] Verified TypeScript: 0 errors
+- [x] Verified all 13 boundary raster analysis tests passing
+- [x] API now returns valid JSON instead of HTML error page

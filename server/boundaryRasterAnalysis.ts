@@ -228,15 +228,23 @@ async function calculateRelativeDemand(
 
       // Accumulate delivery and wait times
       if (order.pickedUpAt && order.deliveredAt) {
-        const deliveryTime = (order.deliveredAt.getTime() - order.pickedUpAt.getTime()) / 1000;
-        totalDeliveryTime += deliveryTime;
-        validDeliveryCount++;
+        const pickedUpTime = order.pickedUpAt instanceof Date ? order.pickedUpAt.getTime() : new Date(order.pickedUpAt).getTime();
+        const deliveredTime = order.deliveredAt instanceof Date ? order.deliveredAt.getTime() : new Date(order.deliveredAt).getTime();
+        const deliveryTime = (deliveredTime - pickedUpTime) / 1000;
+        if (!isNaN(deliveryTime)) {
+          totalDeliveryTime += deliveryTime;
+          validDeliveryCount++;
+        }
       }
       
       if (order.createdAt && order.readyAt) {
-        const waitTime = (order.readyAt.getTime() - order.createdAt.getTime()) / 1000;
-        totalWaitTime += waitTime;
-        validWaitCount++;
+        const createdTime = order.createdAt instanceof Date ? order.createdAt.getTime() : new Date(order.createdAt).getTime();
+        const readyTime = order.readyAt instanceof Date ? order.readyAt.getTime() : new Date(order.readyAt).getTime();
+        const waitTime = (readyTime - createdTime) / 1000;
+        if (!isNaN(waitTime)) {
+          totalWaitTime += waitTime;
+          validWaitCount++;
+        }
       }
     }
 
