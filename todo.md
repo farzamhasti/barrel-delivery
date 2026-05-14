@@ -2450,3 +2450,11 @@ These features are documented for future enhancement but are not required for th
 - [x] Browser test: Confirmed 11 zones displayed, all within Fort Erie boundary
 - [x] Update boundary polygon to use accurate Fort Erie city coordinates
 - [x] Browser test: Verified accurate boundary polygon displays correctly
+
+
+## Phase 30: Monthly Demand Change Analysis (COMPLETED)
+- [x] Add month/year picker to DemandChangeAnalysisCard
+- [x] Implement comparison mode toggle (previous month vs year-over-year)
+- [x] Update backend to support monthly analysis queries (no changes needed - backend already supports arbitrary date ranges)
+- [x] Update UI to display selected months and comparison mode
+- [x] Test monthly comparisons with various date ranges (12 unit tests passing, browser tested)

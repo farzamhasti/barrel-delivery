@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { AlertCircle, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { AlertCircle, TrendingUp, TrendingDown, Minus, Calendar } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
 import { DemandChangeMap } from './DemandChangeMap';
 import { DemandChangeDetailsModal } from './DemandChangeDetailsModal';
@@ -25,27 +25,44 @@ interface DemandZone {
   orderLocations: Array<{ lat: number; lon: number; orderId: string }>;
 }
 
+type ComparisonMode = 'previous-month' | 'previous-year';
+
 export function DemandChangeAnalysisCard() {
   const [selectedZone, setSelectedZone] = useState<DemandZone | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  // Default to last 7 days vs previous 7 days
+  
+  // Month/Year selection
   const today = new Date();
-  const currentStartDate = new Date(today);
-  currentStartDate.setDate(currentStartDate.getDate() - 7);
-  const currentEndDate = new Date(today);
+  const [selectedMonth, setSelectedMonth] = useState(today.getMonth());
+  const [selectedYear, setSelectedYear] = useState(today.getFullYear());
+  const [comparisonMode, setComparisonMode] = useState<ComparisonMode>('previous-month');
 
-  const previousStartDate = new Date(currentStartDate);
-  previousStartDate.setDate(previousStartDate.getDate() - 7);
-  const previousEndDate = new Date(currentStartDate);
+  // Calculate date ranges based on selection
+  const dateParams = useMemo(() => {
+    // Get the first and last day of the selected month
+    const currentStartDate = new Date(selectedYear, selectedMonth, 1);
+    const currentEndDate = new Date(selectedYear, selectedMonth + 1, 0, 23, 59, 59, 999);
 
-  // Memoize dates to prevent query refetch on every render
-  const dateParams = useMemo(() => ({
-    previousStartDate,
-    previousEndDate,
-    currentStartDate,
-    currentEndDate,
-  }), []);
+    let previousStartDate: Date;
+    let previousEndDate: Date;
+
+    if (comparisonMode === 'previous-month') {
+      // Compare with previous month
+      previousStartDate = new Date(selectedYear, selectedMonth - 1, 1);
+      previousEndDate = new Date(selectedYear, selectedMonth, 0, 23, 59, 59, 999);
+    } else {
+      // Compare with same month previous year
+      previousStartDate = new Date(selectedYear - 1, selectedMonth, 1);
+      previousEndDate = new Date(selectedYear - 1, selectedMonth + 1, 0, 23, 59, 59, 999);
+    }
+
+    return {
+      previousStartDate,
+      previousEndDate,
+      currentStartDate,
+      currentEndDate,
+    };
+  }, [selectedMonth, selectedYear, comparisonMode]);
 
   const { data: analysisData, isLoading } = trpc.analytics.analyzeDemandChange.useQuery(dateParams);
 
@@ -80,6 +97,45 @@ export function DemandChangeAnalysisCard() {
     setIsModalOpen(true);
   };
 
+  // Format month/year display
+  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
+                      'July', 'August', 'September', 'October', 'November', 'December'];
+  const currentMonthLabel = `${monthNames[selectedMonth]} ${selectedYear}`;
+  
+  let comparisonMonthLabel: string;
+  if (comparisonMode === 'previous-month') {
+    const prevMonth = selectedMonth === 0 ? 11 : selectedMonth - 1;
+    const prevYear = selectedMonth === 0 ? selectedYear - 1 : selectedYear;
+    comparisonMonthLabel = `${monthNames[prevMonth]} ${prevYear}`;
+  } else {
+    comparisonMonthLabel = `${monthNames[selectedMonth]} ${selectedYear - 1}`;
+  }
+
+  // Get available months (don't allow future months)
+  const maxMonth = today.getMonth();
+  const maxYear = today.getFullYear();
+  const isCurrentMonth = selectedMonth === maxMonth && selectedYear === maxYear;
+
+  const handlePreviousMonth = () => {
+    if (selectedMonth === 0) {
+      setSelectedMonth(11);
+      setSelectedYear(selectedYear - 1);
+    } else {
+      setSelectedMonth(selectedMonth - 1);
+    }
+  };
+
+  const handleNextMonth = () => {
+    if (!isCurrentMonth) {
+      if (selectedMonth === 11) {
+        setSelectedMonth(0);
+        setSelectedYear(selectedYear + 1);
+      } else {
+        setSelectedMonth(selectedMonth + 1);
+      }
+    }
+  };
+
   return (
     <>
       <Card className="w-full">
@@ -93,16 +149,66 @@ export function DemandChangeAnalysisCard() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
+          {/* Month/Year Picker and Comparison Mode */}
+          <div className="space-y-4 border rounded-lg p-4 bg-gray-50">
+            {/* Month Navigation */}
+            <div className="flex items-center justify-between gap-4">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={handlePreviousMonth}
+              >
+                ← Previous
+              </Button>
+              <div className="flex items-center gap-2 flex-1 justify-center">
+                <Calendar className="w-4 h-4 text-gray-600" />
+                <span className="font-semibold text-lg">{currentMonthLabel}</span>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={handleNextMonth}
+                disabled={isCurrentMonth}
+              >
+                Next →
+              </Button>
+            </div>
+
+            {/* Comparison Mode Toggle */}
+            <div className="flex gap-2 justify-center">
+              <Button
+                variant={comparisonMode === 'previous-month' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setComparisonMode('previous-month')}
+                className="text-xs"
+              >
+                vs Previous Month
+              </Button>
+              <Button
+                variant={comparisonMode === 'previous-year' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setComparisonMode('previous-year')}
+                className="text-xs"
+              >
+                vs Same Month Last Year
+              </Button>
+            </div>
+
+            {/* Comparison Label */}
+            <div className="text-center text-sm text-gray-600">
+              Comparing <span className="font-semibold">{currentMonthLabel}</span> with <span className="font-semibold">{comparisonMonthLabel}</span>
+            </div>
+          </div>
+
           {/* Period Comparison */}
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-blue-50 p-4 rounded-lg">
-              <p className="text-sm font-semibold text-blue-900">Previous Period</p>
+              <p className="text-sm font-semibold text-blue-900">Comparison Period</p>
               <p className="text-2xl font-bold text-blue-600">
                 {analysisData?.periodComparison.previousPeriod.totalOrders || 0}
               </p>
               <p className="text-xs text-blue-700 mt-1">
-                {analysisData?.periodComparison.previousPeriod.startDate?.toLocaleDateString()} -{' '}
-                {analysisData?.periodComparison.previousPeriod.endDate?.toLocaleDateString()}
+                {comparisonMonthLabel}
               </p>
             </div>
             <div className="bg-green-50 p-4 rounded-lg">
@@ -111,8 +217,7 @@ export function DemandChangeAnalysisCard() {
                 {analysisData?.periodComparison.currentPeriod.totalOrders || 0}
               </p>
               <p className="text-xs text-green-700 mt-1">
-                {analysisData?.periodComparison.currentPeriod.startDate?.toLocaleDateString()} -{' '}
-                {analysisData?.periodComparison.currentPeriod.endDate?.toLocaleDateString()}
+                {currentMonthLabel}
               </p>
             </div>
           </div>
