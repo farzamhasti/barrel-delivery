@@ -258,7 +258,7 @@ async function calculateRelativeDemand(
 
       // Classify based on relative demand thresholds
       let classification = "Underperforming";
-      let color = "#cccccc"; // Gray
+      let color = "#ADD8E6"; // Light Blue
 
       if (relativeDemand >= 20) {
         classification = "Very High";

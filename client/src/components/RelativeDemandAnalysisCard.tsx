@@ -442,7 +442,7 @@ export const RelativeDemandAnalysisCard: React.FC<RelativeDemandAnalysisCardProp
             </p>
             <div className="space-y-2">
               <div className="flex items-start gap-2">
-                <div className="w-4 h-4 bg-gray-400 rounded mt-0.5 flex-shrink-0"></div>
+                <div className="w-4 h-4 bg-blue-200 rounded mt-0.5 flex-shrink-0"></div>
                 <div className="text-xs">
                   <span className="font-semibold">Underperforming (0-5%)</span>
                   <p className="text-gray-600">Below expected demand intensity. Areas with minimal delivery activity.</p>
