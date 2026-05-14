@@ -2552,3 +2552,15 @@ These features are documented for future enhancement but are not required for th
 - [x] Verify all tests still passing
 - [x] Dev server running without errors
 - [x] Relative Demand Analysis now focused on single-region classification instead of grid clustering
+
+## Phase 39: Restore Raster-Based Grid Visualization (COMPLETED)
+- [x] Restore BoundaryRasterGridCard.tsx component file
+- [x] Fix TypeScript errors for window.leafletImage property
+- [x] Re-add BoundaryRasterGridCard import to GeomarketingAnalyticsTab
+- [x] Re-add BoundaryRasterGridCard component usage in GeomarketingAnalyticsTab
+- [x] Verify TypeScript: 0 errors
+- [x] Verify all 13 boundary raster analysis tests passing
+- [x] Dev server running without errors
+- [x] Raster-based classification for entire Fort Erie restored (1000x1000m cells)
+- [x] Grid cells now display as overlay on map with demand-based color coding
+- [x] No clustering - pure raster grid visualization
