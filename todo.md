@@ -2530,3 +2530,15 @@ These features are documented for future enhancement but are not required for th
 - [x] Confirm grid generates ~50 cells (5-500 range) for Fort Erie
 - [x] TypeScript: 0 errors, Dev server running
 - [x] 1350x reduction in cells compared to original 30x30m grid
+
+## Phase 37: Real Relative Demand Calculation (COMPLETED)
+- [x] Query database for orders within date range with valid coordinates
+- [x] Aggregate orders into 1000x1000m grid cells using spatial proximity
+- [x] Calculate relative demand as percentage of total orders per cell
+- [x] Calculate average delivery time and wait time from real data
+- [x] Implement demand classification based on actual percentages
+- [x] Use Drizzle ORM for database queries instead of raw SQL
+- [x] Handle null/undefined coordinate values gracefully
+- [x] All 13 boundary raster analysis tests passing
+- [x] TypeScript: 0 errors, Dev server running
+- [x] Real demand data now flows from database to visualization

@@ -1,4 +1,6 @@
 import { getDb } from "./db";
+import { orders } from "../drizzle/schema";
+import { and, gte, lt, isNotNull } from "drizzle-orm";
 
 /**
  * Fort Erie boundary polygon (accurate GeoJSON coordinates)
@@ -140,7 +142,7 @@ function generateRasterGrid(
 }
 
 /**
- * Calculate relative demand for each grid cell
+ * Calculate relative demand for each grid cell based on actual delivery data
  */
 async function calculateRelativeDemand(
   startDate: Date,
@@ -161,54 +163,147 @@ async function calculateRelativeDemand(
 }> {
   const db = await getDb();
 
-  // For now, return mock data since we don't have actual order data
-  // In production, this would query the database
+  // Generate grid cells for Fort Erie
   const cells = generateRasterGrid(); // Uses default 1000x1000m cell size
-  const totalOrders = 0;
-  const avgDeliveryTime = 0;
-  const avgWaitingTime = 0;
 
-  // Assign random relative demand to cells for visualization
-  const cellsWithDemand = cells.map((cell) => {
-    const relativeDemand = Math.random() * 25; // 0-25% for visualization
-
-    // Classify based on relative demand thresholds
-    let classification = "Underperforming";
-    let color = "#cccccc"; // Gray
-
-    if (relativeDemand >= 20) {
-      classification = "Very High";
-      color = "#8b0000"; // Dark Red
-    } else if (relativeDemand >= 15) {
-      classification = "High";
-      color = "#ff4500"; // Orange Red
-    } else if (relativeDemand >= 10) {
-      classification = "Average";
-      color = "#ffff00"; // Yellow
-    } else if (relativeDemand >= 5) {
-      classification = "Weak";
-      color = "#90ee90"; // Light Green
+  try {
+    if (!db) {
+      throw new Error("Database not available");
     }
 
+    // Query all orders within the date range that have valid coordinates
+    const ordersResult = await db
+      .select({
+        customerLatitude: orders.customerLatitude,
+        customerLongitude: orders.customerLongitude,
+        pickedUpAt: orders.pickedUpAt,
+        deliveredAt: orders.deliveredAt,
+        createdAt: orders.createdAt,
+        readyAt: orders.readyAt,
+      })
+      .from(orders)
+      .where(
+        and(
+          isNotNull(orders.customerLatitude),
+          isNotNull(orders.customerLongitude),
+          isNotNull(orders.deliveredAt),
+          gte(orders.createdAt, startDate),
+          lt(orders.createdAt, endDate)
+        )
+      );
+
+    const totalOrders = ordersResult.length;
+
+    // Initialize cell demand counts
+    const cellDemandMap = new Map<string, number>();
+    let totalDeliveryTime = 0;
+    let totalWaitTime = 0;
+    let validDeliveryCount = 0;
+    let validWaitCount = 0;
+
+    // Aggregate orders into grid cells
+    for (const order of ordersResult) {
+      const lat = typeof order.customerLatitude === 'string' 
+        ? parseFloat(order.customerLatitude) 
+        : (order.customerLatitude as unknown as number);
+      const lon = typeof order.customerLongitude === 'string' 
+        ? parseFloat(order.customerLongitude) 
+        : (order.customerLongitude as unknown as number);
+
+      if (!isNaN(lat) && !isNaN(lon)) {
+        // Find which cell this order belongs to
+        for (const cell of cells) {
+          // Check if order is within this cell's 1000m bounds
+          const latDiff = Math.abs(lat - cell.lat);
+          const lonDiff = Math.abs(lon - cell.lon);
+          const latThreshold = metersToDegreesLat(500); // Half cell size
+          const lonThreshold = metersToDegreesLon(500, cell.lat);
+
+          if (latDiff <= latThreshold && lonDiff <= lonThreshold) {
+            cellDemandMap.set(cell.id, (cellDemandMap.get(cell.id) || 0) + 1);
+            break;
+          }
+        }
+      }
+
+      // Accumulate delivery and wait times
+      if (order.pickedUpAt && order.deliveredAt) {
+        const deliveryTime = (order.deliveredAt.getTime() - order.pickedUpAt.getTime()) / 1000;
+        totalDeliveryTime += deliveryTime;
+        validDeliveryCount++;
+      }
+      
+      if (order.createdAt && order.readyAt) {
+        const waitTime = (order.readyAt.getTime() - order.createdAt.getTime()) / 1000;
+        totalWaitTime += waitTime;
+        validWaitCount++;
+      }
+    }
+
+    const avgDeliveryTime = validDeliveryCount > 0 ? totalDeliveryTime / validDeliveryCount : 0;
+    const avgWaitingTime = validWaitCount > 0 ? totalWaitTime / validWaitCount : 0;
+
+    // Calculate relative demand for each cell
+    const cellsWithDemand = cells.map((cell) => {
+      const orderCount = cellDemandMap.get(cell.id) || 0;
+      const relativeDemand = totalOrders > 0 ? (orderCount / totalOrders) * 100 : 0;
+
+      // Classify based on relative demand thresholds
+      let classification = "Underperforming";
+      let color = "#cccccc"; // Gray
+
+      if (relativeDemand >= 20) {
+        classification = "Very High";
+        color = "#8b0000"; // Dark Red
+      } else if (relativeDemand >= 15) {
+        classification = "High";
+        color = "#ff4500"; // Orange Red
+      } else if (relativeDemand >= 10) {
+        classification = "Average";
+        color = "#ffff00"; // Yellow
+      } else if (relativeDemand >= 5) {
+        classification = "Weak";
+        color = "#90ee90"; // Light Green
+      }
+
+      return {
+        id: cell.id,
+        lat: cell.lat,
+        lon: cell.lon,
+        orderCount,
+        relativeDemand: Math.round(relativeDemand * 100) / 100,
+        classification,
+        color,
+      };
+    });
+
     return {
+      cells: cellsWithDemand,
+      totalOrders,
+      avgDeliveryTime: Math.round(avgDeliveryTime),
+      avgWaitingTime: Math.round(avgWaitingTime),
+    };
+  } catch (error) {
+    console.error("[boundaryRasterAnalysis] Error calculating demand:", error);
+    
+    // Return empty cells on error
+    const emptyCells = cells.map((cell) => ({
       id: cell.id,
       lat: cell.lat,
       lon: cell.lon,
-      orderCount: Math.floor(relativeDemand),
-      relativeDemand: Math.round(relativeDemand * 100) / 100,
-      classification,
-      color,
+      orderCount: 0,
+      relativeDemand: 0,
+      classification: "Underperforming",
+      color: "#cccccc",
+    }));
+
+    return {
+      cells: emptyCells,
+      totalOrders: 0,
+      avgDeliveryTime: 0,
+      avgWaitingTime: 0,
     };
-  });
-
-
-
-  return {
-    cells: cellsWithDemand,
-    totalOrders,
-    avgDeliveryTime: Math.round(avgDeliveryTime),
-    avgWaitingTime: Math.round(avgWaitingTime),
-  };
+  }
 }
 
 export { calculateRelativeDemand, generateRasterGrid, isPointInPolygon, FORT_ERIE_BOUNDARY };
