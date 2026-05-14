@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -88,15 +89,6 @@ const FORT_ERIE_BOUNDARY = [
 
 const FORT_ERIE_CENTER = [42.9155, -78.9580] as [number, number];
 
-// Color mapping based on demand percentage
-const getColorByDemand = (demand: number): string => {
-  if (demand >= 20) return '#dc2626'; // Red (Very High)
-  if (demand >= 15) return '#ea580c'; // Orange (High)
-  if (demand >= 10) return '#eab308'; // Yellow (Average)
-  if (demand >= 5) return '#16a34a'; // Green (Weak)
-  return '#374151'; // Dark Grey (Underperforming)
-};
-
 export const RelativeDemandAnalysisCard: React.FC<RelativeDemandAnalysisCardProps> = ({
   isCompact = false,
   onOpenExpanded,
@@ -127,7 +119,6 @@ export const RelativeDemandAnalysisCard: React.FC<RelativeDemandAnalysisCardProp
     getDateRangeForQuery(),
     { enabled: isExpanded }
   );
-
   // Update data when received
   useEffect(() => {
     if (gridData) {
@@ -145,6 +136,19 @@ export const RelativeDemandAnalysisCard: React.FC<RelativeDemandAnalysisCardProp
     }
   }, [gridData]);
 
+
+
+
+
+
+
+
+
+
+
+
+
+
   const getClassificationLabel = (classification: string) => {
     const labels: Record<string, string> = {
       very_high: 'Very High Demand',
@@ -156,7 +160,82 @@ export const RelativeDemandAnalysisCard: React.FC<RelativeDemandAnalysisCardProp
     return labels[classification] || classification;
   };
 
-  // Initialize grid view with proper colors and labels
+  const getClassificationColor = (classification: string): string => {
+    switch (classification) {
+      case 'very_high':
+        return '#dc2626'; // Red
+      case 'high':
+        return '#f97316'; // Orange
+      case 'average':
+        return '#eab308'; // Yellow
+      case 'weak':
+        return '#22c55e'; // Green
+      case 'underperforming':
+        return '#9ca3af'; // Gray
+      default:
+        return '#9ca3af';
+    }
+  };
+
+  // Initialize map with dark theme
+  useEffect(() => {
+    if (!showHeatmap || !rasterContainerRef.current || !regions || regions.length === 0) return;
+
+    if (!rasterMapRef.current) {
+      rasterMapRef.current = L.map(rasterContainerRef.current).setView(FORT_ERIE_CENTER, 12);
+
+      // Dark theme tile layer
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '© OpenStreetMap, © CartoDB',
+        maxZoom: 19,
+      }).addTo(rasterMapRef.current);
+    }
+
+    const map = rasterMapRef.current;
+
+    // Clear existing heatmap
+    if (heatmapLayerRef.current) {
+      map.removeLayer(heatmapLayerRef.current);
+    }
+
+    // Prepare heatmap data: [lat, lon, intensity]
+    const heatmapData = regions.map((region) => {
+      const intensity = region.relativeDemand / 100; // Normalize to 0-1
+      return [region.lat, region.lon, intensity];
+    });
+
+    // Create heatmap layer
+    heatmapLayerRef.current = (L as any).heatLayer(heatmapData, {
+      radius: 40,
+      blur: 25,
+      maxZoom: 17,
+      gradient: {
+        0.0: '#9ca3af', // Gray
+        0.25: '#22c55e', // Green
+        0.5: '#eab308', // Yellow
+        0.75: '#f97316', // Orange
+        1.0: '#dc2626', // Red
+      },
+    }).addTo(map);
+
+    // Draw Fort Erie boundary
+    const boundaryPolygon = L.polygon(FORT_ERIE_BOUNDARY, {
+      color: '#3b82f6',
+      weight: 2,
+      opacity: 0.6,
+      fillOpacity: 0,
+    }).addTo(map);
+
+    // Fit map to boundary
+    const bounds = L.latLngBounds(FORT_ERIE_BOUNDARY);
+    map.fitBounds(bounds, { padding: [80, 80] });
+
+    return () => {
+      // Cleanup handled by React
+    };
+  }, [showHeatmap, regions]);
+
+  // Initialize grid view
   useEffect(() => {
     if (showHeatmap || !rasterContainerRef.current || !regions || regions.length === 0) return;
 
@@ -181,7 +260,7 @@ export const RelativeDemandAnalysisCard: React.FC<RelativeDemandAnalysisCardProp
       map.removeLayer(heatmapLayerRef.current);
     }
 
-    // Draw grid cells with correct colors based on demand percentage
+    // Draw grid cells with smooth transitions
     regions.forEach((region) => {
       const cellSize = 0.009; // ~1km at equator
       const bounds = [
@@ -189,132 +268,29 @@ export const RelativeDemandAnalysisCard: React.FC<RelativeDemandAnalysisCardProp
         [region.lat + cellSize / 2, region.lon + cellSize / 2],
       ] as [[number, number], [number, number]];
 
-      // Get color based on demand percentage (not classification)
-      const color = getColorByDemand(region.relativeDemand);
-
+      const color = getClassificationColor(region.classification);
       const rectangle = L.rectangle(bounds, {
-        color: '#60a5fa', // Light blue border
+        color: color,
         weight: 1,
-        opacity: 1,
+        opacity: 0.7,
         fillColor: color,
-        fillOpacity: 0.75, // Increased opacity for visibility
+        fillOpacity: 0.6,
         className: 'grid-cell-transition',
       }).addTo(map);
 
       // Add popup on click
       rectangle.bindPopup(`
-        <div class="text-sm text-white">
+        <div class="text-sm">
           <p class="font-semibold">${getClassificationLabel(region.classification)}</p>
           <p>Orders: ${region.orderCount}</p>
           <p>Demand: ${region.relativeDemand.toFixed(1)}%</p>
-          <p class="text-xs text-gray-300">Lat: ${region.lat.toFixed(4)}, Lon: ${region.lon.toFixed(4)}</p>
         </div>
       `);
-
-      // Add hover effects
-      rectangle.on('mouseover', function(this: L.Rectangle) {
-        this.setStyle({
-          color: '#ffffff', // White border on hover
-          weight: 2,
-          opacity: 1,
-        });
-      });
-
-      rectangle.on('mouseout', function(this: L.Rectangle) {
-        this.setStyle({
-          color: '#60a5fa', // Back to light blue
-          weight: 1,
-          opacity: 1,
-        });
-      });
-
-      // Add demand percentage label if zone has orders
-      if (region.orderCount > 0) {
-        const labelIcon = L.divIcon({
-          html: `<div style="
-            background: rgba(0, 0, 0, 0.7);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 4px;
-            padding: 2px 6px;
-            color: white;
-            font-weight: bold;
-            font-size: 12px;
-            text-align: center;
-            white-space: nowrap;
-          ">${region.relativeDemand.toFixed(1)}%</div>`,
-          iconSize: [60, 24],
-          className: 'demand-label',
-        });
-
-        L.marker([region.lat, region.lon], { icon: labelIcon }).addTo(map);
-      }
 
       gridLayersRef.current.push(rectangle);
     });
 
-    // Draw Fort Erie boundary
-    const boundaryPolygon = L.polygon(FORT_ERIE_BOUNDARY, {
-      color: '#3b82f6',
-      weight: 2,
-      opacity: 0.6,
-      fillOpacity: 0,
-    }).addTo(map);
-
-    // Fit map to boundary
-    const bounds = L.latLngBounds(FORT_ERIE_BOUNDARY);
-    map.fitBounds(bounds, { padding: [80, 80] });
-
-    return () => {
-      // Cleanup handled by React
-    };
-  }, [showHeatmap, regions]);
-
-  // Initialize heatmap view
-  useEffect(() => {
-    if (!showHeatmap || !rasterContainerRef.current || !regions || regions.length === 0) return;
-
-    if (!rasterMapRef.current) {
-      rasterMapRef.current = L.map(rasterContainerRef.current).setView(FORT_ERIE_CENTER, 12);
-
-      // Dark theme tile layer
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: '© OpenStreetMap, © CartoDB',
-        maxZoom: 19,
-      }).addTo(rasterMapRef.current);
-    }
-
-    const map = rasterMapRef.current;
-
-    // Clear existing grid layers
-    gridLayersRef.current.forEach((layer) => map.removeLayer(layer));
-    gridLayersRef.current = [];
-
-    // Clear heatmap if visible
-    if (heatmapLayerRef.current) {
-      map.removeLayer(heatmapLayerRef.current);
-    }
-
-    // Prepare heatmap data: [lat, lon, intensity]
-    const heatmapData = regions.map((region) => {
-      const intensity = region.relativeDemand / 100; // Normalize to 0-1
-      return [region.lat, region.lon, intensity];
-    });
-
-    // Create heatmap layer
-    heatmapLayerRef.current = (L as any).heatLayer(heatmapData, {
-      radius: 40,
-      blur: 25,
-      maxZoom: 17,
-      gradient: {
-        0.0: '#374151', // Dark grey
-        0.25: '#16a34a', // Green
-        0.5: '#eab308', // Yellow
-        0.75: '#ea580c', // Orange
-        1.0: '#dc2626', // Red
-      },
-    }).addTo(map);
-
-    // Draw Fort Erie boundary
+    // Draw boundary
     const boundaryPolygon = L.polygon(FORT_ERIE_BOUNDARY, {
       color: '#3b82f6',
       weight: 2,
@@ -366,11 +342,34 @@ export const RelativeDemandAnalysisCard: React.FC<RelativeDemandAnalysisCardProp
           </Button>
         </div>
 
-        {/* Map with Floating Stats Panel */}
+        {/* Glassmorphism Stats Panel */}
         {cityStats && (
           <div className="relative">
-            {/* Map Container - 500px height */}
-            <div className="relative h-screen rounded-lg overflow-hidden border border-gray-700 bg-gray-900" style={{ maxHeight: '500px' }}>
+            <div className="absolute top-4 right-4 z-10 bg-black/30 backdrop-blur-md border border-white/20 rounded-2xl p-4 text-white space-y-3 w-64">
+              <div>
+                <p className="text-xs text-white/70">Total Grid Cells</p>
+                <p className="text-2xl font-bold">{regions.length}</p>
+              </div>
+              <div>
+                <p className="text-xs text-white/70">Avg Relative Demand</p>
+                <p className="text-2xl font-bold text-green-400">
+                  {(regions.reduce((sum, r) => sum + r.relativeDemand, 0) / regions.length).toFixed(2)}%
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-white/70">Max Demand</p>
+                <p className="text-2xl font-bold text-red-500">
+                  {Math.max(...regions.map((r) => r.relativeDemand)).toFixed(2)}%
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-white/70">Total Orders</p>
+                <p className="text-2xl font-bold text-blue-400">{cityStats.totalOrders}</p>
+              </div>
+            </div>
+
+            {/* Map Container */}
+            <div className="relative h-96 rounded-lg overflow-hidden border border-gray-700 bg-gray-900">
               {isLoading ? (
                 <div className="h-full flex items-center justify-center bg-gray-900">
                   <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
@@ -378,30 +377,6 @@ export const RelativeDemandAnalysisCard: React.FC<RelativeDemandAnalysisCardProp
               ) : (
                 <div ref={rasterContainerRef} className="h-full w-full" />
               )}
-
-              {/* Floating Glassmorphism Stats Panel - Inside Map */}
-              <div className="absolute top-4 right-4 z-10 bg-black/70 backdrop-blur-md border border-white/15 rounded-xl p-3 text-white space-y-2 w-56">
-                <div>
-                  <p className="text-xs text-white/70">Total Grid Cells</p>
-                  <p className="text-xl font-bold">{regions.length}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-white/70">Avg Relative Demand</p>
-                  <p className="text-xl font-bold text-green-400">
-                    {(regions.reduce((sum, r) => sum + r.relativeDemand, 0) / regions.length).toFixed(2)}%
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-white/70">Max Demand</p>
-                  <p className="text-xl font-bold text-red-500">
-                    {Math.max(...regions.map((r) => r.relativeDemand)).toFixed(2)}%
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-white/70">Total Orders</p>
-                  <p className="text-xl font-bold text-blue-400">{cityStats.totalOrders}</p>
-                </div>
-              </div>
             </div>
           </div>
         )}
@@ -429,7 +404,7 @@ export const RelativeDemandAnalysisCard: React.FC<RelativeDemandAnalysisCardProp
         </div>
 
         {/* Animated Legend */}
-        <div className="bg-gradient-to-r from-gray-400 via-green-500 via-yellow-500 via-orange-500 to-red-700 h-8 rounded-lg relative">
+        <div className="bg-gradient-to-r from-gray-500 via-green-500 via-yellow-500 via-orange-500 to-red-700 h-8 rounded-lg relative">
           <div className="absolute inset-0 flex justify-between px-4 text-xs text-white font-semibold">
             <span>0-5%</span>
             <span>5-10%</span>
@@ -455,14 +430,14 @@ export const RelativeDemandAnalysisCard: React.FC<RelativeDemandAnalysisCardProp
                 </div>
               </div>
               <div className="flex items-start gap-2">
-                <div className="w-4 h-4 bg-green-500 rounded mt-0.5 flex-shrink-0"></div>
+                <div className="w-4 h-4 bg-green-400 rounded mt-0.5 flex-shrink-0"></div>
                 <div className="text-xs">
                   <span className="font-semibold">Weak (5-10%)</span>
                   <p className="text-gray-600">Below-average demand. Residential areas with lower delivery frequency.</p>
                 </div>
               </div>
               <div className="flex items-start gap-2">
-                <div className="w-4 h-4 bg-yellow-500 rounded mt-0.5 flex-shrink-0"></div>
+                <div className="w-4 h-4 bg-yellow-400 rounded mt-0.5 flex-shrink-0"></div>
                 <div className="text-xs">
                   <span className="font-semibold">Average (10-15%)</span>
                   <p className="text-gray-600">Typical demand level. Meets citywide average delivery intensity.</p>
@@ -500,11 +475,32 @@ export const RelativeDemandAnalysisCard: React.FC<RelativeDemandAnalysisCardProp
             <p className="text-sm text-blue-800">{interpretation}</p>
           </div>
         )}
+
+        {/* Selected Region Details */}
+        {selectedRegion && (
+          <div className="bg-gray-50 border rounded-lg p-4">
+            <h4 className="font-semibold text-sm mb-3">{selectedRegion.id} - Detailed Metrics</h4>
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div>
+                <div className="text-gray-600">Order Count</div>
+                <div className="font-semibold">{selectedRegion.orderCount}</div>
+              </div>
+              <div>
+                <div className="text-gray-600">Demand %</div>
+                <div className="font-semibold">{selectedRegion.relativeDemand.toFixed(1)}%</div>
+              </div>
+              <div>
+                <div className="text-gray-600">Classification</div>
+                <div className="font-semibold">{getClassificationLabel(selectedRegion.classification)}</div>
+              </div>
+            </div>
+          </div>
+        )}
       </CardContent>
 
       <style>{`
         .grid-cell-transition {
-          transition: fill 0.5s ease, stroke 0.5s ease, stroke-width 0.3s ease;
+          transition: fill 0.5s ease, stroke 0.5s ease;
         }
         @keyframes pulse-month {
           0%, 100% { opacity: 1; }
@@ -512,9 +508,6 @@ export const RelativeDemandAnalysisCard: React.FC<RelativeDemandAnalysisCardProp
         }
         .animate-pulse {
           animation: pulse-month 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-        .demand-label {
-          filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
         }
       `}</style>
     </Card>
