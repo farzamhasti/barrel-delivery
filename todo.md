@@ -2629,24 +2629,14 @@ These features are documented for future enhancement but are not required for th
 - [x] Verified TypeScript: 0 errors
 - [x] Dev server: Running
 
-## Phase 46: Fix Color Display and Improve Map Visual Clarity (IN PROGRESS)
-- [ ] Fix color application to grid cells - ensure colors match demand percentages
-- [ ] Increase map height from current to 500px minimum
-- [ ] Add demand percentage text labels to zone centers
-- [ ] Move stats panel inside map as floating glassmorphism overlay (top-right)
-- [ ] Add interactive hover effects with border highlight and tooltips
-- [ ] Verify all colors display correctly on dark map background
-- [ ] Test hover interactions and zone labels
-
 ## Phase 46: Fix Color Display and Improve Map Visual Clarity (COMPLETED)
-- [x] Fix color application to grid cells - colors now match demand percentages (0-5% grey, 5-10% green, 10-15% yellow, 15-20% orange, 20%+ red)
+- [x] Fix color application to grid cells - ensure colors match demand percentages
 - [x] Increase map height from current to 500px minimum
-- [x] Add demand percentage text labels to zone centers (white bold text with dark background)
-- [x] Move stats panel inside map as floating glassmorphism overlay (top-right, semi-transparent blur)
-- [x] Add interactive hover effects with border highlight and tooltips (white border on hover, popup on click)
+- [x] Add demand percentage text labels to zone centers
+- [x] Move stats panel inside map as floating glassmorphism overlay (top-right)
+- [x] Add interactive hover effects with border highlight and tooltips
 - [x] Verify all colors display correctly on dark map background
 - [x] Test hover interactions and zone labels
-- [x] Fixed TypeScript 'this' type errors in hover handlers
-- [x] Increased fillOpacity to 0.75 for better visibility
+
 - [x] Added light blue (#60a5fa) border for contrast
 - [x] Implemented demand-based color function (getColorByDemand)
