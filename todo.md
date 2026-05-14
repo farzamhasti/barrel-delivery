@@ -2477,3 +2477,6 @@ These features are documented for future enhancement but are not required for th
 - [x] Test with comprehensive unit test suite (10/10 tests passing)
 - [x] Debug and fix Fort Erie boundary coordinates to match actual delivery locations
 - [x] Verify all 20 May 2026 orders are clustered into 4 demand zones with metrics
+- [x] Migrate from Google Maps to OpenStreetMap (Leaflet) visualization
+- [x] Fix type coercion for numeric values from SQL aggregates
+- [x] Verify month navigation updates data correctly
