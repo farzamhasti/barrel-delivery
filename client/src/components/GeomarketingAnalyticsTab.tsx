@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BarChart3, Map as MapIcon, Calendar } from "lucide-react";
+import { BarChart3, Map as MapIcon, Calendar, TrendingUp } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { DatePickerModal } from "./DatePickerModal";
 import { AnalyticsSectionModalWithGIS } from "./AnalyticsSectionModalWithGIS";
@@ -186,31 +186,6 @@ export function GeomarketingAnalyticsTab() {
       </Card>
 
       {/* Analytics Sections Grid */}
-      {expandedDemandAnalysis ? (
-        <div className="space-y-4">
-          <Button 
-            variant="outline" 
-            onClick={() => setExpandedDemandAnalysis(false)}
-            className="mb-4"
-          >
-            ← Back to Grid View
-          </Button>
-          <DemandChangeAnalysisCard isCompact={false} />
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Demand Change Analysis Card */}
-          <DemandChangeAnalysisCard 
-            isCompact={true} 
-            onOpenExpanded={() => setExpandedDemandAnalysis(true)}
-          />
-
-          {/* Placeholder to maintain grid alignment */}
-          <div />
-        </div>
-      )}
-
-      {/* Analytics Sections Grid */}
       {!expandedDemandAnalysis && (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Section 1: Geographic Distribution */}
@@ -371,8 +346,38 @@ export function GeomarketingAnalyticsTab() {
               </div>
             </div>
           </CardContent>
-         </Card>
+        </Card>
       </div>
+      )}
+
+      {/* Demand Change Analysis - At End of Page */}
+      {expandedDemandAnalysis ? (
+        <div className="space-y-4">
+          <Button 
+            variant="outline" 
+            onClick={() => setExpandedDemandAnalysis(false)}
+            className="mb-4"
+          >
+            ← Back to Grid View
+          </Button>
+          <DemandChangeAnalysisCard isCompact={false} />
+        </div>
+      ) : (
+        <Card className="border-0 shadow-sm cursor-pointer hover:shadow-md transition-shadow w-full" onClick={() => setExpandedDemandAnalysis(true)}>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <TrendingUp className="w-5 h-5" />
+              Demand Change Analysis
+            </CardTitle>
+            <CardDescription>Geographic demand evolution over time</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center py-8">
+              <p className="text-sm text-gray-500 mb-4">Click to view detailed demand analysis</p>
+              <p className="text-xs text-gray-400">Compare monthly demand trends and zone performance</p>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* Date Picker Modal */}

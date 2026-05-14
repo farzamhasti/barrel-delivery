@@ -2462,6 +2462,6 @@ These features are documented for future enhancement but are not required for th
 
 ## Phase 31: Reorganize Demand Change Analysis Layout (COMPLETED)
 - [x] Refactor DemandChangeAnalysisCard to work in grid layout (added isCompact and onOpenExpanded props)
-- [x] Update GeomarketingAnalyticsTab to place Demand Change Analysis in grid with other cards
-- [x] Adjust card styling and content for grid display (compact view shows key metrics, badges, and expand hint)
-- [x] Test layout and verify all cards display properly (browser tested expand/collapse functionality)
+- [x] Move Demand Change Analysis to end of page (after all 6 analytics cards)
+- [x] Adjust card styling for full-width display at bottom
+- [x] Test layout and verify expand/collapse functionality (browser tested - working perfectly)
