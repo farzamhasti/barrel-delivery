@@ -433,6 +433,60 @@ export const RelativeDemandAnalysisCard: React.FC<RelativeDemandAnalysisCardProp
           </div>
         )}
 
+        {/* Classification Legend and Explanation */}
+        <div className="bg-gray-50 border rounded-lg p-4 space-y-3">
+          <div>
+            <h4 className="font-semibold text-sm mb-2">Relative Demand Classification</h4>
+            <p className="text-xs text-gray-700 mb-3">
+              Each 1000x1000m grid cell is classified based on its relative demand as a percentage of total city demand:
+            </p>
+            <div className="space-y-2">
+              <div className="flex items-start gap-2">
+                <div className="w-4 h-4 bg-gray-400 rounded mt-0.5 flex-shrink-0"></div>
+                <div className="text-xs">
+                  <span className="font-semibold">Underperforming (0-5%)</span>
+                  <p className="text-gray-600">Below expected demand intensity. Areas with minimal delivery activity.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-2">
+                <div className="w-4 h-4 bg-green-400 rounded mt-0.5 flex-shrink-0"></div>
+                <div className="text-xs">
+                  <span className="font-semibold">Weak (5-10%)</span>
+                  <p className="text-gray-600">Below-average demand. Residential areas with lower delivery frequency.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-2">
+                <div className="w-4 h-4 bg-yellow-400 rounded mt-0.5 flex-shrink-0"></div>
+                <div className="text-xs">
+                  <span className="font-semibold">Average (10-15%)</span>
+                  <p className="text-gray-600">Typical demand level. Meets citywide average delivery intensity.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-2">
+                <div className="w-4 h-4 bg-orange-500 rounded mt-0.5 flex-shrink-0"></div>
+                <div className="text-xs">
+                  <span className="font-semibold">High (15-20%)</span>
+                  <p className="text-gray-600">Above-average demand. Commercial or high-density residential zones.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-2">
+                <div className="w-4 h-4 bg-red-700 rounded mt-0.5 flex-shrink-0"></div>
+                <div className="text-xs">
+                  <span className="font-semibold">Very High (20%+)</span>
+                  <p className="text-gray-600">Significantly above average. Central business or high-demand residential areas.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="border-t pt-3">
+            <h4 className="font-semibold text-sm mb-2">Calculation Methodology</h4>
+            <p className="text-xs text-gray-700">
+              Relative demand for each cell = (Orders in cell / Total orders in Fort Erie) × 100%. 
+              This metric shows each grid cell's contribution to total city demand, enabling identification of high-performing zones and underutilized areas.
+            </p>
+          </div>
+        </div>
+
         {/* Spatial Insight */}
         {interpretation && (
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
