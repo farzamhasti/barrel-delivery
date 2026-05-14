@@ -2520,3 +2520,13 @@ These features are documented for future enhancement but are not required for th
 - [x] Verify all 13 boundary raster analysis tests pass with new cell size
 - [x] Confirm grid generates fewer cells (~1,250 cells vs 67,819 with 30m)
 - [x] TypeScript: 0 errors, Dev server running
+
+## Phase 36: Further Raster Grid Optimization to 1000x1000m (COMPLETED)
+- [x] Resize raster grid cells from 200x200m to 1000x1000m
+- [x] Update generateRasterGrid default parameter from 200 to 1000
+- [x] Update calculateRelativeDemand to use default 1000m cell size
+- [x] Update test expectations for 1000x1000m cell size
+- [x] Verify all 13 boundary raster analysis tests pass with new cell size
+- [x] Confirm grid generates ~50 cells (5-500 range) for Fort Erie
+- [x] TypeScript: 0 errors, Dev server running
+- [x] 1350x reduction in cells compared to original 30x30m grid

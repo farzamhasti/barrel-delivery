@@ -95,21 +95,21 @@ describe('Boundary Raster Analysis', () => {
     });
 
     it('should respect cell size parameter', () => {
-      const cells100 = generateRasterGrid(100);
-      const cells200 = generateRasterGrid(200);
+      const cells500 = generateRasterGrid(500);
+      const cells1000 = generateRasterGrid(1000);
       
       // Larger cell size should result in fewer cells
-      expect(cells200.length).toBeLessThan(cells100.length);
+      expect(cells1000.length).toBeLessThan(cells500.length);
     });
 
     it('should generate reasonable number of cells for Fort Erie', () => {
-      const cells = generateRasterGrid(); // Default 200x200m
+      const cells = generateRasterGrid(); // Default 1000x1000m
       
       // Fort Erie is roughly 5km x 10km (0.045 degrees x 0.09 degrees)
-      // With 200m cells, we should have roughly (5000/200) * (10000/200) = ~1,250 cells
-      // The actual boundary is complex, so we expect fewer cells than 30m grid
-      expect(cells.length).toBeGreaterThan(100);
-      expect(cells.length).toBeLessThan(10000);
+      // With 1000m cells, we should have roughly (5000/1000) * (10000/1000) = ~50 cells
+      // The actual boundary is complex, so we expect a small number of large cells
+      expect(cells.length).toBeGreaterThan(5);
+      expect(cells.length).toBeLessThan(500);
     });
   });
 
