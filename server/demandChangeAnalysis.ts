@@ -1,9 +1,8 @@
-import * as h3 from "h3-js";
 import { isPointInBoundary } from './geographicBoundaryFilter';
 import { getOrdersWithCoordinates } from './geomarketing';
 
 export interface DemandZone {
-  hexId: string;
+  zoneId: string;
   latitude: number;
   longitude: number;
   previousPeriodOrders: number;
@@ -28,11 +27,35 @@ export interface DemandChangeAnalysisResult {
   };
   spatialInterpretation: string;
   success: boolean;
+  fortErieBoundary: { center: { lat: number; lon: number }; radius: number };
 }
 
 /**
- * Analyze geographic demand changes over time within Fort Erie boundary
+ * Create a grid cell ID for a given lat/lon within Fort Erie
+ * Uses 0.01 degree cells (~1km) to create a constrained grid
+ */
+function getGridCellId(lat: number, lon: number): string {
+  const cellSize = 0.01; // ~1km at this latitude
+  const cellLat = Math.floor(lat / cellSize) * cellSize;
+  const cellLon = Math.floor(lon / cellSize) * cellSize;
+  return `${cellLat.toFixed(2)}_${cellLon.toFixed(2)}`;
+}
+
+/**
+ * Get grid cell center coordinates
+ */
+function getGridCellCenter(cellId: string): { lat: number; lon: number } {
+  const [latStr, lonStr] = cellId.split('_');
+  return {
+    lat: parseFloat(latStr) + 0.005,
+    lon: parseFloat(lonStr) + 0.005,
+  };
+}
+
+/**
+ * Analyze geographic demand changes over time within Fort Erie boundary ONLY
  * Compares two time periods to identify demand evolution patterns
+ * Uses a constrained grid that respects Fort Erie boundaries
  */
 export async function analyzeDemandChange(
   previousStartDate: Date,
@@ -49,7 +72,7 @@ export async function analyzeDemandChange(
 
     console.log(`[analyzeDemandChange] Previous period orders: ${previousOrders.length}, Current period orders: ${currentOrders.length}`);
 
-    // Filter to Fort Erie boundary
+    // Filter to Fort Erie boundary ONLY - this is critical
     const previousFortErieOrders = previousOrders.filter((o: any) => {
       if (!o.customerLatitude || !o.customerLongitude) return false;
       const result = isPointInBoundary(Number(o.customerLongitude), Number(o.customerLatitude));
@@ -73,26 +96,26 @@ export async function analyzeDemandChange(
         },
         spatialInterpretation: "No delivery data available within Fort Erie for the selected periods.",
         success: false,
+        fortErieBoundary: { center: { lat: 42.8812, lon: -78.9485 }, radius: 5 },
       };
     }
 
-    // Aggregate orders into H3 hexagons (resolution 5 for ~1km cells)
-    const hexResolution = 5;
-    const previousHexagons = new Map<string, { orders: any[]; totalWaitingTime: number; totalDeliveryTime: number }>();
-    const currentHexagons = new Map<string, { orders: any[]; totalWaitingTime: number; totalDeliveryTime: number }>();
+    // Aggregate orders into constrained grid cells (within Fort Erie only)
+    const previousGridCells = new Map<string, { orders: any[]; totalWaitingTime: number; totalDeliveryTime: number }>();
+    const currentGridCells = new Map<string, { orders: any[]; totalWaitingTime: number; totalDeliveryTime: number }>();
 
     // Process previous period
     for (const order of previousFortErieOrders) {
       const lat = Number(order.customerLatitude);
       const lon = Number(order.customerLongitude);
-      const hexId = h3.latLngToCell(lat, lon, hexResolution);
+      const cellId = getGridCellId(lat, lon);
 
-      if (!previousHexagons.has(hexId)) {
-        previousHexagons.set(hexId, { orders: [], totalWaitingTime: 0, totalDeliveryTime: 0 });
+      if (!previousGridCells.has(cellId)) {
+        previousGridCells.set(cellId, { orders: [], totalWaitingTime: 0, totalDeliveryTime: 0 });
       }
 
-      const hex = previousHexagons.get(hexId)!;
-      hex.orders.push(order);
+      const cell = previousGridCells.get(cellId)!;
+      cell.orders.push(order);
 
       // Calculate waiting time (ready time - order creation)
       const waitingTime = order.readyAt && order.createdAt
@@ -104,22 +127,22 @@ export async function analyzeDemandChange(
         ? (new Date(order.deliveredAt).getTime() - new Date(order.createdAt).getTime()) / (1000 * 60)
         : 0;
 
-      hex.totalWaitingTime += waitingTime;
-      hex.totalDeliveryTime += totalDeliveryTime;
+      cell.totalWaitingTime += waitingTime;
+      cell.totalDeliveryTime += totalDeliveryTime;
     }
 
     // Process current period
     for (const order of currentFortErieOrders) {
       const lat = Number(order.customerLatitude);
       const lon = Number(order.customerLongitude);
-      const hexId = h3.latLngToCell(lat, lon, hexResolution);
+      const cellId = getGridCellId(lat, lon);
 
-      if (!currentHexagons.has(hexId)) {
-        currentHexagons.set(hexId, { orders: [], totalWaitingTime: 0, totalDeliveryTime: 0 });
+      if (!currentGridCells.has(cellId)) {
+        currentGridCells.set(cellId, { orders: [], totalWaitingTime: 0, totalDeliveryTime: 0 });
       }
 
-      const hex = currentHexagons.get(hexId)!;
-      hex.orders.push(order);
+      const cell = currentGridCells.get(cellId)!;
+      cell.orders.push(order);
 
       const waitingTime = order.readyAt && order.createdAt
         ? (new Date(order.readyAt).getTime() - new Date(order.createdAt).getTime()) / (1000 * 60)
@@ -129,22 +152,22 @@ export async function analyzeDemandChange(
         ? (new Date(order.deliveredAt).getTime() - new Date(order.createdAt).getTime()) / (1000 * 60)
         : 0;
 
-      hex.totalWaitingTime += waitingTime;
-      hex.totalDeliveryTime += totalDeliveryTime;
+      cell.totalWaitingTime += waitingTime;
+      cell.totalDeliveryTime += totalDeliveryTime;
     }
 
-    // Analyze demand changes across all zones
-    const allHexIds = new Set([...previousHexagons.keys(), ...currentHexagons.keys()]);
+    // Analyze demand changes across all grid cells
+    const allCellIds = new Set([...previousGridCells.keys(), ...currentGridCells.keys()]);
     const zones: DemandZone[] = [];
 
-    for (const hexId of allHexIds) {
-      const prevData = previousHexagons.get(hexId);
-      const currData = currentHexagons.get(hexId);
+    for (const cellId of allCellIds) {
+      const prevData = previousGridCells.get(cellId);
+      const currData = currentGridCells.get(cellId);
 
       const previousOrderCount = prevData?.orders.length || 0;
       const currentOrderCount = currData?.orders.length || 0;
 
-      // Skip zones with no activity in either period
+      // Skip cells with no activity in either period
       if (previousOrderCount === 0 && currentOrderCount === 0) continue;
 
       const orderDensityChange = currentOrderCount - previousOrderCount;
@@ -169,15 +192,9 @@ export async function analyzeDemandChange(
         ? (currData?.totalDeliveryTime || 0) / currentOrderCount
         : 0;
 
-      const waitingTimeTrend = avgWaitingTimeCurrent - avgWaitingTimePrevious;
-      const deliveryTimeTrend = avgDeliveryTimeCurrent - avgDeliveryTimePrevious;
-
-      // Classify zone based on demand change
-      let classification: DemandZone["classification"];
-
-      if (previousOrderCount === 0 && currentOrderCount > 0) {
-        classification = "Strong Growth"; // New demand area
-      } else if (growthPercentage >= 50) {
+      // Classify zone based on growth percentage
+      let classification: "Strong Growth" | "Moderate Growth" | "Stable" | "Weakening" | "Rapid Decline";
+      if (growthPercentage >= 50) {
         classification = "Strong Growth";
       } else if (growthPercentage >= 10) {
         classification = "Moderate Growth";
@@ -189,23 +206,22 @@ export async function analyzeDemandChange(
         classification = "Rapid Decline";
       }
 
-      // Get zone center coordinates
-      const [lat, lon] = h3.cellToLatLng(hexId);
+      const cellCenter = getGridCellCenter(cellId);
 
-      // Collect all order locations
+      // Collect all order locations in this cell
       const orderLocations = [
         ...(prevData?.orders || []),
         ...(currData?.orders || []),
       ].map((o: any) => ({
-        lat: Number(o.customerLatitude || 0),
-        lon: Number(o.customerLongitude || 0),
+        lat: Number(o.customerLatitude),
+        lon: Number(o.customerLongitude),
         orderId: o.id,
       }));
 
       zones.push({
-        hexId,
-        latitude: lat,
-        longitude: lon,
+        zoneId: cellId,
+        latitude: cellCenter.lat,
+        longitude: cellCenter.lon,
         previousPeriodOrders: previousOrderCount,
         currentPeriodOrders: currentOrderCount,
         orderDensityChange,
@@ -213,30 +229,42 @@ export async function analyzeDemandChange(
         classification,
         avgWaitingTimePrevious,
         avgWaitingTimeCurrent,
-        waitingTimeTrend,
+        waitingTimeTrend: avgWaitingTimeCurrent - avgWaitingTimePrevious,
         avgDeliveryTimePrevious,
         avgDeliveryTimeCurrent,
-        deliveryTimeTrend,
+        deliveryTimeTrend: avgDeliveryTimeCurrent - avgDeliveryTimePrevious,
         orderLocations,
       });
     }
 
-    // Sort by density change (most significant shifts first)
-    zones.sort((a, b) => Math.abs(b.orderDensityChange) - Math.abs(a.orderDensityChange));
-
     console.log(`[analyzeDemandChange] Total zones analyzed: ${zones.length}`);
 
     // Generate spatial interpretation
-    const spatialInterpretation = generateDemandInterpretation(zones, previousStartDate, previousEndDate, currentStartDate, currentEndDate);
+    const strongGrowthZones = zones.filter(z => z.classification === "Strong Growth").length;
+    const declineZones = zones.filter(z => z.classification === "Rapid Decline").length;
+    const stableZones = zones.filter(z => z.classification === "Stable").length;
+
+    let spatialInterpretation = `Demand analysis comparing ${previousStartDate.toLocaleDateString()} to ${currentStartDate.toLocaleDateString()}: `;
+    if (strongGrowthZones > 0) {
+      spatialInterpretation += `${strongGrowthZones} zone(s) show strong demand growth. `;
+    }
+    if (declineZones > 0) {
+      spatialInterpretation += `${declineZones} zone(s) show rapid decline. `;
+    }
+    if (stableZones > 0) {
+      spatialInterpretation += `${stableZones} zone(s) remain stable. `;
+    }
+    spatialInterpretation += "All analysis is within Fort Erie service area.";
 
     return {
-      zones: zones.slice(0, 15), // Return top 15 zones
+      zones,
       periodComparison: {
         previousPeriod: { startDate: previousStartDate, endDate: previousEndDate, totalOrders: previousFortErieOrders.length },
         currentPeriod: { startDate: currentStartDate, endDate: currentEndDate, totalOrders: currentFortErieOrders.length },
       },
       spatialInterpretation,
       success: true,
+      fortErieBoundary: { center: { lat: 42.8812, lon: -78.9485 }, radius: 5 },
     };
   } catch (error) {
     console.error("[analyzeDemandChange] Error:", error);
@@ -248,58 +276,7 @@ export async function analyzeDemandChange(
       },
       spatialInterpretation: "Error analyzing demand changes.",
       success: false,
+      fortErieBoundary: { center: { lat: 42.8812, lon: -78.9485 }, radius: 5 },
     };
   }
-}
-
-/**
- * Generate human-readable spatial interpretation
- */
-function generateDemandInterpretation(
-  zones: DemandZone[],
-  prevStart: Date,
-  prevEnd: Date,
-  currStart: Date,
-  currEnd: Date
-): string {
-  if (zones.length === 0) {
-    return "No significant demand changes detected in Fort Erie during this period.";
-  }
-
-  const strongGrowth = zones.filter((z) => z.classification === "Strong Growth");
-  const moderateGrowth = zones.filter((z) => z.classification === "Moderate Growth");
-  const weakening = zones.filter((z) => z.classification === "Weakening");
-  const rapidDecline = zones.filter((z) => z.classification === "Rapid Decline");
-
-  let interpretation = `Demand analysis comparing ${prevStart.toLocaleDateString()} to ${currStart.toLocaleDateString()}: `;
-
-  if (strongGrowth.length > 0) {
-    interpretation += `${strongGrowth.length} zones show strong demand growth. `;
-  }
-
-  if (moderateGrowth.length > 0) {
-    interpretation += `${moderateGrowth.length} zones show moderate growth. `;
-  }
-
-  if (weakening.length > 0) {
-    interpretation += `${weakening.length} zones show weakening demand. `;
-  }
-
-  if (rapidDecline.length > 0) {
-    interpretation += `${rapidDecline.length} zones show rapid demand decline. `;
-  }
-
-  // Check for operational pressure
-  const highWaitingTimeZones = zones.filter((z) => z.waitingTimeTrend > 5);
-  if (highWaitingTimeZones.length > 0) {
-    interpretation += `Preparation times are increasing in ${highWaitingTimeZones.length} regions, indicating rising operational pressure. `;
-  }
-
-  // Check for delivery time changes
-  const improvedDeliveryZones = zones.filter((z) => z.deliveryTimeTrend < -5);
-  if (improvedDeliveryZones.length > 0) {
-    interpretation += `Delivery efficiency is improving in ${improvedDeliveryZones.length} zones. `;
-  }
-
-  return interpretation;
 }

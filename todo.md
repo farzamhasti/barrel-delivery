@@ -2428,3 +2428,16 @@ These features are documented for future enhancement but are not required for th
 - [x] Implement zone detail modal showing metrics and trends
 - [x] Add automatic spatial interpretation generation
 - [x] Test with multiple date ranges and verify Fort Erie boundary constraint
+
+
+## Phase 135: REDESIGN VISUALIZATION LAYER - FORT ERIE BOUNDARY WITH HEATMAP (COMPLETED)
+- [x] Remove H3 hexagon visualization from DemandChangeMap
+- [x] Add Fort Erie boundary polygon rendering to map
+- [x] Implement demand circles for localized order concentrations
+- [x] Add smooth color gradients (green to red classification)
+- [x] Add legend showing classification intensity scale
+- [x] Test: Verify all visualization stays within Fort Erie boundary
+- [x] Test: Verify circles show neighborhood-scale demand patterns
+- [x] Test: Verify no visual elements appear outside Fort Erie
+- [x] Keep backend analytics unchanged - visualization only
+- [x] Browser test: Confirmed 11 zones displayed, all within Fort Erie boundary

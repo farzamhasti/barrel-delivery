@@ -8,7 +8,7 @@ import { DemandChangeMap } from './DemandChangeMap';
 import { DemandChangeDetailsModal } from './DemandChangeDetailsModal';
 
 interface DemandZone {
-  hexId: string;
+  zoneId: string;
   latitude: number;
   longitude: number;
   previousPeriodOrders: number;
@@ -148,7 +148,7 @@ export function DemandChangeAnalysisCard() {
             <div className="space-y-3 max-h-96 overflow-y-auto">
               {zones.map((zone) => (
                 <div
-                  key={zone.hexId}
+                  key={zone.zoneId}
                   className="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer transition-colors"
                   onClick={() => handleZoneClick(zone)}
                 >
@@ -158,7 +158,7 @@ export function DemandChangeAnalysisCard() {
                         <Badge className={getClassificationColor(zone.classification)}>
                           {zone.classification}
                         </Badge>
-                        <span className="text-xs text-gray-500">Zone {zone.hexId.slice(0, 8)}</span>
+                        <span className="text-xs text-gray-500">Zone {zone.zoneId.split('_')[0]}</span>
                       </div>
                       <div className="grid grid-cols-2 gap-2 text-sm">
                         <div>

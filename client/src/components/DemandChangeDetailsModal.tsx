@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
 interface DemandZone {
-  hexId: string;
+  zoneId: string;
   latitude: number;
   longitude: number;
   previousPeriodOrders: number;
@@ -60,7 +60,7 @@ export function DemandChangeDetailsModal({ zone, isOpen, onClose }: DemandChange
             <Badge className={getClassificationColor(zone.classification)}>
               {zone.classification}
             </Badge>
-            <span className="text-sm font-normal text-gray-600">Zone {zone.hexId.slice(0, 8)}</span>
+            <span className="text-sm font-normal text-gray-600">Zone {zone.zoneId.split('_')[0]}</span>
           </DialogTitle>
         </DialogHeader>
 
