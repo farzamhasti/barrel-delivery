@@ -2417,6 +2417,13 @@ These features are documented for future enhancement but are not required for th
 - [x] Verify TypeScript compilation is clean
 
 
+## Phase 136: UPDATE FORT ERIE BOUNDARY POLYGON (COMPLETED)
+- [x] Replace simple dashed rectangle with accurate Fort Erie boundary polygon
+- [x] Update boundary coordinates from GeoJSON (52 coordinate points)
+- [x] Adjust map zoom and center for proper boundary display
+- [x] Verify all demand zones remain within accurate boundary
+- [x] Browser test: Confirmed accurate boundary displays with all zones inside
+
 ## Phase 134: CREATE DEMAND CHANGE ANALYSIS SYSTEM (COMPLETED)
 - [x] Design demand change analysis data model with zone classification
 - [x] Implement backend analyzeDemandChange procedure with spatial aggregation
@@ -2441,3 +2448,5 @@ These features are documented for future enhancement but are not required for th
 - [x] Test: Verify no visual elements appear outside Fort Erie
 - [x] Keep backend analytics unchanged - visualization only
 - [x] Browser test: Confirmed 11 zones displayed, all within Fort Erie boundary
+- [x] Update boundary polygon to use accurate Fort Erie city coordinates
+- [x] Browser test: Verified accurate boundary polygon displays correctly

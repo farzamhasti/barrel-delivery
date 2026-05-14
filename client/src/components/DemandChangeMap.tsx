@@ -25,16 +25,63 @@ interface DemandChangeMapProps {
   onZoneClick: (zone: DemandZone) => void;
 }
 
-// Fort Erie boundary polygon coordinates
+// Fort Erie boundary polygon coordinates (actual city boundary)
 const FORT_ERIE_BOUNDARY = [
-  [42.8812164, -78.9783667],
-  [42.8812164, -78.9187357],
-  [42.9566977, -78.9187357],
-  [42.9566977, -78.9783667],
-  [42.8812164, -78.9783667],
+  [42.8765244, -78.999892],
+  [42.8919223, -78.9996819],
+  [42.9036221, -79.0009428],
+  [42.9042378, -79.0055659],
+  [42.9287076, -79.0089282],
+  [42.9557824, -79.0097688],
+  [42.9667012, -79.0154427],
+  [42.9755716, -79.0166213],
+  [42.9741848, -79.0087238],
+  [42.9723357, -79.0005104],
+  [42.9690161, -78.9858657],
+  [42.9652306, -78.9793129],
+  [42.9569016, -78.9768987],
+  [42.9518533, -78.9718979],
+  [42.9490765, -78.9610341],
+  [42.947688, -78.9513773],
+  [42.9493289, -78.9482734],
+  [42.9497076, -78.9401686],
+  [42.9478143, -78.9341331],
+  [42.9407454, -78.9243039],
+  [42.9360744, -78.9175787],
+  [42.9307718, -78.913785],
+  [42.9286254, -78.9124055],
+  [42.9247111, -78.9125779],
+  [42.9149875, -78.9082669],
+  [42.9086727, -78.9084393],
+  [42.9061465, -78.9099913],
+  [42.9041256, -78.9155094],
+  [42.9013466, -78.9172338],
+  [42.896041, -78.9203378],
+  [42.8925037, -78.9218898],
+  [42.891114, -78.9218898],
+  [42.8889662, -78.9244764],
+  [42.8873237, -78.9256835],
+  [42.8849231, -78.9296496],
+  [42.884165, -78.9339607],
+  [42.8836595, -78.9365473],
+  [42.8829014, -78.9405135],
+  [42.8820169, -78.9486183],
+  [42.8808797, -78.95086],
+  [42.8837859, -78.9603443],
+  [42.8834068, -78.9681042],
+  [42.8807533, -78.9703459],
+  [42.8794897, -78.9701735],
+  [42.8788579, -78.9720703],
+  [42.8793633, -78.974657],
+  [42.8801215, -78.9781058],
+  [42.8791106, -78.9829342],
+  [42.879296, -78.9907284],
+  [42.8781587, -78.9955568],
+  [42.8765244, -78.999892],
 ] as [number, number][];
 
-const FORT_ERIE_CENTER = [42.9189, -78.9485] as [number, number];
+// Calculate Fort Erie center from boundary
+const FORT_ERIE_CENTER = [42.9155, -78.9580] as [number, number];
 
 export function DemandChangeMap({ zones, onZoneClick }: DemandChangeMapProps) {
   const mapRef = useRef<L.Map | null>(null);
@@ -63,7 +110,7 @@ export function DemandChangeMap({ zones, onZoneClick }: DemandChangeMapProps) {
 
     // Initialize map
     if (!mapRef.current) {
-      mapRef.current = L.map(containerRef.current).setView(FORT_ERIE_CENTER, 13);
+      mapRef.current = L.map(containerRef.current).setView(FORT_ERIE_CENTER, 12);
 
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors',
@@ -83,11 +130,10 @@ export function DemandChangeMap({ zones, onZoneClick }: DemandChangeMapProps) {
     // Draw Fort Erie boundary polygon with enhanced styling
     const boundaryPolygon = L.polygon(FORT_ERIE_BOUNDARY, {
       color: '#1e40af',
-      weight: 3,
-      opacity: 0.9,
+      weight: 2.5,
+      opacity: 0.85,
       fillColor: '#93c5fd',
-      fillOpacity: 0.08,
-      dashArray: '5, 5',
+      fillOpacity: 0.05,
     }).addTo(map);
     
     boundaryPolygon.bindPopup('<div class="text-sm font-semibold">Fort Erie Service Area</div>');
@@ -136,9 +182,9 @@ export function DemandChangeMap({ zones, onZoneClick }: DemandChangeMapProps) {
       });
     });
 
-    // Fit map to Fort Erie boundary
+    // Fit map to Fort Erie boundary with padding
     const bounds = L.latLngBounds(FORT_ERIE_BOUNDARY);
-    map.fitBounds(bounds, { padding: [50, 50] });
+    map.fitBounds(bounds, { padding: [80, 80] });
 
     return () => {
       // Cleanup handled by React
@@ -190,7 +236,7 @@ export function DemandChangeMap({ zones, onZoneClick }: DemandChangeMapProps) {
           </div>
         </div>
         <p className="text-xs text-muted-foreground mt-3">
-          <strong>Blue dashed boundary:</strong> Fort Erie service area<br />
+          <strong>Blue boundary:</strong> Fort Erie service area<br />
           <strong>Circle size:</strong> Proportional to order volume<br />
           <strong>Circle color:</strong> Demand classification<br />
           Click any circle to view detailed zone metrics
