@@ -135,7 +135,7 @@ export const RelativeDemandAnalysisCard: React.FC<RelativeDemandAnalysisCardProp
   // Fetch raster grid data
   const { data: gridData, isLoading: gridLoading } = trpc.analytics.analyzeBoundaryRaster.useQuery(
     { startDate, endDate },
-    { enabled: showRasterGrid && isExpanded }
+    { enabled: isExpanded }
   );
 
   // Refetch when selectedMonth changes
@@ -196,12 +196,11 @@ export const RelativeDemandAnalysisCard: React.FC<RelativeDemandAnalysisCardProp
     }
   };
 
-
-
-  // Initialize raster grid map
+  // Initialize raster grid map - always show basemap, conditionally render grid cells
   useEffect(() => {
-    if (!showRasterGrid || !rasterContainerRef.current || !gridData?.cells || gridData.cells.length === 0) return;
+    if (!rasterContainerRef.current) return;
 
+    // Initialize map if not already done
     if (!rasterMapRef.current) {
       rasterMapRef.current = L.map(rasterContainerRef.current).setView(FORT_ERIE_CENTER, 12);
 
@@ -213,51 +212,53 @@ export const RelativeDemandAnalysisCard: React.FC<RelativeDemandAnalysisCardProp
 
     const map = rasterMapRef.current;
 
-    // Clear existing layers (except tile layer)
+    // Clear existing grid layers (except tile layer)
     map.eachLayer((layer) => {
       if (layer instanceof L.Rectangle || layer instanceof L.Polygon) {
         map.removeLayer(layer);
       }
     });
 
-    // Draw raster grid cells
-    gridData.cells.forEach((cell) => {
-      const cellSize = 1000; // 1000 meters
-      const latStep = cellSize / 111320;
-      const lonStep = cellSize / (111320 * Math.cos((cell.lat * Math.PI) / 180));
+    // Only draw grid cells if checkbox is enabled and data is available
+    if (showRasterGrid && gridData?.cells && gridData.cells.length > 0) {
+      gridData.cells.forEach((cell) => {
+        const cellSize = 1000; // 1000 meters
+        const latStep = cellSize / 111320;
+        const lonStep = cellSize / (111320 * Math.cos((cell.lat * Math.PI) / 180));
 
-      const bounds = [
-        [cell.lat - latStep / 2, cell.lon - lonStep / 2],
-        [cell.lat + latStep / 2, cell.lon + lonStep / 2],
-      ] as L.LatLngBoundsExpression;
+        const bounds = [
+          [cell.lat - latStep / 2, cell.lon - lonStep / 2],
+          [cell.lat + latStep / 2, cell.lon + lonStep / 2],
+        ] as L.LatLngBoundsExpression;
 
-      const rectangle = L.rectangle(bounds, {
-        color: cell.color,
-        weight: 1,
-        opacity: 0.8,
-        fillOpacity: 0.6,
+        const rectangle = L.rectangle(bounds, {
+          color: cell.color,
+          weight: 1,
+          opacity: 0.8,
+          fillOpacity: 0.6,
+        });
+
+        rectangle.bindPopup(
+          `<div class="p-2 text-sm">
+            <p class="font-semibold">${cell.id}</p>
+            <p>Demand: ${cell.relativeDemand.toFixed(2)}%</p>
+            <p>Orders: ${cell.orderCount}</p>
+            <p>Classification: ${cell.classification}</p>
+          </div>`
+        );
+
+        rectangle.addTo(map);
       });
 
-      rectangle.bindPopup(
-        `<div class="p-2 text-sm">
-          <p class="font-semibold">${cell.id}</p>
-          <p>Demand: ${cell.relativeDemand.toFixed(2)}%</p>
-          <p>Orders: ${cell.orderCount}</p>
-          <p>Classification: ${cell.classification}</p>
-        </div>`
+      // Fit map to grid bounds
+      const allLats = gridData.cells.map((c) => c.lat);
+      const allLons = gridData.cells.map((c) => c.lon);
+      const bounds = L.latLngBounds(
+        [Math.min(...allLats), Math.min(...allLons)],
+        [Math.max(...allLats), Math.max(...allLons)]
       );
-
-      rectangle.addTo(map);
-    });
-
-    // Fit map to grid bounds
-    const allLats = gridData.cells.map((c) => c.lat);
-    const allLons = gridData.cells.map((c) => c.lon);
-    const bounds = L.latLngBounds(
-      [Math.min(...allLats), Math.min(...allLons)],
-      [Math.max(...allLats), Math.max(...allLons)]
-    );
-    map.fitBounds(bounds, { padding: [50, 50] });
+      map.fitBounds(bounds, { padding: [50, 50] });
+    }
   }, [gridData, showRasterGrid]);
 
   if (isCompact && !isExpanded) {
@@ -313,6 +314,7 @@ export const RelativeDemandAnalysisCard: React.FC<RelativeDemandAnalysisCardProp
           )}
         </div>
       </CardHeader>
+      
       <CardContent className="space-y-4">
         {/* Month Navigation */}
         <div className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
@@ -336,26 +338,29 @@ export const RelativeDemandAnalysisCard: React.FC<RelativeDemandAnalysisCardProp
           </Button>
         </div>
 
-        {/* City-wide         {!isCompact && (
+        {/* City-wide Stats */}
+        {!isCompact && (
             <div className="grid grid-cols-4 gap-3 mb-4">
               <div className="bg-blue-50 p-3 rounded-lg">
                 <div className="text-xs text-gray-600 mb-1">Total Orders</div>
-                <div className="text-2xl font-bold text-blue-600">{Number(cityStats.totalOrders) || 0}</div>
+                <div className="text-2xl font-bold text-blue-600">{Number(cityStats?.totalOrders) || 0}</div>
               </div>
               <div className="bg-green-50 p-3 rounded-lg">
                 <div className="text-xs text-gray-600 mb-1">Avg Delivery Time</div>
-                <div className="text-2xl font-bold text-green-600">{(Number(cityStats.avgDeliveryTime) || 0).toFixed(0)} min</div>
+                <div className="text-2xl font-bold text-green-600">{(Number(cityStats?.avgDeliveryTime) || 0).toFixed(0)} min</div>
               </div>
               <div className="bg-orange-50 p-3 rounded-lg">
                 <div className="text-xs text-gray-600 mb-1">Avg Waiting Time</div>
-                <div className="text-2xl font-bold text-orange-600">{(Number(cityStats.avgWaitingTime) || 0).toFixed(0)} min</div>
+                <div className="text-2xl font-bold text-orange-600">{(Number(cityStats?.avgWaitingTime) || 0).toFixed(0)} min</div>
               </div>
               <div className="bg-purple-50 p-3 rounded-lg">
                 <div className="text-xs text-gray-600 mb-1">Order Density</div>
-                <div className="text-2xl font-bold text-purple-600">{(Number(cityStats.avgOrderDensity) || 0).toFixed(1)}/km²</div>
+                <div className="text-2xl font-bold text-purple-600">{(Number(cityStats?.avgOrderDensity) || 0).toFixed(1)}/km²</div>
               </div>
             </div>
-        )}* Map */}
+        )}
+
+        {/* Loading state */}
         {isLoading ? (
           <div className="h-96 flex items-center justify-center bg-gray-50 rounded-lg border border-gray-200">
             <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
@@ -375,64 +380,65 @@ export const RelativeDemandAnalysisCard: React.FC<RelativeDemandAnalysisCardProp
         </div>
 
         {/* Raster Grid Visualization */}
-        {showRasterGrid && (
-          <div className="space-y-3">
-            <h3 className="font-semibold text-sm">Raster-Based Relative Demand Classification</h3>
-            {gridLoading ? (
-              <div className="h-96 flex items-center justify-center bg-gray-50 rounded-lg border border-gray-200">
-                <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
-              </div>
-            ) : gridData?.cells && gridData.cells.length > 0 ? (
-              <>
-                <div className="grid grid-cols-4 gap-2 text-sm">
-                  <div className="bg-blue-50 p-2 rounded">
-                    <div className="text-xs text-gray-600">Grid Cells</div>
-                    <div className="font-bold text-blue-600">{gridData.cells.length}</div>
+        <div className="space-y-3">
+          <h3 className="font-semibold text-sm">Raster-Based Relative Demand Classification</h3>
+          {gridLoading && showRasterGrid ? (
+            <div className="h-96 flex items-center justify-center bg-gray-50 rounded-lg border border-gray-200">
+              <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+            </div>
+          ) : (
+            <>
+              {/* Map always visible */}
+              <div className="h-96 rounded-lg overflow-hidden border border-gray-200" ref={rasterContainerRef} />
+              
+              {/* Grid stats and legend only shown when enabled */}
+              {showRasterGrid && gridData?.cells && gridData.cells.length > 0 && (
+                <>
+                  <div className="grid grid-cols-4 gap-2 text-sm">
+                    <div className="bg-blue-50 p-2 rounded">
+                      <div className="text-xs text-gray-600">Grid Cells</div>
+                      <div className="font-bold text-blue-600">{gridData.cells.length}</div>
+                    </div>
+                    <div className="bg-green-50 p-2 rounded">
+                      <div className="text-xs text-gray-600">Avg Demand</div>
+                      <div className="font-bold text-green-600">{(gridData.cells.reduce((sum, c) => sum + c.relativeDemand, 0) / gridData.cells.length).toFixed(2)}%</div>
+                    </div>
+                    <div className="bg-orange-50 p-2 rounded">
+                      <div className="text-xs text-gray-600">Max Demand</div>
+                      <div className="font-bold text-orange-600">{Math.max(...gridData.cells.map(c => c.relativeDemand)).toFixed(2)}%</div>
+                    </div>
+                    <div className="bg-purple-50 p-2 rounded">
+                      <div className="text-xs text-gray-600">Total Orders</div>
+                      <div className="font-bold text-purple-600">{gridData.totalOrders}</div>
+                    </div>
                   </div>
-                  <div className="bg-green-50 p-2 rounded">
-                    <div className="text-xs text-gray-600">Avg Demand</div>
-                    <div className="font-bold text-green-600">{(gridData.cells.reduce((sum, c) => sum + c.relativeDemand, 0) / gridData.cells.length).toFixed(2)}%</div>
+                  <div className="grid grid-cols-5 gap-2 text-xs">
+                    <div className="flex items-center gap-1">
+                      <div className="h-3 w-3 rounded" style={{ backgroundColor: '#A855F7' }}></div>
+                      <span>0-5%</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <div className="h-3 w-3 rounded" style={{ backgroundColor: '#90ee90' }}></div>
+                      <span>5-10%</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <div className="h-3 w-3 rounded" style={{ backgroundColor: '#ffff00' }}></div>
+                      <span>10-15%</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <div className="h-3 w-3 rounded" style={{ backgroundColor: '#ff4500' }}></div>
+                      <span>15-20%</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <div className="h-3 w-3 rounded" style={{ backgroundColor: '#8b0000' }}></div>
+                      <span>20%+</span>
+                    </div>
                   </div>
-                  <div className="bg-orange-50 p-2 rounded">
-                    <div className="text-xs text-gray-600">Max Demand</div>
-                    <div className="font-bold text-orange-600">{Math.max(...gridData.cells.map(c => c.relativeDemand)).toFixed(2)}%</div>
-                  </div>
-                  <div className="bg-purple-50 p-2 rounded">
-                    <div className="text-xs text-gray-600">Total Orders</div>
-                    <div className="font-bold text-purple-600">{gridData.totalOrders}</div>
-                  </div>
-                </div>
-                <div className="h-96 rounded-lg overflow-hidden border border-gray-200" ref={rasterContainerRef} />
-                <div className="grid grid-cols-5 gap-2 text-xs">
-                  <div className="flex items-center gap-1">
-                    <div className="h-3 w-3 rounded" style={{ backgroundColor: '#A855F7' }}></div>
-                    <span>0-5%</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <div className="h-3 w-3 rounded" style={{ backgroundColor: '#90ee90' }}></div>
-                    <span>5-10%</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <div className="h-3 w-3 rounded" style={{ backgroundColor: '#ffff00' }}></div>
-                    <span>10-15%</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <div className="h-3 w-3 rounded" style={{ backgroundColor: '#ff4500' }}></div>
-                    <span>15-20%</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <div className="h-3 w-3 rounded" style={{ backgroundColor: '#8b0000' }}></div>
-                    <span>20%+</span>
-                  </div>
-                </div>
-              </>
-            ) : (
-              <div className="h-96 flex items-center justify-center bg-gray-50 rounded-lg border border-gray-200">
-                <p className="text-gray-500">No raster grid data available</p>
-              </div>
-            )}
-          </div>
-        )}
+                </>
+              )}
+            </>
+          )}
+        </div>
 
         {/* Classification Legend and Explanation */}
         <div className="bg-gray-50 border rounded-lg p-4 space-y-3">
