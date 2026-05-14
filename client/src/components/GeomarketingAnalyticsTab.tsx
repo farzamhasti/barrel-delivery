@@ -7,6 +7,7 @@ import { DatePickerModal } from "./DatePickerModal";
 import { AnalyticsSectionModalWithGIS } from "./AnalyticsSectionModalWithGIS";
 import { DeliveryHeatmapAnalysis } from "./DeliveryHeatmapAnalysis";
 import { DemandChangeAnalysisCard } from "./DemandChangeAnalysisCard";
+import { RelativeDemandAnalysisCard } from "./RelativeDemandAnalysisCard";
 
 
 type DateRange = "daily" | "monthly";
@@ -25,6 +26,7 @@ export function GeomarketingAnalyticsTab() {
   const [openSectionModal, setOpenSectionModal] = useState<string | null>(null);
   const [showHeatmap, setShowHeatmap] = useState(false);
   const [expandedDemandAnalysis, setExpandedDemandAnalysis] = useState(false);
+  const [expandedRelativeDemand, setExpandedRelativeDemand] = useState(false);
 
   // Calculate date range for queries
   const getDateRangeForQuery = () => {
@@ -375,6 +377,36 @@ export function GeomarketingAnalyticsTab() {
             <div className="text-center py-8">
               <p className="text-sm text-gray-500 mb-4">Click to view detailed demand analysis</p>
               <p className="text-xs text-gray-400">Compare monthly demand trends and zone performance</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Relative Demand Analysis */}
+      {expandedRelativeDemand ? (
+        <div className="w-full">
+          <Button 
+            variant="outline" 
+            onClick={() => setExpandedRelativeDemand(false)}
+            className="mb-4"
+          >
+            ← Back to Grid View
+          </Button>
+          <RelativeDemandAnalysisCard isCompact={false} />
+        </div>
+      ) : (
+        <Card className="border-0 shadow-sm cursor-pointer hover:shadow-md transition-shadow w-full" onClick={() => setExpandedRelativeDemand(true)}>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <MapIcon className="w-5 h-5" />
+              Relative Demand Analysis
+            </CardTitle>
+            <CardDescription>Geographic demand relative to city-wide averages</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center py-8">
+              <p className="text-sm text-gray-500 mb-4">Click to view detailed analysis</p>
+              <p className="text-xs text-gray-400">Identify high-performing and underperforming zones</p>
             </div>
           </CardContent>
         </Card>

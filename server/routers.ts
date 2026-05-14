@@ -30,6 +30,7 @@ import {
 } from './competitors';
 import { analyzeEmergingZones } from './emergingZonesAnalysis';
 import { analyzeDemandChange } from './demandChangeAnalysis';
+import { analyzeRelativeDemand } from './relativeDemandAnalysis';
 
 export const appRouter = router({
   places: router({
@@ -1300,7 +1301,35 @@ export const appRouter = router({
           };
         }
       }),
-
+    
+    analyzeRelativeDemand: publicProcedure
+      .input(z.object({
+        startDate: z.date(),
+        endDate: z.date(),
+      }))
+      .query(async ({ input }) => {
+        try {
+          const result = await analyzeRelativeDemand(input.startDate, input.endDate);
+          return {
+            success: true,
+            ...result,
+          };
+        } catch (error) {
+          console.error('[analytics.analyzeRelativeDemand] Error:', error);
+          return {
+            success: false,
+            regions: [],
+            cityWideStats: {
+              totalOrders: 0,
+              avgOrderDensity: 0,
+              avgDeliveryTime: 0,
+              avgWaitingTime: 0,
+              avgOperationalIntensity: 0,
+            },
+            interpretation: 'Error analyzing relative demand',
+          };
+        }
+      }),
   }),
   gps: router({
     updateDriverPosition: protectedProcedure
