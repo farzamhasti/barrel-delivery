@@ -136,17 +136,9 @@ export function DemandChangeMap({ zones, onZoneClick }: DemandChangeMapProps) {
       fillOpacity: 0.05,
     }).addTo(map);
     
-    boundaryPolygon.bindPopup('<div class="text-sm font-semibold">Fort Erie Service Area</div>');
+    boundaryPolygon.bindPopup('<div class="text-sm font-semibold">Service Area</div>');
     
-    // Add boundary label at center
-    const boundaryCenter = L.latLngBounds(FORT_ERIE_BOUNDARY).getCenter();
-    L.marker(boundaryCenter, {
-      icon: L.divIcon({
-        className: 'boundary-label-icon',
-        html: '<div style="background: rgba(255,255,255,0.9); padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: 600; color: #1e40af; box-shadow: 0 2px 8px rgba(0,0,0,0.15); border: 2px solid #1e40af; white-space: nowrap;">Fort Erie</div>',
-        iconSize: [100, 30],
-      }),
-    }).addTo(map);
+    // Boundary label removed per user request
 
     // Add demand zones as circles within Fort Erie
     zones.forEach((zone) => {
@@ -236,7 +228,7 @@ export function DemandChangeMap({ zones, onZoneClick }: DemandChangeMapProps) {
           </div>
         </div>
         <p className="text-xs text-muted-foreground mt-3">
-          <strong>Blue boundary:</strong> Fort Erie service area<br />
+          <strong>Blue boundary:</strong> Service area<br />
           <strong>Circle size:</strong> Proportional to order volume<br />
           <strong>Circle color:</strong> Demand classification<br />
           Click any circle to view detailed zone metrics

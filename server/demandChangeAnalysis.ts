@@ -254,7 +254,7 @@ export async function analyzeDemandChange(
     if (stableZones > 0) {
       spatialInterpretation += `${stableZones} zone(s) remain stable. `;
     }
-    spatialInterpretation += "All analysis is within Fort Erie service area.";
+    // Spatial interpretation complete
 
     return {
       zones,

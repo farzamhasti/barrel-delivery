@@ -89,7 +89,7 @@ export function DemandChangeAnalysisCard() {
             Demand Change Analysis
           </CardTitle>
           <CardDescription>
-            Geographic demand evolution within Fort Erie over time
+            Geographic demand evolution over time
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
