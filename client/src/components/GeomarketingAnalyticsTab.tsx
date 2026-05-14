@@ -8,7 +8,6 @@ import { AnalyticsSectionModalWithGIS } from "./AnalyticsSectionModalWithGIS";
 import { DeliveryHeatmapAnalysis } from "./DeliveryHeatmapAnalysis";
 import { DemandChangeAnalysisCard } from "./DemandChangeAnalysisCard";
 import { RelativeDemandAnalysisCard } from "./RelativeDemandAnalysisCard";
-import BoundaryRasterGridCard from "./BoundaryRasterGridCard";
 
 
 
@@ -413,11 +412,6 @@ export function GeomarketingAnalyticsTab() {
           </CardContent>
         </Card>
       )}
-
-      {/* Raster-Based Relative Demand Classification */}
-      <div className="mt-6">
-        <BoundaryRasterGridCard dateRangeQuery={dateRangeQuery} />
-      </div>
 
       {/* Date Picker Modal */}
       <DatePickerModal

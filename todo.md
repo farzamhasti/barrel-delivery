@@ -2564,3 +2564,18 @@ These features are documented for future enhancement but are not required for th
 - [x] Raster-based classification for entire Fort Erie restored (1000x1000m cells)
 - [x] Grid cells now display as overlay on map with demand-based color coding
 - [x] No clustering - pure raster grid visualization
+
+## Phase 40: Integrate Raster Grid into RelativeDemandAnalysisCard (COMPLETED)
+- [x] Add raster grid state variable (showRasterGrid) to RelativeDemandAnalysisCard
+- [x] Add raster map refs (rasterMapRef, rasterContainerRef) to component
+- [x] Add analyzeBoundaryRaster tRPC query to fetch grid data
+- [x] Add toggle button to show/hide raster grid visualization
+- [x] Display grid statistics (cells, avg demand, max demand, total orders)
+- [x] Render raster grid cells on Leaflet map with color coding
+- [x] Add demand classification legend (0-5%, 5-10%, 10-15%, 15-20%, 20%+)
+- [x] Add cell popups with demand metrics on click
+- [x] Remove standalone BoundaryRasterGridCard from GeomarketingAnalyticsTab
+- [x] Verify TypeScript: 0 errors
+- [x] Verify all 13 boundary raster analysis tests passing
+- [x] Raster grid now integrated as part of Relative Demand Analysis card
+- [x] Users can toggle between demand zones and raster grid views

@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, ChevronLeft, ChevronRight, MapPin } from 'lucide-react';
+import { Loader2, ChevronLeft, ChevronRight, MapPin, Download } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import L from 'leaflet';
@@ -102,13 +102,16 @@ export const RelativeDemandAnalysisCard: React.FC<RelativeDemandAnalysisCardProp
   dateRangeQuery,
 }) => {
   const [selectedMonth, setSelectedMonth] = useState(new Date());
+  const [showRasterGrid, setShowRasterGrid] = useState(false);
   const [isExpanded, setIsExpanded] = useState(!isCompact);
   const [regions, setRegions] = useState<RelativeDemandRegion[]>([]);
   const [cityStats, setCityStats] = useState<CityWideStats | null>(null);
   const [interpretation, setInterpretation] = useState('');
   const [selectedRegion, setSelectedRegion] = useState<RelativeDemandRegion | null>(null);
   const mapRef = useRef<L.Map | null>(null);
+  const rasterMapRef = useRef<L.Map | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const rasterContainerRef = useRef<HTMLDivElement>(null);
   const utils = trpc.useUtils();
 
   // Calculate date range based on selectedMonth or dateRangeQuery
@@ -128,6 +131,12 @@ export const RelativeDemandAnalysisCard: React.FC<RelativeDemandAnalysisCardProp
       refetchOnWindowFocus: false,
       staleTime: 0,
     }
+  );
+
+  // Fetch raster grid data
+  const { data: gridData, isLoading: gridLoading } = trpc.analytics.analyzeBoundaryRaster.useQuery(
+    { startDate, endDate },
+    { enabled: showRasterGrid && isExpanded }
   );
 
   // Refetch when selectedMonth changes
@@ -258,6 +267,68 @@ export const RelativeDemandAnalysisCard: React.FC<RelativeDemandAnalysisCardProp
       // Cleanup handled by React
     };
   }, [regions, isExpanded]);
+
+  // Initialize raster grid map
+  useEffect(() => {
+    if (!showRasterGrid || !rasterContainerRef.current || !gridData?.cells || gridData.cells.length === 0) return;
+
+    if (!rasterMapRef.current) {
+      rasterMapRef.current = L.map(rasterContainerRef.current).setView(FORT_ERIE_CENTER, 12);
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 19,
+      }).addTo(rasterMapRef.current);
+    }
+
+    const map = rasterMapRef.current;
+
+    // Clear existing layers (except tile layer)
+    map.eachLayer((layer) => {
+      if (layer instanceof L.Rectangle || layer instanceof L.Polygon) {
+        map.removeLayer(layer);
+      }
+    });
+
+    // Draw raster grid cells
+    gridData.cells.forEach((cell) => {
+      const cellSize = 1000; // 1000 meters
+      const latStep = cellSize / 111320;
+      const lonStep = cellSize / (111320 * Math.cos((cell.lat * Math.PI) / 180));
+
+      const bounds = [
+        [cell.lat - latStep / 2, cell.lon - lonStep / 2],
+        [cell.lat + latStep / 2, cell.lon + lonStep / 2],
+      ] as L.LatLngBoundsExpression;
+
+      const rectangle = L.rectangle(bounds, {
+        color: cell.color,
+        weight: 1,
+        opacity: 0.8,
+        fillOpacity: 0.6,
+      });
+
+      rectangle.bindPopup(
+        `<div class="p-2 text-sm">
+          <p class="font-semibold">${cell.id}</p>
+          <p>Demand: ${cell.relativeDemand.toFixed(2)}%</p>
+          <p>Orders: ${cell.orderCount}</p>
+          <p>Classification: ${cell.classification}</p>
+        </div>`
+      );
+
+      rectangle.addTo(map);
+    });
+
+    // Fit map to grid bounds
+    const allLats = gridData.cells.map((c) => c.lat);
+    const allLons = gridData.cells.map((c) => c.lon);
+    const bounds = L.latLngBounds(
+      [Math.min(...allLats), Math.min(...allLons)],
+      [Math.max(...allLats), Math.max(...allLons)]
+    );
+    map.fitBounds(bounds, { padding: [50, 50] });
+  }, [gridData, showRasterGrid]);
 
   if (isCompact && !isExpanded) {
     return (
@@ -409,6 +480,78 @@ export const RelativeDemandAnalysisCard: React.FC<RelativeDemandAnalysisCardProp
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* Raster-Based Grid Toggle */}
+        <div className="flex gap-2">
+          <Button
+            variant={showRasterGrid ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setShowRasterGrid(!showRasterGrid)}
+            className="flex-1"
+          >
+            {showRasterGrid ? 'Hide' : 'Show'} Raster Grid (1000x1000m)
+          </Button>
+        </div>
+
+        {/* Raster Grid Visualization */}
+        {showRasterGrid && (
+          <div className="space-y-3">
+            <h3 className="font-semibold text-sm">Raster-Based Relative Demand Classification</h3>
+            {gridLoading ? (
+              <div className="h-96 flex items-center justify-center bg-gray-50 rounded-lg border border-gray-200">
+                <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+              </div>
+            ) : gridData?.cells && gridData.cells.length > 0 ? (
+              <>
+                <div className="grid grid-cols-4 gap-2 text-sm">
+                  <div className="bg-blue-50 p-2 rounded">
+                    <div className="text-xs text-gray-600">Grid Cells</div>
+                    <div className="font-bold text-blue-600">{gridData.cells.length}</div>
+                  </div>
+                  <div className="bg-green-50 p-2 rounded">
+                    <div className="text-xs text-gray-600">Avg Demand</div>
+                    <div className="font-bold text-green-600">{(gridData.cells.reduce((sum, c) => sum + c.relativeDemand, 0) / gridData.cells.length).toFixed(2)}%</div>
+                  </div>
+                  <div className="bg-orange-50 p-2 rounded">
+                    <div className="text-xs text-gray-600">Max Demand</div>
+                    <div className="font-bold text-orange-600">{Math.max(...gridData.cells.map(c => c.relativeDemand)).toFixed(2)}%</div>
+                  </div>
+                  <div className="bg-purple-50 p-2 rounded">
+                    <div className="text-xs text-gray-600">Total Orders</div>
+                    <div className="font-bold text-purple-600">{gridData.totalOrders}</div>
+                  </div>
+                </div>
+                <div className="h-96 rounded-lg overflow-hidden border border-gray-200" ref={rasterContainerRef} />
+                <div className="grid grid-cols-5 gap-2 text-xs">
+                  <div className="flex items-center gap-1">
+                    <div className="h-3 w-3 rounded" style={{ backgroundColor: '#cccccc' }}></div>
+                    <span>0-5%</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="h-3 w-3 rounded" style={{ backgroundColor: '#90ee90' }}></div>
+                    <span>5-10%</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="h-3 w-3 rounded" style={{ backgroundColor: '#ffff00' }}></div>
+                    <span>10-15%</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="h-3 w-3 rounded" style={{ backgroundColor: '#ff4500' }}></div>
+                    <span>15-20%</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="h-3 w-3 rounded" style={{ backgroundColor: '#8b0000' }}></div>
+                    <span>20%+</span>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="h-96 flex items-center justify-center bg-gray-50 rounded-lg border border-gray-200">
+                <p className="text-gray-500">No raster grid data available</p>
+              </div>
+            )}
           </div>
         )}
 
