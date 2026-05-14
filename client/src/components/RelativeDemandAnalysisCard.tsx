@@ -163,9 +163,9 @@ export const RelativeDemandAnalysisCard: React.FC<RelativeDemandAnalysisCardProp
     if (!rasterMapRef.current) {
       rasterMapRef.current = L.map(rasterContainerRef.current).setView(FORT_ERIE_CENTER, 12);
 
-      // Dark theme tile layer
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: '© OpenStreetMap, © CartoDB',
+      // Normal theme tile layer
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
         maxZoom: 19,
       }).addTo(rasterMapRef.current);
     }
@@ -276,9 +276,9 @@ export const RelativeDemandAnalysisCard: React.FC<RelativeDemandAnalysisCardProp
     if (!rasterMapRef.current) {
       rasterMapRef.current = L.map(rasterContainerRef.current).setView(FORT_ERIE_CENTER, 12);
 
-      // Dark theme tile layer
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: '© OpenStreetMap, © CartoDB',
+      // Normal theme tile layer
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
         maxZoom: 19,
       }).addTo(rasterMapRef.current);
     }
