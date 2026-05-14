@@ -108,9 +108,7 @@ export const RelativeDemandAnalysisCard: React.FC<RelativeDemandAnalysisCardProp
   const [cityStats, setCityStats] = useState<CityWideStats | null>(null);
   const [interpretation, setInterpretation] = useState('');
   const [selectedRegion, setSelectedRegion] = useState<RelativeDemandRegion | null>(null);
-  const mapRef = useRef<L.Map | null>(null);
   const rasterMapRef = useRef<L.Map | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
   const rasterContainerRef = useRef<HTMLDivElement>(null);
   const utils = trpc.useUtils();
 
@@ -197,76 +195,7 @@ export const RelativeDemandAnalysisCard: React.FC<RelativeDemandAnalysisCardProp
     }
   };
 
-  // Initialize Leaflet map
-  useEffect(() => {
-    if (!isExpanded || !containerRef.current || regions.length === 0) return;
 
-    if (!mapRef.current) {
-      mapRef.current = L.map(containerRef.current).setView(FORT_ERIE_CENTER, 12);
-
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors',
-        maxZoom: 19,
-      }).addTo(mapRef.current);
-    }
-
-    const map = mapRef.current;
-
-    // Clear existing layers (except tile layer)
-    map.eachLayer((layer) => {
-      if (layer instanceof L.Polygon || layer instanceof L.Circle || layer instanceof L.Marker) {
-        map.removeLayer(layer);
-      }
-    });
-
-    // Draw Fort Erie boundary polygon
-    const boundaryPolygon = L.polygon(FORT_ERIE_BOUNDARY, {
-      color: '#1e40af',
-      weight: 2.5,
-      opacity: 0.85,
-      fillColor: '#93c5fd',
-      fillOpacity: 0.05,
-    }).addTo(map);
-
-    boundaryPolygon.bindPopup('<div class="text-sm font-semibold">Service Area</div>');
-
-    // Add demand zones as circles
-    regions.forEach((region) => {
-      const color = getClassificationColor(region.classification);
-      const radius = Math.max(150, Math.min(500, region.orderCount * 60));
-
-      const circle = L.circle([region.centerLat, region.centerLon], {
-        color: color,
-        weight: 2,
-        opacity: 0.85,
-        fillColor: color,
-        fillOpacity: 0.55,
-        radius: radius,
-      }).addTo(map);
-
-      const popupContent = `
-        <div class="p-2 text-sm">
-          <p class="font-semibold">${getClassificationLabel(region.classification)}</p>
-          <p>Orders: ${region.orderCount}</p>
-          <p>Demand Score: ${(Number(region.relativeDemandScore) || 0).toFixed(0)}/100</p>
-          <p>Avg Delivery: ${(Number(region.avgDeliveryTime) || 0).toFixed(0)} min</p>
-        </div>
-      `;
-
-      circle.bindPopup(popupContent);
-      circle.on('click', () => {
-        setSelectedRegion(region);
-      });
-    });
-
-    // Fit map to Fort Erie boundary
-    const bounds = L.latLngBounds(FORT_ERIE_BOUNDARY);
-    map.fitBounds(bounds, { padding: [80, 80] });
-
-    return () => {
-      // Cleanup handled by React
-    };
-  }, [regions, isExpanded]);
 
   // Initialize raster grid map
   useEffect(() => {
@@ -430,58 +359,7 @@ export const RelativeDemandAnalysisCard: React.FC<RelativeDemandAnalysisCardProp
           <div className="h-96 flex items-center justify-center bg-gray-50 rounded-lg border border-gray-200">
             <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
           </div>
-        ) : regions.length > 0 ? (
-          <div className="space-y-3">
-            <h3 className="font-semibold text-sm">Geographic Demand Distribution</h3>
-            <div className="h-96 rounded-lg overflow-hidden border border-gray-200" ref={containerRef} />
-          </div>
-        ) : (
-          <div className="h-96 flex flex-col items-center justify-center bg-gray-50 rounded-lg border border-gray-200">
-            <MapPin className="w-12 h-12 text-gray-300 mb-2" />
-            <p className="text-gray-500">No delivery data available for {format(selectedMonth, 'MMMM yyyy')}</p>
-          </div>
-        )}
-
-        {/* Demand Zones */}
-        {regions.length > 0 && (
-          <div className="space-y-3">
-            <h3 className="font-semibold text-sm">Demand Zones ({regions.length})</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {regions.map((region) => (
-                <div
-                  key={region.id}
-                  className="border rounded-lg p-3 cursor-pointer hover:shadow-md transition-shadow"
-                  onClick={() => setSelectedRegion(region)}
-                >
-                  <div className="flex items-start justify-between mb-2">
-                    <h4 className="font-semibold text-sm">{region.id}</h4>
-                    <Badge variant="secondary" className="text-xs">
-                      {getClassificationLabel(region.classification)}
-                    </Badge>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div>
-                      <div className="text-gray-600">Orders</div>
-                      <div className="font-semibold">{region.orderCount}</div>
-                    </div>
-                    <div>
-                      <div className="text-gray-600">Demand Score</div>
-                      <div className="font-semibold">{region.relativeDemandScore.toFixed(0)}/100</div>
-                    </div>
-                    <div>
-                      <div className="text-gray-600">Avg Delivery</div>
-                      <div className="font-semibold">{(Number(region.avgDeliveryTime) || 0).toFixed(0)} min</div>
-                    </div>
-                    <div>
-                      <div className="text-gray-600">Delivery Perf</div>
-                      <div className="font-semibold">{region.relativeDeliveryPerformance.toFixed(0)}/100</div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        ) : null}
 
         {/* Raster-Based Grid Toggle */}
         <div className="flex gap-2">

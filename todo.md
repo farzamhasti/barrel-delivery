@@ -2596,3 +2596,12 @@ These features are documented for future enhancement but are not required for th
 - [x] Restarted dev server to clear cache and reload components
 - [x] Verified dev server is running without errors
 - [x] Geographic Demand Distribution map should now display correctly
+
+## Phase 43: Remove Geographic Demand Distribution and Demand Zones (COMPLETED)
+- [x] Removed Geographic Demand Distribution map section
+- [x] Removed Demand Zones grid display
+- [x] Removed mapRef and containerRef useRef hooks
+- [x] Removed map initialization useEffect
+- [x] Kept only raster-based relative demand classification
+- [x] Verified TypeScript: 0 errors
+- [x] Dev server: Running
