@@ -1,0 +1,8 @@
+{
+  "query": "SELECT COUNT(*) as total_orders, COUNT(CASE WHEN deliveredAt IS NOT NULL THEN 1 END) as completed_orders, COUNT(CASE WHEN customerLatitude IS NOT NULL AND customerLongitude IS NOT NULL THEN 1 END) as orders_with_coords, MIN(createdAt) as earliest_order, MAX(createdAt) as latest_order FROM orders WHERE createdAt >= '2026-05-01' AND createdAt < '2026-06-01';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3vEgeGHWz6yFd3X.root --database GArd6gSmf3RbAbT5WtHac3 --execute SELECT COUNT(*) as total_orders, COUNT(CASE WHEN deliveredAt IS NOT NULL THEN 1 END) as completed_orders, COUNT(CASE WHEN customerLatitude IS NOT NULL AND customerLongitude IS NOT NULL THEN 1 END) as orders_with_coords, MIN(createdAt) as earliest_order, MAX(createdAt) as latest_order FROM orders WHERE createdAt >= '2026-05-01' AND createdAt < '2026-06-01';",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 'deliveredat' in 'where clause'"
+  ]
+}

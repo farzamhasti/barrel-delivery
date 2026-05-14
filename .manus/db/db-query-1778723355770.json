@@ -1,0 +1,15 @@
+{
+  "query": "SELECT COUNT(*) as total_orders, \n       SUM(CASE WHEN status = 'Delivered' THEN 1 ELSE 0 END) as delivered_count,\n       SUM(CASE WHEN delivered_at IS NOT NULL THEN 1 ELSE 0 END) as with_delivery_time\nFROM orders",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3vEgeGHWz6yFd3X.root --database GArd6gSmf3RbAbT5WtHac3 --execute SELECT COUNT(*) as total_orders, \n       SUM(CASE WHEN status = 'Delivered' THEN 1 ELSE 0 END) as delivered_count,\n       SUM(CASE WHEN delivered_at IS NOT NULL THEN 1 ELSE 0 END) as with_delivery_time\nFROM orders",
+  "rows": [
+    {
+      "total_orders": "22",
+      "delivered_count": "20",
+      "with_delivery_time": "20"
+    }
+  ],
+  "messages": [],
+  "stdout": "total_orders\tdelivered_count\twith_delivery_time\n22\t20\t20\n",
+  "stderr": "",
+  "execution_time_ms": 267
+}

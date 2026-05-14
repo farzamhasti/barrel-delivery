@@ -12,10 +12,10 @@ import { sql } from "drizzle-orm";
 // Fort Erie boundary polygon (approximate coordinates)
 // Defines the geographic constraint for all analysis
 const FORT_ERIE_BOUNDARY = {
-  minLat: 42.8,
-  maxLat: 43.0,
-  minLon: -79.3,
-  maxLon: -79.0,
+  minLat: 42.88,
+  maxLat: 42.94,
+  minLon: -78.98,
+  maxLon: -78.92,
 };
 
 /**
@@ -48,69 +48,111 @@ export interface RelativeDemandRegion {
 export interface CityWideStats {
   totalOrders: number;
   avgOrderDensity: number; // orders per sq km
-  avgDeliveryTime: number; // minutes
-  avgWaitingTime: number; // minutes
+  avgDeliveryTime: number;
+  avgWaitingTime: number;
   avgOperationalIntensity: number;
 }
 
 /**
- * Adaptive density clustering using K-means-like approach
- * Creates localized spatial regions based on order density
+ * Point in 2D space for clustering
  */
-function adaptiveDensityClustering(
-  orders: Array<{ lat: number; lon: number }>,
-  targetClusterCount: number = 8
-): Array<{ centerLat: number; centerLon: number; points: typeof orders }> {
-  if (orders.length === 0) return [];
+interface Point {
+  lat: number;
+  lon: number;
+}
+
+/**
+ * Cluster result from K-means
+ */
+interface Cluster {
+  center: Point;
+  points: Point[];
+}
+
+/**
+ * Adaptive Density Clustering using K-means algorithm
+ * Creates localized regions based on delivery density
+ */
+function adaptiveDensityClustering(points: Point[]): Cluster[] {
+  if (points.length === 0) return [];
+  if (points.length <= 5) {
+    return [{
+      center: {
+        lat: points.reduce((sum, p) => sum + p.lat, 0) / points.length,
+        lon: points.reduce((sum, p) => sum + p.lon, 0) / points.length,
+      },
+      points,
+    }];
+  }
   
-  // Initialize cluster centers randomly from order locations
-  const initialCenters = orders
-    .sort(() => Math.random() - 0.5)
-    .slice(0, Math.min(targetClusterCount, orders.length))
-    .map(o => ({ lat: o.lat, lon: o.lon }));
+  // Determine optimal number of clusters (adaptive)
+  const k = Math.min(Math.ceil(Math.sqrt(points.length / 2)), 8);
   
-  let centers = initialCenters;
-  let clusters: Array<{ centerLat: number; centerLon: number; points: typeof orders }> = [];
+  // Initialize centers randomly
+  let centers: Point[] = [];
+  for (let i = 0; i < k; i++) {
+    centers.push(points[Math.floor(Math.random() * points.length)]);
+  }
   
-  // K-means iterations (simplified, 3 iterations for performance)
-  for (let iter = 0; iter < 3; iter++) {
+  // K-means iterations
+  for (let iter = 0; iter < 10; iter++) {
     // Assign points to nearest center
-    const newClusters = centers.map(center => ({
-      centerLat: center.lat,
-      centerLon: center.lon,
-      points: [] as typeof orders,
+    const clusters: Cluster[] = centers.map(center => ({
+      center,
+      points: [],
     }));
     
-    for (const order of orders as any[]) {
-      let nearestIdx = 0;
+    for (const point of points) {
       let minDist = Infinity;
+      let nearestCluster = 0;
       
       for (let i = 0; i < centers.length; i++) {
-        const dist = Math.hypot(
-          order.lat - centers[i].lat,
-          order.lon - centers[i].lon
+        const dist = Math.sqrt(
+          Math.pow(point.lat - centers[i].lat, 2) +
+          Math.pow(point.lon - centers[i].lon, 2)
         );
         if (dist < minDist) {
           minDist = dist;
-          nearestIdx = i;
+          nearestCluster = i;
         }
       }
-      
-      newClusters[nearestIdx].points.push(order);
+      clusters[nearestCluster].points.push(point);
     }
     
-    // Remove empty clusters
-    clusters = newClusters.filter((c: any) => c.points.length > 0);
-    
     // Update centers
-    centers = clusters.map(cluster => {
-      const avgLat = cluster.points.reduce((sum, p) => sum + p.lat, 0) / cluster.points.length;
-      const avgLon = cluster.points.reduce((sum, p) => sum + p.lon, 0) / cluster.points.length;
-      return { lat: avgLat, lon: avgLon };
-    });
+    const newCenters = clusters.map(cluster => ({
+      lat: cluster.points.reduce((sum, p) => sum + p.lat, 0) / Math.max(cluster.points.length, 1),
+      lon: cluster.points.reduce((sum, p) => sum + p.lon, 0) / Math.max(cluster.points.length, 1),
+    }));
+    
+    centers = newCenters;
   }
   
-  return clusters;
+  // Final clustering
+  const finalClusters: Cluster[] = centers.map(center => ({
+    center,
+    points: [],
+  }));
+  
+  for (const point of points) {
+    let minDist = Infinity;
+    let nearestCluster = 0;
+    
+    for (let i = 0; i < centers.length; i++) {
+      const dist = Math.sqrt(
+        Math.pow(point.lat - centers[i].lat, 2) +
+        Math.pow(point.lon - centers[i].lon, 2)
+      );
+      if (dist < minDist) {
+        minDist = dist;
+        nearestCluster = i;
+      }
+    }
+    finalClusters[nearestCluster].points.push(point);
+  }
+  
+  // Filter out empty clusters
+  return finalClusters.filter(c => c.points.length > 0);
 }
 
 /**
@@ -134,16 +176,16 @@ async function calculateCityWideStats(
   const result = await db
     .select({
       totalOrders: sql<number>`COUNT(*)`,
-      avgDeliveryTime: sql<number>`AVG(TIMESTAMPDIFF(MINUTE, ${orders.createdAt}, ${orders.deliveredAt}))`,
-      avgWaitingTime: sql<number>`AVG(TIMESTAMPDIFF(MINUTE, ${orders.createdAt}, ${orders.readyAt}))`,
+      avgDeliveryTime: sql<number>`AVG(TIMESTAMPDIFF(MINUTE, createdAt, delivered_at))`,
+      avgWaitingTime: sql<number>`AVG(TIMESTAMPDIFF(MINUTE, createdAt, ready_at))`,
     })
     .from(orders)
     .where(
-      sql`${orders.deliveredAt} IS NOT NULL 
-        AND ${orders.createdAt} >= ${startDate} 
-        AND ${orders.createdAt} <= ${endDate}
-        AND ${orders.customerLatitude} IS NOT NULL 
-        AND ${orders.customerLongitude} IS NOT NULL`
+      sql`delivered_at IS NOT NULL 
+        AND createdAt >= ${startDate} 
+        AND createdAt <= ${endDate}
+        AND customer_latitude IS NOT NULL 
+        AND customer_longitude IS NOT NULL`
     );
   
   const stats = result[0] || {
@@ -153,7 +195,8 @@ async function calculateCityWideStats(
   };
   
   // Calculate area in sq km (Fort Erie is approximately 32 sq km)
-  const fortErieAreaKm = 32;  const avgOrderDensity = stats.totalOrders / fortErieAreaKm;
+  const fortErieAreaKm = 32;
+  const avgOrderDensity = stats.totalOrders / fortErieAreaKm;
   return {
     totalOrders: stats.totalOrders || 0,
     avgOrderDensity,
@@ -175,14 +218,14 @@ function classifyRegion(score: number): RelativeDemandRegion['classification'] {
 }
 
 /**
- * Get color for region classification
+ * Get color for classification
  */
 function getColorForClassification(classification: RelativeDemandRegion['classification']): string {
   const colors: Record<RelativeDemandRegion['classification'], string> = {
-    very_high: '#001f3f', // Dark Blue
-    high: '#0074D9', // Blue
-    average: '#FFDC00', // Yellow
-    weak: '#FF851B', // Orange
+    very_high: '#001f3f',      // Dark blue
+    high: '#0074D9',           // Blue
+    average: '#7FDBCA',        // Teal
+    weak: '#FF851B',           // Orange
     underperforming: '#FF4136', // Red
   };
   return colors[classification];
@@ -195,13 +238,20 @@ export async function analyzeRelativeDemand(
   startDate: Date,
   endDate: Date
 ): Promise<{
+  success: boolean;
   regions: RelativeDemandRegion[];
   cityWideStats: CityWideStats;
   interpretation: string;
 }> {
+  console.log('[Relative Demand Analysis] Date range:', {
+    startDate: startDate.toISOString(),
+    endDate: endDate.toISOString(),
+  });
+  
   const db = await getDb();
   if (!db) {
     return {
+      success: false,
       regions: [],
       cityWideStats: {
         totalOrders: 0,
@@ -226,12 +276,14 @@ export async function analyzeRelativeDemand(
     })
     .from(orders)
     .where(
-      sql`${orders.deliveredAt} IS NOT NULL 
-        AND ${orders.createdAt} >= ${startDate} 
-        AND ${orders.createdAt} <= ${endDate}
-        AND ${orders.customerLatitude} IS NOT NULL 
-        AND ${orders.customerLongitude} IS NOT NULL`
+      sql`delivered_at IS NOT NULL 
+        AND createdAt >= ${startDate} 
+        AND createdAt <= ${endDate}
+        AND customer_latitude IS NOT NULL 
+        AND customer_longitude IS NOT NULL`
     );
+  
+  console.log('[Relative Demand Analysis] Found orders:', deliveryOrders.length);
   
   // Filter to Fort Erie boundary
   const fortErieOrders = deliveryOrders.filter(
@@ -241,6 +293,8 @@ export async function analyzeRelativeDemand(
       Number(o.lon) >= FORT_ERIE_BOUNDARY.minLon &&
       Number(o.lon) <= FORT_ERIE_BOUNDARY.maxLon
   );
+  
+  console.log('[Relative Demand Analysis] Orders in Fort Erie:', fortErieOrders.length);
   
   // Get city-wide statistics
   const cityStats = await calculateCityWideStats(startDate, endDate);
@@ -252,6 +306,8 @@ export async function analyzeRelativeDemand(
       lon: Number(o.lon),
     }))
   );
+  
+  console.log('[Relative Demand Analysis] Clusters found:', clusters.length);
   
   // Calculate relative metrics for each region
   const regions: RelativeDemandRegion[] = clusters.map((cluster, idx) => {
@@ -267,7 +323,9 @@ export async function analyzeRelativeDemand(
     
     const avgDeliveryTime = clusterOrders.reduce((sum: number, o: any) => {
       if (o.deliveredAt && o.createdAt) {
-        const minutes = (o.deliveredAt.getTime() - o.createdAt.getTime()) / (1000 * 60);
+        const deliveredTime = o.deliveredAt instanceof Date ? o.deliveredAt : new Date(o.deliveredAt);
+        const createdTime = o.createdAt instanceof Date ? o.createdAt : new Date(o.createdAt);
+        const minutes = (deliveredTime.getTime() - createdTime.getTime()) / (1000 * 60);
         return sum + minutes;
       }
       return sum;
@@ -275,44 +333,41 @@ export async function analyzeRelativeDemand(
     
     const avgWaitingTime = clusterOrders.reduce((sum: number, o: any) => {
       if (o.readyAt && o.createdAt) {
-        const minutes = (o.readyAt.getTime() - o.createdAt.getTime()) / (1000 * 60);
+        const readyTime = o.readyAt instanceof Date ? o.readyAt : new Date(o.readyAt);
+        const createdTime = o.createdAt instanceof Date ? o.createdAt : new Date(o.createdAt);
+        const minutes = (readyTime.getTime() - createdTime.getTime()) / (1000 * 60);
         return sum + minutes;
       }
       return sum;
     }, 0) / Math.max(clusterOrders.length, 1);
     
     // Calculate relative demand score (0-100)
-    const localDensity = orderCount / 32; // Fort Erie area ~32 sq km
-    const demandRatio = cityStats.avgOrderDensity > 0 
-      ? localDensity / cityStats.avgOrderDensity 
-      : 1;
-    const relativeDemandScore = Math.min(100, Math.max(0, demandRatio * 50));
+    // Compare this region's order density to city average
+    const regionDensity = orderCount / 32; // sq km
+    const relativeDensity = cityStats.avgOrderDensity > 0 
+      ? (regionDensity / cityStats.avgOrderDensity) * 50 + 50
+      : 50;
+    const relativeDemandScore = Math.min(100, Math.max(0, relativeDensity));
     
-    // Calculate relative delivery performance (0-100, where 50 = average)
-    const deliveryRatio = cityStats.avgDeliveryTime > 0
-      ? avgDeliveryTime / cityStats.avgDeliveryTime
-      : 1;
-    const relativeDeliveryPerformance = Math.min(100, Math.max(0, (1 / deliveryRatio) * 50));
+    // Calculate relative delivery performance
+    const relativeDeliveryPerformance = cityStats.avgDeliveryTime > 0
+      ? Math.min(100, Math.max(0, (cityStats.avgDeliveryTime / avgDeliveryTime) * 50 + 50))
+      : 50;
     
-    // Calculate relative waiting time (0-100)
-    const waitingRatio = cityStats.avgWaitingTime > 0
-      ? avgWaitingTime / cityStats.avgWaitingTime
-      : 1;
-    const relativeWaitingTime = Math.min(100, Math.max(0, (1 / waitingRatio) * 50));
+    // Calculate relative waiting time
+    const relativeWaitingTime = cityStats.avgWaitingTime > 0
+      ? Math.min(100, Math.max(0, (cityStats.avgWaitingTime / avgWaitingTime) * 50 + 50))
+      : 50;
     
-    // Calculate operational intensity
-    const operationalIntensity = avgDeliveryTime + avgWaitingTime;
-    const operationalRatio = cityStats.avgOperationalIntensity > 0
-      ? operationalIntensity / cityStats.avgOperationalIntensity
-      : 1;
-    const relativeOperationalIntensity = Math.min(100, Math.max(0, (1 / operationalRatio) * 50));
+    // Operational intensity (combined delivery + waiting time)
+    const relativeOperationalIntensity = (relativeDeliveryPerformance + relativeWaitingTime) / 2;
     
     const classification = classifyRegion(relativeDemandScore);
     
     return {
-      id: `region_${idx}`,
-      centerLat: cluster.centerLat,
-      centerLon: cluster.centerLon,
+      id: `region-${idx}`,
+      centerLat: cluster.center.lat,
+      centerLon: cluster.center.lon,
       orderCount,
       avgDeliveryTime,
       avgWaitingTime,
@@ -326,38 +381,34 @@ export async function analyzeRelativeDemand(
   });
   
   // Generate business interpretation
-  const veryHighRegions = regions.filter(r => r.classification === 'very_high');
-  const underperformingRegions = regions.filter(r => r.classification === 'underperforming');
-  
-  let interpretation = 'Geographic demand analysis for Fort Erie: ';
-  
-  if (veryHighRegions.length > 0) {
-    interpretation += `Central and high-density residential neighborhoods are performing significantly above city-wide average delivery demand levels. `;
-  }
-  
-  if (underperformingRegions.length > 0) {
-    interpretation += `Peripheral and lower-density residential areas remain below expected spatial demand intensity. `;
-  }
-  
-  if (veryHighRegions.length === 0 && underperformingRegions.length === 0) {
-    interpretation += `Demand is relatively evenly distributed across Fort Erie with minor localized variations.`;
+  let interpretation = '';
+  if (regions.length === 0) {
+    interpretation = `No delivery data available for the selected period.`;
+  } else {
+    const highDemandZones = regions.filter(r => r.classification === 'very_high' || r.classification === 'high');
+    const lowDemandZones = regions.filter(r => r.classification === 'weak' || r.classification === 'underperforming');
+    
+    if (highDemandZones.length > 0) {
+      interpretation += `High-demand zones identified: ${highDemandZones.length} region(s). `;
+    }
+    if (lowDemandZones.length > 0) {
+      interpretation += `Underperforming zones: ${lowDemandZones.length} region(s). `;
+    }
+    
+    const avgScore = regions.reduce((sum, r) => sum + r.relativeDemandScore, 0) / regions.length;
+    if (avgScore > 60) {
+      interpretation += `Geographic demand analysis for Fort Erie: Demand is relatively evenly distributed across Fort Erie with minor localized variations.`;
+    } else if (avgScore > 40) {
+      interpretation += `Geographic demand analysis for Fort Erie: Moderate concentration in specific zones with opportunities for market expansion.`;
+    } else {
+      interpretation += `Geographic demand analysis for Fort Erie: Demand is relatively evenly distributed across Fort Erie with minor localized variations.`;
+    }
   }
   
   return {
+    success: true,
     regions,
     cityWideStats: cityStats,
     interpretation,
   };
-}
-
-/**
- * Get relative demand analysis for a specific region
- */
-export async function getRegionDetails(
-  regionId: string,
-  startDate: Date,
-  endDate: Date
-): Promise<RelativeDemandRegion | null> {
-  const analysis = await analyzeRelativeDemand(startDate, endDate);
-  return analysis.regions.find((r: any) => r.id === regionId) || null;
 }

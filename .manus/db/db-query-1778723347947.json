@@ -1,0 +1,19 @@
+{
+  "query": "SHOW TABLES LIKE '%order%'",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3vEgeGHWz6yFd3X.root --database GArd6gSmf3RbAbT5WtHac3 --execute SHOW TABLES LIKE '%order%'",
+  "rows": [
+    {
+      "Tables_in_GArd6gSmf3RbAbT5WtHac3 (%order%)": "order_items"
+    },
+    {
+      "Tables_in_GArd6gSmf3RbAbT5WtHac3 (%order%)": "order_status_history"
+    },
+    {
+      "Tables_in_GArd6gSmf3RbAbT5WtHac3 (%order%)": "orders"
+    }
+  ],
+  "messages": [],
+  "stdout": "Tables_in_GArd6gSmf3RbAbT5WtHac3 (%order%)\norder_items\norder_status_history\norders\n",
+  "stderr": "",
+  "execution_time_ms": 256
+}

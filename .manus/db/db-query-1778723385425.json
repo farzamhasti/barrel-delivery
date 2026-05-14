@@ -1,0 +1,13 @@
+{
+  "query": "SELECT COUNT(*) as count_with_coords\nFROM orders\nWHERE delivered_at IS NOT NULL\nAND delivered_at >= '2026-05-01 00:00:00'\nAND delivered_at <= '2026-05-31 23:59:59'\nAND customer_latitude IS NOT NULL\nAND customer_longitude IS NOT NULL",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3vEgeGHWz6yFd3X.root --database GArd6gSmf3RbAbT5WtHac3 --execute SELECT COUNT(*) as count_with_coords\nFROM orders\nWHERE delivered_at IS NOT NULL\nAND delivered_at >= '2026-05-01 00:00:00'\nAND delivered_at <= '2026-05-31 23:59:59'\nAND customer_latitude IS NOT NULL\nAND customer_longitude IS NOT NULL",
+  "rows": [
+    {
+      "count_with_coords": "20"
+    }
+  ],
+  "messages": [],
+  "stdout": "count_with_coords\n20\n",
+  "stderr": "",
+  "execution_time_ms": 262
+}

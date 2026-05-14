@@ -1,0 +1,17 @@
+{
+  "query": "SELECT COUNT(*) as total_orders, COUNT(CASE WHEN delivered_at IS NOT NULL THEN 1 END) as completed_orders, COUNT(CASE WHEN customer_latitude IS NOT NULL AND customer_longitude IS NOT NULL THEN 1 END) as orders_with_coords, MIN(createdAt) as earliest_order, MAX(createdAt) as latest_order FROM orders WHERE createdAt >= '2026-05-01' AND createdAt < '2026-06-01';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3vEgeGHWz6yFd3X.root --database GArd6gSmf3RbAbT5WtHac3 --execute SELECT COUNT(*) as total_orders, COUNT(CASE WHEN delivered_at IS NOT NULL THEN 1 END) as completed_orders, COUNT(CASE WHEN customer_latitude IS NOT NULL AND customer_longitude IS NOT NULL THEN 1 END) as orders_with_coords, MIN(createdAt) as earliest_order, MAX(createdAt) as latest_order FROM orders WHERE createdAt >= '2026-05-01' AND createdAt < '2026-06-01';",
+  "rows": [
+    {
+      "total_orders": "22",
+      "completed_orders": "20",
+      "orders_with_coords": "20",
+      "earliest_order": "2026-05-07 01:58:59",
+      "latest_order": "2026-05-13 23:06:44"
+    }
+  ],
+  "messages": [],
+  "stdout": "total_orders\tcompleted_orders\torders_with_coords\tearliest_order\tlatest_order\n22\t20\t20\t2026-05-07 01:58:59\t2026-05-13 23:06:44\n",
+  "stderr": "",
+  "execution_time_ms": 261
+}

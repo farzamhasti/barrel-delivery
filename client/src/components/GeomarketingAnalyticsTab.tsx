@@ -392,7 +392,7 @@ export function GeomarketingAnalyticsTab() {
           >
             ← Back to Grid View
           </Button>
-          <RelativeDemandAnalysisCard isCompact={false} />
+          <RelativeDemandAnalysisCard isCompact={false} dateRangeQuery={dateRangeQuery} />
         </div>
       ) : (
         <Card className="border-0 shadow-sm cursor-pointer hover:shadow-md transition-shadow w-full" onClick={() => setExpandedRelativeDemand(true)}>

@@ -1,0 +1,60 @@
+{
+  "query": "SELECT customer_latitude, customer_longitude, COUNT(*) as count\nFROM orders\nWHERE delivered_at IS NOT NULL\nAND customer_latitude IS NOT NULL\nAND customer_longitude IS NOT NULL\nGROUP BY customer_latitude, customer_longitude\nLIMIT 10",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3vEgeGHWz6yFd3X.root --database GArd6gSmf3RbAbT5WtHac3 --execute SELECT customer_latitude, customer_longitude, COUNT(*) as count\nFROM orders\nWHERE delivered_at IS NOT NULL\nAND customer_latitude IS NOT NULL\nAND customer_longitude IS NOT NULL\nGROUP BY customer_latitude, customer_longitude\nLIMIT 10",
+  "rows": [
+    {
+      "customer_latitude": "42.933561",
+      "customer_longitude": "-78.924561",
+      "count": "1"
+    },
+    {
+      "customer_latitude": "42.934331",
+      "customer_longitude": "-78.919741",
+      "count": "1"
+    },
+    {
+      "customer_latitude": "42.914962",
+      "customer_longitude": "-78.927383",
+      "count": "1"
+    },
+    {
+      "customer_latitude": "42.922195",
+      "customer_longitude": "-78.967388",
+      "count": "2"
+    },
+    {
+      "customer_latitude": "42.932854",
+      "customer_longitude": "-78.930205",
+      "count": "1"
+    },
+    {
+      "customer_latitude": "42.931189",
+      "customer_longitude": "-78.925708",
+      "count": "1"
+    },
+    {
+      "customer_latitude": "42.934326",
+      "customer_longitude": "-78.928868",
+      "count": "1"
+    },
+    {
+      "customer_latitude": "42.931286",
+      "customer_longitude": "-78.922371",
+      "count": "1"
+    },
+    {
+      "customer_latitude": "42.903896",
+      "customer_longitude": "-78.974552",
+      "count": "1"
+    },
+    {
+      "customer_latitude": "42.886875",
+      "customer_longitude": "-78.928791",
+      "count": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "customer_latitude\tcustomer_longitude\tcount\n42.933561\t-78.924561\t1\n42.934331\t-78.919741\t1\n42.914962\t-78.927383\t1\n42.922195\t-78.967388\t2\n42.932854\t-78.930205\t1\n42.931189\t-78.925708\t1\n42.934326\t-78.928868\t1\n42.931286\t-78.922371\t1\n42.903896\t-78.974552\t1\n42.886875\t-78.928791\t1\n",
+  "stderr": "",
+  "execution_time_ms": 288
+}

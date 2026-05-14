@@ -1310,10 +1310,7 @@ export const appRouter = router({
       .query(async ({ input }) => {
         try {
           const result = await analyzeRelativeDemand(input.startDate, input.endDate);
-          return {
-            success: true,
-            ...result,
-          };
+          return result;
         } catch (error) {
           console.error('[analytics.analyzeRelativeDemand] Error:', error);
           return {

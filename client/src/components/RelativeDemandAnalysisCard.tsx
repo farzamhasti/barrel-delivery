@@ -32,11 +32,13 @@ interface CityWideStats {
 export interface RelativeDemandAnalysisCardProps {
   isCompact?: boolean;
   onOpenExpanded?: () => void;
+  dateRangeQuery?: { startDate: Date; endDate: Date };
 }
 
 export const RelativeDemandAnalysisCard: React.FC<RelativeDemandAnalysisCardProps> = ({
   isCompact = false,
   onOpenExpanded,
+  dateRangeQuery,
 }) => {
   const [selectedMonth, setSelectedMonth] = useState(new Date());
   const [isExpanded, setIsExpanded] = useState(!isCompact);
@@ -45,8 +47,14 @@ export const RelativeDemandAnalysisCard: React.FC<RelativeDemandAnalysisCardProp
   const [interpretation, setInterpretation] = useState('');
   const [selectedRegion, setSelectedRegion] = useState<RelativeDemandRegion | null>(null);
 
-  const startDate = startOfMonth(selectedMonth);
-  const endDate = endOfMonth(selectedMonth);
+  // Use provided dateRangeQuery if available, otherwise use month-based range
+  let startDate = dateRangeQuery?.startDate || startOfMonth(selectedMonth);
+  let endDate = dateRangeQuery?.endDate || endOfMonth(selectedMonth);
+  
+  // Ensure end date is at the end of the day (23:59:59.999)
+  if (!dateRangeQuery?.endDate) {
+    endDate = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate(), 23, 59, 59, 999);
+  }
 
   const { data, isLoading, error } = trpc.analytics.analyzeRelativeDemand.useQuery(
     {
