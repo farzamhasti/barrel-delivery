@@ -1,29 +1,36 @@
+'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, ChevronLeft, ChevronRight, MapPin, Download, Grid3x3, Flame } from 'lucide-react';
+import { Loader2, ChevronLeft, ChevronRight, MapPin, Download } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import 'leaflet.heat';
 
 interface RelativeDemandRegion {
   id: string;
-  lat: number;
-  lon: number;
+  centerLat: number;
+  centerLon: number;
   orderCount: number;
-  relativeDemand: number;
+  avgDeliveryTime: number;
+  avgWaitingTime: number;
+  relativeDemandScore: number;
+  relativeDeliveryPerformance: number;
+  relativeWaitingTime: number;
+  relativeOperationalIntensity: number;
   classification: 'very_high' | 'high' | 'average' | 'weak' | 'underperforming';
   color: string;
 }
 
 interface CityWideStats {
   totalOrders: number;
+  avgOrderDensity: number;
   avgDeliveryTime: number;
   avgWaitingTime: number;
+  avgOperationalIntensity: number;
 }
 
 interface RelativeDemandAnalysisCardProps {
@@ -94,60 +101,71 @@ export const RelativeDemandAnalysisCard: React.FC<RelativeDemandAnalysisCardProp
   onOpenExpanded,
   dateRangeQuery,
 }) => {
-  const [isExpanded, setIsExpanded] = useState(!isCompact);
   const [selectedMonth, setSelectedMonth] = useState(new Date());
+  const [showRasterGrid, setShowRasterGrid] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(!isCompact);
   const [regions, setRegions] = useState<RelativeDemandRegion[]>([]);
   const [cityStats, setCityStats] = useState<CityWideStats | null>(null);
   const [interpretation, setInterpretation] = useState('');
   const [selectedRegion, setSelectedRegion] = useState<RelativeDemandRegion | null>(null);
-  const [showHeatmap, setShowHeatmap] = useState(false);
   const rasterMapRef = useRef<L.Map | null>(null);
-  const heatmapLayerRef = useRef<any>(null);
-  const gridLayersRef = useRef<L.Rectangle[]>([]);
   const rasterContainerRef = useRef<HTMLDivElement>(null);
   const utils = trpc.useUtils();
 
   // Calculate date range based on selectedMonth or dateRangeQuery
-  const getDateRangeForQuery = () => {
-    const start = startOfMonth(selectedMonth);
-    const end = endOfMonth(selectedMonth);
-    return { startDate: start, endDate: end };
+  const startDate = dateRangeQuery?.startDate || startOfMonth(selectedMonth);
+  const endDateObj = dateRangeQuery?.endDate || endOfMonth(selectedMonth);
+  const endDate = new Date(endDateObj.getFullYear(), endDateObj.getMonth(), endDateObj.getDate(), 23, 59, 59, 999);
+
+  // Query with proper dependencies - will refetch when startDate or endDate changes
+  const { data, isLoading, error } = trpc.analytics.analyzeRelativeDemand.useQuery(
+    {
+      startDate,
+      endDate,
+    },
+    {
+      enabled: isExpanded,
+      refetchOnMount: true,
+      refetchOnWindowFocus: false,
+      staleTime: 0,
+    }
+  );
+
+  // Fetch raster grid data
+  const { data: gridData, isLoading: gridLoading } = trpc.analytics.analyzeBoundaryRaster.useQuery(
+    { startDate, endDate },
+    { enabled: showRasterGrid && isExpanded }
+  );
+
+  // Refetch when selectedMonth changes
+  useEffect(() => {
+    if (isExpanded && !dateRangeQuery) {
+      utils.analytics.analyzeRelativeDemand.invalidate();
+    }
+  }, [selectedMonth, isExpanded, dateRangeQuery, utils]);
+
+  // Update regions when data changes
+  useEffect(() => {
+    if (data?.regions) {
+      setRegions(data.regions);
+      setCityStats(data.cityWideStats);
+      setInterpretation(data.interpretation);
+    }
+  }, [data, startDate, endDate]);
+
+  const handlePreviousMonth = () => {
+    const newMonth = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() - 1, 1);
+    setSelectedMonth(newMonth);
+    utils.analytics.analyzeRelativeDemand.invalidate();
   };
 
-  // Query data
-  const { data: gridData, isLoading } = trpc.analytics.analyzeBoundaryRaster.useQuery(
-    getDateRangeForQuery(),
-    { enabled: isExpanded }
-  );
-  // Update data when received
-  useEffect(() => {
-    if (gridData) {
-      const typedCells = (gridData.cells || []).map(cell => ({
-        ...cell,
-        classification: cell.classification as 'very_high' | 'high' | 'average' | 'weak' | 'underperforming',
-      }));
-      setRegions(typedCells);
-      setCityStats({
-        totalOrders: gridData.totalOrders,
-        avgDeliveryTime: gridData.avgDeliveryTime,
-        avgWaitingTime: gridData.avgWaitingTime,
-      });
-      setInterpretation('Geographic demand analysis for Fort Erie: Demand is relatively evenly distributed across Fort Erie with minor localized variations.');
+  const handleNextMonth = () => {
+    const nextMonth = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() + 1, 1);
+    if (nextMonth <= new Date()) {
+      setSelectedMonth(nextMonth);
+      utils.analytics.analyzeRelativeDemand.invalidate();
     }
-  }, [gridData]);
-
-
-
-
-
-
-
-
-
-
-
-
-
+  };
 
   const getClassificationLabel = (classification: string) => {
     const labels: Record<string, string> = {
@@ -163,256 +181,257 @@ export const RelativeDemandAnalysisCard: React.FC<RelativeDemandAnalysisCardProp
   const getClassificationColor = (classification: string): string => {
     switch (classification) {
       case 'very_high':
-        return '#dc2626'; // Red
+        return '#1e3a8a'; // Dark blue
       case 'high':
-        return '#f97316'; // Orange
+        return '#2563eb'; // Blue
       case 'average':
         return '#eab308'; // Yellow
       case 'weak':
-        return '#22c55e'; // Green
+        return '#f97316'; // Orange
       case 'underperforming':
-        return '#9ca3af'; // Gray
+        return '#dc2626'; // Red
       default:
-        return '#9ca3af';
+        return '#9ca3af'; // Gray
     }
   };
 
-  // Initialize map with dark theme
+
+
+  // Initialize raster grid map
   useEffect(() => {
-    if (!showHeatmap || !rasterContainerRef.current || !regions || regions.length === 0) return;
+    if (!showRasterGrid || !rasterContainerRef.current || !gridData?.cells || gridData.cells.length === 0) return;
 
     if (!rasterMapRef.current) {
       rasterMapRef.current = L.map(rasterContainerRef.current).setView(FORT_ERIE_CENTER, 12);
 
-      // Dark theme tile layer
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: '© OpenStreetMap, © CartoDB',
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
         maxZoom: 19,
       }).addTo(rasterMapRef.current);
     }
 
     const map = rasterMapRef.current;
 
-    // Clear existing heatmap
-    if (heatmapLayerRef.current) {
-      map.removeLayer(heatmapLayerRef.current);
-    }
-
-    // Prepare heatmap data: [lat, lon, intensity]
-    const heatmapData = regions.map((region) => {
-      const intensity = region.relativeDemand / 100; // Normalize to 0-1
-      return [region.lat, region.lon, intensity];
+    // Clear existing layers (except tile layer)
+    map.eachLayer((layer) => {
+      if (layer instanceof L.Rectangle || layer instanceof L.Polygon) {
+        map.removeLayer(layer);
+      }
     });
 
-    // Create heatmap layer
-    heatmapLayerRef.current = (L as any).heatLayer(heatmapData, {
-      radius: 40,
-      blur: 25,
-      maxZoom: 17,
-      gradient: {
-        0.0: '#9ca3af', // Gray
-        0.25: '#22c55e', // Green
-        0.5: '#eab308', // Yellow
-        0.75: '#f97316', // Orange
-        1.0: '#dc2626', // Red
-      },
-    }).addTo(map);
+    // Draw raster grid cells
+    gridData.cells.forEach((cell) => {
+      const cellSize = 1000; // 1000 meters
+      const latStep = cellSize / 111320;
+      const lonStep = cellSize / (111320 * Math.cos((cell.lat * Math.PI) / 180));
 
-    // Draw Fort Erie boundary
-    const boundaryPolygon = L.polygon(FORT_ERIE_BOUNDARY, {
-      color: '#3b82f6',
-      weight: 2,
-      opacity: 0.6,
-      fillOpacity: 0,
-    }).addTo(map);
-
-    // Fit map to boundary
-    const bounds = L.latLngBounds(FORT_ERIE_BOUNDARY);
-    map.fitBounds(bounds, { padding: [80, 80] });
-
-    return () => {
-      // Cleanup handled by React
-    };
-  }, [showHeatmap, regions]);
-
-  // Initialize grid view
-  useEffect(() => {
-    if (showHeatmap || !rasterContainerRef.current || !regions || regions.length === 0) return;
-
-    if (!rasterMapRef.current) {
-      rasterMapRef.current = L.map(rasterContainerRef.current).setView(FORT_ERIE_CENTER, 12);
-
-      // Dark theme tile layer
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: '© OpenStreetMap, © CartoDB',
-        maxZoom: 19,
-      }).addTo(rasterMapRef.current);
-    }
-
-    const map = rasterMapRef.current;
-
-    // Clear existing grid layers
-    gridLayersRef.current.forEach((layer) => map.removeLayer(layer));
-    gridLayersRef.current = [];
-
-    // Clear heatmap if visible
-    if (heatmapLayerRef.current) {
-      map.removeLayer(heatmapLayerRef.current);
-    }
-
-    // Draw grid cells with smooth transitions
-    regions.forEach((region) => {
-      const cellSize = 0.009; // ~1km at equator
       const bounds = [
-        [region.lat - cellSize / 2, region.lon - cellSize / 2],
-        [region.lat + cellSize / 2, region.lon + cellSize / 2],
-      ] as [[number, number], [number, number]];
+        [cell.lat - latStep / 2, cell.lon - lonStep / 2],
+        [cell.lat + latStep / 2, cell.lon + lonStep / 2],
+      ] as L.LatLngBoundsExpression;
 
-      const color = getClassificationColor(region.classification);
       const rectangle = L.rectangle(bounds, {
-        color: color,
+        color: cell.color,
         weight: 1,
-        opacity: 0.7,
-        fillColor: color,
+        opacity: 0.8,
         fillOpacity: 0.6,
-        className: 'grid-cell-transition',
-      }).addTo(map);
+      });
 
-      // Add popup on click
-      rectangle.bindPopup(`
-        <div class="text-sm">
-          <p class="font-semibold">${getClassificationLabel(region.classification)}</p>
-          <p>Orders: ${region.orderCount}</p>
-          <p>Demand: ${region.relativeDemand.toFixed(1)}%</p>
-        </div>
-      `);
+      rectangle.bindPopup(
+        `<div class="p-2 text-sm">
+          <p class="font-semibold">${cell.id}</p>
+          <p>Demand: ${cell.relativeDemand.toFixed(2)}%</p>
+          <p>Orders: ${cell.orderCount}</p>
+          <p>Classification: ${cell.classification}</p>
+        </div>`
+      );
 
-      gridLayersRef.current.push(rectangle);
+      rectangle.addTo(map);
     });
 
-    // Draw boundary
-    const boundaryPolygon = L.polygon(FORT_ERIE_BOUNDARY, {
-      color: '#3b82f6',
-      weight: 2,
-      opacity: 0.6,
-      fillOpacity: 0,
-    }).addTo(map);
+    // Fit map to grid bounds
+    const allLats = gridData.cells.map((c) => c.lat);
+    const allLons = gridData.cells.map((c) => c.lon);
+    const bounds = L.latLngBounds(
+      [Math.min(...allLats), Math.min(...allLons)],
+      [Math.max(...allLats), Math.max(...allLons)]
+    );
+    map.fitBounds(bounds, { padding: [50, 50] });
+  }, [gridData, showRasterGrid]);
 
-    // Fit map to boundary
-    const bounds = L.latLngBounds(FORT_ERIE_BOUNDARY);
-    map.fitBounds(bounds, { padding: [80, 80] });
-
-    return () => {
-      // Cleanup handled by React
-    };
-  }, [showHeatmap, regions]);
+  if (isCompact && !isExpanded) {
+    return (
+      <Card
+        className="cursor-pointer hover:shadow-md transition-shadow"
+        onClick={() => {
+          setIsExpanded(true);
+          onOpenExpanded?.();
+        }}
+      >
+        <CardHeader>
+          <CardTitle className="text-lg">Relative Demand Analysis</CardTitle>
+          <CardDescription>Geographic demand relative to city-wide averages</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {cityStats && (
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div>
+                  <div className="text-gray-600">Total Orders</div>
+                  <div className="text-2xl font-bold text-blue-600">{cityStats.totalOrders}</div>
+                </div>
+                <div>
+                  <div className="text-gray-600">Zones Detected</div>
+                  <div className="text-2xl font-bold text-purple-600">{regions.length}</div>
+                </div>
+              </div>
+            )}
+            <div className="text-xs text-gray-500">Click to expand</div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
-    <Card className="w-full">
+    <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="flex items-center gap-2">
-              <MapPin className="w-5 h-5" />
-              Relative Demand Analysis
-            </CardTitle>
+            <CardTitle className="text-lg">Relative Demand Analysis</CardTitle>
             <CardDescription>Geographic demand relative to city-wide averages</CardDescription>
           </div>
+          {isCompact && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsExpanded(false)}
+            >
+              ← Back to Grid View
+            </Button>
+          )}
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Month Navigation */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setSelectedMonth(new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() - 1))}
+            onClick={handlePreviousMonth}
           >
             <ChevronLeft className="w-4 h-4 mr-1" />
             Previous
           </Button>
-          <h3 className="text-lg font-semibold animate-pulse">{format(selectedMonth, 'MMMM yyyy')}</h3>
+          <h3 className="text-lg font-semibold">{format(selectedMonth, 'MMMM yyyy')}</h3>
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setSelectedMonth(new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() + 1))}
+            onClick={handleNextMonth}
+            disabled={new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() + 1, 1) > new Date()}
           >
             Next
             <ChevronRight className="w-4 h-4 ml-1" />
           </Button>
         </div>
 
-        {/* Glassmorphism Stats Panel */}
-        {cityStats && (
-          <div className="relative">
-            <div className="absolute top-4 right-4 z-10 bg-black/30 backdrop-blur-md border border-white/20 rounded-2xl p-4 text-white space-y-3 w-64">
-              <div>
-                <p className="text-xs text-white/70">Total Grid Cells</p>
-                <p className="text-2xl font-bold">{regions.length}</p>
+        {/* City-wide         {!isCompact && (
+            <div className="grid grid-cols-4 gap-3 mb-4">
+              <div className="bg-blue-50 p-3 rounded-lg">
+                <div className="text-xs text-gray-600 mb-1">Total Orders</div>
+                <div className="text-2xl font-bold text-blue-600">{Number(cityStats.totalOrders) || 0}</div>
               </div>
-              <div>
-                <p className="text-xs text-white/70">Avg Relative Demand</p>
-                <p className="text-2xl font-bold text-green-400">
-                  {(regions.reduce((sum, r) => sum + r.relativeDemand, 0) / regions.length).toFixed(2)}%
-                </p>
+              <div className="bg-green-50 p-3 rounded-lg">
+                <div className="text-xs text-gray-600 mb-1">Avg Delivery Time</div>
+                <div className="text-2xl font-bold text-green-600">{(Number(cityStats.avgDeliveryTime) || 0).toFixed(0)} min</div>
               </div>
-              <div>
-                <p className="text-xs text-white/70">Max Demand</p>
-                <p className="text-2xl font-bold text-red-500">
-                  {Math.max(...regions.map((r) => r.relativeDemand)).toFixed(2)}%
-                </p>
+              <div className="bg-orange-50 p-3 rounded-lg">
+                <div className="text-xs text-gray-600 mb-1">Avg Waiting Time</div>
+                <div className="text-2xl font-bold text-orange-600">{(Number(cityStats.avgWaitingTime) || 0).toFixed(0)} min</div>
               </div>
-              <div>
-                <p className="text-xs text-white/70">Total Orders</p>
-                <p className="text-2xl font-bold text-blue-400">{cityStats.totalOrders}</p>
+              <div className="bg-purple-50 p-3 rounded-lg">
+                <div className="text-xs text-gray-600 mb-1">Order Density</div>
+                <div className="text-2xl font-bold text-purple-600">{(Number(cityStats.avgOrderDensity) || 0).toFixed(1)}/km²</div>
               </div>
             </div>
-
-            {/* Map Container */}
-            <div className="relative h-96 rounded-lg overflow-hidden border border-gray-700 bg-gray-900">
-              {isLoading ? (
-                <div className="h-full flex items-center justify-center bg-gray-900">
-                  <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
-                </div>
-              ) : (
-                <div ref={rasterContainerRef} className="h-full w-full" />
-              )}
-            </div>
+        )}* Map */}
+        {isLoading ? (
+          <div className="h-96 flex items-center justify-center bg-gray-50 rounded-lg border border-gray-200">
+            <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
           </div>
-        )}
+        ) : null}
 
-        {/* View Toggle Button */}
+        {/* Raster-Based Grid Toggle */}
         <div className="flex gap-2">
           <Button
-            variant="outline"
+            variant={showRasterGrid ? 'default' : 'outline'}
             size="sm"
-            onClick={() => setShowHeatmap(!showHeatmap)}
-            className="flex-1 bg-black/20 border-white/20 text-white hover:bg-black/40 backdrop-blur-sm"
+            onClick={() => setShowRasterGrid(!showRasterGrid)}
+            className="flex-1"
           >
-            {showHeatmap ? (
-              <>
-                <Flame className="w-4 h-4 mr-2" />
-                Heatmap View
-              </>
-            ) : (
-              <>
-                <Grid3x3 className="w-4 h-4 mr-2" />
-                Grid View
-              </>
-            )}
+            {showRasterGrid ? 'Hide' : 'Show'} Raster Grid (1000x1000m)
           </Button>
         </div>
 
-        {/* Animated Legend */}
-        <div className="bg-gradient-to-r from-gray-500 via-green-500 via-yellow-500 via-orange-500 to-red-700 h-8 rounded-lg relative">
-          <div className="absolute inset-0 flex justify-between px-4 text-xs text-white font-semibold">
-            <span>0-5%</span>
-            <span>5-10%</span>
-            <span>10-15%</span>
-            <span>15-20%</span>
-            <span>20%+</span>
+        {/* Raster Grid Visualization */}
+        {showRasterGrid && (
+          <div className="space-y-3">
+            <h3 className="font-semibold text-sm">Raster-Based Relative Demand Classification</h3>
+            {gridLoading ? (
+              <div className="h-96 flex items-center justify-center bg-gray-50 rounded-lg border border-gray-200">
+                <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+              </div>
+            ) : gridData?.cells && gridData.cells.length > 0 ? (
+              <>
+                <div className="grid grid-cols-4 gap-2 text-sm">
+                  <div className="bg-blue-50 p-2 rounded">
+                    <div className="text-xs text-gray-600">Grid Cells</div>
+                    <div className="font-bold text-blue-600">{gridData.cells.length}</div>
+                  </div>
+                  <div className="bg-green-50 p-2 rounded">
+                    <div className="text-xs text-gray-600">Avg Demand</div>
+                    <div className="font-bold text-green-600">{(gridData.cells.reduce((sum, c) => sum + c.relativeDemand, 0) / gridData.cells.length).toFixed(2)}%</div>
+                  </div>
+                  <div className="bg-orange-50 p-2 rounded">
+                    <div className="text-xs text-gray-600">Max Demand</div>
+                    <div className="font-bold text-orange-600">{Math.max(...gridData.cells.map(c => c.relativeDemand)).toFixed(2)}%</div>
+                  </div>
+                  <div className="bg-purple-50 p-2 rounded">
+                    <div className="text-xs text-gray-600">Total Orders</div>
+                    <div className="font-bold text-purple-600">{gridData.totalOrders}</div>
+                  </div>
+                </div>
+                <div className="h-96 rounded-lg overflow-hidden border border-gray-200" ref={rasterContainerRef} />
+                <div className="grid grid-cols-5 gap-2 text-xs">
+                  <div className="flex items-center gap-1">
+                    <div className="h-3 w-3 rounded" style={{ backgroundColor: '#cccccc' }}></div>
+                    <span>0-5%</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="h-3 w-3 rounded" style={{ backgroundColor: '#90ee90' }}></div>
+                    <span>5-10%</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="h-3 w-3 rounded" style={{ backgroundColor: '#ffff00' }}></div>
+                    <span>10-15%</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="h-3 w-3 rounded" style={{ backgroundColor: '#ff4500' }}></div>
+                    <span>15-20%</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="h-3 w-3 rounded" style={{ backgroundColor: '#8b0000' }}></div>
+                    <span>20%+</span>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="h-96 flex items-center justify-center bg-gray-50 rounded-lg border border-gray-200">
+                <p className="text-gray-500">No raster grid data available</p>
+              </div>
+            )}
           </div>
-        </div>
+        )}
 
         {/* Classification Legend and Explanation */}
         <div className="bg-gray-50 border rounded-lg p-4 space-y-3">
@@ -486,8 +505,20 @@ export const RelativeDemandAnalysisCard: React.FC<RelativeDemandAnalysisCardProp
                 <div className="font-semibold">{selectedRegion.orderCount}</div>
               </div>
               <div>
-                <div className="text-gray-600">Demand %</div>
-                <div className="font-semibold">{selectedRegion.relativeDemand.toFixed(1)}%</div>
+                <div className="text-gray-600">Demand Score</div>
+                <div className="font-semibold">{selectedRegion.relativeDemandScore.toFixed(1)}/100</div>
+              </div>
+              <div>
+                <div className="text-gray-600">Delivery Performance</div>
+                <div className="font-semibold">{selectedRegion.relativeDeliveryPerformance.toFixed(1)}/100</div>
+              </div>
+              <div>
+                <div className="text-gray-600">Avg Delivery Time</div>
+                <div className="font-semibold">{(Number(selectedRegion.avgDeliveryTime) || 0).toFixed(1)} min</div>
+              </div>
+              <div>
+                <div className="text-gray-600">Avg Waiting Time</div>
+                <div className="font-semibold">{(Number(selectedRegion.avgWaitingTime) || 0).toFixed(1)} min</div>
               </div>
               <div>
                 <div className="text-gray-600">Classification</div>
@@ -497,19 +528,6 @@ export const RelativeDemandAnalysisCard: React.FC<RelativeDemandAnalysisCardProp
           </div>
         )}
       </CardContent>
-
-      <style>{`
-        .grid-cell-transition {
-          transition: fill 0.5s ease, stroke 0.5s ease;
-        }
-        @keyframes pulse-month {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.7; }
-        }
-        .animate-pulse {
-          animation: pulse-month 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-      `}</style>
     </Card>
   );
 };
