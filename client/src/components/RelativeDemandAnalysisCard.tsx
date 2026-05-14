@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, ChevronLeft, ChevronRight, MapPin, Download } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
@@ -362,15 +363,15 @@ export const RelativeDemandAnalysisCard: React.FC<RelativeDemandAnalysisCardProp
         ) : null}
 
         {/* Raster-Based Grid Toggle */}
-        <div className="flex gap-2">
-          <Button
-            variant={showRasterGrid ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setShowRasterGrid(!showRasterGrid)}
-            className="flex-1"
-          >
-            {showRasterGrid ? 'Hide' : 'Show'} Raster Grid (1000x1000m)
-          </Button>
+        <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+          <Checkbox
+            id="raster-toggle"
+            checked={showRasterGrid}
+            onCheckedChange={(checked) => setShowRasterGrid(checked as boolean)}
+          />
+          <label htmlFor="raster-toggle" className="text-sm font-medium cursor-pointer flex-1">
+            Show Raster Grid (1000x1000m) Classification Overlay
+          </label>
         </div>
 
         {/* Raster Grid Visualization */}
@@ -404,7 +405,7 @@ export const RelativeDemandAnalysisCard: React.FC<RelativeDemandAnalysisCardProp
                 <div className="h-96 rounded-lg overflow-hidden border border-gray-200" ref={rasterContainerRef} />
                 <div className="grid grid-cols-5 gap-2 text-xs">
                   <div className="flex items-center gap-1">
-                    <div className="h-3 w-3 rounded" style={{ backgroundColor: '#cccccc' }}></div>
+                    <div className="h-3 w-3 rounded" style={{ backgroundColor: '#A855F7' }}></div>
                     <span>0-5%</span>
                   </div>
                   <div className="flex items-center gap-1">
