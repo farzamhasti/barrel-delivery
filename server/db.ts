@@ -2,7 +2,7 @@ import { drizzle } from 'drizzle-orm/mysql2';
 import { sql } from 'drizzle-orm';
 import { InsertUser, users, drivers, InsertDriver, orders, InsertOrder, orderItems, InsertOrderItem, systemCredentials, systemSessions, orderStatusHistory, InsertOrderStatusHistory, returnTimeHistory, reservations, InsertReservation, Reservation } from "../drizzle/schema";
 import { ENV } from './_core/env';
-import { eq, and, desc, gte, lt, inArray, gt, isNull, lte } from "drizzle-orm";
+import { eq, and, desc, gte, lt, inArray, gt, isNull, isNotNull, lte } from "drizzle-orm";
 import { createHash, timingSafeEqual } from 'crypto';
 import { format, startOfWeek, startOfMonth } from 'date-fns';
 
@@ -1817,5 +1817,92 @@ export async function getDeliveryReport(startDate: Date, endDate: Date) {
   } catch (error) {
     console.error('[getDeliveryReport] Error fetching delivery report:', error);
     return { orders: [], drivers: [], totalDelivered: 0, regionStats: [] };
+  }
+}
+
+/**
+ * Get loyal customers - those who have placed more than 2 orders to the same address in a given month
+ */
+export async function getLoyalCustomers(startDate: Date, endDate: Date) {
+  const db = await getDb();
+  if (!db) {
+    console.error('[getLoyalCustomers] Database not available');
+    return [];
+  }
+
+  try {
+    // Get all delivered orders in the date range with customer info
+    const deliveredOrders = await db
+      .select({
+        id: orders.id,
+        orderNumber: orders.orderNumber,
+        customerName: orders.customerName,
+        customerAddress: orders.customerAddress,
+        customerPhone: orders.customerPhone,
+        receiptImage: orders.receiptImage,
+        formattedReceiptImage: orders.formattedReceiptImage,
+        deliveredAt: orders.deliveredAt,
+        createdAt: orders.createdAt,
+      })
+      .from(orders)
+      .where(and(
+        eq(orders.status, 'Delivered'),
+        gte(orders.deliveredAt, startDate),
+        lt(orders.deliveredAt, endDate),
+        // Only include orders with valid address and phone
+        isNotNull(orders.customerAddress),
+        isNotNull(orders.customerPhone)
+      ))
+      .orderBy(desc(orders.deliveredAt));
+
+    // Group orders by address and count
+    const addressGroups = new Map<string, typeof deliveredOrders>();
+    
+    deliveredOrders.forEach(order => {
+      const address = order.customerAddress || '';
+      if (!addressGroups.has(address)) {
+        addressGroups.set(address, []);
+      }
+      addressGroups.get(address)!.push(order);
+    });
+
+    // Filter to only addresses with more than 2 orders
+    const loyalCustomers: Array<{
+      address: string;
+      phone: string;
+      orderCount: number;
+      orders: Array<{
+        id: number;
+        orderNumber: string;
+        customerName: string | null;
+        deliveredAt: Date | null;
+        receiptImage: string | null;
+        formattedReceiptImage: string | null;
+      }>;
+    }> = [];
+
+    addressGroups.forEach((addressOrders, address) => {
+      if (addressOrders.length > 2) {
+        const phone = addressOrders[0]?.customerPhone || '';
+        loyalCustomers.push({
+          address,
+          phone,
+          orderCount: addressOrders.length,
+          orders: addressOrders.map(o => ({
+            id: o.id,
+            orderNumber: o.orderNumber,
+            customerName: o.customerName,
+            deliveredAt: o.deliveredAt,
+            receiptImage: o.receiptImage,
+            formattedReceiptImage: o.formattedReceiptImage,
+          })),
+        });
+      }
+    });
+
+    return loyalCustomers;
+  } catch (error) {
+    console.error('[getLoyalCustomers] Error fetching loyal customers:', error);
+    return [];
   }
 }

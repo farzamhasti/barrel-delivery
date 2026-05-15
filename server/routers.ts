@@ -388,6 +388,14 @@ export const appRouter = router({
       .query(async ({ input }) => {
         return await db.getDeliveryReport(input.startDate, input.endDate);
       }),
+    getLoyalCustomers: publicProcedure
+      .input(z.object({
+        startDate: z.date(),
+        endDate: z.date(),
+      }))
+      .query(async ({ input }) => {
+        return await db.getLoyalCustomers(input.startDate, input.endDate);
+      }),
   }),
 
   drivers: router({

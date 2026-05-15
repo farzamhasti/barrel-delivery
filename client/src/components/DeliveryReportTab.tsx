@@ -11,6 +11,7 @@ import { DriverStatsTable } from "@/components/DriverStatsTable";
 import { SimpleReportDateSelector } from "@/components/SimpleReportDateSelector";
 import { RegionStatsTable } from "@/components/RegionStatsTable";
 import { FilterOrdersSection } from "@/components/FilterOrdersSection";
+import { LoyalCustomersSection } from "@/components/LoyalCustomersSection";
 
 export function DeliveryReportTab() {
   const [dateRange, setDateRange] = useState<{ startDate: Date; endDate: Date } | null>(null);
@@ -158,6 +159,11 @@ export function DeliveryReportTab() {
             </Button>
           </CardContent>
         </Card>
+      )}
+
+      {/* Loyal Customers Section */}
+      {dateRange && (
+        <LoyalCustomersSection dateRange={dateRange} />
       )}
 
       {/* Filter Orders Section */}
