@@ -37,6 +37,7 @@ export function SimpleReportDateSelector({ onDateRangeChange }: SimpleReportDate
       startDate.setHours(0, 0, 0, 0);
       const endMonth = sortedMonths[sortedMonths.length - 1];
       const [year, month] = endMonth.split("-").map(Number);
+      // JavaScript Date uses 0-indexed months, so month 5 (May) should be passed as 5 to get June 1st, then day 0 gives us May 31st
       const endDate = new Date(year, month, 0, 23, 59, 59, 999);
       onDateRangeChange(startDate, endDate);
     }

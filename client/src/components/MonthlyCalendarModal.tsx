@@ -24,8 +24,10 @@ export function MonthlyCalendarModal({
     const months = [];
     for (let i = 0; i < 12; i++) {
       const date = new Date(selectedYear, i, 1);
+      const monthStr = String(i + 1).padStart(2, '0');
+      const value = `${selectedYear}-${monthStr}`;
       months.push({
-        value: date.toISOString().slice(0, 7),
+        value,
         label: format(date, "MMM"),
       });
     }
