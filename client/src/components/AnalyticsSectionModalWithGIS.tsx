@@ -390,7 +390,7 @@ export function AnalyticsSectionModalWithGIS({
               <div className="space-y-3 max-h-96 overflow-y-auto">
                 {Object.entries(data).map(([driverId, metrics]: any) => (
                   <div key={driverId} className="bg-gray-50 p-4 rounded-lg">
-                    <p className="font-medium mb-2">{metrics.driverId || `Driver ${driverId}`}</p>
+                    <p className="font-medium mb-2">{metrics.driverName || metrics.driverId || `Driver ${driverId}`}</p>
                     <div className="grid grid-cols-2 gap-2 text-sm">
                       <div>
                         <p className="text-gray-600">Deliveries</p>
