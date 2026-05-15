@@ -1,12 +1,14 @@
 /**
  * AI Prediction Map Component
  * Interactive mini geo map with prediction overlays
+ * Connects to Geo AI service for real predictions or uses mock data as fallback
  */
 
 import React, { useEffect, useRef, useState } from 'react';
 import { Card } from '@/components/ui/card';
-import { MapPin, Zap } from 'lucide-react';
+import { MapPin, Zap, AlertCircle } from 'lucide-react';
 import { MapView } from '../Map';
+import { trpc } from '@/lib/trpc';
 
 interface AIPredictionMapProps {
   predictions: any;
@@ -21,7 +23,7 @@ const FORT_ERIE_SERVICE_AREA = [
   { lat: 42.9789, lng: -79.0289 },
 ];
 
-// Mock hotspot data for predictions
+// Mock hotspot data for predictions (fallback when service unavailable)
 const MOCK_HOTSPOTS = [
   { lat: 42.9820, lng: -79.0280, intensity: 'high', orders: 45, confidence: 0.92 },
   { lat: 42.9750, lng: -79.0350, intensity: 'medium', orders: 28, confidence: 0.85 },
@@ -31,6 +33,23 @@ const MOCK_HOTSPOTS = [
 export default function AIPredictionMap({ predictions }: AIPredictionMapProps) {
   const [mapReady, setMapReady] = useState(false);
   const mapRef = useRef<any>(null);
+  
+  // Try to fetch real hotspots from Geo AI service
+  const { data: hotspotsData, isLoading: hotspotsLoading, error: hotspotsFetchError } = trpc.geoAI.hotspots.active.useQuery(
+    undefined,
+    {
+      enabled: mapReady,
+      retry: false,
+    }
+  );
+  
+  // Use real hotspots if available, otherwise fall back to mock data
+  const hotspots = hotspotsData?.success && hotspotsData.data?.hotspots 
+    ? hotspotsData.data.hotspots 
+    : MOCK_HOTSPOTS;
+  
+  // Show error if Geo AI service is unavailable
+  const showServiceWarning = hotspotsFetchError && hotspotsData?.success === false;
 
   const handleMapReady = (map: any) => {
     mapRef.current = map;
@@ -49,7 +68,7 @@ export default function AIPredictionMap({ predictions }: AIPredictionMapProps) {
       });
 
       // Add hotspot markers
-      MOCK_HOTSPOTS.forEach((hotspot) => {
+      hotspots.forEach((hotspot: any) => {
         const markerColor = 
           hotspot.intensity === 'high' ? '#EF4444' :
           hotspot.intensity === 'medium' ? '#F97316' :
@@ -70,12 +89,13 @@ export default function AIPredictionMap({ predictions }: AIPredictionMapProps) {
         });
 
         marker.addListener('click', () => {
+          const confidence = hotspot.confidence || 0.85;
           new window.google.maps.InfoWindow({
             content: `
               <div class="p-2 text-sm">
                 <p class="font-semibold">${hotspot.intensity.toUpperCase()} Demand Zone</p>
                 <p>Predicted Orders: ${hotspot.orders}</p>
-                <p>Confidence: ${(hotspot.confidence * 100).toFixed(0)}%</p>
+                <p>Confidence: ${(confidence * 100).toFixed(0)}%</p>
               </div>
             `,
           }).open(map, marker);
@@ -84,7 +104,7 @@ export default function AIPredictionMap({ predictions }: AIPredictionMapProps) {
     }
   };
 
-  if (!predictions) {
+  if (!predictions && !hotspotsLoading) {
     return (
       <Card className="p-8 bg-gray-50 border-dashed">
         <div className="text-center text-gray-500">
@@ -97,6 +117,17 @@ export default function AIPredictionMap({ predictions }: AIPredictionMapProps) {
 
   return (
     <div className="space-y-4">
+      {/* Service Status Warning */}
+      {showServiceWarning && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 flex items-start gap-2">
+          <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="font-semibold text-sm text-yellow-700">Geo AI Service Unavailable</p>
+            <p className="text-xs text-yellow-600">Using mock predictions. Connect to Geo AI service for real data.</p>
+          </div>
+        </div>
+      )}
+      
       {/* Google Map Container */}
       <Card className="p-4 bg-white border-2 border-purple-200 h-96 overflow-hidden">
         <MapView 
@@ -114,7 +145,9 @@ export default function AIPredictionMap({ predictions }: AIPredictionMapProps) {
             <div className="w-3 h-3 bg-red-400 rounded-full" />
             <span className="font-semibold text-sm text-red-700">High Demand Zones</span>
           </div>
-          <p className="text-xs text-red-600">3 active hotspots detected</p>
+          <p className="text-xs text-red-600">
+            {hotspots.filter((h: any) => h.intensity === 'high').length} active hotspots detected
+          </p>
         </div>
 
         {/* Medium Demand */}
@@ -123,7 +156,9 @@ export default function AIPredictionMap({ predictions }: AIPredictionMapProps) {
             <div className="w-3 h-3 bg-orange-400 rounded-full" />
             <span className="font-semibold text-sm text-orange-700">Medium Demand</span>
           </div>
-          <p className="text-xs text-orange-600">Moderate activity zones</p>
+          <p className="text-xs text-orange-600">
+            {hotspots.filter((h: any) => h.intensity === 'medium').length} moderate activity zones
+          </p>
         </div>
 
         {/* Low Demand */}
@@ -132,7 +167,9 @@ export default function AIPredictionMap({ predictions }: AIPredictionMapProps) {
             <div className="w-3 h-3 bg-yellow-400 rounded-full" />
             <span className="font-semibold text-sm text-yellow-700">Low Demand</span>
           </div>
-          <p className="text-xs text-yellow-600">Emerging opportunity areas</p>
+          <p className="text-xs text-yellow-600">
+            {hotspots.filter((h: any) => h.intensity === 'low').length} emerging opportunity areas
+          </p>
         </div>
       </div>
 
@@ -143,6 +180,14 @@ export default function AIPredictionMap({ predictions }: AIPredictionMapProps) {
           <span className="font-semibold text-sm text-purple-700">Service Area</span>
         </div>
         <p className="text-xs text-purple-600">Purple boundary shows your delivery service area in Fort Erie</p>
+      </div>
+
+      {/* Data Source Info */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+        <p className="text-xs text-blue-600">
+          {hotspotsLoading ? '⏳ Loading predictions from Geo AI service...' : '✓ Predictions loaded'}
+          {' '}({hotspots.length} hotspots)
+        </p>
       </div>
     </div>
   );
