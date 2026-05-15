@@ -130,12 +130,15 @@ export function SimpleReportDateSelector({ onDateRangeChange }: SimpleReportDate
                     </div>
                   ))}
               {reportType === "monthly" &&
-                [...selectedMonths].sort().map((month) => (
+                [...selectedMonths].sort().map((month) => {
+                  const [year, monthNum] = month.split("-").map(Number);
+                  const date = new Date(year, monthNum - 1, 1);
+                  return (
                   <div
                     key={month}
                     className="bg-blue-100 text-blue-900 px-3 py-1 rounded-full text-xs font-medium flex items-center gap-2"
                   >
-                    {format(new Date(`${month}-01`), "MMMM yyyy")}
+                    {format(date, "MMMM yyyy")}
                     <button
                       onClick={() => handleRemoveMonth(month)}
                       className="hover:text-blue-600"
@@ -143,7 +146,8 @@ export function SimpleReportDateSelector({ onDateRangeChange }: SimpleReportDate
                       <X className="w-3 h-3" />
                     </button>
                   </div>
-                ))}
+                );
+                })}
             </div>
           </div>
         )}
