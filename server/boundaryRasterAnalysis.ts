@@ -164,7 +164,7 @@ async function calculateRelativeDemand(
   const db = await getDb();
 
   // Generate grid cells for Fort Erie
-  const cells = generateRasterGrid(); // Uses default 1000x1000m cell size
+  const cells = generateRasterGrid(500); // Uses 500x500m cell size
 
   try {
     if (!db) {
