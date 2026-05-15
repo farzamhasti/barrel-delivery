@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BarChart3, Map as MapIcon, Calendar, TrendingUp } from "lucide-react";
@@ -8,8 +8,7 @@ import { AnalyticsSectionModalWithGIS } from "./AnalyticsSectionModalWithGIS";
 import { DeliveryHeatmapAnalysis } from "./DeliveryHeatmapAnalysis";
 import { DemandChangeAnalysisCard } from "./DemandChangeAnalysisCard";
 import { RelativeDemandAnalysisCard } from "./RelativeDemandAnalysisCard";
-
-
+import { SpatialAIIntelligenceCard } from "./SpatialAIIntelligenceCard";
 
 type DateRange = "daily" | "monthly";
 type AreaFilter = "all" | "Downtown" | "Central Park" | "Both";
@@ -492,9 +491,10 @@ export function GeomarketingAnalyticsTab() {
             </div>
           </div>
         </div>
-      )}
-
-
+            )}
+      
+      {/* Spatial AI Intelligence Card - Dedicated AI Module */}
+      <SpatialAIIntelligenceCard dateRange={dateRangeQuery} areaFilter={areaFilter} />
     </div>
   );
 }
