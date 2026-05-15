@@ -375,7 +375,7 @@ export const RelativeDemandAnalysisCard: React.FC<RelativeDemandAnalysisCardProp
             onCheckedChange={(checked) => setShowRasterGrid(checked as boolean)}
           />
           <label htmlFor="raster-toggle" className="text-sm font-medium cursor-pointer flex-1">
-            Show Raster Grid (500x500m) Classification Overlay
+            Show Raster Grid (1000x1000m) Classification Overlay
           </label>
         </div>
 
@@ -445,7 +445,7 @@ export const RelativeDemandAnalysisCard: React.FC<RelativeDemandAnalysisCardProp
           <div>
             <h4 className="font-semibold text-sm mb-2">Relative Demand Classification</h4>
             <p className="text-xs text-gray-700 mb-3">
-              Each 500x500m grid cell is classified based on its relative demand as a percentage of total city demand:
+              Each 1000x1000m grid cell is classified based on its relative demand as a percentage of total city demand:
             </p>
             <div className="space-y-2">
               <div className="flex items-start gap-2">
