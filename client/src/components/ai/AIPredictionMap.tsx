@@ -3,21 +3,86 @@
  * Interactive mini geo map with prediction overlays
  */
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Card } from '@/components/ui/card';
-import { AlertCircle, MapPin, Zap } from 'lucide-react';
+import { MapPin, Zap } from 'lucide-react';
+import { MapView } from '../Map';
 
 interface AIPredictionMapProps {
   predictions: any;
 }
 
-export default function AIPredictionMap({ predictions }: AIPredictionMapProps) {
-  const mapContainer = useRef<HTMLDivElement>(null);
+// Fort Erie service area boundary polygon (from your earlier data)
+const FORT_ERIE_SERVICE_AREA = [
+  { lat: 42.9789, lng: -79.0289 },
+  { lat: 42.9850, lng: -79.0150 },
+  { lat: 42.9920, lng: -79.0200 },
+  { lat: 42.9880, lng: -79.0380 },
+  { lat: 42.9789, lng: -79.0289 },
+];
 
-  useEffect(() => {
-    // Map initialization will happen here when integrated with actual map library
-    // For now, showing placeholder with mock visualization
-  }, [predictions]);
+// Mock hotspot data for predictions
+const MOCK_HOTSPOTS = [
+  { lat: 42.9820, lng: -79.0280, intensity: 'high', orders: 45, confidence: 0.92 },
+  { lat: 42.9750, lng: -79.0350, intensity: 'medium', orders: 28, confidence: 0.85 },
+  { lat: 42.9900, lng: -79.0150, intensity: 'low', orders: 12, confidence: 0.78 },
+];
+
+export default function AIPredictionMap({ predictions }: AIPredictionMapProps) {
+  const [mapReady, setMapReady] = useState(false);
+  const mapRef = useRef<any>(null);
+
+  const handleMapReady = (map: any) => {
+    mapRef.current = map;
+    setMapReady(true);
+    
+    // Draw service area polygon
+    if (window.google?.maps) {
+      const polygon = new window.google.maps.Polygon({
+        paths: FORT_ERIE_SERVICE_AREA,
+        strokeColor: '#9333EA',
+        strokeOpacity: 0.8,
+        strokeWeight: 2,
+        fillColor: '#9333EA',
+        fillOpacity: 0.15,
+        map: map,
+      });
+
+      // Add hotspot markers
+      MOCK_HOTSPOTS.forEach((hotspot) => {
+        const markerColor = 
+          hotspot.intensity === 'high' ? '#EF4444' :
+          hotspot.intensity === 'medium' ? '#F97316' :
+          '#FBBF24';
+
+        const marker = new window.google.maps.Marker({
+          position: { lat: hotspot.lat, lng: hotspot.lng },
+          map: map,
+          title: `${hotspot.intensity.toUpperCase()} DEMAND - ${hotspot.orders} orders`,
+          icon: {
+            path: window.google.maps.SymbolPath.CIRCLE,
+            scale: 12,
+            fillColor: markerColor,
+            fillOpacity: 0.7,
+            strokeColor: '#fff',
+            strokeWeight: 2,
+          },
+        });
+
+        marker.addListener('click', () => {
+          new window.google.maps.InfoWindow({
+            content: `
+              <div class="p-2 text-sm">
+                <p class="font-semibold">${hotspot.intensity.toUpperCase()} Demand Zone</p>
+                <p>Predicted Orders: ${hotspot.orders}</p>
+                <p>Confidence: ${(hotspot.confidence * 100).toFixed(0)}%</p>
+              </div>
+            `,
+          }).open(map, marker);
+        });
+      });
+    }
+  };
 
   if (!predictions) {
     return (
@@ -32,103 +97,52 @@ export default function AIPredictionMap({ predictions }: AIPredictionMapProps) {
 
   return (
     <div className="space-y-4">
-      {/* Map Container */}
-      <Card className="p-4 bg-white border-2 border-purple-200 h-96">
-        <div
-          ref={mapContainer}
-          className="w-full h-full bg-gradient-to-br from-blue-100 to-green-100 rounded-lg flex items-center justify-center relative overflow-hidden"
-        >
-          {/* Mock Map Visualization */}
-          <div className="absolute inset-0 bg-opacity-10">
-            {/* Hotspot Indicators */}
-            <div className="absolute top-1/4 left-1/3 w-16 h-16 bg-red-400 rounded-full opacity-30 animate-pulse" />
-            <div className="absolute top-1/2 right-1/4 w-12 h-12 bg-orange-400 rounded-full opacity-40 animate-pulse" />
-            <div className="absolute bottom-1/4 left-1/2 w-10 h-10 bg-yellow-400 rounded-full opacity-35 animate-pulse" />
-
-            {/* Center Marker */}
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-              <div className="w-4 h-4 bg-blue-600 rounded-full border-2 border-white shadow-lg" />
-            </div>
-          </div>
-
-          {/* Map Legend Overlay */}
-          <div className="absolute bottom-4 left-4 bg-white rounded-lg shadow-lg p-3 text-xs space-y-2">
-            <div className="font-semibold text-gray-700 mb-2">Prediction Intensity</div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-red-400 rounded-full" />
-              <span>High Demand</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-orange-400 rounded-full" />
-              <span>Medium Demand</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-yellow-400 rounded-full" />
-              <span>Low Demand</span>
-            </div>
-          </div>
-
-          {/* Info Badge */}
-          <div className="absolute top-4 right-4 bg-white rounded-lg shadow-lg p-2 text-xs font-semibold text-purple-700">
-            AI Predictions
-          </div>
-        </div>
+      {/* Google Map Container */}
+      <Card className="p-4 bg-white border-2 border-purple-200 h-96 overflow-hidden">
+        <MapView 
+          initialCenter={{ lat: 42.9820, lng: -79.0280 }}
+          initialZoom={13}
+          onMapReady={handleMapReady}
+        />
       </Card>
 
       {/* Prediction Details Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         {/* Hotspot Details */}
-        <Card className="p-3 bg-gradient-to-br from-red-50 to-orange-50 border-orange-200">
-          <div className="flex items-start gap-2">
-            <Zap className="w-4 h-4 text-orange-600 mt-1 flex-shrink-0" />
-            <div>
-              <h4 className="font-semibold text-sm text-gray-700">Hotspots</h4>
-              <p className="text-xs text-gray-600 mt-1">
-                {predictions.hotspots.active_hotspots} active zones detected
-              </p>
-              <p className="text-xs text-orange-600 font-semibold mt-1">
-                Coverage: {predictions.hotspots.coverage_area}
-              </p>
-            </div>
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-3 h-3 bg-red-400 rounded-full" />
+            <span className="font-semibold text-sm text-red-700">High Demand Zones</span>
           </div>
-        </Card>
+          <p className="text-xs text-red-600">3 active hotspots detected</p>
+        </div>
 
-        {/* Risk Zones */}
-        <Card className="p-3 bg-gradient-to-br from-yellow-50 to-red-50 border-red-200">
-          <div className="flex items-start gap-2">
-            <AlertCircle className="w-4 h-4 text-red-600 mt-1 flex-shrink-0" />
-            <div>
-              <h4 className="font-semibold text-sm text-gray-700">Risk Zones</h4>
-              <p className="text-xs text-gray-600 mt-1">
-                {predictions.riskAssessment.overall_risk_level.toUpperCase()} risk level
-              </p>
-              <p className="text-xs text-red-600 font-semibold mt-1">
-                Delay risk: {(predictions.riskAssessment.delay_probability * 100).toFixed(0)}%
-              </p>
-            </div>
+        {/* Medium Demand */}
+        <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-3 h-3 bg-orange-400 rounded-full" />
+            <span className="font-semibold text-sm text-orange-700">Medium Demand</span>
           </div>
-        </Card>
+          <p className="text-xs text-orange-600">Moderate activity zones</p>
+        </div>
 
-        {/* Optimization Zones */}
-        <Card className="p-3 bg-gradient-to-br from-green-50 to-blue-50 border-green-200">
-          <div className="flex items-start gap-2">
-            <MapPin className="w-4 h-4 text-green-600 mt-1 flex-shrink-0" />
-            <div>
-              <h4 className="font-semibold text-sm text-gray-700">Optimization</h4>
-              <p className="text-xs text-gray-600 mt-1">
-                {predictions.demandForecast.predicted_demand} orders forecasted
-              </p>
-              <p className="text-xs text-green-600 font-semibold mt-1">
-                Efficiency potential: +{(predictions.demandForecast.confidence_score * 100).toFixed(0)}%
-              </p>
-            </div>
+        {/* Low Demand */}
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-3 h-3 bg-yellow-400 rounded-full" />
+            <span className="font-semibold text-sm text-yellow-700">Low Demand</span>
           </div>
-        </Card>
+          <p className="text-xs text-yellow-600">Emerging opportunity areas</p>
+        </div>
       </div>
 
-      {/* Map Controls Info */}
-      <div className="text-xs text-gray-500 text-center p-2 bg-gray-50 rounded-lg">
-        <p>Interactive map with real-time prediction overlays - Zoom, pan, and click for details</p>
+      {/* Service Area Info */}
+      <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
+        <div className="flex items-center gap-2 mb-2">
+          <Zap className="w-4 h-4 text-purple-600" />
+          <span className="font-semibold text-sm text-purple-700">Service Area</span>
+        </div>
+        <p className="text-xs text-purple-600">Purple boundary shows your delivery service area in Fort Erie</p>
       </div>
     </div>
   );
