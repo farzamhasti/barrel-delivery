@@ -28,14 +28,14 @@ interface GISDriverPerformanceProps {
 const RESTAURANT_LOCATION = { lat: 42.90517, lng: -78.92295 };
 
 const DRIVER_COLORS = [
-  "#FF6B6B",
-  "#4ECDC4",
-  "#45B7D1",
-  "#FFA07A",
-  "#98D8C8",
-  "#F7DC6F",
-  "#BB8FCE",
-  "#85C1E2",
+  "#FF6B6B",    // Red
+  "#FFB84D",    // Orange
+  "#4ECDC4",    // Teal
+  "#9B59B6",    // Purple
+  "#3498DB",    // Blue
+  "#E74C3C",    // Dark Red
+  "#2ECC71",    // Green
+  "#F39C12",    // Dark Orange
 ];
 
 export function GISDriverPerformance({ driverMetrics = {} }: GISDriverPerformanceProps) {
