@@ -7,6 +7,7 @@
 
 import { router, publicProcedure, protectedProcedure } from '../_core/trpc';
 import { z } from 'zod';
+import { isWithinOperatingHours, getDayCategory, extractTemporalFeatures } from '../utils/operatingHours';
 
 // Environment variables
 const GEO_AI_SERVICE_URL = process.env.GEO_AI_SERVICE_URL || 'http://localhost:8001';
@@ -39,6 +40,29 @@ async function callGeoAIService(endpoint: string, method: string = 'GET', body?:
     console.error('Error calling Geo AI service:', error);
     throw error;
   }
+}
+
+/**
+ * Validate that request is within operating hours
+ * Returns error response if outside operating hours
+ */
+function validateOperatingHours() {
+  const now = new Date();
+  if (!isWithinOperatingHours(now)) {
+    const temporalFeatures = extractTemporalFeatures(now);
+    return {
+      success: false,
+      error: 'Predictions not available outside operating hours',
+      data: null,
+      metadata: {
+        isOperatingHours: false,
+        dayCategory: getDayCategory(now),
+        currentHour: temporalFeatures.hour,
+        minutesUntilOpen: temporalFeatures.minutesUntilClose === -1 ? -1 : 0,
+      },
+    };
+  }
+  return null;
 }
 
 export const geoAIRouter = router({
@@ -78,6 +102,13 @@ export const geoAIRouter = router({
       )
       .query(async ({ input }) => {
         try {
+          // Check if within operating hours
+          const operatingHoursError = validateOperatingHours();
+          if (operatingHoursError) {
+            return operatingHoursError;
+          }
+
+          const now = new Date();
           const response = await callGeoAIService('/api/v1/demand/predict', 'POST', {
             zone_id: input.zoneId,
             forecast_hours: input.forecastHours,
@@ -87,6 +118,11 @@ export const geoAIRouter = router({
           return {
             success: true,
             data: response,
+            metadata: {
+              isOperatingHours: true,
+              dayCategory: getDayCategory(now),
+              temporalFeatures: extractTemporalFeatures(now),
+            },
           };
         } catch (error) {
           return {
@@ -111,6 +147,13 @@ export const geoAIRouter = router({
       )
       .query(async ({ input }) => {
         try {
+          // Check if within operating hours
+          const operatingHoursError = validateOperatingHours();
+          if (operatingHoursError) {
+            return operatingHoursError;
+          }
+
+          const now = new Date();
           const response = await callGeoAIService('/api/v1/demand/batch-predict', 'POST', {
             zone_ids: input.zoneIds,
             forecast_hours: input.forecastHours,
@@ -120,6 +163,11 @@ export const geoAIRouter = router({
           return {
             success: true,
             data: response,
+            metadata: {
+              isOperatingHours: true,
+              dayCategory: getDayCategory(now),
+              temporalFeatures: extractTemporalFeatures(now),
+            },
           };
         } catch (error) {
           return {
@@ -197,6 +245,13 @@ export const geoAIRouter = router({
       )
       .query(async ({ input }) => {
         try {
+          // Check if within operating hours
+          const operatingHoursError = validateOperatingHours();
+          if (operatingHoursError) {
+            return operatingHoursError;
+          }
+
+          const now = new Date();
           const response = await callGeoAIService('/api/v1/hotspots/predict', 'POST', {
             latitude: input.latitude,
             longitude: input.longitude,
@@ -207,6 +262,11 @@ export const geoAIRouter = router({
           return {
             success: true,
             data: response,
+            metadata: {
+              isOperatingHours: true,
+              dayCategory: getDayCategory(now),
+              temporalFeatures: extractTemporalFeatures(now),
+            },
           };
         } catch (error) {
           return {
@@ -219,11 +279,23 @@ export const geoAIRouter = router({
 
     active: publicProcedure.query(async () => {
       try {
+        // Check if within operating hours
+        const operatingHoursError = validateOperatingHours();
+        if (operatingHoursError) {
+          return operatingHoursError;
+        }
+
+        const now = new Date();
         const response = await callGeoAIService('/api/v1/hotspots/active');
 
         return {
           success: true,
           data: response,
+          metadata: {
+            isOperatingHours: true,
+            dayCategory: getDayCategory(now),
+            temporalFeatures: extractTemporalFeatures(now),
+          },
         };
       } catch (error) {
         return {
@@ -248,6 +320,13 @@ export const geoAIRouter = router({
       )
       .query(async ({ input }) => {
         try {
+          // Check if within operating hours
+          const operatingHoursError = validateOperatingHours();
+          if (operatingHoursError) {
+            return operatingHoursError;
+          }
+
+          const now = new Date();
           const response = await callGeoAIService('/api/v1/risk/predict', 'POST', {
             zone_id: input.zoneId,
             forecast_hours: input.forecastHours,
@@ -256,6 +335,11 @@ export const geoAIRouter = router({
           return {
             success: true,
             data: response,
+            metadata: {
+              isOperatingHours: true,
+              dayCategory: getDayCategory(now),
+              temporalFeatures: extractTemporalFeatures(now),
+            },
           };
         } catch (error) {
           return {
@@ -298,6 +382,13 @@ export const geoAIRouter = router({
       )
       .query(async ({ input }) => {
         try {
+          // Check if within operating hours
+          const operatingHoursError = validateOperatingHours();
+          if (operatingHoursError) {
+            return operatingHoursError;
+          }
+
+          const now = new Date();
           const response = await callGeoAIService('/api/v1/recommendations/generate', 'POST', {
             zone_id: input.zoneId,
             risk_level: input.riskLevel,
@@ -307,6 +398,11 @@ export const geoAIRouter = router({
           return {
             success: true,
             data: response,
+            metadata: {
+              isOperatingHours: true,
+              dayCategory: getDayCategory(now),
+              temporalFeatures: extractTemporalFeatures(now),
+            },
           };
         } catch (error) {
           return {
@@ -349,6 +445,13 @@ export const geoAIRouter = router({
       )
       .query(async ({ input }) => {
         try {
+          // Check if within operating hours
+          const operatingHoursError = validateOperatingHours();
+          if (operatingHoursError) {
+            return operatingHoursError;
+          }
+
+          const now = new Date();
           // Fetch demand, risks, and recommendations in parallel
           const [demandRes, riskRes, recsRes] = await Promise.all([
             callGeoAIService('/api/v1/demand/batch-predict', 'POST', {
@@ -366,6 +469,11 @@ export const geoAIRouter = router({
               risks: riskRes,
               recommendations: recsRes,
               timestamp: new Date(),
+            },
+            metadata: {
+              isOperatingHours: true,
+              dayCategory: getDayCategory(now),
+              temporalFeatures: extractTemporalFeatures(now),
             },
           };
         } catch (error) {

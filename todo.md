@@ -2661,3 +2661,91 @@ These features are documented for future enhancement but are not required for th
 - [x] Verify all hotspots are within Fort Erie boundary
 - [x] TypeScript compilation check (0 errors)
 - [x] Dev server verification (running successfully)
+
+## Phase 47: Operating-Hours-Aware Geo AI Forecasting System (IN PROGRESS)
+
+### Operating Hours Definition:
+- **Sunday-Thursday:** 4:00 PM - 10:00 PM (6 hours)
+- **Friday-Saturday:** 4:00 PM - 11:00 PM (7 hours)
+
+### Phase 47.1: Define Operating Hours Constants and Utilities (COMPLETED)
+- [x] Create operatingHours.ts utility module with business hours constants
+- [x] Implement isWithinOperatingHours() function
+- [x] Implement getDayCategory() function (weekday/Friday/Saturday)
+- [x] Create temporal feature engineering utilities
+- [x] Implement peak hour window detection
+- [x] Implement pre-closing demand spike detection
+- [x] Add unit tests for operating hours utilities (38/38 tests passing)
+
+### Phase 47.2: Backend Forecasting Constraints (COMPLETED)
+- [x] Update geoAI router to enforce operating hours on predictions
+- [x] Add time-based filtering to hotspot.predict procedure
+- [x] Add time-based filtering to demand.predict procedure
+- [x] Implement operating-hours validation in batch predictions
+- [x] Add response metadata indicating if prediction is within operating hours
+- [x] Create error handling for out-of-hours requests
+- [x] TypeScript compilation: 0 errors
+- [x] Dev server: Running successfully
+
+### Phase 47.3: Temporal Feature Engineering for ML (COMPLETED)
+- [x] Extract day-of-week features (0-6, with Friday/Saturday distinction)
+- [x] Extract hour-of-day features (16-22 for weekdays, 16-23 for Fri/Sat)
+- [x] Extract peak hour indicators (7-9 PM, 9-10 PM, 10-11 PM for Fri/Sat)
+- [x] Extract pre-closing demand spike features (last 30 minutes before close)
+- [x] Extract weekend extended hours features (Fri/Sat 10-11 PM)
+- [x] Create temporal aggregation features (rolling averages by hour)
+- [x] Document temporal feature schema for ML model training
+- [x] Implement cyclical encoding for hour and day (sine/cosine)
+- [x] Calculate demand intensity scores (0.0-1.0)
+- [x] Create feature normalization (0-1 range)
+- [x] Create feature importance weights
+- [x] Create feature vectors for ML model input
+- [x] Batch processing for multiple timestamps
+- [x] Comprehensive test suite (28/28 tests passing)
+- [x] TypeScript compilation: 0 errors
+- [x] Dev server: Running successfully
+
+### Phase 47.4: Frontend Map Filtering
+- [ ] Update AIPredictionMap to check operating hours
+- [ ] Hide/disable hotspots outside operating hours
+- [ ] Display "Outside Operating Hours" message when appropriate
+- [ ] Add operating hours indicator to map UI
+- [ ] Show current business status (Open/Closed)
+- [ ] Add countdown timer to next operating period if closed
+- [ ] Implement time-based visual styling (dimmed for closed hours)
+
+### Phase 47.5: Demand Surge Detection
+- [ ] Create demandSurgeDetection.ts module
+- [ ] Implement surge detection logic within operating hours only
+- [ ] Detect peak hour demand patterns (7-9 PM, 9-10 PM)
+- [ ] Detect pre-closing surge (last 30 minutes)
+- [ ] Detect weekend extended hours surge (10-11 PM Fri/Sat)
+- [ ] Create surge alerts with operating hours context
+- [ ] Add surge severity classification
+
+### Phase 47.6: Driver Allocation Integration
+- [ ] Update driver recommendation logic to use operating hours
+- [ ] Adjust driver allocation for peak hours
+- [ ] Adjust driver allocation for pre-closing surge
+- [ ] Adjust driver allocation for weekend extended hours
+- [ ] Create operating-hours-aware shift planning recommendations
+- [ ] Integrate into admin dashboard recommendations
+
+### Phase 47.7: Testing and Verification
+- [ ] Create comprehensive test suite for operating hours logic
+- [ ] Test predictions at various times (in-hours, out-of-hours, boundaries)
+- [ ] Test day-of-week distinctions (weekday vs Friday vs Saturday)
+- [ ] Test temporal feature extraction accuracy
+- [ ] Test surge detection at peak hours
+- [ ] Test surge detection at pre-closing times
+- [ ] Test surge detection at weekend extended hours
+- [ ] Verify no predictions generated outside operating hours
+- [ ] Test with real Geo AI service integration
+- [ ] Document operating hours behavior in system
+
+**Implementation Notes:**
+- Operating hours are strict constraints, not soft guidelines
+- All forecasting must respect these hours
+- Temporal patterns should be learned separately for each day category
+- The system should understand business operational rhythms
+- No 24-hour demand assumptions
