@@ -2615,23 +2615,7 @@ These features are documented for future enhancement but are not required for th
 - [x] Verified TypeScript: 0 errors
 - [x] Dev server: Running
 
-## Phase 45: Spatial AI Intelligence Map Integration (IN PROGRESS)
-- [x] Fix TypeScript import error in AIPredictionMap (changed Map to MapView)
-- [x] Update MapView component usage with correct props (initialCenter, initialZoom, onMapReady)
-- [x] Implement Fort Erie service area polygon rendering (purple boundary)
-- [x] Add mock hotspot markers with color coding (red/orange/yellow for high/medium/low demand)
-- [x] Implement interactive info windows on marker clicks
-- [x] Add prediction details grid showing demand zones
-- [x] Add service area information panel
-- [ ] Connect frontend to actual geoAI tRPC procedures
-- [ ] Implement real prediction data from Python/FastAPI service
-- [ ] Add heatmap visualization layer
-- [ ] Add clustering for dense hotspot areas
-- [ ] Implement confidence score indicators
-- [ ] Add temporal filtering for predictions
-- [ ] Create unit tests for map component
-- [ ] Test end-to-end prediction flow
-- [ ] Verify map renders correctly in browser
+
 
 ## Phase 45: Spatial AI Intelligence Map Integration (COMPLETED)
 - [x] Fix TypeScript import error in AIPredictionMap (changed Map to MapView)
@@ -2665,3 +2649,15 @@ These features are documented for future enhancement but are not required for th
 - [ ] Create comprehensive unit tests for map component
 - [ ] Test end-to-end prediction flow with real Geo AI service
 - [ ] Add real-time prediction updates
+
+## Phase 46: Migrate to OpenStreetMap/Leaflet (COMPLETED)
+- [x] Replace Google Maps with OpenStreetMap/Leaflet library
+- [x] Update Fort Erie boundary polygon with correct coordinates (GeoJSON from user)
+- [x] Reposition hotspots to be within correct Fort Erie boundary
+- [x] Implement Leaflet map rendering with proper styling
+- [x] Update marker rendering for Leaflet compatibility (CircleMarker with Popup)
+- [x] Update info windows/popups for Leaflet (Popup component)
+- [x] Test map rendering and boundary accuracy
+- [x] Verify all hotspots are within Fort Erie boundary
+- [x] TypeScript compilation check (0 errors)
+- [x] Dev server verification (running successfully)
