@@ -1866,7 +1866,7 @@ export async function getLoyalCustomers(startDate: Date, endDate: Date) {
       addressGroups.get(address)!.push(order);
     });
 
-    // Filter to only addresses with more than 2 orders
+    // Filter to only addresses with 2 or more orders
     const loyalCustomers: Array<{
       address: string;
       phone: string;
@@ -1882,7 +1882,7 @@ export async function getLoyalCustomers(startDate: Date, endDate: Date) {
     }> = [];
 
     addressGroups.forEach((addressOrders, address) => {
-      if (addressOrders.length > 2) {
+      if (addressOrders.length >= 2) {
         const phone = addressOrders[0]?.customerPhone || '';
         loyalCustomers.push({
           address,
