@@ -282,7 +282,15 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
       setRecommendations(recsResponse.data.recommendations);
     }
 
-    // Update forecast data when responses arrive
+    // Update AI status
+    if (demandLoading || hotspotsLoading || riskLoading || recsLoading || weatherLoading || todayForecastLoading || tomorrowForecastLoading) {
+      setAiStatus('loading');
+    } else {
+      setAiStatus('ready');
+    }
+  }, [demandResponse, hotspotsResponse, riskResponse, recsResponse, weatherResponse, demandLoading, hotspotsLoading, riskLoading, recsLoading, weatherLoading, todayForecastLoading, tomorrowForecastLoading, todayForecastResponse, tomorrowForecastResponse]);
+
+  // Update forecast data when today forecast response arrives
   useEffect(() => {
     if (todayForecastResponse?.data) {
       setTodayForecast({
@@ -302,6 +310,7 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
     }
   }, [todayForecastResponse]);
 
+  // Update forecast data when tomorrow forecast response arrives
   useEffect(() => {
     if (tomorrowForecastResponse?.data) {
       setTomorrowForecast({
@@ -321,20 +330,12 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
     }
   }, [tomorrowForecastResponse]);
 
-  // Update AI status
-    if (demandLoading || hotspotsLoading || riskLoading || recsLoading || weatherLoading || todayForecastLoading || tomorrowForecastLoading) {
-      setAiStatus('loading');
-    } else {
-      setAiStatus('ready');
-    }
-  }, [demandResponse, hotspotsResponse, riskResponse, recsResponse, weatherResponse, demandLoading, hotspotsLoading, riskLoading, recsLoading, weatherLoading]);
-
   // Check business hours
   useEffect(() => {
     checkOperatingMode();
     const hoursCheckInterval = setInterval(checkOperatingMode, 60000); // 1 minute
     return () => clearInterval(hoursCheckInterval);
-  }, [checkOperatingMode]);
+  }, []);
 
   // Render "Closed" state (after business closes)
   if (operatingMode === 'closed') {
