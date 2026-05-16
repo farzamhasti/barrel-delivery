@@ -3841,3 +3841,127 @@ This is a comprehensive system rebuild to transform the current weather-aware da
    - Continuous learning
    - Dynamic alerts (no hardcoded)
    - Spatial analysis with PostGIS
+
+
+---
+
+# PHASE 89-96: REALTIME OPERATIONAL BEHAVIOR FIXES
+
+## Phase 88: Frontend Integration with Real Geo AI API (COMPLETED)
+
+- [x] Refactor SpatialAIIntelligenceCard to use real tRPC calls
+- [x] Replace all mock data with live API calls
+- [x] Implement tRPC hooks for demand, hotspots, risk, recommendations
+- [x] Implement auto-refresh every 5-15 minutes during business hours
+- [x] Implement business hours enforcement on frontend
+- [x] Fix TypeScript errors in component prop passing
+- [x] Implement dynamic alert generation from real conditions
+- [x] Implement weather-driven demand multiplier calculation
+- [x] Verify end-to-end flow: React -> tRPC -> Python FastAPI -> ML Results
+- [x] All TypeScript compilation errors resolved (0 errors)
+- [x] Dev server running successfully
+
+## Phase 89: Implement Realtime Prediction Recalculation Engine
+
+- [ ] Create tRPC mutation for manual prediction refresh
+- [ ] Implement 5-15 minute auto-refresh interval during business hours
+- [ ] Fetch latest orders from database for feature calculation
+- [ ] Fetch latest Fort Erie weather from API
+- [ ] Fetch latest active events from event database
+- [ ] Recalculate ML features from fresh data
+- [ ] Rerun prediction models (demand, risk, hotspots)
+- [ ] Update dashboard state with new predictions
+- [ ] Prevent stale prediction reuse
+- [ ] Add refresh timestamp to all predictions
+
+## Phase 90: Enforce Business Hours on Frontend Dashboard
+
+- [ ] Check business hours before rendering predictions
+- [ ] Display "Business Closed" mode outside operating hours
+- [ ] Display "Forecasting paused until next operating window"
+- [ ] Disable all forecast panels during closed hours
+- [ ] Hide hotspot predictions during closed hours
+- [ ] Hide overload alerts during closed hours
+- [ ] Hide driver shortage alerts during closed hours
+- [ ] Show next opening time in closed mode
+- [ ] Test hour transitions (4 PM opening, 10 PM closing)
+- [ ] Test Friday/Saturday extended hours (11 PM closing)
+
+## Phase 91: Implement Live Weather-Driven Recalculation
+
+- [ ] Monitor weather data for significant changes
+- [ ] Trigger recalculation on temperature change >5°C
+- [ ] Trigger recalculation on precipitation start
+- [ ] Trigger recalculation on snowfall start
+- [ ] Trigger recalculation on wind severity increase >10 km/h
+- [ ] Update demand forecasts based on weather changes
+- [ ] Update risk scores based on weather changes
+- [ ] Update recommendations based on weather changes
+- [ ] Display weather change indicators on dashboard
+- [ ] Log weather-triggered recalculations
+
+## Phase 92: Build Event Validation System
+
+- [ ] Create event validation module
+- [ ] Fetch live NHL game schedules for Fort Erie area
+- [ ] Fetch live CFL game schedules for Fort Erie area
+- [ ] Validate if event is currently active
+- [ ] Calculate actual operational impact from events
+- [ ] Display "No Active Events" when no events exist
+- [ ] Remove hardcoded static events
+- [ ] Show event details (team, time, location) when active
+- [ ] Update event impact on demand predictions
+- [ ] Test with real and non-existent events
+
+## Phase 93: Create Dynamic Alert Generation System
+
+- [ ] Create alert generation engine
+- [ ] Generate alerts only from live operational conditions
+- [ ] Alert: High demand surge (>threshold)
+- [ ] Alert: Driver shortage risk (>threshold)
+- [ ] Alert: Delivery delay risk (>threshold)
+- [ ] Alert: Severe weather impact (precipitation/snow/wind)
+- [ ] Alert: Hotspot overload (intensity >threshold)
+- [ ] Display "No Active AI Alerts" when no issues exist
+- [ ] Remove hardcoded static alerts
+- [ ] Alert priority levels (critical/high/medium/low)
+- [ ] Auto-dismiss resolved alerts
+
+## Phase 94: Implement Cache Expiration and Stale Data Prevention
+
+- [ ] Add cache expiration timestamps to all predictions
+- [ ] Implement 5-minute cache TTL for demand forecasts
+- [ ] Implement 10-minute cache TTL for hotspot data
+- [ ] Implement 15-minute cache TTL for risk assessments
+- [ ] Auto-expire stale predictions
+- [ ] Trigger recalculation on cache expiration
+- [ ] Prevent serving expired predictions to frontend
+- [ ] Log cache hits and misses
+- [ ] Monitor cache effectiveness
+
+## Phase 95: Update All Dashboard Panels for Realtime Behavior
+
+- [ ] Update Overview panel for realtime data
+- [ ] Update Map panel with live hotspots
+- [ ] Update Alerts panel with dynamic alerts
+- [ ] Update Weather panel with live updates
+- [ ] Update Recommendations panel with realtime suggestions
+- [ ] Update KPI Summary with live metrics
+- [ ] Update Demand Forecast panel with auto-refresh
+- [ ] Update Risk Assessment panel with live data
+- [ ] Remove all placeholder/mock data
+- [ ] Add loading states during recalculation
+
+## Phase 96: Comprehensive Testing and Validation
+
+- [ ] Test prediction recalculation every 5 minutes
+- [ ] Test business hours enforcement at 4 PM (opening)
+- [ ] Test business hours enforcement at 10 PM (closing)
+- [ ] Test Friday/Saturday 11 PM closing
+- [ ] Test weather-triggered recalculation
+- [ ] Test event validation with real events
+- [ ] Test alert generation with live conditions
+- [ ] Test cache expiration and refresh
+- [ ] Test dashboard panel updates
+- [ ] Verify no stale data displayed
+- [ ] Performance testing with frequent updates
