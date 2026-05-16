@@ -3,11 +3,14 @@
  * 
  * Procedures for integrating Geo AI predictions with the Node.js backend
  * Communicates with the separate Python Geo AI service
+ * 
+ * WEATHER-AWARE: All predictions are adjusted based on real-time Fort Erie weather
  */
 
 import { router, publicProcedure, protectedProcedure } from '../_core/trpc';
 import { z } from 'zod';
 import { isWithinOperatingHours, getDayCategory, extractTemporalFeatures } from '../utils/operatingHours';
+import { calculateWeatherImpact, applyWeatherToDemand, applyWeatherToDelayRisk, applyWeatherToHotspotIntensity, applyWeatherToDriverShortageRisk, generateWeatherRecommendations, type WeatherData, type WeatherImpactScore } from '../utils/weatherImpact';
 
 // Environment variables
 const GEO_AI_SERVICE_URL = process.env.GEO_AI_SERVICE_URL || 'http://localhost:8001';
@@ -39,6 +42,68 @@ async function callGeoAIService(endpoint: string, method: string = 'GET', body?:
   } catch (error) {
     console.error('Error calling Geo AI service:', error);
     throw error;
+  }
+}
+
+/**
+ * Cache for weather data (refresh every 5 minutes)
+ */
+let cachedWeatherData: WeatherData | null = null;
+let lastWeatherFetch = 0;
+const WEATHER_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+/**
+ * Fetch and cache Fort Erie weather data
+ */
+async function getWeatherData(): Promise<WeatherData | null> {
+  const now = Date.now();
+  
+  // Return cached data if still fresh
+  if (cachedWeatherData && (now - lastWeatherFetch) < WEATHER_CACHE_DURATION) {
+    return cachedWeatherData;
+  }
+
+  try {
+    const url = new URL('https://api.open-meteo.com/v1/forecast');
+    url.searchParams.append('latitude', '42.8900');
+    url.searchParams.append('longitude', '-79.0000');
+    url.searchParams.append('current', 'temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,snowfall,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,visibility');
+    url.searchParams.append('timezone', 'America/Toronto');
+    
+    const response = await fetch(url.toString(), {
+      cache: 'no-store',
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Open-Meteo API error: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    
+    // Map API response to WeatherData interface
+    cachedWeatherData = {
+      temperature: data.current.temperature_2m,
+      apparent_temperature: data.current.apparent_temperature,
+      humidity: data.current.relative_humidity_2m,
+      precipitation: data.current.precipitation || 0,
+      snowfall: data.current.snowfall || 0,
+      weather_code: data.current.weather_code,
+      wind_speed: data.current.wind_speed_10m,
+      wind_direction: data.current.wind_direction_10m,
+      wind_gusts: data.current.wind_gusts_10m || 0,
+      visibility: data.current.visibility,
+    };
+    
+    lastWeatherFetch = now;
+    return cachedWeatherData;
+  } catch (error) {
+    console.error('Error fetching weather data:', error);
+    return null;
   }
 }
 
@@ -88,8 +153,8 @@ export const geoAIRouter = router({
   }),
 
   /**
-   * Get Demand Prediction
-   * Predict demand for a specific zone
+   * Get Demand Prediction (WEATHER-AWARE)
+   * Predict demand for a specific zone with weather adjustments
    */
   demand: router({
     predict: protectedProcedure
@@ -115,13 +180,37 @@ export const geoAIRouter = router({
             include_features: input.includeFeatures,
           });
 
+          // Fetch weather data and apply weather-aware adjustments
+          const weatherData = await getWeatherData();
+          let weatherImpact: WeatherImpactScore | null = null;
+          let adjustedData = { ...response };
+
+          if (weatherData) {
+            weatherImpact = calculateWeatherImpact(weatherData);
+            
+            // Apply weather multiplier to predicted orders if available
+            if (adjustedData.predicted_orders) {
+              adjustedData.base_forecast = adjustedData.predicted_orders; // Store original
+              adjustedData.predicted_orders = applyWeatherToDemand(
+                adjustedData.predicted_orders,
+                weatherImpact
+              );
+            }
+            
+            // Add weather impact information to response
+            adjustedData.weather_adjusted = true;
+            adjustedData.weather_impact = weatherImpact;
+            adjustedData.demand_multiplier = weatherImpact.demandMultiplier;
+          }
+
           return {
             success: true,
-            data: response,
+            data: adjustedData,
             metadata: {
               isOperatingHours: true,
               dayCategory: getDayCategory(now),
               temporalFeatures: extractTemporalFeatures(now),
+              weatherAdjusted: !!weatherImpact,
             },
           };
         } catch (error) {
@@ -134,8 +223,8 @@ export const geoAIRouter = router({
       }),
 
     /**
-     * Batch Demand Predictions
-     * Predict demand for multiple zones
+     * Batch Demand Predictions (WEATHER-AWARE)
+     * Predict demand for multiple zones with weather adjustments
      */
     batchPredict: protectedProcedure
       .input(
@@ -160,13 +249,36 @@ export const geoAIRouter = router({
             include_all_types: input.includeAllTypes,
           });
 
+          // Fetch weather data and apply weather-aware adjustments
+          const weatherData = await getWeatherData();
+          let weatherImpact: WeatherImpactScore | null = null;
+          let adjustedData = response;
+
+          if (weatherData) {
+            weatherImpact = calculateWeatherImpact(weatherData);
+            
+            // Apply weather multiplier to all zones if available
+            if (Array.isArray(adjustedData.predictions)) {
+              adjustedData.predictions = adjustedData.predictions.map((pred: any) => ({
+                ...pred,
+                base_forecast: pred.predicted_orders,
+                predicted_orders: applyWeatherToDemand(pred.predicted_orders, weatherImpact),
+                weather_adjusted: true,
+                demand_multiplier: weatherImpact.demandMultiplier,
+              }));
+            }
+            
+            adjustedData.weather_impact = weatherImpact;
+          }
+
           return {
             success: true,
-            data: response,
+            data: adjustedData,
             metadata: {
               isOperatingHours: true,
               dayCategory: getDayCategory(now),
               temporalFeatures: extractTemporalFeatures(now),
+              weatherAdjusted: !!weatherImpact,
             },
           };
         } catch (error) {
@@ -231,7 +343,7 @@ export const geoAIRouter = router({
   }),
 
   /**
-   * Hotspot Detection (Phase 2)
+   * Hotspot Detection (WEATHER-AWARE)
    */
   hotspots: router({
     predict: protectedProcedure
@@ -259,13 +371,34 @@ export const geoAIRouter = router({
             forecast_hours: input.forecastHours,
           });
 
+          // Fetch weather data and apply weather-aware adjustments
+          const weatherData = await getWeatherData();
+          let weatherImpact: WeatherImpactScore | null = null;
+          let adjustedData = { ...response };
+
+          if (weatherData) {
+            weatherImpact = calculateWeatherImpact(weatherData);
+            
+            // Apply weather multiplier to hotspot intensity
+            if (adjustedData.intensity !== undefined) {
+              adjustedData.base_intensity = adjustedData.intensity;
+              adjustedData.intensity = applyWeatherToHotspotIntensity(
+                adjustedData.intensity,
+                weatherImpact
+              );
+            }
+            
+            adjustedData.weather_impact = weatherImpact;
+          }
+
           return {
             success: true,
-            data: response,
+            data: adjustedData,
             metadata: {
               isOperatingHours: true,
               dayCategory: getDayCategory(now),
               temporalFeatures: extractTemporalFeatures(now),
+              weatherAdjusted: !!weatherImpact,
             },
           };
         } catch (error) {
@@ -288,13 +421,34 @@ export const geoAIRouter = router({
         const now = new Date();
         const response = await callGeoAIService('/api/v1/hotspots/active');
 
+        // Fetch weather data and apply weather-aware adjustments
+        const weatherData = await getWeatherData();
+        let weatherImpact: WeatherImpactScore | null = null;
+        let adjustedData = response;
+
+        if (weatherData) {
+          weatherImpact = calculateWeatherImpact(weatherData);
+          
+          // Apply weather multiplier to all active hotspots
+          if (Array.isArray(adjustedData.hotspots)) {
+            adjustedData.hotspots = adjustedData.hotspots.map((hotspot: any) => ({
+              ...hotspot,
+              base_intensity: hotspot.intensity,
+              intensity: applyWeatherToHotspotIntensity(hotspot.intensity, weatherImpact),
+            }));
+          }
+          
+          adjustedData.weather_impact = weatherImpact;
+        }
+
         return {
           success: true,
-          data: response,
+          data: adjustedData,
           metadata: {
             isOperatingHours: true,
             dayCategory: getDayCategory(now),
             temporalFeatures: extractTemporalFeatures(now),
+            weatherAdjusted: !!weatherImpact,
           },
         };
       } catch (error) {
@@ -308,7 +462,7 @@ export const geoAIRouter = router({
   }),
 
   /**
-   * Risk Prediction (Phase 3)
+   * Risk Prediction (WEATHER-AWARE)
    */
   risk: router({
     predict: protectedProcedure
@@ -332,13 +486,42 @@ export const geoAIRouter = router({
             forecast_hours: input.forecastHours,
           });
 
+          // Fetch weather data and apply weather-aware adjustments
+          const weatherData = await getWeatherData();
+          let weatherImpact: WeatherImpactScore | null = null;
+          let adjustedData = { ...response };
+
+          if (weatherData) {
+            weatherImpact = calculateWeatherImpact(weatherData);
+            
+            // Apply weather adjustments to delay risk and driver shortage risk
+            if (adjustedData.delay_risk !== undefined) {
+              adjustedData.base_delay_risk = adjustedData.delay_risk;
+              adjustedData.delay_risk = applyWeatherToDelayRisk(
+                adjustedData.delay_risk,
+                weatherImpact
+              );
+            }
+            
+            if (adjustedData.driver_shortage_risk !== undefined) {
+              adjustedData.base_driver_shortage_risk = adjustedData.driver_shortage_risk;
+              adjustedData.driver_shortage_risk = applyWeatherToDriverShortageRisk(
+                adjustedData.driver_shortage_risk,
+                weatherImpact
+              );
+            }
+            
+            adjustedData.weather_impact = weatherImpact;
+          }
+
           return {
             success: true,
-            data: response,
+            data: adjustedData,
             metadata: {
               isOperatingHours: true,
               dayCategory: getDayCategory(now),
               temporalFeatures: extractTemporalFeatures(now),
+              weatherAdjusted: !!weatherImpact,
             },
           };
         } catch (error) {
@@ -369,7 +552,7 @@ export const geoAIRouter = router({
   }),
 
   /**
-   * Recommendations (Phase 4)
+   * Recommendations (WEATHER-AWARE)
    */
   recommendations: router({
     generate: protectedProcedure
@@ -395,13 +578,38 @@ export const geoAIRouter = router({
             current_drivers: input.currentDrivers,
           });
 
+          // Fetch weather data and generate weather-aware recommendations
+          const weatherData = await getWeatherData();
+          let weatherImpact: WeatherImpactScore | null = null;
+          let adjustedData = { ...response };
+
+          if (weatherData) {
+            weatherImpact = calculateWeatherImpact(weatherData);
+            
+            // Generate weather-specific recommendations
+            const weatherRecs = generateWeatherRecommendations(weatherImpact);
+            adjustedData.weather_recommendations = weatherRecs;
+            adjustedData.weather_impact = weatherImpact;
+            
+            // Combine with existing recommendations
+            if (Array.isArray(adjustedData.recommendations)) {
+              adjustedData.recommendations = [
+                ...adjustedData.recommendations,
+                ...weatherRecs
+              ];
+            } else {
+              adjustedData.recommendations = weatherRecs;
+            }
+          }
+
           return {
             success: true,
-            data: response,
+            data: adjustedData,
             metadata: {
               isOperatingHours: true,
               dayCategory: getDayCategory(now),
               temporalFeatures: extractTemporalFeatures(now),
+              weatherAdjusted: !!weatherImpact,
             },
           };
         } catch (error) {
@@ -417,9 +625,31 @@ export const geoAIRouter = router({
       try {
         const response = await callGeoAIService('/api/v1/recommendations/dashboard');
 
+        // Fetch weather data and add weather-aware recommendations
+        const weatherData = await getWeatherData();
+        let adjustedData = response;
+
+        if (weatherData) {
+          const weatherImpact = calculateWeatherImpact(weatherData);
+          const weatherRecs = generateWeatherRecommendations(weatherImpact);
+          
+          adjustedData.weather_recommendations = weatherRecs;
+          adjustedData.weather_impact = weatherImpact;
+          
+          // Combine with existing recommendations
+          if (Array.isArray(adjustedData.recommendations)) {
+            adjustedData.recommendations = [
+              ...adjustedData.recommendations,
+              ...weatherRecs
+            ];
+          } else {
+            adjustedData.recommendations = weatherRecs;
+          }
+        }
+
         return {
           success: true,
-          data: response,
+          data: adjustedData,
         };
       } catch (error) {
         return {
@@ -504,8 +734,8 @@ export const geoAIRouter = router({
   }),
 
   /**
-   * Composite Dashboard Data
-   * Get all AI predictions for dashboard display
+   * Composite Dashboard Data (WEATHER-AWARE)
+   * Get all AI predictions for dashboard display with weather adjustments
    */
   dashboard: router({
     summary: protectedProcedure
@@ -524,6 +754,15 @@ export const geoAIRouter = router({
           }
 
           const now = new Date();
+          
+          // Fetch weather data once for all predictions
+          const weatherData = await getWeatherData();
+          let weatherImpact: WeatherImpactScore | null = null;
+          
+          if (weatherData) {
+            weatherImpact = calculateWeatherImpact(weatherData);
+          }
+          
           // Fetch demand, risks, and recommendations in parallel
           const [demandRes, riskRes, recsRes] = await Promise.all([
             callGeoAIService('/api/v1/demand/batch-predict', 'POST', {
@@ -534,18 +773,47 @@ export const geoAIRouter = router({
             callGeoAIService('/api/v1/recommendations/dashboard'),
           ]);
 
+          // Apply weather adjustments to all responses
+          let adjustedDemand = demandRes;
+          let adjustedRecs = recsRes;
+
+          if (weatherImpact) {
+            // Apply weather to demand
+            if (Array.isArray(adjustedDemand.predictions)) {
+              adjustedDemand.predictions = adjustedDemand.predictions.map((pred: any) => ({
+                ...pred,
+                base_forecast: pred.predicted_orders,
+                predicted_orders: applyWeatherToDemand(pred.predicted_orders, weatherImpact),
+                demand_multiplier: weatherImpact.demandMultiplier,
+              }));
+            }
+            
+            // Add weather recommendations
+            const weatherRecs = generateWeatherRecommendations(weatherImpact);
+            if (Array.isArray(adjustedRecs.recommendations)) {
+              adjustedRecs.recommendations = [
+                ...adjustedRecs.recommendations,
+                ...weatherRecs
+              ];
+            } else {
+              adjustedRecs.recommendations = weatherRecs;
+            }
+          }
+
           return {
             success: true,
             data: {
-              demand: demandRes,
+              demand: adjustedDemand,
               risks: riskRes,
-              recommendations: recsRes,
+              recommendations: adjustedRecs,
+              weather: weatherImpact,
               timestamp: new Date(),
             },
             metadata: {
               isOperatingHours: true,
               dayCategory: getDayCategory(now),
               temporalFeatures: extractTemporalFeatures(now),
+              weatherAdjusted: !!weatherImpact,
             },
           };
         } catch (error) {

@@ -3445,3 +3445,122 @@ Weather Impact card now displays all complete weather information:
 FILES MODIFIED:
 - client/src/components/SpatialAIIntelligenceCard.tsx: Fixed weatherData field mapping
 - todo.md: Added Phase 80 completion details
+
+
+## Phase 81: Integrate Weather Impact into Demand Forecasting (IN PROGRESS)
+
+FEATURE REQUEST:
+- Transform static weather display into fully weather-aware Geo AI operational forecasting engine
+- Weather must actively modify: demand forecasting, delay risk prediction, hotspot intensity, driver shortage risk, operational recommendations
+- Display weather-adjusted predictions in demand panels
+- Show demand multiplier and weather influence in Weather Impact panel
+
+ARCHITECTURE ANALYSIS (Phase 1 - COMPLETED):
+Current system structure identified:
+- demand.predict: Single zone demand prediction
+- demand.batchPredict: Multiple zones demand prediction
+- demand.history: Historical prediction data
+- hotspots.predict: Hotspot detection and intensity
+- hotspots.active: Active hotspots
+- risk.predict: Risk prediction for zones
+- risk.alerts: Risk alerts
+- recommendations.generate: Operational recommendations
+- recommendations.dashboard: Dashboard recommendations
+- weather.current: Real-time Fort Erie weather
+
+Current flow:
+1. tRPC procedures call Geo AI service endpoints
+2. Geo AI service returns predictions without weather context
+3. Frontend displays predictions as-is
+4. Weather data displayed separately in Weather Impact card
+
+REQUIRED INTEGRATION (Phase 2-10):
+- [ ] Create weather-aware multiplier calculation function
+- [ ] Integrate weather data into demand predictions
+- [ ] Integrate weather data into delay risk predictions
+- [ ] Integrate weather data into hotspot intensity
+- [ ] Integrate weather data into driver shortage risk
+- [ ] Integrate weather data into operational recommendations
+- [ ] Create weather multiplier display panel
+- [ ] Update demand panels to show weather-adjusted forecasts
+- [ ] Test and validate weather-aware system
+
+WEATHER FACTORS TO USE:
+Priority 1: Precipitation (rain/snow intensity)
+Priority 2: Temperature (cold weather, feels-like)
+Priority 3: Wind (high wind operational risk)
+Priority 4: Visibility (reduced delivery efficiency)
+Priority 5: Severe weather (storms, snowstorms, freezing rain)
+
+WEATHER MULTIPLIER LOGIC:
+- Snow → demand multiplier x1.35 (higher orders)
+- Rain → demand multiplier x1.20 (increased delivery demand)
+- Severe snowstorm → delay risk +22%, demand x1.40
+- Cold evenings → order density x1.15
+- Clear/sunny → demand multiplier x0.85 (lower demand)
+- High wind (>25 km/h) → delay risk +15%, operational difficulty +10%
+- Low visibility (<5 km) → delay risk +20%
+
+IMPLEMENTATION STRATEGY:
+1. Create weather impact calculation middleware
+2. Pass weather data to all prediction procedures
+3. Apply multipliers to demand, risk, hotspot, and recommendation responses
+4. Update frontend to display both base and weather-adjusted forecasts
+5. Show demand multiplier and weather influence in dedicated panel
+
+FILES TO MODIFY:
+- server/routers/geoAI.ts: Add weather-aware logic to all prediction procedures
+- server/utils/weatherImpact.ts: Create weather multiplier calculation functions (NEW)
+- client/src/components/ai/AIKPISummary.tsx: Display weather-adjusted demand
+- client/src/components/SpatialAIIntelligenceCard.tsx: Show demand multiplier in Weather Impact panel
+
+
+## Phase 82: Weather-Aware tRPC Integration (COMPLETED)
+
+IMPLEMENTATION SUMMARY:
+Successfully integrated weather impact system into all Geo AI tRPC procedures.
+
+PHASE 2 - WEATHER-AWARE ALGORITHM DESIGN (COMPLETED):
+- [x] Created comprehensive weather impact calculation module (weatherImpact.ts)
+- [x] Implemented weather multiplier functions for all operational factors
+- [x] Defined weather severity levels (low, medium, high, critical)
+- [x] Created weather-specific recommendation generator
+
+PHASE 3 - WEATHER IMPACT INTEGRATION (COMPLETED):
+- [x] Updated demand.predict procedure with weather multipliers
+- [x] Updated demand.batchPredict with weather adjustments
+- [x] Updated hotspots.predict with weather intensity adjustments
+- [x] Updated hotspots.active with weather multipliers
+- [x] Updated risk.predict with delay risk and driver shortage adjustments
+- [x] Updated recommendations.generate with weather-aware recommendations
+- [x] Updated recommendations.dashboard with weather recommendations
+- [x] Updated dashboard.summary with comprehensive weather adjustments
+- [x] Implemented weather data caching (5-minute refresh)
+
+WEATHER ADJUSTMENTS APPLIED:
+- Demand multiplier: Combines precipitation and temperature effects
+- Delay risk increase: Adds precipitation, wind, and visibility impacts
+- Hotspot intensity multiplier: Applies weather to hotspot detection
+- Driver shortage risk: Increases with weather severity
+- Operational difficulty score: Combines all weather difficulty factors
+
+RESPONSE STRUCTURE CHANGES:
+All procedures now return:
+- base_forecast: Original prediction before weather adjustment
+- predicted_orders/intensity: Weather-adjusted values
+- weather_adjusted: Boolean flag indicating adjustment applied
+- weather_impact: Complete WeatherImpactScore object
+- demand_multiplier: Multiplier value (e.g., 1.35)
+- weather_recommendations: Array of weather-specific recommendations
+
+FILES CREATED/MODIFIED:
+- [x] server/utils/weatherImpact.ts: Weather calculation module (NEW)
+- [x] server/routers/geoAI.ts: Weather-integrated procedures (UPDATED)
+
+VERIFICATION:
+- TypeScript compilation: 0 errors
+- Dev server: Running successfully
+- All procedures compile and execute without errors
+
+NEXT PHASE (4):
+Update frontend components to display weather-adjusted demand forecasts and show demand multiplier in Weather Impact panel.
