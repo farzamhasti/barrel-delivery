@@ -167,21 +167,31 @@ export const geoAIRouter = router({
           zoneId: z.string().describe('Zone identifier (e.g., "42.8_-79.0")'),
           forecastHours: z.number().int().min(1).max(168).default(24),
           includeFeatures: z.boolean().default(false),
+          forecastMode: z.enum(['TODAY_FORECAST', 'LIVE_OPERATION', 'TOMORROW_FORECAST']).optional().describe('Forecast mode: TODAY_FORECAST (pre-op), LIVE_OPERATION (during ops), TOMORROW_FORECAST (next day)'),
         })
       )
       .query(async ({ input }) => {
         try {
-          // Check if within operating hours
-          const operatingHoursError = validateOperatingHours();
-          if (operatingHoursError) {
-            return operatingHoursError;
+          // Determine forecast mode
+          const forecastMode = determineForecastMode(input.forecastMode as ForecastMode | undefined);
+          const forecastContext = buildForecastContext(forecastMode);
+          
+          // For TODAY_FORECAST and TOMORROW_FORECAST, allow forecasting outside operating hours
+          // For LIVE_OPERATION, enforce operating hours
+          if (forecastMode === 'LIVE_OPERATION') {
+            const operatingHoursError = validateOperatingHours();
+            if (operatingHoursError) {
+              return operatingHoursError;
+            }
           }
 
           const now = new Date();
           const response = await callGeoAIService('/api/v1/demand/predict', 'POST', {
             zone_id: input.zoneId,
-            forecast_hours: input.forecastHours,
+            forecast_hours: forecastContext.forecastHours,
             include_features: input.includeFeatures,
+            forecast_mode: forecastMode,
+            target_date: forecastContext.targetDate.toISOString(),
           });
 
           // Fetch weather data and apply weather-aware adjustments
@@ -215,6 +225,10 @@ export const geoAIRouter = router({
               dayCategory: getDayCategory(now),
               temporalFeatures: extractTemporalFeatures(now),
               weatherAdjusted: !!weatherImpact,
+              forecastMode: forecastMode,
+              forecastModeDescription: getForecastModeDescription(forecastMode),
+              refreshInterval: getRefreshInterval(forecastMode),
+              targetDate: forecastContext.targetDate.toISOString(),
             },
           };
         } catch (error) {
@@ -283,6 +297,10 @@ export const geoAIRouter = router({
               dayCategory: getDayCategory(now),
               temporalFeatures: extractTemporalFeatures(now),
               weatherAdjusted: !!weatherImpact,
+              forecastMode: forecastMode,
+              forecastModeDescription: getForecastModeDescription(forecastMode),
+              refreshInterval: getRefreshInterval(forecastMode),
+              targetDate: forecastContext.targetDate.toISOString(),
             },
           };
         } catch (error) {
@@ -403,6 +421,10 @@ export const geoAIRouter = router({
               dayCategory: getDayCategory(now),
               temporalFeatures: extractTemporalFeatures(now),
               weatherAdjusted: !!weatherImpact,
+              forecastMode: forecastMode,
+              forecastModeDescription: getForecastModeDescription(forecastMode),
+              refreshInterval: getRefreshInterval(forecastMode),
+              targetDate: forecastContext.targetDate.toISOString(),
             },
           };
         } catch (error) {
@@ -526,6 +548,10 @@ export const geoAIRouter = router({
               dayCategory: getDayCategory(now),
               temporalFeatures: extractTemporalFeatures(now),
               weatherAdjusted: !!weatherImpact,
+              forecastMode: forecastMode,
+              forecastModeDescription: getForecastModeDescription(forecastMode),
+              refreshInterval: getRefreshInterval(forecastMode),
+              targetDate: forecastContext.targetDate.toISOString(),
             },
           };
         } catch (error) {
@@ -614,6 +640,10 @@ export const geoAIRouter = router({
               dayCategory: getDayCategory(now),
               temporalFeatures: extractTemporalFeatures(now),
               weatherAdjusted: !!weatherImpact,
+              forecastMode: forecastMode,
+              forecastModeDescription: getForecastModeDescription(forecastMode),
+              refreshInterval: getRefreshInterval(forecastMode),
+              targetDate: forecastContext.targetDate.toISOString(),
             },
           };
         } catch (error) {
@@ -997,101 +1027,7 @@ export const geoAIRouter = router({
           };
         }
       }),
-
-
-  // Next-day planning (available during closed mode)
-  nextDay: router({
-    forecast: publicProcedure.query(async () => {
-      try {
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        tomorrow.setHours(18, 0, 0, 0); // 6 PM tomorrow
-
-        // Fetch tomorrow's weather forecast
-        const weatherResponse = await callGeoAIService('/api/v1/weather/forecast', 'POST', {
-          date: tomorrow.toISOString(),
-          location: 'Fort Erie',
-        });
-
-        // Fetch tomorrow's demand forecast
-        const demandResponse = await callGeoAIService('/api/v1/demand/predict', 'POST', {
-          zone_id: '1',
-          forecast_date: tomorrow.toISOString(),
-          forecast_hours: 6,
-        });
-
-        // Fetch tomorrow's hotspots
-        const hotspotsResponse = await callGeoAIService('/api/v1/hotspots/predict', 'POST', {
-          zone_id: '1',
-          forecast_date: tomorrow.toISOString(),
-        });
-
-        // Fetch tomorrow's risk assessment
-        const riskResponse = await callGeoAIService('/api/v1/risk/predict', 'POST', {
-          zone_id: '1',
-          forecast_date: tomorrow.toISOString(),
-          forecast_hours: 6,
-        });
-
-        // Get tomorrow's events
-        const eventMultiplier = await calculateEventDemandMultiplier(tomorrow);
-
-        // Apply event multiplier to demand
-        let adjustedDemand = demandResponse;
-        if (Array.isArray(adjustedDemand.predictions) && eventMultiplier > 1) {
-          adjustedDemand.predictions = adjustedDemand.predictions.map((pred: any) => ({
-            ...pred,
-            predicted_orders: Math.round(pred.predicted_orders * eventMultiplier),
-            event_multiplier: eventMultiplier,
-          }));
-        }
-
-        return {
-          success: true,
-          data: {
-            date: tomorrow.toISOString(),
-            weather: weatherResponse,
-            demand: adjustedDemand,
-            hotspots: hotspotsResponse,
-            risks: riskResponse,
-
-            eventMultiplier: eventMultiplier,
-            timestamp: new Date(),
-          },
-        };
-      } catch (error) {
-        return {
-          success: false,
-          error: 'Failed to fetch next-day forecast',
-          data: null,
-        };
-      }
-    }),
-
-    recommendations: publicProcedure.query(async () => {
-      try {
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-
-        // Fetch recommendations for tomorrow
-        const response = await callGeoAIService('/api/v1/recommendations/generate', 'POST', {
-          zone_id: '1',
-          forecast_date: tomorrow.toISOString(),
-          context: 'next-day-planning',
-        });
-
-        return {
-          success: true,
-          data: response,
-        };
-      } catch (error) {
-        return {
-          success: false,
-          error: 'Failed to fetch next-day recommendations',
-          data: null,
-        };
-      }
-    }),
-  }),
   }),
 });
+
+

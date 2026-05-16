@@ -15,7 +15,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, TrendingUp, Zap, Brain, MapPin, Clock, Users, Lightbulb, Cloud } from 'lucide-react';
+import { AlertTriangle, TrendingUp, Zap, Brain, MapPin, Clock, Users, Lightbulb, Cloud, Calendar } from 'lucide-react';
 import AIKPISummary from './ai/AIKPISummary';
 import { AIPredictionMap } from './ai/AIPredictionMap';
 import AIAlertsPanel from './ai/AIAlertsPanel';
@@ -45,6 +45,8 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
   const [eventMultiplier, setEventMultiplier] = useState(1.0);
   const [weatherChangeLog, setWeatherChangeLog] = useState<string[]>([]);
   const weatherHistory = useWeatherChangeHistory(5);
+  const [todayForecast, setTodayForecast] = useState<any>(null);
+  const [tomorrowForecast, setTomorrowForecast] = useState<any>(null);
 
   // Operating mode check (pre-operation, active-operations, or closed)
   const checkOperatingMode = useCallback(() => {
@@ -69,37 +71,49 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
 
   // Fetch weather data via tRPC
   const { data: weatherResponse, isLoading: weatherLoading } = trpc.geoAI.weather.current.useQuery(undefined, {
-    refetchInterval: 300000, // 5 minutes
+    refetchInterval: 300000, // 5 minutes (weather)
   });
 
   // Fetch demand prediction via tRPC
   const { data: demandResponse, isLoading: demandLoading } = trpc.geoAI.demand.predict.useQuery(
     { zoneId: '1', forecastHours: 2 },
-    { refetchInterval: 600000, enabled: shouldForecastingBeActive() } // Always forecast, even in pre-operation
+    { refetchInterval: 900000, enabled: shouldForecastingBeActive() } // 15 minutes during active operations
   );
 
   // Fetch hotspots via tRPC
   const { data: hotspotsResponse, isLoading: hotspotsLoading } = trpc.geoAI.hotspots.active.useQuery(undefined, {
-    refetchInterval: 600000,
-    enabled: shouldForecastingBeActive()
+    refetchInterval: 900000,
+    enabled: shouldForecastingBeActive() // 15 minutes during active operations
   });
 
   // Fetch risk assessment via tRPC
   const { data: riskResponse, isLoading: riskLoading } = trpc.geoAI.risk.predict.useQuery(
     { zoneId: '1', forecastHours: 2 },
-    { refetchInterval: 600000, enabled: shouldForecastingBeActive() }
+    { refetchInterval: 900000, enabled: shouldForecastingBeActive() } // 15 minutes during active operations
   );
 
   // Fetch recommendations via tRPC
   const { data: recsResponse, isLoading: recsLoading } = trpc.geoAI.recommendations.generate.useQuery(
     { zoneId: '1' },
-    { refetchInterval: 600000, enabled: shouldForecastingBeActive() }
+    { refetchInterval: 900000, enabled: shouldForecastingBeActive() } // 15 minutes during active operations
   );
 
   // Fetch active events via tRPC (Phase 92)
   const { data: eventsResponse, isLoading: eventsLoading } = trpc.geoAI.events.active.useQuery(undefined, {
-    refetchInterval: 600000,
+    refetchInterval: 900000,
+    enabled: shouldForecastingBeActive() // 15 minutes during active operations
+  });
+
+  // Fetch today forecast via tRPC (Phase 103)
+  const { data: todayForecastResponse, isLoading: todayForecastLoading } = trpc.geoAI.todayForecast.forecast.useQuery(undefined, {
+    refetchInterval: 900000,
     enabled: shouldForecastingBeActive()
+  });
+
+  // Fetch tomorrow forecast via tRPC (Phase 104)
+  const { data: tomorrowForecastResponse, isLoading: tomorrowForecastLoading } = trpc.geoAI.tomorrowForecast.forecast.useQuery(undefined, {
+    refetchInterval: 900000,
+    enabled: true // Always available
   });
 
   // Calculate demand multiplier from weather
@@ -372,8 +386,10 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-6 px-4">
+        <TabsList className="grid w-full grid-cols-8 px-4">
           <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="today">Today</TabsTrigger>
+          <TabsTrigger value="tomorrow">Tomorrow</TabsTrigger>
           <TabsTrigger value="map">Map</TabsTrigger>
           <TabsTrigger value="alerts">Alerts {alerts.length > 0 && alerts[0].id !== 'no-alerts' && <span className="ml-1 text-xs">({alerts.length})</span>}</TabsTrigger>
           <TabsTrigger value="weather">Weather</TabsTrigger>
@@ -445,6 +461,118 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
             <Alert className="border-green-300 bg-green-50">
               <AlertDescription className="text-green-800">
                 No Active Events - Normal demand expected
+              </AlertDescription>
+            </Alert>
+          )}
+        </TabsContent>
+
+        {/* Today Forecast Tab */}
+        <TabsContent value="today" className="space-y-4 p-4">
+          {todayForecast ? (
+            <div className="space-y-4">
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center gap-2 mb-3">
+                  <TrendingUp className="w-5 h-5 text-blue-600" />
+                  <h3 className="font-semibold text-blue-900">Tonight's Forecast</h3>
+                </div>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <p className="text-blue-700 font-medium">Operating Window</p>
+                    <p className="text-blue-900">{todayForecast.operatingWindow}</p>
+                  </div>
+                  <div>
+                    <p className="text-blue-700 font-medium">Expected Demand</p>
+                    <p className="text-blue-900">{todayForecast.expectedDemand?.volume || 'N/A'} orders</p>
+                  </div>
+                  <div>
+                    <p className="text-blue-700 font-medium">Peak Hours</p>
+                    <p className="text-blue-900">{todayForecast.expectedPeakHours}</p>
+                  </div>
+                  <div>
+                    <p className="text-blue-700 font-medium">Delay Risk</p>
+                    <p className="text-blue-900">{todayForecast.expectedDelayProbability}%</p>
+                  </div>
+                  <div>
+                    <p className="text-blue-700 font-medium">Driver Shortage Risk</p>
+                    <p className="text-blue-900">{todayForecast.expectedDriverShortageRisk}%</p>
+                  </div>
+                  <div>
+                    <p className="text-blue-700 font-medium">Weather Impact</p>
+                    <p className="text-blue-900">{todayForecast.weatherImpact?.demandMultiplier.toFixed(2)}x multiplier</p>
+                  </div>
+                </div>
+                {todayForecast.expectedHotspots && todayForecast.expectedHotspots.length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-blue-200">
+                    <p className="text-blue-700 font-medium mb-2">Expected Hotspots</p>
+                    <ul className="text-sm text-blue-800 space-y-1">
+                      {todayForecast.expectedHotspots.map((hotspot: any, idx: number) => (
+                        <li key={idx}>• {hotspot.zone || hotspot.name} - {hotspot.intensity || hotspot.demand}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <Alert className="border-gray-300 bg-gray-50">
+              <AlertDescription className="text-gray-800">
+                {todayForecastLoading ? 'Loading today forecast...' : 'No today forecast available'}
+              </AlertDescription>
+            </Alert>
+          )}
+        </TabsContent>
+
+        {/* Tomorrow Forecast Tab */}
+        <TabsContent value="tomorrow" className="space-y-4 p-4">
+          {tomorrowForecast ? (
+            <div className="space-y-4">
+              <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
+                <div className="flex items-center gap-2 mb-3">
+                  <Calendar className="w-5 h-5 text-purple-600" />
+                  <h3 className="font-semibold text-purple-900">Tomorrow's Forecast</h3>
+                </div>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <p className="text-purple-700 font-medium">Expected Demand</p>
+                    <p className="text-purple-900">{tomorrowForecast.expectedDemand}</p>
+                  </div>
+                  <div>
+                    <p className="text-purple-700 font-medium">Demand Volume</p>
+                    <p className="text-purple-900">{Math.round(tomorrowForecast.expectedDemandVolume || 0)} orders</p>
+                  </div>
+                  <div>
+                    <p className="text-purple-700 font-medium">Peak Hours</p>
+                    <p className="text-purple-900">{tomorrowForecast.expectedPeakHours}</p>
+                  </div>
+                  <div>
+                    <p className="text-purple-700 font-medium">Operational Pressure</p>
+                    <p className="text-purple-900">{tomorrowForecast.expectedOperationalPressure}%</p>
+                  </div>
+                  <div>
+                    <p className="text-purple-700 font-medium">Weather Impact</p>
+                    <p className="text-purple-900">{tomorrowForecast.weatherImpact?.demandMultiplier.toFixed(2)}x multiplier</p>
+                  </div>
+                  <div>
+                    <p className="text-purple-700 font-medium">Staffing Needs</p>
+                    <p className="text-purple-900">{tomorrowForecast.expectedStaffingNeeds} drivers</p>
+                  </div>
+                </div>
+                {tomorrowForecast.expectedHotspots && tomorrowForecast.expectedHotspots.length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-purple-200">
+                    <p className="text-purple-700 font-medium mb-2">Expected Hotspots</p>
+                    <ul className="text-sm text-purple-800 space-y-1">
+                      {tomorrowForecast.expectedHotspots.map((hotspot: any, idx: number) => (
+                        <li key={idx}>• {hotspot.zone || hotspot.name} - {hotspot.intensity || hotspot.demand}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <Alert className="border-gray-300 bg-gray-50">
+              <AlertDescription className="text-gray-800">
+                {tomorrowForecastLoading ? 'Loading tomorrow forecast...' : 'No tomorrow forecast available'}
               </AlertDescription>
             </Alert>
           )}
