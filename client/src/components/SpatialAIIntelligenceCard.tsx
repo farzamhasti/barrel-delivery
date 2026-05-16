@@ -314,17 +314,92 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
                     </div>
                   </div>
 
-                  {/* Weather Impact */}
-                  <div className="p-3 bg-white rounded-lg border border-blue-200">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-semibold text-gray-600">Weather</span>
-                      <Cloud className="w-4 h-4 text-blue-500" />
-                    </div>
-                    <div className="text-lg font-bold text-blue-600">
-                      {predictionData.weatherImpact.temperature}°C
-                    </div>
-                    <div className="text-xs text-gray-500 truncate">
-                      {predictionData.weatherImpact.condition}
+                  {/* Fort Erie Live Weather - Complete Information */}
+                  <div className="col-span-2 md:col-span-2 p-4 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-lg border-2 border-blue-300 shadow-md">
+                    <div className="space-y-3">
+                      {/* Header */}
+                      <div className="flex items-center gap-2 mb-3">
+                        <Cloud className="w-5 h-5 text-blue-600" />
+                        <div>
+                          <h3 className="font-bold text-blue-900">Fort Erie Live Weather</h3>
+                          <p className="text-xs text-blue-700">Fort Erie, Ontario, Canada</p>
+                        </div>
+                      </div>
+
+                      {/* Temperature */}
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-sm text-gray-600">Temperature:</span>
+                        <span className="text-lg font-bold text-blue-700">
+                          {weatherData?.temperature_2m ? Math.round(weatherData.temperature_2m) : predictionData?.weatherImpact?.temperature}°C
+                        </span>
+                        {weatherData?.apparent_temperature && (
+                          <span className="text-xs text-gray-500">
+                            (feels like {Math.round(weatherData.apparent_temperature)}°C)
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Humidity */}
+                      {weatherData?.relative_humidity_2m && (
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-sm text-gray-600">Humidity:</span>
+                          <span className="text-lg font-bold text-blue-600">{weatherData.relative_humidity_2m}%</span>
+                        </div>
+                      )}
+
+                      {/* Precipitation & Snowfall */}
+                      {weatherData && (
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-sm text-gray-600">Precipitation:</span>
+                          <span className="text-lg font-bold text-blue-600">
+                            {weatherData.precipitation || 0}mm
+                          </span>
+                          {weatherData.snowfall > 0 && (
+                            <span className="text-lg font-bold text-cyan-600 ml-2">
+                              | Snowfall: {weatherData.snowfall}mm
+                            </span>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Wind */}
+                      {weatherData?.wind_speed_10m && (
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-sm text-gray-600">Wind:</span>
+                          <span className="text-lg font-bold text-blue-600">
+                            {Math.round(weatherData.wind_speed_10m)} km/h
+                          </span>
+                          {weatherData.wind_gusts_10m && (
+                            <span className="text-xs text-gray-500">
+                              (gusts: {Math.round(weatherData.wind_gusts_10m)} km/h, direction: {weatherData.wind_direction_10m}°)
+                            </span>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Visibility */}
+                      {weatherData?.visibility && (
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-sm text-gray-600">Visibility:</span>
+                          <span className="text-lg font-bold text-blue-600">
+                            {(weatherData.visibility / 1000).toFixed(1)} km
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Location Verification */}
+                      {weatherData?.latitude && weatherData?.longitude && (
+                        <div className="text-xs text-gray-600 pt-2 border-t border-blue-200">
+                          <span className="font-semibold">Location verified:</span> {weatherData.latitude.toFixed(4)}°N, {Math.abs(weatherData.longitude).toFixed(4)}°W (Fort Erie, Ontario)
+                        </div>
+                      )}
+
+                      {/* Last Updated */}
+                      {weatherData?.timestamp && (
+                        <div className="text-xs text-gray-500 pt-1">
+                          Last updated: {new Date(weatherData.timestamp).toLocaleTimeString()}
+                        </div>
+                      )}
                     </div>
                   </div>
 

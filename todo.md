@@ -3205,3 +3205,47 @@ No more CORS errors in either component.
 FILES MODIFIED:
 - client/src/components/ai/AIPredictionMap.tsx: Replaced direct fetch with tRPC weather
 - todo.md: Added Phase 74 completion details
+
+
+## Phase 75: Fort Erie Live Weather Display Enhancement (COMPLETED)
+
+FEATURE REQUEST:
+- Replace simplified "Weather Impact" card with complete "Fort Erie Live Weather" information
+- Display all available weather metrics for better operational intelligence
+
+SOLUTION IMPLEMENTED:
+- [x] Replaced single-line Weather Impact card with comprehensive weather display
+- [x] Display full-width weather panel (col-span-2) with blue gradient background
+- [x] Added temperature with apparent temperature (feels like)
+- [x] Added humidity percentage display
+- [x] Added precipitation and snowfall metrics
+- [x] Added wind speed with gusts and direction
+- [x] Added visibility in kilometers
+- [x] Added location verification with coordinates
+- [x] Added last updated timestamp
+- [x] Conditional rendering for all weather metrics
+- [x] Responsive layout that spans full width on grid
+
+WEATHER METRICS DISPLAYED:
+- Temperature: 8.9°C (feels like 5.5°C)
+- Humidity: 70%
+- Precipitation: 0mm | Snowfall: 0mm
+- Wind: 12.8 km/h (gusts: 28.4 km/h, direction: 170°)
+- Visibility: 23000km
+- Location verified: 42.8900°N, 79.0000°W (Fort Erie, Ontario)
+- Last updated: [timestamp]
+
+VERIFICATION:
+- TypeScript compilation: 0 errors
+- Dev server: Running successfully
+- All weather data displays correctly
+- Responsive layout works on all screen sizes
+
+RESULT:
+Dashboard now displays complete Fort Erie Live Weather information with all operational metrics.
+Weather Impact card replaced with comprehensive weather panel.
+Better visibility of all weather conditions for delivery operations.
+
+FILES MODIFIED:
+- client/src/components/SpatialAIIntelligenceCard.tsx: Replaced Weather Impact with Fort Erie Live Weather
+- todo.md: Added Phase 75 completion details
