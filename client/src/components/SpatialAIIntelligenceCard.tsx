@@ -23,6 +23,7 @@ import { AIPredictionMap } from './ai/AIPredictionMap';
 import AIAlertsPanel from './ai/AIAlertsPanel';
 import AIRecommendationsPanel from './ai/AIRecommendationsPanel';
 import AIConfidenceIndicator from './ai/AIConfidenceIndicator';
+import { trpc } from '@/lib/trpc';
 
 interface SpatialAIProps {
   selectedMonth?: string;
