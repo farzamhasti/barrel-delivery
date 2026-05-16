@@ -15,6 +15,7 @@ import { predictionCache, generateCacheKey, getTTLForType } from '../utils/predi
 import { getActiveEvents, calculateEventDemandMultiplier, getEventImpactDescription } from '../utils/eventValidator';
 import { generateDynamicAlerts, filterResolvedAlerts } from '../utils/alertGenerator';
 import { cacheExpirationMonitor, preventStaleDataMiddleware } from '../utils/cacheExpiration';
+import { determineForecastMode, buildForecastContext, getForecastModeDescription, getRefreshInterval, type ForecastMode } from '../utils/forecastModes';
 
 // Environment variables
 const GEO_AI_SERVICE_URL = process.env.GEO_AI_SERVICE_URL || 'http://localhost:8001';
@@ -225,10 +226,6 @@ export const geoAIRouter = router({
               dayCategory: getDayCategory(now),
               temporalFeatures: extractTemporalFeatures(now),
               weatherAdjusted: !!weatherImpact,
-              forecastMode: forecastMode,
-              forecastModeDescription: getForecastModeDescription(forecastMode),
-              refreshInterval: getRefreshInterval(forecastMode),
-              targetDate: forecastContext.targetDate.toISOString(),
             },
           };
         } catch (error) {
@@ -297,10 +294,6 @@ export const geoAIRouter = router({
               dayCategory: getDayCategory(now),
               temporalFeatures: extractTemporalFeatures(now),
               weatherAdjusted: !!weatherImpact,
-              forecastMode: forecastMode,
-              forecastModeDescription: getForecastModeDescription(forecastMode),
-              refreshInterval: getRefreshInterval(forecastMode),
-              targetDate: forecastContext.targetDate.toISOString(),
             },
           };
         } catch (error) {
@@ -421,10 +414,6 @@ export const geoAIRouter = router({
               dayCategory: getDayCategory(now),
               temporalFeatures: extractTemporalFeatures(now),
               weatherAdjusted: !!weatherImpact,
-              forecastMode: forecastMode,
-              forecastModeDescription: getForecastModeDescription(forecastMode),
-              refreshInterval: getRefreshInterval(forecastMode),
-              targetDate: forecastContext.targetDate.toISOString(),
             },
           };
         } catch (error) {
@@ -548,10 +537,6 @@ export const geoAIRouter = router({
               dayCategory: getDayCategory(now),
               temporalFeatures: extractTemporalFeatures(now),
               weatherAdjusted: !!weatherImpact,
-              forecastMode: forecastMode,
-              forecastModeDescription: getForecastModeDescription(forecastMode),
-              refreshInterval: getRefreshInterval(forecastMode),
-              targetDate: forecastContext.targetDate.toISOString(),
             },
           };
         } catch (error) {
@@ -640,10 +625,6 @@ export const geoAIRouter = router({
               dayCategory: getDayCategory(now),
               temporalFeatures: extractTemporalFeatures(now),
               weatherAdjusted: !!weatherImpact,
-              forecastMode: forecastMode,
-              forecastModeDescription: getForecastModeDescription(forecastMode),
-              refreshInterval: getRefreshInterval(forecastMode),
-              targetDate: forecastContext.targetDate.toISOString(),
             },
           };
         } catch (error) {

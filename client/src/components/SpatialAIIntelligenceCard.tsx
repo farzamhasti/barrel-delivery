@@ -104,17 +104,23 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
     enabled: shouldForecastingBeActive() // 15 minutes during active operations
   });
 
-  // Fetch today forecast via tRPC (Phase 103)
-  const { data: todayForecastResponse, isLoading: todayForecastLoading } = trpc.geoAI.todayForecast.forecast.useQuery(undefined, {
-    refetchInterval: 900000,
-    enabled: shouldForecastingBeActive()
-  });
+  // Fetch today forecast via unified demand.predict with TODAY_FORECAST mode
+  const { data: todayForecastResponse, isLoading: todayForecastLoading } = trpc.geoAI.demand.predict.useQuery(
+    { zoneId: '42.8_-79.0', forecastMode: 'TODAY_FORECAST' as any },
+    {
+      refetchInterval: 300000,
+      enabled: shouldForecastingBeActive()
+    }
+  );
 
-  // Fetch tomorrow forecast via tRPC (Phase 104)
-  const { data: tomorrowForecastResponse, isLoading: tomorrowForecastLoading } = trpc.geoAI.tomorrowForecast.forecast.useQuery(undefined, {
-    refetchInterval: 900000,
-    enabled: true // Always available
-  });
+  // Fetch tomorrow forecast via unified demand.predict with TOMORROW_FORECAST mode
+  const { data: tomorrowForecastResponse, isLoading: tomorrowForecastLoading } = trpc.geoAI.demand.predict.useQuery(
+    { zoneId: '42.8_-79.0', forecastMode: 'TOMORROW_FORECAST' as any },
+    {
+      refetchInterval: 3600000,
+      enabled: true
+    }
+  );
 
   // Calculate demand multiplier from weather
   const calculateDemandMultiplier = useCallback(() => {
