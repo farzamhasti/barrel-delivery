@@ -23,6 +23,7 @@ import { AIPredictionMap } from './ai/AIPredictionMap';
 import AIAlertsPanel from './ai/AIAlertsPanel';
 import AIRecommendationsPanel from './ai/AIRecommendationsPanel';
 import AIConfidenceIndicator from './ai/AIConfidenceIndicator';
+import WeatherImpactPanel from './ai/WeatherImpactPanel';
 import { trpc } from '@/lib/trpc';
 
 interface SpatialAIProps {
@@ -289,7 +290,7 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
       <CardContent className="space-y-6">
         {/* Tabs Navigation */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 bg-purple-100">
+          <TabsList className="grid w-full grid-cols-5 bg-purple-100">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <TrendingUp className="w-4 h-4" />
               <span className="hidden sm:inline">Overview</span>
@@ -301,6 +302,10 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
             <TabsTrigger value="alerts" className="flex items-center gap-2">
               <AlertTriangle className="w-4 h-4" />
               <span className="hidden sm:inline">Alerts</span>
+            </TabsTrigger>
+            <TabsTrigger value="weather" className="flex items-center gap-2">
+              <Cloud className="w-4 h-4" />
+              <span className="hidden sm:inline">Weather</span>
             </TabsTrigger>
             <TabsTrigger value="recommendations" className="flex items-center gap-2">
               <Lightbulb className="w-4 h-4" />
@@ -482,6 +487,11 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
           {/* Alerts Tab */}
           <TabsContent value="alerts">
             <AIAlertsPanel alerts={alerts} />
+          </TabsContent>
+
+          {/* Weather Tab */}
+          <TabsContent value="weather">
+            <WeatherImpactPanel weatherData={weatherData} demandMultiplier={weatherData ? calculateWeatherImpactMultiplier(weatherData) : 1.0} />
           </TabsContent>
 
           {/* Recommendations Tab */}
