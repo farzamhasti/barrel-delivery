@@ -3366,3 +3366,40 @@ Dashboard displays unified weather information without duplication.
 FILES MODIFIED:
 - client/src/components/ai/AIPredictionMap.tsx: Removed two Fort Erie Live Weather cards
 - todo.md: Added Phase 78 completion details
+
+
+## Phase 79: Rename Weather Impact Card to Fort Erie Live Weather Impact (COMPLETED)
+
+FEATURE REQUEST:
+- Rename the Weather Impact card to "Fort Erie Live Weather Impact"
+- Keep all the detailed weather information display
+
+SOLUTION IMPLEMENTED:
+- [x] Updated card title from "🌤️ Fort Erie Live Weather" to "🌤️ Fort Erie Live Weather Impact"
+- [x] Maintained all detailed weather metrics display
+- [x] Kept emoji formatting for all weather fields
+
+CARD DISPLAY:
+- 🌤️ Fort Erie Live Weather Impact
+- Fort Erie, Ontario, Canada
+- 🌡️ Temperature: 8.9°C (feels like 5.5°C)
+- 💧 Humidity: 70%
+- 🌧️ Precipitation: 0 mm | ❄️ Snowfall: 0 mm
+- 💨 Wind: 12.8 km/h (gust: 28.4 km/h, direction: 170°)
+- 👁️ Visibility: 23,000 km
+- 📍 Confirmed location: 42.8900°N, 79.0000°W (Fort Erie, Ontario)
+
+VERIFICATION:
+- TypeScript compilation: 0 errors
+- Dev server: Running successfully
+- Card displays all weather metrics correctly
+- Emoji formatting preserved
+
+RESULT:
+Weather Impact card renamed to "Fort Erie Live Weather Impact".
+All detailed weather information displays as expected.
+Card provides comprehensive operational weather intelligence.
+
+FILES MODIFIED:
+- client/src/components/SpatialAIIntelligenceCard.tsx: Updated card title
+- todo.md: Added Phase 79 completion details

@@ -319,7 +319,7 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
                     <div className="space-y-2 text-sm">
                       {/* Header */}
                       <div className="mb-3 pb-2 border-b border-blue-200">
-                        <h3 className="font-bold text-blue-900 text-base">🌤️ Fort Erie Live Weather</h3>
+                        <h3 className="font-bold text-blue-900 text-base">🌤️ Fort Erie Live Weather Impact</h3>
                         <p className="text-xs text-blue-700">Fort Erie, Ontario, Canada</p>
                       </div>
 
