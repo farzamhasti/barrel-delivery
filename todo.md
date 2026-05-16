@@ -3647,3 +3647,197 @@ NEXT PHASES (5-10):
 - Tests validate combined weather factor scenarios
 - All TypeScript errors resolved (0 errors)
 - Dev server running without errors
+
+
+---
+
+# PHASE 85+: COMPLETE GEO AI SPATIAL DEMAND FORECASTING & OPERATIONAL INTELLIGENCE SYSTEM
+
+This is a comprehensive system rebuild to transform the current weather-aware dashboard into a true production-grade operational intelligence engine.
+
+## Phase 85: System Assessment & Gap Analysis
+
+- [ ] Audit current system capabilities vs. specification requirements
+- [ ] Identify missing components:
+  - [ ] Python Geo AI microservice (does not exist)
+  - [ ] Machine learning models (not implemented)
+  - [ ] Hotspot detection algorithms (not implemented)
+  - [ ] Business hours enforcement (not implemented)
+  - [ ] Canadian sports/events integration (not implemented)
+  - [ ] Heatmap generation (not implemented)
+  - [ ] Time control panel (not implemented)
+  - [ ] Alert system (basic only)
+  - [ ] Recommendation engine (basic only)
+- [ ] Document current database schema limitations
+- [ ] Plan database schema extensions for ML predictions
+
+## Phase 86: Geo AI Python Microservice Architecture
+
+- [ ] Design FastAPI microservice structure
+- [ ] Plan PostgreSQL + PostGIS integration
+- [ ] Design API endpoints for:
+  - [ ] Demand predictions
+  - [ ] Hotspot detection
+  - [ ] Risk assessment
+  - [ ] Recommendations
+  - [ ] Model training/retraining
+- [ ] Plan Docker containerization
+- [ ] Design inter-service communication (Node.js ↔ Python)
+
+## Phase 87: Business Hours Logic Implementation (COMPLETED)
+
+- [x] Implement operating schedule enforcement (Sun-Thu 4PM-10PM, Fri-Sat 4PM-11PM)
+- [x] Add "Business Closed" mode display
+- [x] Disable forecasting outside operating hours
+- [x] Disable alerts outside operating hours
+- [x] Show "Forecasting paused until next operating window"
+- [x] Test hour transitions and edge cases (33 passing tests)
+
+## Phase 88: Machine Learning Feature Engineering
+
+- [ ] Create temporal features (hour, weekday, weekend, peak periods)
+- [ ] Create weather features (precipitation, snow, temperature, wind, visibility)
+- [ ] Create spatial features (zone density, cluster detection, hotspot intensity)
+- [ ] Create operational features (driver availability, delays, completion times)
+- [ ] Create event features (NHL games, holidays, sports events)
+- [ ] Build automated feature pipeline
+
+## Phase 89: Spatial Hotspot Detection
+
+- [ ] Implement DBSCAN clustering algorithm
+- [ ] Implement HDBSCAN for dynamic clustering
+- [ ] Create real-time hotspot detection
+- [ ] Predict future hotspots
+- [ ] Detect surge zones
+- [ ] Identify overloaded delivery areas
+- [ ] Store hotspot predictions in database
+
+## Phase 90: Demand Forecasting Models
+
+- [ ] Build XGBoost demand prediction model
+- [ ] Build LightGBM demand prediction model
+- [ ] Build Random Forest baseline model
+- [ ] Implement model training pipeline
+- [ ] Create forecast windows (30min, 1h, 2h, tonight, daily)
+- [ ] Implement weather-aware demand multipliers
+- [ ] Store predictions in database
+
+## Phase 91: Canadian Sports & Events Integration
+
+- [ ] Integrate NHL game schedule API
+- [ ] Integrate CFL/NFL game schedule API
+- [ ] Integrate holiday calendar
+- [ ] Integrate concert/event data sources
+- [ ] Create event feature engineering
+- [ ] Learn event-demand correlations
+- [ ] Update recommendations based on events
+
+## Phase 92: Real-Time Heatmap Generation
+
+- [ ] Generate demand heatmaps from predictions
+- [ ] Generate historical density heatmaps
+- [ ] Generate current activity heatmaps
+- [ ] Implement dynamic heatmap updates during operating hours
+- [ ] Create heatmap visualization layers
+- [ ] Integrate with map display
+
+## Phase 93: Dynamic Alert & Recommendation Engine
+
+- [ ] Build alert generation system (no static alerts)
+- [ ] Create demand surge alerts
+- [ ] Create delay risk alerts
+- [ ] Create driver shortage alerts
+- [ ] Build recommendation engine
+- [ ] Generate "Add drivers to hotspot" recommendations
+- [ ] Generate "Reduce delivery radius" recommendations
+- [ ] Add confidence scores to recommendations
+- [ ] Show "No Active AI Alerts" when appropriate
+
+## Phase 94: Time Control Panel
+
+- [ ] Create time control UI component
+- [ ] Support 30m, 1h, 2h, tonight, daily forecast windows
+- [ ] Display forecast validity
+- [ ] Show next refresh time
+- [ ] Display active prediction window
+- [ ] Update dashboard based on selected window
+
+## Phase 95: Spatial AI Intelligence Dashboard Module
+
+- [ ] Create dedicated "Spatial AI Intelligence" section
+- [ ] Build overview panel with:
+  - [ ] Predicted orders
+  - [ ] Demand level
+  - [ ] Risk level
+  - [ ] Active alerts
+  - [ ] System health
+  - [ ] Weather impact
+- [ ] Integrate all components into unified dashboard
+
+## Phase 96: Map Visualization with Hotspots & Heatmaps
+
+- [ ] Display Fort Erie boundary
+- [ ] Render hotspots on map
+- [ ] Render demand zones
+- [ ] Render delivery risk zones
+- [ ] Render driver shortage zones
+- [ ] Render weather impact zones
+- [ ] Display heatmaps dynamically
+- [ ] Ensure no fake/static data
+
+## Phase 97: Continuous Learning & Model Retraining
+
+- [ ] Implement automated model retraining
+- [ ] Create feedback loop from actual orders
+- [ ] Update weather-demand correlations
+- [ ] Improve event-demand predictions
+- [ ] Monitor model performance
+- [ ] Implement model versioning
+- [ ] Create A/B testing framework
+
+## Phase 98: Comprehensive System Testing & Validation
+
+- [ ] Test business hours enforcement
+- [ ] Test demand predictions accuracy
+- [ ] Test hotspot detection accuracy
+- [ ] Test alert generation
+- [ ] Test recommendation quality
+- [ ] Test weather impact calculations
+- [ ] Test event impact calculations
+- [ ] Load testing (concurrent users, data volume)
+- [ ] Integration testing (all components)
+
+## Phase 99: Deployment & Documentation
+
+- [ ] Create Docker Compose setup
+- [ ] Document Python microservice API
+- [ ] Document database schema
+- [ ] Create deployment guide
+- [ ] Create user documentation
+- [ ] Create developer documentation
+- [ ] Setup monitoring and logging
+- [ ] Create backup/recovery procedures
+
+## CRITICAL REQUIREMENTS TO ENFORCE:
+
+1. **Business Hours Strict Enforcement:**
+   - Sun-Thu: 4:00 PM - 10:00 PM
+   - Fri-Sat: 4:00 PM - 11:00 PM
+   - Outside hours: NO forecasting, NO alerts, NO predictions
+
+2. **Free/Open-Source Only:**
+   - NO paid APIs (OpenAI, commercial ML services)
+   - NO commercial cloud services
+   - All ML: scikit-learn, XGBoost, LightGBM, GeoPandas, Shapely
+
+3. **Real Data Only:**
+   - NO fake weather
+   - NO static hotspots
+   - NO placeholder alerts
+   - NO demo values
+
+4. **Production-Grade:**
+   - Real-time updates (5-15 minute refresh)
+   - Continuous learning
+   - Dynamic alerts (no hardcoded)
+   - Spatial analysis with PostGIS
