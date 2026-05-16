@@ -79,13 +79,19 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
       const current = weatherResponse.data;
       console.log('Weather API response:', current);
       setWeatherData({
-        temperature: Math.round(current.temperature),
-        condition: getWeatherCondition(current.weather_code),
-        impact_score: calculateWeatherImpact(current),
-        precipitation_chance: current.precipitation || 0,
-        humidity: current.humidity,
-        wind_speed: current.wind_speed,
-        timestamp: new Date().toLocaleTimeString()
+        temperature_2m: current.temperature,
+        apparent_temperature: current.apparent_temperature,
+        relative_humidity_2m: current.humidity,
+        precipitation: current.precipitation || 0,
+        snowfall: current.snowfall || 0,
+        wind_speed_10m: current.wind_speed,
+        wind_gusts_10m: current.wind_gusts,
+        wind_direction_10m: current.wind_direction,
+        visibility: current.visibility,
+        latitude: current.latitude,
+        longitude: current.longitude,
+        timestamp: new Date().getTime(),
+        weather_code: current.weather_code
       });
     }
   }, [weatherResponse]);

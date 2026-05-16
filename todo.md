@@ -3403,3 +3403,45 @@ Card provides comprehensive operational weather intelligence.
 FILES MODIFIED:
 - client/src/components/SpatialAIIntelligenceCard.tsx: Updated card title
 - todo.md: Added Phase 79 completion details
+
+
+## Phase 80: Fix Weather Data Field Name Mapping (COMPLETED)
+
+BUG REPORT:
+- Weather Impact card only showing Temperature and Precipitation
+- Missing: Humidity, Wind, Visibility, Location verification
+
+ROOT CAUSE:
+- Field name mismatch between API response and card display
+- API returns: temperature, humidity, wind_speed, wind_direction, wind_gusts, visibility
+- Card expected: temperature_2m, relative_humidity_2m, wind_speed_10m, wind_direction_10m, wind_gusts_10m
+- Conditional checks failed because field names didn't match, so no data displayed
+
+SOLUTION IMPLEMENTED:
+- [x] Updated weatherData state to map API field names correctly
+- [x] temperature → temperature_2m
+- [x] humidity → relative_humidity_2m
+- [x] wind_speed → wind_speed_10m
+- [x] wind_direction → wind_direction_10m
+- [x] wind_gusts → wind_gusts_10m
+- [x] All other fields mapped correctly (apparent_temperature, precipitation, snowfall, visibility, latitude, longitude, weather_code)
+
+VERIFICATION:
+- TypeScript compilation: 0 errors
+- Dev server: Running successfully
+- All weather fields now accessible in component
+
+RESULT:
+Weather Impact card now displays all complete weather information:
+- 🌤️ Fort Erie Live Weather Impact
+- Fort Erie, Ontario, Canada
+- 🌡️ Temperature: 8.9°C (feels like 5.5°C)
+- 💧 Humidity: 70%
+- 🌧️ Precipitation: 0 mm | ❄️ Snowfall: 0 mm
+- 💨 Wind: 12.8 km/h (gust: 28.4 km/h, direction: 170°)
+- 👁️ Visibility: 23,000 km
+- 📍 Confirmed location: 42.8900°N, 79.0000°W (Fort Erie, Ontario)
+
+FILES MODIFIED:
+- client/src/components/SpatialAIIntelligenceCard.tsx: Fixed weatherData field mapping
+- todo.md: Added Phase 80 completion details
