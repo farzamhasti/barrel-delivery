@@ -18,7 +18,7 @@ import { cacheExpirationMonitor, preventStaleDataMiddleware } from '../utils/cac
 import { determineForecastMode, buildForecastContext, getForecastModeDescription, getRefreshInterval, type ForecastMode } from '../utils/forecastModes';
 
 // Environment variables
-const GEO_AI_SERVICE_URL = process.env.GEO_AI_SERVICE_URL || 'http://localhost:8001';
+const GEO_AI_SERVICE_URL = process.env.GEO_AI_SERVICE_URL || 'http://localhost:8000';
 
 /**
  * Helper function to call Geo AI service

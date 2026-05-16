@@ -108,8 +108,8 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
   const { data: todayForecastResponse, isLoading: todayForecastLoading } = trpc.geoAI.demand.predict.useQuery(
     { zoneId: '42.8_-79.0', forecastMode: 'TODAY_FORECAST' as any },
     {
-      refetchInterval: 300000,
-      enabled: shouldForecastingBeActive()
+      refetchInterval: 300000,  // 5 minutes
+      enabled: true  // Always enabled for pre-operation planning
     }
   );
 
@@ -117,8 +117,8 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
   const { data: tomorrowForecastResponse, isLoading: tomorrowForecastLoading } = trpc.geoAI.demand.predict.useQuery(
     { zoneId: '42.8_-79.0', forecastMode: 'TOMORROW_FORECAST' as any },
     {
-      refetchInterval: 3600000,
-      enabled: true
+      refetchInterval: 3600000,  // 1 hour
+      enabled: true  // Always enabled
     }
   );
 
@@ -282,8 +282,47 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
       setRecommendations(recsResponse.data.recommendations);
     }
 
-    // Update AI status
-    if (demandLoading || hotspotsLoading || riskLoading || recsLoading || weatherLoading) {
+    // Update forecast data when responses arrive
+  useEffect(() => {
+    if (todayForecastResponse?.data) {
+      setTodayForecast({
+        expectedDemand: Math.round(todayForecastResponse.data.predicted_orders),
+        expectedDemandVolume: Math.round(todayForecastResponse.data.predicted_orders),
+        expectedPeakHours: '6:00 PM - 8:00 PM',
+        expectedOperationalPressure: Math.round(todayForecastResponse.data.confidence_score * 100),
+        expectedDriverShortageRisk: Math.round((1 - todayForecastResponse.data.confidence_score) * 100),
+        expectedStaffingNeeds: Math.max(3, Math.ceil(todayForecastResponse.data.predicted_orders / 8)),
+        expectedHotspots: [],
+        weatherImpact: {
+          demandMultiplier: todayForecastResponse.data.demand_multiplier || 1.0
+        },
+        learningPhase: todayForecastResponse.data.learning_phase,
+        confidence: todayForecastResponse.data.confidence_score
+      });
+    }
+  }, [todayForecastResponse]);
+
+  useEffect(() => {
+    if (tomorrowForecastResponse?.data) {
+      setTomorrowForecast({
+        expectedDemand: Math.round(tomorrowForecastResponse.data.predicted_orders),
+        expectedDemandVolume: Math.round(tomorrowForecastResponse.data.predicted_orders),
+        expectedPeakHours: '6:00 PM - 8:00 PM',
+        expectedOperationalPressure: Math.round(tomorrowForecastResponse.data.confidence_score * 100),
+        expectedDriverShortageRisk: Math.round((1 - tomorrowForecastResponse.data.confidence_score) * 100),
+        expectedStaffingNeeds: Math.max(3, Math.ceil(tomorrowForecastResponse.data.predicted_orders / 8)),
+        expectedHotspots: [],
+        weatherImpact: {
+          demandMultiplier: tomorrowForecastResponse.data.demand_multiplier || 1.0
+        },
+        learningPhase: tomorrowForecastResponse.data.learning_phase,
+        confidence: tomorrowForecastResponse.data.confidence_score
+      });
+    }
+  }, [tomorrowForecastResponse]);
+
+  // Update AI status
+    if (demandLoading || hotspotsLoading || riskLoading || recsLoading || weatherLoading || todayForecastLoading || tomorrowForecastLoading) {
       setAiStatus('loading');
     } else {
       setAiStatus('ready');
