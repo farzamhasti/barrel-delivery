@@ -3987,3 +3987,71 @@ This is a comprehensive system rebuild to transform the current weather-aware da
 - [x] Business hours enforcement tests: 3 tests passing
 - [x] Performance metrics tests: 2 tests passing
 - [x] Data integrity tests: 2 tests passing
+
+
+## Phase 97: Refactor Business Hours Logic for Dual Modes (COMPLETED)
+
+- [x] Create operatingModes.ts utility with mode detection logic
+- [x] Define two modes: "pre-operation" and "active-operations"
+- [x] Mode logic: before 4 PM = pre-operation, 4 PM-10/11 PM = active-operations, after = closed
+- [x] Add getOperatingMode() function to return current mode
+- [x] Add isPreOperationMode() helper function
+- [x] Add isActiveOperationsMode() helper function
+- [x] Add isClosedMode() helper function
+- [x] Distinguish between "forecasting disabled" vs "live metrics disabled"
+- [x] Keep forecasting active in pre-operation mode
+- [x] Keep live metrics disabled in pre-operation mode
+- [x] Created server-side operatingModes.ts
+- [x] Created client-side operatingModes.ts
+
+## Phase 98: Implement Pre-Operation Forecasting Mode (COMPLETED)
+
+- [x] Update SpatialAIIntelligenceCard to support pre-operation mode
+- [x] Show "Pre-Operation Forecasting Mode" indicator when before 4 PM
+- [x] Keep all prediction panels active in pre-operation mode
+- [x] Disable live metrics (active orders, realtime hotspots) in pre-operation mode
+- [x] Forecasting remains active all day (pre-operation + active operations)
+- [x] Updated queries to use shouldForecastingBeActive()
+- [x] Updated closed mode rendering
+- [x] Added mode-specific styling (blue for pre-operation, purple for active)
+
+## Phase 99: Update Dashboard Mode Indicators (COMPLETED)
+
+- [x] Add mode indicator badge to dashboard header
+- [x] Show "🔵 Preparing" in pre-operation mode
+- [x] Show "🟢 Live" in active operations mode
+- [x] Show "🔴 Error" in error state
+- [x] Add mode description text below badge
+- [x] Update card styling for each mode
+- [x] Add time until next mode transition
+- [x] Show time countdown in header
+- [x] Update color scheme for each mode
+- [x] Blue border/background for pre-operation
+- [x] Purple border/background for active operations
+
+## Phase 100: Add Next-Day Planning Analytics
+
+- [ ] Create next-day forecasting procedure in geoAI router
+- [ ] Fetch tomorrow's weather forecast
+- [ ] Forecast tomorrow's demand
+- [ ] Identify tomorrow's expected hotspots
+- [ ] Check for tomorrow's events
+- [ ] Show "Tomorrow's Outlook" section in closed mode
+- [ ] Display next-day preparation recommendations
+- [ ] Show expected weather for tomorrow
+- [ ] Show expected events for tomorrow
+- [ ] Allow managers to plan ahead for next day
+
+## Phase 101: Comprehensive Testing for Dual Modes
+
+- [ ] Test pre-operation mode before 4 PM
+- [ ] Test active operations mode during 4 PM-10 PM
+- [ ] Test closed mode after 10 PM
+- [ ] Test Friday/Saturday extended hours (11 PM)
+- [ ] Test mode transitions at exact hour boundaries
+- [ ] Test forecasting remains active in pre-operation
+- [ ] Test live metrics disabled in pre-operation
+- [ ] Test all predictions visible in pre-operation
+- [ ] Test next-day planning in closed mode
+- [ ] Test mode indicators update correctly
+- [ ] Performance test with frequent mode checks

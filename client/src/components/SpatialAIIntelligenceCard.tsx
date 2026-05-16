@@ -24,6 +24,7 @@ import AIConfidenceIndicator from './ai/AIConfidenceIndicator';
 import WeatherImpactPanel from './ai/WeatherImpactPanel';
 import { trpc } from '@/lib/trpc';
 import { useWeatherChangeDetection, useWeatherChangeHistory } from '@/hooks/useWeatherChangeDetection';
+import { getOperatingMode, getModeInfo, shouldForecastingBeActive, shouldLiveMetricsBeActive, getTimeUntilNextMode } from '@/lib/operatingModes';
 
 interface SpatialAIProps {
   selectedMonth?: string;
@@ -38,39 +39,33 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
   const [alerts, setAlerts] = useState<any[]>([]);
   const [recommendations, setRecommendations] = useState<any[]>([]);
   const [isBusinessOpen, setIsBusinessOpen] = useState(false);
+  const [operatingMode, setOperatingMode] = useState<'pre-operation' | 'active-operations' | 'closed'>('pre-operation');
   const [nextOpeningTime, setNextOpeningTime] = useState<string>('');
   const [demandMultiplier, setDemandMultiplier] = useState(1.0);
   const [eventMultiplier, setEventMultiplier] = useState(1.0);
   const [weatherChangeLog, setWeatherChangeLog] = useState<string[]>([]);
   const weatherHistory = useWeatherChangeHistory(5);
 
-  // Business hours check (Sun-Thu 4PM-10PM, Fri-Sat 4PM-11PM)
-  const checkBusinessHours = useCallback(() => {
+  // Operating mode check (pre-operation, active-operations, or closed)
+  const checkOperatingMode = useCallback(() => {
     const now = new Date();
-    const dayOfWeek = now.getDay(); // 0=Sunday, 6=Saturday
-    const hour = now.getHours();
+    const mode = getOperatingMode(now);
+    const timeUntil = getTimeUntilNextMode(now);
 
-    let isOpen = false;
-    let nextOpening = '';
+    setOperatingMode(mode);
+    setIsBusinessOpen(mode === 'active-operations');
 
-    if (dayOfWeek === 0) { // Sunday
-      isOpen = hour >= 16 && hour < 22;
-      if (!isOpen) nextOpening = 'Monday 4:00 PM';
-    } else if (dayOfWeek >= 1 && dayOfWeek <= 4) { // Mon-Thu
-      isOpen = hour >= 16 && hour < 22;
-      if (!isOpen) nextOpening = dayOfWeek === 4 ? 'Friday 4:00 PM' : 'Tomorrow 4:00 PM';
-    } else if (dayOfWeek === 5) { // Friday
-      isOpen = hour >= 16 && hour < 23;
-      if (!isOpen) nextOpening = 'Saturday 4:00 PM';
-    } else if (dayOfWeek === 6) { // Saturday
-      isOpen = hour >= 16 && hour < 23;
-      if (!isOpen) nextOpening = 'Sunday 4:00 PM';
+    if (mode === 'pre-operation') {
+      setNextOpeningTime(`Tonight at 4:00 PM (${timeUntil.formatted})`);
+    } else if (mode === 'active-operations') {
+      setNextOpeningTime(`Closes in ${timeUntil.formatted}`);
+    } else {
+      setNextOpeningTime(`Next shift at 4:00 PM (${timeUntil.formatted})`);
     }
 
-    setIsBusinessOpen(isOpen);
-    setNextOpeningTime(nextOpening);
-    return isOpen;
+    return mode;
   }, []);
+
 
   // Fetch weather data via tRPC
   const { data: weatherResponse, isLoading: weatherLoading } = trpc.geoAI.weather.current.useQuery(undefined, {
@@ -80,31 +75,31 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
   // Fetch demand prediction via tRPC
   const { data: demandResponse, isLoading: demandLoading } = trpc.geoAI.demand.predict.useQuery(
     { zoneId: '1', forecastHours: 2 },
-    { refetchInterval: 600000, enabled: isBusinessOpen } // 10 minutes, only when open
+    { refetchInterval: 600000, enabled: shouldForecastingBeActive() } // Always forecast, even in pre-operation
   );
 
   // Fetch hotspots via tRPC
   const { data: hotspotsResponse, isLoading: hotspotsLoading } = trpc.geoAI.hotspots.active.useQuery(undefined, {
     refetchInterval: 600000,
-    enabled: isBusinessOpen
+    enabled: shouldForecastingBeActive()
   });
 
   // Fetch risk assessment via tRPC
   const { data: riskResponse, isLoading: riskLoading } = trpc.geoAI.risk.predict.useQuery(
     { zoneId: '1', forecastHours: 2 },
-    { refetchInterval: 600000, enabled: isBusinessOpen }
+    { refetchInterval: 600000, enabled: shouldForecastingBeActive() }
   );
 
   // Fetch recommendations via tRPC
   const { data: recsResponse, isLoading: recsLoading } = trpc.geoAI.recommendations.generate.useQuery(
     { zoneId: '1' },
-    { refetchInterval: 600000, enabled: isBusinessOpen }
+    { refetchInterval: 600000, enabled: shouldForecastingBeActive() }
   );
 
   // Fetch active events via tRPC (Phase 92)
   const { data: eventsResponse, isLoading: eventsLoading } = trpc.geoAI.events.active.useQuery(undefined, {
     refetchInterval: 600000,
-    enabled: isBusinessOpen
+    enabled: shouldForecastingBeActive()
   });
 
   // Calculate demand multiplier from weather
@@ -277,13 +272,13 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
 
   // Check business hours
   useEffect(() => {
-    checkBusinessHours();
-    const hoursCheckInterval = setInterval(checkBusinessHours, 60000); // 1 minute
+    checkOperatingMode();
+    const hoursCheckInterval = setInterval(checkOperatingMode, 60000); // 1 minute
     return () => clearInterval(hoursCheckInterval);
-  }, [checkBusinessHours]);
+  }, [checkOperatingMode]);
 
-  // Render "Business Closed" state
-  if (!isBusinessOpen && aiStatus === 'closed') {
+  // Render "Closed" state (after business closes)
+  if (operatingMode === 'closed') {
     return (
       <Card className="col-span-2 border-2 border-red-200 bg-gradient-to-br from-red-50 to-orange-50 shadow-lg">
         <CardHeader className="pb-3">
@@ -291,7 +286,7 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
             <Clock className="w-5 h-5 text-red-600" />
             Business Closed
           </CardTitle>
-          <CardDescription>Forecasting paused until next operating window</CardDescription>
+          <CardDescription>Forecasting paused - Next-day planning available</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -302,8 +297,8 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
               </AlertDescription>
             </Alert>
             <div className="text-center py-8">
-              <p className="text-lg font-semibold text-gray-700">Next Opening: {nextOpeningTime}</p>
-              <p className="text-sm text-gray-600 mt-2">All forecasting, alerts, and recommendations are disabled outside operating hours.</p>
+              <p className="text-lg font-semibold text-gray-700">{nextOpeningTime}</p>
+              <p className="text-sm text-gray-600 mt-2">Next-day planning and forecasting available for tomorrow's operations.</p>
             </div>
           </div>
         </CardContent>
@@ -346,25 +341,32 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
   }), [demandResponse, hotspotsResponse, riskResponse, weatherResponse, demandMultiplier]);
 
   return (
-    <Card className="col-span-2 border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-blue-50 shadow-lg">
-      {/* Header with refresh timestamp */}
+    <Card className={`col-span-2 border-2 shadow-lg ${
+      operatingMode === 'pre-operation'
+        ? 'border-blue-200 bg-gradient-to-br from-blue-50 to-cyan-50'
+        : 'border-purple-200 bg-gradient-to-br from-purple-50 to-blue-50'
+    }`}>
+      {/* Header with mode indicator and refresh timestamp */}
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="flex items-center gap-2">
-              <Brain className="w-5 h-5 text-purple-600" />
+              <Brain className="w-5 h-5" style={{ color: operatingMode === 'pre-operation' ? '#0369a1' : '#9333ea' }} />
               Spatial AI Intelligence
             </CardTitle>
             <CardDescription>
-              Real-time operational forecasting engine
+              {operatingMode === 'pre-operation' ? 'Pre-Operation Forecasting Mode - Planning for tonight' : 'Real-time operational forecasting engine'}
               {predictionData?.refreshedAt && (
                 <span className="ml-2 text-xs text-gray-500">Last updated: {predictionData.refreshedAt}</span>
               )}
             </CardDescription>
           </div>
-          <Badge variant={aiStatus === 'ready' ? 'default' : aiStatus === 'loading' ? 'secondary' : 'destructive'}>
-            {aiStatus === 'ready' ? '🟢 Live' : aiStatus === 'loading' ? '🟡 Updating...' : '🔴 Error'}
-          </Badge>
+          <div className="flex flex-col items-end gap-2">
+            <Badge variant={aiStatus === 'ready' ? 'default' : aiStatus === 'loading' ? 'secondary' : 'destructive'}>
+              {operatingMode === 'pre-operation' ? '🔵 Preparing' : aiStatus === 'ready' ? '🟢 Live' : aiStatus === 'loading' ? '🟡 Updating...' : '🔴 Error'}
+            </Badge>
+            <span className="text-xs text-gray-600">{nextOpeningTime}</span>
+          </div>
         </div>
       </CardHeader>
 
