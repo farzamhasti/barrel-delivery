@@ -997,5 +997,101 @@ export const geoAIRouter = router({
           };
         }
       }),
+
+
+  // Next-day planning (available during closed mode)
+  nextDay: router({
+    forecast: publicProcedure.query(async () => {
+      try {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        tomorrow.setHours(18, 0, 0, 0); // 6 PM tomorrow
+
+        // Fetch tomorrow's weather forecast
+        const weatherResponse = await callGeoAIService('/api/v1/weather/forecast', 'POST', {
+          date: tomorrow.toISOString(),
+          location: 'Fort Erie',
+        });
+
+        // Fetch tomorrow's demand forecast
+        const demandResponse = await callGeoAIService('/api/v1/demand/predict', 'POST', {
+          zone_id: '1',
+          forecast_date: tomorrow.toISOString(),
+          forecast_hours: 6,
+        });
+
+        // Fetch tomorrow's hotspots
+        const hotspotsResponse = await callGeoAIService('/api/v1/hotspots/predict', 'POST', {
+          zone_id: '1',
+          forecast_date: tomorrow.toISOString(),
+        });
+
+        // Fetch tomorrow's risk assessment
+        const riskResponse = await callGeoAIService('/api/v1/risk/predict', 'POST', {
+          zone_id: '1',
+          forecast_date: tomorrow.toISOString(),
+          forecast_hours: 6,
+        });
+
+        // Get tomorrow's events
+        const eventMultiplier = await calculateEventDemandMultiplier(tomorrow);
+
+        // Apply event multiplier to demand
+        let adjustedDemand = demandResponse;
+        if (Array.isArray(adjustedDemand.predictions) && eventMultiplier > 1) {
+          adjustedDemand.predictions = adjustedDemand.predictions.map((pred: any) => ({
+            ...pred,
+            predicted_orders: Math.round(pred.predicted_orders * eventMultiplier),
+            event_multiplier: eventMultiplier,
+          }));
+        }
+
+        return {
+          success: true,
+          data: {
+            date: tomorrow.toISOString(),
+            weather: weatherResponse,
+            demand: adjustedDemand,
+            hotspots: hotspotsResponse,
+            risks: riskResponse,
+
+            eventMultiplier: eventMultiplier,
+            timestamp: new Date(),
+          },
+        };
+      } catch (error) {
+        return {
+          success: false,
+          error: 'Failed to fetch next-day forecast',
+          data: null,
+        };
+      }
+    }),
+
+    recommendations: publicProcedure.query(async () => {
+      try {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+
+        // Fetch recommendations for tomorrow
+        const response = await callGeoAIService('/api/v1/recommendations/generate', 'POST', {
+          zone_id: '1',
+          forecast_date: tomorrow.toISOString(),
+          context: 'next-day-planning',
+        });
+
+        return {
+          success: true,
+          data: response,
+        };
+      } catch (error) {
+        return {
+          success: false,
+          error: 'Failed to fetch next-day recommendations',
+          data: null,
+        };
+      }
+    }),
+  }),
   }),
 });
