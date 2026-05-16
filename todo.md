@@ -3332,3 +3332,37 @@ Dashboard now displays comprehensive weather information without duplication.
 FILES MODIFIED:
 - client/src/components/ai/AIKPISummary.tsx: Removed simplified Weather Impact card
 - todo.md: Added Phase 77 completion details
+
+
+## Phase 78: Remove Fort Erie Live Weather Cards from AIPredictionMap (COMPLETED)
+
+FEATURE REQUEST:
+- Remove the "Fort Erie Live Weather" cards showing Temperature and Precipitation
+- Keep only the detailed Weather Impact card with complete metrics
+
+SOLUTION IMPLEMENTED:
+- [x] Located two Fort Erie Live Weather cards in AIPredictionMap.tsx
+- [x] Removed first card (lines 219-250) - popup weather display
+- [x] Removed second card (lines 263-290) - main weather panel
+- [x] Fixed orphaned JSX closing tags
+- [x] Maintained map functionality without weather cards
+
+CARDS REMOVED:
+- Weather popup card in map popups
+- Real-Time Fort Erie Weather Panel in main view
+- Both cards showed simplified weather info (Temperature, Humidity, Precipitation, Wind, Visibility)
+
+VERIFICATION:
+- TypeScript compilation: 0 errors
+- Dev server: Running successfully
+- No duplicate weather cards across dashboard
+- Map functionality preserved
+
+RESULT:
+All "Fort Erie Live Weather" cards removed from AIPredictionMap.
+Only the comprehensive Weather Impact card in SpatialAIIntelligenceCard remains.
+Dashboard displays unified weather information without duplication.
+
+FILES MODIFIED:
+- client/src/components/ai/AIPredictionMap.tsx: Removed two Fort Erie Live Weather cards
+- todo.md: Added Phase 78 completion details

@@ -216,38 +216,7 @@ export const AIPredictionMap: React.FC<AIPredictionMapProps> = () => {
           </div>
         </Card>
         
-        {/* Still show weather even when closed */}
-        {weather && (
-          <Card className="p-4 bg-blue-50 border border-blue-200">
-            <div className="flex items-start justify-between">
-              <div className="flex items-start gap-3 flex-1">
-                <Cloud className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                <div className="flex-1">
-                  <p className="font-semibold text-sm text-blue-700">Fort Erie Live Weather</p>
-                  <div className="text-xs text-blue-600 mt-1 space-y-1">
-                    <p className="font-semibold text-blue-700">{weather.location || 'Fort Erie, Ontario, Canada'}</p>
-                    <p>🌡️ Temperature: {weather.temperature_2m}°C (feels like {weather.apparent_temperature}°C)</p>
-                    <p>💧 Humidity: {weather.relative_humidity_2m}%</p>
-                    <p>🌧️ Precipitation: {weather.precipitation || 0}mm | ❄️ Snowfall: {weather.snowfall || 0}mm</p>
-                    <p>💨 Wind: {weather.wind_speed_10m}km/h (gusts: {weather.wind_gusts_10m}km/h, direction: {weather.wind_direction_10m}°)</p>
-                    <p>👁️ Visibility: {weather.visibility || 10}km</p>
-                    <p className="text-xs text-blue-500 mt-2 font-semibold">📍 Location verified: 42.8900°N, 79.0000°W (Fort Erie, Ontario)</p>
-                  </div>
-                </div>
-              </div>
-              {lastWeatherUpdate && (
-                <div className="text-right">
-                  <p className="text-xs text-blue-500">
-                    Updated: {lastWeatherUpdate.toLocaleTimeString()}
-                  </p>
-                  <p className="text-xs text-blue-400 mt-1">
-                    (Auto-refresh: 10 min)
-                  </p>
-                </div>
-              )}
-            </div>
-          </Card>
-        )}
+
       </div>
     );
   }
@@ -259,40 +228,6 @@ export const AIPredictionMap: React.FC<AIPredictionMapProps> = () => {
         <div className="w-2 h-2 bg-green-600 rounded-full animate-pulse" />
         <span className="text-sm font-semibold text-green-700">🟢 Operating - AI Ready</span>
       </div>
-      
-      {/* Real-Time Fort Erie Weather Panel */}
-      {weather && (
-        <Card className="p-4 bg-blue-50 border border-blue-200">
-          <div className="flex items-start justify-between">
-            <div className="flex items-start gap-3 flex-1">
-              <Cloud className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
-              <div className="flex-1">
-                <p className="font-semibold text-sm text-blue-700">Fort Erie Live Weather</p>
-                <div className="text-xs text-blue-600 mt-1 space-y-1">
-                  <p className="font-semibold text-blue-700">{weather.location || 'Fort Erie, Ontario, Canada'}</p>
-                  <p>🌡️ Temperature: <span className="font-bold text-lg text-blue-800">{weather.temperature_2m}°C</span> (feels like {weather.apparent_temperature}°C)</p>
-                  <p>💧 Humidity: {weather.relative_humidity_2m}%</p>
-                  <p>🌧️ Precipitation: {weather.precipitation || 0}mm | ❄️ Snowfall: {weather.snowfall || 0}mm</p>
-                  <p>💨 Wind: {weather.wind_speed_10m}km/h (gusts: {weather.wind_gusts_10m}km/h, direction: {weather.wind_direction_10m}°)</p>
-                  <p>👁️ Visibility: {weather.visibility || 10}km</p>
-                  <p className="text-xs text-blue-500 mt-2 font-semibold">📍 Location verified: 42.8900°N, 79.0000°W (Fort Erie, Ontario)</p>
-                  <p className="text-xs text-blue-400 mt-1">API Time: {weather.time}</p>
-                </div>
-              </div>
-            </div>
-            {lastWeatherUpdate && (
-              <div className="text-right">
-                <p className="text-xs text-blue-500">
-                  Updated: {lastWeatherUpdate.toLocaleTimeString()}
-                </p>
-                <p className="text-xs text-blue-400 mt-1">
-                  (Auto-refresh: 10 min)
-                </p>
-              </div>
-            )}
-          </div>
-        </Card>
-      )}
       
       {/* Service Status Warning - Only show if API fails during operating hours */}
       {showServiceWarning && (
