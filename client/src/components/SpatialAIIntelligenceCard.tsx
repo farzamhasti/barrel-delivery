@@ -67,6 +67,48 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
     
     return Math.min(impact, 1.0);
   };
+  
+  // Calculate demand multiplier based on weather conditions
+  const calculateWeatherImpactMultiplier = (weatherData: any): number => {
+    let multiplier = 1.0;
+    
+    if (weatherData.snowfall && weatherData.snowfall > 0) {
+      multiplier += 0.35;
+    } else if (weatherData.precipitation && weatherData.precipitation > 0) {
+      multiplier += 0.15;
+    }
+    
+    const temp = weatherData.temperature_2m;
+    if (temp < -10) {
+      multiplier += 0.20;
+    } else if (temp < 0) {
+      multiplier += 0.10;
+    } else if (temp > 30) {
+      multiplier -= 0.10;
+    }
+    
+    if (weatherData.wind_speed_10m && weatherData.wind_speed_10m > 25) {
+      multiplier += 0.05;
+    }
+    
+    return Math.max(multiplier, 0.8);
+  };
+  
+  // Get weather impact description
+  const getWeatherImpactDescription = (weatherData: any): string => {
+    const multiplier = calculateWeatherImpactMultiplier(weatherData);
+    
+    if (multiplier >= 1.35) {
+      return 'Severe weather - expect high demand surge';
+    } else if (multiplier >= 1.25) {
+      return 'Bad weather - expect increased demand';
+    } else if (multiplier >= 1.10) {
+      return 'Poor weather - expect moderate demand increase';
+    } else if (multiplier < 0.95) {
+      return 'Favorable weather - expect lower demand';
+    }
+    return 'Normal weather conditions';
+  };
 
   // Fetch real Fort Erie weather data via tRPC (server-side to bypass CORS)
   const { data: weatherResponse, isLoading: weatherLoading } = trpc.geoAI.weather.current.useQuery(undefined, {
@@ -387,6 +429,21 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
                           <span className="font-bold text-blue-600">
                             {(weatherData.visibility / 1000).toLocaleString('en-US', { maximumFractionDigits: 0 })} km
                           </span>
+                        </div>
+                      )}
+
+                      {/* Demand Impact Multiplier */}
+                      {weatherData && (
+                        <div className="mt-3 pt-3 border-t border-blue-200">
+                          <div className="flex items-center justify-between">
+                            <span className="font-semibold text-blue-900">📊 Demand Impact:</span>
+                            <span className="text-lg font-bold text-orange-600 bg-orange-50 px-3 py-1 rounded">
+                              x{calculateWeatherImpactMultiplier(weatherData).toFixed(2)}
+                            </span>
+                          </div>
+                          <p className="text-xs text-gray-600 mt-1">
+                            {getWeatherImpactDescription(weatherData)}
+                          </p>
                         </div>
                       )}
 
