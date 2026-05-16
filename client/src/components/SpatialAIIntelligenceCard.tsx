@@ -23,6 +23,7 @@ import AIRecommendationsPanel from './ai/AIRecommendationsPanel';
 import AIConfidenceIndicator from './ai/AIConfidenceIndicator';
 import WeatherImpactPanel from './ai/WeatherImpactPanel';
 import { trpc } from '@/lib/trpc';
+import { useWeatherChangeDetection, useWeatherChangeHistory } from '@/hooks/useWeatherChangeDetection';
 
 interface SpatialAIProps {
   selectedMonth?: string;
@@ -39,6 +40,9 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
   const [isBusinessOpen, setIsBusinessOpen] = useState(false);
   const [nextOpeningTime, setNextOpeningTime] = useState<string>('');
   const [demandMultiplier, setDemandMultiplier] = useState(1.0);
+  const [eventMultiplier, setEventMultiplier] = useState(1.0);
+  const [weatherChangeLog, setWeatherChangeLog] = useState<string[]>([]);
+  const weatherHistory = useWeatherChangeHistory(5);
 
   // Business hours check (Sun-Thu 4PM-10PM, Fri-Sat 4PM-11PM)
   const checkBusinessHours = useCallback(() => {
@@ -97,6 +101,12 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
     { refetchInterval: 600000, enabled: isBusinessOpen }
   );
 
+  // Fetch active events via tRPC (Phase 92)
+  const { data: eventsResponse, isLoading: eventsLoading } = trpc.geoAI.events.active.useQuery(undefined, {
+    refetchInterval: 600000,
+    enabled: isBusinessOpen
+  });
+
   // Calculate demand multiplier from weather
   const calculateDemandMultiplier = useCallback(() => {
     if (!weatherResponse?.data) return 1.0;
@@ -139,6 +149,31 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
   useEffect(() => {
     setDemandMultiplier(calculateDemandMultiplier());
   }, [calculateDemandMultiplier]);
+
+  // Update event multiplier (Phase 92)
+  useEffect(() => {
+    if (eventsResponse?.data?.demand_multiplier) {
+      setEventMultiplier(eventsResponse.data.demand_multiplier);
+    }
+  }, [eventsResponse]);
+
+  // Weather change detection (Phase 91)
+  const handleWeatherChange = (change: string) => {
+    weatherHistory.addChange(change);
+    setWeatherChangeLog(prev => [change, ...prev.slice(0, 4)]);
+    console.log('Weather change detected:', change);
+  };
+
+  useWeatherChangeDetection(
+    weatherResponse?.data,
+    handleWeatherChange,
+    {
+      temperatureChange: 5,
+      precipitationStart: true,
+      snowfallStart: true,
+      windSpeedIncrease: 10,
+    }
+  );
 
   // Generate dynamic alerts
   useEffect(() => {
@@ -301,7 +336,11 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
       impact_score: demandMultiplier * 100,
       precipitation_chance: weatherResponse?.data?.precipitation || 0
     },
-    eventImpact: { active_events: 0, event_name: 'No Active Events', demand_multiplier: 1.0 },
+    eventImpact: { 
+      active_events: eventsResponse?.data?.event_count || 0, 
+      event_name: eventsResponse?.data?.impact_description || 'No Active Events', 
+      demand_multiplier: eventMultiplier 
+    },
     timestamp: Date.now(),
     refreshedAt: new Date().toLocaleTimeString()
   }), [demandResponse, hotspotsResponse, riskResponse, weatherResponse, demandMultiplier]);
@@ -331,11 +370,12 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5 px-4">
+        <TabsList className="grid w-full grid-cols-6 px-4">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="map">Map</TabsTrigger>
-          <TabsTrigger value="alerts">Alerts</TabsTrigger>
+          <TabsTrigger value="alerts">Alerts {alerts.length > 0 && alerts[0].id !== 'no-alerts' && <span className="ml-1 text-xs">({alerts.length})</span>}</TabsTrigger>
           <TabsTrigger value="weather">Weather</TabsTrigger>
+          <TabsTrigger value="events">Events</TabsTrigger>
           <TabsTrigger value="recommendations">Recommendations</TabsTrigger>
         </TabsList>
 
@@ -369,6 +409,42 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
               weatherData={weatherResponse.data} 
               demandMultiplier={demandMultiplier}
             />
+          )}
+          {weatherChangeLog.length > 0 && (
+            <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded">
+              <p className="text-sm font-semibold text-blue-900 mb-2">Recent Weather Changes:</p>
+              <ul className="text-sm text-blue-800 space-y-1">
+                {weatherChangeLog.map((change, idx) => (
+                  <li key={idx}>• {change}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </TabsContent>
+
+        {/* Events Tab (Phase 92) */}
+        <TabsContent value="events" className="space-y-4 p-4">
+          {eventsResponse?.data?.active_events && eventsResponse.data.active_events.length > 0 ? (
+            <div className="space-y-3">
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded">
+                <p className="font-semibold text-amber-900">Active Events</p>
+                <p className="text-sm text-amber-800 mt-1">{eventsResponse.data.impact_description}</p>
+              </div>
+              {eventsResponse.data.active_events.map((event: any, idx: number) => (
+                <div key={idx} className="p-3 bg-blue-50 border border-blue-200 rounded">
+                  <p className="font-semibold text-blue-900">{event.name}</p>
+                  <p className="text-sm text-blue-800">Type: {event.type}</p>
+                  <p className="text-sm text-blue-800">Demand Multiplier: {event.demandMultiplier.toFixed(2)}x</p>
+                  <p className="text-xs text-blue-700 mt-1">{event.description}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <Alert className="border-green-300 bg-green-50">
+              <AlertDescription className="text-green-800">
+                No Active Events - Normal demand expected
+              </AlertDescription>
+            </Alert>
           )}
         </TabsContent>
 

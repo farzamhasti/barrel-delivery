@@ -11,6 +11,10 @@ import { router, publicProcedure, protectedProcedure } from '../_core/trpc';
 import { z } from 'zod';
 import { isWithinOperatingHours, getDayCategory, extractTemporalFeatures } from '../utils/operatingHours';
 import { calculateWeatherImpact, applyWeatherToDemand, applyWeatherToDelayRisk, applyWeatherToHotspotIntensity, applyWeatherToDriverShortageRisk, generateWeatherRecommendations, type WeatherData, type WeatherImpactScore } from '../utils/weatherImpact';
+import { predictionCache, generateCacheKey, getTTLForType } from '../utils/predictionCache';
+import { getActiveEvents, calculateEventDemandMultiplier, getEventImpactDescription } from '../utils/eventValidator';
+import { generateDynamicAlerts, filterResolvedAlerts } from '../utils/alertGenerator';
+import { cacheExpirationMonitor, preventStaleDataMiddleware } from '../utils/cacheExpiration';
 
 // Environment variables
 const GEO_AI_SERVICE_URL = process.env.GEO_AI_SERVICE_URL || 'http://localhost:8001';
@@ -731,6 +735,175 @@ export const geoAIRouter = router({
         };
       }
     }),
+  }),
+
+  /**
+   * Manual Refresh Mutation (PHASE 89)
+   * Manually trigger prediction refresh and clear cache
+   */
+  refresh: protectedProcedure
+    .input(
+      z.object({
+        types: z.array(z.enum(['demand', 'hotspots', 'risk', 'recommendations', 'all'])).default(['all']),
+      })
+    )
+    .mutation(async ({ input }) => {
+      try {
+        // Check if within operating hours
+        const operatingHoursError = validateOperatingHours();
+        if (operatingHoursError) {
+          return operatingHoursError;
+        }
+
+        const now = new Date();
+        const cleared: string[] = [];
+
+        // Clear cache for specified types
+        if (input.types.includes('all')) {
+          predictionCache.clear();
+          cleared.push('all');
+        } else {
+          for (const type of input.types) {
+            const keys = predictionCache.keys().filter(k => k.includes(type));
+            keys.forEach(k => predictionCache.delete(k));
+            if (keys.length > 0) {
+              cleared.push(type);
+            }
+          }
+        }
+
+        return {
+          success: true,
+          data: {
+            cleared,
+            timestamp: now.toISOString(),
+            cacheStats: predictionCache.getStats(),
+          },
+          metadata: {
+            isOperatingHours: true,
+            dayCategory: getDayCategory(now),
+          },
+        };
+      } catch (error) {
+        return {
+          success: false,
+          error: 'Failed to refresh predictions',
+          data: null,
+        };
+      }
+    }),
+
+  /**
+   * Get Active Events (PHASE 92)
+   * Validate and return currently active events in Fort Erie area
+   */
+  events: router({
+    active: publicProcedure.query(async () => {
+      try {
+        const now = new Date();
+        const activeEvents = await getActiveEvents(now);
+        const eventMultiplier = await calculateEventDemandMultiplier(now);
+
+        return {
+          success: true,
+          data: {
+            active_events: activeEvents,
+            event_count: activeEvents.length,
+            demand_multiplier: eventMultiplier,
+            impact_description: getEventImpactDescription(eventMultiplier),
+            timestamp: now.toISOString(),
+          },
+          metadata: {
+            isOperatingHours: isWithinOperatingHours(now),
+            dayCategory: getDayCategory(now),
+          },
+        };
+      } catch (error) {
+        console.error('Error fetching active events:', error);
+        return {
+          success: true,
+          data: {
+            active_events: [],
+            event_count: 0,
+            demand_multiplier: 1.0,
+            impact_description: 'No active events',
+            timestamp: new Date().toISOString(),
+          },
+        };
+      }
+    }),
+  }),
+
+  /**
+   * Dynamic Alerts (PHASE 93)
+   * Generate alerts only from live operational conditions
+   */
+  alerts: router({
+    generate: protectedProcedure
+      .input(
+        z.object({
+          zoneId: z.string(),
+          predictedOrders: z.number().int().optional(),
+          demandThreshold: z.number().int().default(40),
+          driverShortageRisk: z.number().min(0).max(1).optional(),
+          delayRisk: z.number().min(0).max(1).optional(),
+          precipitation: z.number().optional(),
+          snowfall: z.number().optional(),
+          windSpeed: z.number().optional(),
+          hotspotsIntensity: z.number().min(0).max(1).optional(),
+          activeEventMultiplier: z.number().optional(),
+        })
+      )
+      .query(async ({ input }) => {
+        try {
+          // Check if within operating hours
+          const operatingHoursError = validateOperatingHours();
+          if (operatingHoursError) {
+            return operatingHoursError;
+          }
+
+          const now = new Date();
+
+          // Generate dynamic alerts from live conditions
+          const alerts = generateDynamicAlerts({
+            predictedOrders: input.predictedOrders,
+            demandThreshold: input.demandThreshold,
+            driverShortageRisk: input.driverShortageRisk,
+            delayRisk: input.delayRisk,
+            precipitation: input.precipitation,
+            snowfall: input.snowfall,
+            windSpeed: input.windSpeed,
+            hotspotsIntensity: input.hotspotsIntensity,
+            activeEventMultiplier: input.activeEventMultiplier,
+          });
+
+          return {
+            success: true,
+            data: {
+              alerts,
+              alert_count: alerts.length,
+              has_critical: alerts.some(a => a.priority === 'critical'),
+              timestamp: now.toISOString(),
+            },
+            metadata: {
+              isOperatingHours: true,
+              dayCategory: getDayCategory(now),
+              generatedAt: now.toISOString(),
+            },
+          };
+        } catch (error) {
+          console.error('Error generating alerts:', error);
+          return {
+            success: true,
+            data: {
+              alerts: [],
+              alert_count: 0,
+              has_critical: false,
+              timestamp: new Date().toISOString(),
+            },
+          };
+        }
+      }),
   }),
 
   /**
