@@ -17,7 +17,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, TrendingUp, Zap, Brain, MapPin, Clock, Users, Lightbulb } from 'lucide-react';
+import { AlertTriangle, TrendingUp, Zap, Brain, MapPin, Clock, Users, Lightbulb, Cloud } from 'lucide-react';
 import AIKPISummary from './ai/AIKPISummary';
 import { AIPredictionMap } from './ai/AIPredictionMap';
 import AIAlertsPanel from './ai/AIAlertsPanel';
@@ -35,6 +35,84 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
   const [predictionData, setPredictionData] = useState<any>(null);
   const [alerts, setAlerts] = useState<any[]>([]);
   const [recommendations, setRecommendations] = useState<any[]>([]);
+  const [weatherData, setWeatherData] = useState<any>(null);
+
+  // Fetch real Fort Erie weather data
+  useEffect(() => {
+    const fetchFortErieWeather = async () => {
+      try {
+        const url = new URL('https://api.open-meteo.com/v1/forecast');
+        url.searchParams.append('latitude', '42.8900');
+        url.searchParams.append('longitude', '-79.0000');
+        url.searchParams.append('current', 'temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,snowfall,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,visibility');
+        url.searchParams.append('timezone', 'America/Toronto');
+        url.searchParams.append('_t', Date.now().toString()); // Cache-busting
+        
+        const response = await fetch(url.toString(), {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+          }
+        });
+        const data = await response.json();
+        
+        if (data.current) {
+          const isValidLocation = 
+            Math.abs(data.latitude - 42.8900) < 0.05 && 
+            Math.abs(data.longitude - (-79.0000)) < 0.05;
+          
+          if (isValidLocation) {
+            setWeatherData({
+              temperature: Math.round(data.current.temperature_2m),
+              condition: getWeatherCondition(data.current.weather_code),
+              impact_score: calculateWeatherImpact(data.current),
+              precipitation_chance: data.current.precipitation || 0,
+              humidity: data.current.relative_humidity_2m,
+              wind_speed: data.current.wind_speed_10m,
+              timestamp: new Date().toLocaleTimeString()
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Weather fetch error:', error);
+      }
+    };
+    
+    fetchFortErieWeather();
+    const interval = setInterval(fetchFortErieWeather, 600000); // 10 minutes
+    return () => clearInterval(interval);
+  }, []);
+  
+  // Helper function to get weather condition from WMO code
+  const getWeatherCondition = (code: number): string => {
+    if (code === 0 || code === 1) return 'Clear';
+    if (code === 2) return 'Partly Cloudy';
+    if (code === 3) return 'Cloudy';
+    if (code === 45 || code === 48) return 'Foggy';
+    if (code === 51 || code === 53 || code === 55) return 'Light Rain';
+    if (code === 61 || code === 63 || code === 65) return 'Rain';
+    if (code === 71 || code === 73 || code === 75) return 'Snow';
+    if (code === 80 || code === 81 || code === 82) return 'Showers';
+    if (code === 85 || code === 86) return 'Snow Showers';
+    if (code === 95 || code === 96 || code === 99) return 'Thunderstorm';
+    return 'Unknown';
+  };
+  
+  // Calculate weather impact score (0-1)
+  const calculateWeatherImpact = (current: any): number => {
+    let impact = 0.3; // Base impact
+    
+    // Precipitation increases impact
+    if (current.precipitation > 0) impact += 0.2;
+    if (current.snowfall > 0) impact += 0.3;
+    
+    // Wind speed affects impact
+    if (current.wind_speed_10m > 20) impact += 0.2;
+    
+    return Math.min(impact, 1.0);
+  };
 
   // Simulate AI data loading
   useEffect(() => {
@@ -64,7 +142,7 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
             overload_risk: 0.22,
             overall_risk_level: 'medium'
           },
-          weatherImpact: {
+          weatherImpact: weatherData || {
             temperature: 18,
             condition: 'Partly Cloudy',
             impact_score: 0.3,
@@ -139,7 +217,7 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
     };
 
     loadAIData();
-  }, [selectedMonth, selectedYear]);
+  }, [selectedMonth, selectedYear, weatherData]);
 
   return (
     <Card className="col-span-2 border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-blue-50 shadow-lg">
@@ -260,6 +338,20 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
                     </div>
                   </div>
 
+                  {/* Weather Impact */}
+                  <div className="p-3 bg-white rounded-lg border border-blue-200">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-semibold text-gray-600">Weather</span>
+                      <Cloud className="w-4 h-4 text-blue-500" />
+                    </div>
+                    <div className="text-lg font-bold text-blue-600">
+                      {predictionData.weatherImpact.temperature}°C
+                    </div>
+                    <div className="text-xs text-gray-500 truncate">
+                      {predictionData.weatherImpact.condition}
+                    </div>
+                  </div>
+
                   {/* Event Impact */}
                   <div className="p-3 bg-white rounded-lg border border-purple-200">
                     <div className="flex items-center justify-between mb-2">
@@ -296,8 +388,8 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
 
         {/* Footer Info */}
         <div className="flex items-center justify-between text-xs text-gray-500 pt-4 border-t border-purple-200">
-          <span>Last updated: {new Date().toLocaleTimeString()}</span>
-          <span>Powered by Geo AI Service v1.0</span>
+          <span>Last updated: {weatherData?.timestamp || new Date().toLocaleTimeString()}</span>
+          <span>Weather: Fort Erie • Powered by Geo AI Service v1.0</span>
         </div>
       </CardContent>
     </Card>
