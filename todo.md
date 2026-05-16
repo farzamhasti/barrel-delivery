@@ -3131,3 +3131,40 @@ VERIFICATION:
 RESULT:
 Weather data now loads correctly via tRPC server-side fetch. No more CORS errors.
 Frontend receives real-time Fort Erie weather data without browser restrictions.
+
+
+## Phase 73: Weather Condition Display Fix (COMPLETED)
+
+BUG REPORTED:
+- Weather Impact card showing "Unknown" condition instead of actual weather (e.g., "Clear")
+- Temperature displays correctly (9°C) but condition is always "Unknown"
+- Occurs when dashboard first loads, then updates
+
+ROOT CAUSE:
+- Helper functions (getWeatherCondition, calculateWeatherImpact) were defined AFTER useEffect
+- React was calling these functions before they existed
+- weather_code (0 = Clear) was not being parsed correctly
+
+SOLUTION IMPLEMENTED:
+- [x] Moved getWeatherCondition() function BEFORE useEffect hook
+- [x] Moved calculateWeatherImpact() function BEFORE useEffect hook
+- [x] Added null/undefined check in getWeatherCondition (code === undefined || code === null)
+- [x] Added console.log to debug weather API response
+- [x] Verified API returns correct weather_code: 0 (Clear)
+- [x] Verified temperature: 8.9°C (correct)
+- [x] Verified humidity: 70% (correct)
+
+VERIFICATION:
+- API test: weather_code 0 confirmed from Open-Meteo
+- getWeatherCondition(0) now returns "Clear" (not "Unknown")
+- TypeScript compilation: 0 errors
+- Dev server: Running successfully
+
+RESULT:
+Weather Impact card now displays:
+- Condition: "Clear" (not "Unknown")
+- Temperature: 9°C (rounded from 8.9°C)
+- Precipitation: 0%
+- Impact Score: 30% (base impact)
+
+The condition will update correctly when weather changes throughout the day.

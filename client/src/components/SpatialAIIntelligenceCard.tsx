@@ -38,30 +38,9 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
   const [recommendations, setRecommendations] = useState<any[]>([]);
   const [weatherData, setWeatherData] = useState<any>(null);
 
-  // Fetch real Fort Erie weather data via tRPC (server-side to bypass CORS)
-  const { data: weatherResponse, isLoading: weatherLoading } = trpc.geoAI.weather.current.useQuery(undefined, {
-    refetchInterval: 600000, // 10 minutes
-  });
-  
-  // Update weather state when tRPC response arrives
-  useEffect(() => {
-    if (weatherResponse?.success && weatherResponse.data) {
-      const current = weatherResponse.data;
-      setWeatherData({
-        temperature: Math.round(current.temperature),
-        condition: getWeatherCondition(current.weather_code),
-        impact_score: calculateWeatherImpact(current),
-        precipitation_chance: current.precipitation || 0,
-        humidity: current.humidity,
-        wind_speed: current.wind_speed,
-        timestamp: new Date().toLocaleTimeString()
-      });
-    }
-  }, [weatherResponse]);
-  
-  // Helper function to get weather condition from WMO code
+  // Helper function to get weather condition from WMO code (MUST be before useEffect)
   const getWeatherCondition = (code: number | undefined): string => {
-    if (!code) return 'Unknown';
+    if (code === undefined || code === null) return 'Unknown';
     if (code === 0 || code === 1) return 'Clear';
     if (code === 2) return 'Partly Cloudy';
     if (code === 3) return 'Cloudy';
@@ -75,7 +54,7 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
     return 'Unknown';
   };
   
-  // Calculate weather impact score (0-1)
+  // Calculate weather impact score (0-1) (MUST be before useEffect)
   const calculateWeatherImpact = (current: any): number => {
     let impact = 0.3; // Base impact
     
@@ -89,7 +68,29 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
     return Math.min(impact, 1.0);
   };
 
-  // Simulate AI data loading
+  // Fetch real Fort Erie weather data via tRPC (server-side to bypass CORS)
+  const { data: weatherResponse, isLoading: weatherLoading } = trpc.geoAI.weather.current.useQuery(undefined, {
+    refetchInterval: 600000, // 10 minutes
+  });
+  
+  // Update weather state when tRPC response arrives
+  useEffect(() => {
+    if (weatherResponse?.success && weatherResponse.data) {
+      const current = weatherResponse.data;
+      console.log('Weather API response:', current);
+      setWeatherData({
+        temperature: Math.round(current.temperature),
+        condition: getWeatherCondition(current.weather_code),
+        impact_score: calculateWeatherImpact(current),
+        precipitation_chance: current.precipitation || 0,
+        humidity: current.humidity,
+        wind_speed: current.wind_speed,
+        timestamp: new Date().toLocaleTimeString()
+      });
+    }
+  }, [weatherResponse]);
+
+  // Simulate AI data loading (this runs after weather is fetched)
   useEffect(() => {
     const loadAIData = async () => {
       try {
