@@ -19,7 +19,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, TrendingUp, Zap, Brain, MapPin, Clock, Users, Lightbulb } from 'lucide-react';
 import AIKPISummary from './ai/AIKPISummary';
-import AIPredictionMap from './ai/AIPredictionMap';
+import { AIPredictionMap } from './ai/AIPredictionMap';
 import AIAlertsPanel from './ai/AIAlertsPanel';
 import AIRecommendationsPanel from './ai/AIRecommendationsPanel';
 import AIConfidenceIndicator from './ai/AIConfidenceIndicator';

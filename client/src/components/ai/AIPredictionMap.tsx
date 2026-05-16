@@ -98,8 +98,6 @@ const isWithinOperatingHours = (): boolean => {
   const currentHour = now.getHours();
   
   const hours = OPERATING_HOURS[dayOfWeek as keyof typeof OPERATING_HOURS];
-  if (!hours) return false;
-  
   return currentHour >= hours.start && currentHour < hours.end;
 };
 
@@ -112,31 +110,26 @@ const getNextOperatingWindow = (): string => {
   const hours = OPERATING_HOURS[dayOfWeek as keyof typeof OPERATING_HOURS];
   
   if (currentHour < hours.start) {
-    return `Today at 4:00 PM`;
-  }
-  
-  if (currentHour >= hours.end) {
-    const tomorrow = new Date(now);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowDay = tomorrow.getDay();
+    return `Opens at 4:00 PM today`;
+  } else if (currentHour >= hours.end) {
+    const nextDay = (dayOfWeek + 1) % 7;
     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    return `${dayNames[tomorrowDay]} at 4:00 PM`;
+    return `Opens at 4:00 PM ${dayNames[nextDay]}`;
   }
   
-  return 'Now';
+  return `Closes at ${hours.end === 22 ? '10:00 PM' : '11:00 PM'} today`;
 };
 
-export default function AIPredictionMap({ predictions }: AIPredictionMapProps) {
+export const AIPredictionMap: React.FC<AIPredictionMapProps> = () => {
   const [weather, setWeather] = useState<any>(null);
   const [weatherLoading, setWeatherLoading] = useState(false);
   const [lastWeatherUpdate, setLastWeatherUpdate] = useState<Date | null>(null);
   const [isOperating, setIsOperating] = useState(isWithinOperatingHours());
   
-  // Check operating hours
+  // Check operating hours every minute
   useEffect(() => {
     setIsOperating(isWithinOperatingHours());
     
-    // Update every minute
     const interval = setInterval(() => {
       setIsOperating(isWithinOperatingHours());
     }, 60000);
@@ -144,38 +137,64 @@ export default function AIPredictionMap({ predictions }: AIPredictionMapProps) {
     return () => clearInterval(interval);
   }, []);
   
-  // Fetch real-time weather data every 10 minutes
+  // Fetch real-time Fort Erie weather data ALWAYS (every 10 minutes)
+  // Weather is fetched regardless of operating hours to ensure live data
   useEffect(() => {
-    const fetchWeather = async () => {
-      if (!isOperating) return;
-      
+    const fetchFortErieWeather = async () => {
       try {
         setWeatherLoading(true);
-        // Fort Erie coordinates
-        const response = await fetch(
-          'https://api.open-meteo.com/v1/forecast?latitude=42.8900&longitude=-79.0000&current=temperature_2m,weather_code,precipitation,wind_speed&timezone=America/Toronto'
-        );
+        
+        // Fort Erie exact coordinates: 42.8900°N, 79.0000°W
+        // Enhanced API parameters for complete real-time weather data
+        const url = new URL('https://api.open-meteo.com/v1/forecast');
+        url.searchParams.append('latitude', '42.8900');
+        url.searchParams.append('longitude', '-79.0000');
+        url.searchParams.append('current', 'temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,snowfall,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,visibility');
+        url.searchParams.append('timezone', 'America/Toronto');
+        
+        const response = await fetch(url.toString());
         const data = await response.json();
         
         if (data.current) {
-          setWeather(data.current);
-          setLastWeatherUpdate(new Date());
+          // Validate Fort Erie location (ensure we're getting Fort Erie data, not nearby)
+          const isValidLocation = 
+            Math.abs(data.latitude - 42.8900) < 0.05 && 
+            Math.abs(data.longitude - (-79.0000)) < 0.05;
+          
+          if (isValidLocation) {
+            setWeather({
+              ...data.current,
+              location: 'Fort Erie, Ontario, Canada',
+              latitude: data.latitude,
+              longitude: data.longitude,
+              timestamp: new Date().toISOString()
+            });
+            setLastWeatherUpdate(new Date());
+            console.log('✓ Fort Erie weather updated:', {
+              temp: data.current.temperature_2m,
+              condition: data.current.weather_code,
+              time: new Date().toLocaleTimeString()
+            });
+          } else {
+            console.warn('Weather location validation failed - coordinates not Fort Erie');
+          }
         }
       } catch (error) {
-        console.error('Weather fetch error:', error);
+        console.error('Fort Erie weather fetch error:', error);
       } finally {
         setWeatherLoading(false);
       }
     };
     
-    // Fetch immediately
-    fetchWeather();
+    // Fetch immediately on component mount
+    fetchFortErieWeather();
     
-    // Then fetch every 10 minutes
-    const interval = setInterval(fetchWeather, 600000);
+    // Then fetch every 10 minutes (600000 ms) - ALWAYS, regardless of operating hours
+    // This ensures weather data is always fresh and ready
+    const interval = setInterval(fetchFortErieWeather, 600000);
     
     return () => clearInterval(interval);
-  }, [isOperating]);
+  }, []);
   
   // Try to fetch real hotspots from Geo AI service ONLY if operating
   const { data: hotspotsData, isLoading: hotspotsLoading, error: hotspotsFetchError } = trpc.geoAI.hotspots.active.useQuery(
@@ -198,76 +217,96 @@ export default function AIPredictionMap({ predictions }: AIPredictionMapProps) {
   if (!isOperating) {
     return (
       <div className="space-y-4">
-        <Card className="p-8 bg-gradient-to-br from-gray-900 to-gray-800 border-gray-700">
-          <div className="text-center">
-            <Clock className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-            <h2 className="text-2xl font-bold text-white mb-2">Business Closed</h2>
-            <p className="text-gray-300 mb-4">Delivery operations are currently closed</p>
-            <div className="bg-gray-700 rounded-lg p-4 inline-block">
-              <p className="text-sm text-gray-200">
-                <span className="font-semibold">Next Operating Window:</span>
-              </p>
-              <p className="text-lg font-bold text-blue-400 mt-1">
-                {getNextOperatingWindow()}
-              </p>
+        <Card className="p-6 bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200">
+          <div className="flex items-center gap-3 mb-4">
+            <Clock className="w-6 h-6 text-gray-600" />
+            <div>
+              <p className="font-semibold text-lg text-gray-800">Business Closed</p>
+              <p className="text-sm text-gray-600">{getNextOperatingWindow()}</p>
             </div>
-            <p className="text-xs text-gray-400 mt-6">
-              Operating Hours: Sun-Thu 4:00 PM - 10:00 PM | Fri-Sat 4:00 PM - 11:00 PM
-            </p>
+          </div>
+          <div className="bg-white rounded p-3 text-sm text-gray-700">
+            <p className="font-semibold mb-2">Operating Hours:</p>
+            <ul className="space-y-1 text-xs">
+              <li>Sunday - Thursday: 4:00 PM - 10:00 PM</li>
+              <li>Friday - Saturday: 4:00 PM - 11:00 PM</li>
+            </ul>
           </div>
         </Card>
         
-        {/* Closed state - no predictions */}
-        <Card className="p-4 bg-gray-50 border-dashed border-gray-300">
-          <p className="text-center text-gray-500 text-sm">
-            Forecasting paused until next operating window
-          </p>
-        </Card>
+        {/* Display live weather even when closed */}
+        {weather && (
+          <Card className="p-4 bg-blue-50 border border-blue-200">
+            <div className="flex items-start justify-between">
+              <div className="flex items-start gap-3 flex-1">
+                <Cloud className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                <div className="flex-1">
+                  <p className="font-semibold text-sm text-blue-700">Fort Erie Live Weather</p>
+                  <div className="text-xs text-blue-600 mt-1 space-y-1">
+                    <p className="font-semibold text-blue-700">{weather.location || 'Fort Erie, Ontario, Canada'}</p>
+                    <p>🌡️ Temperature: {weather.temperature_2m}°C (feels like {weather.apparent_temperature}°C)</p>
+                    <p>💧 Humidity: {weather.relative_humidity_2m}%</p>
+                    <p>🌧️ Precipitation: {weather.precipitation || 0}mm | ❄️ Snowfall: {weather.snowfall || 0}mm</p>
+                    <p>💨 Wind: {weather.wind_speed_10m}km/h (gusts: {weather.wind_gusts_10m}km/h)</p>
+                    <p>👁️ Visibility: {weather.visibility || 10}km</p>
+                    <p className="text-xs text-blue-500 mt-2 font-semibold">📍 Location: 42.8900°N, 79.0000°W</p>
+                  </div>
+                </div>
+              </div>
+              {lastWeatherUpdate && (
+                <div className="text-right text-xs">
+                  <p className="text-blue-500">Updated: {lastWeatherUpdate.toLocaleTimeString()}</p>
+                  <p className="text-blue-400 mt-1">(Auto-refresh: 10 min)</p>
+                </div>
+              )}
+            </div>
+          </Card>
+        )}
       </div>
     );
   }
-
-  const mapCenter = calculateCenter();
-
+  
   return (
     <div className="space-y-4">
       {/* Operating Status Header */}
-      <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-start justify-between">
-        <div className="flex items-start gap-2">
-          <div className="w-3 h-3 bg-green-500 rounded-full mt-1 animate-pulse" />
-          <div>
-            <p className="font-semibold text-sm text-green-700">Live Operational Mode</p>
-            <p className="text-xs text-green-600">Real-time predictions active</p>
-          </div>
+      <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg p-3">
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
+          <p className="text-sm font-semibold text-green-700">Operating • Forecasting Active</p>
         </div>
         <p className="text-xs text-green-600">
           {new Date().toLocaleTimeString()}
         </p>
       </div>
       
-      {/* Real-Time Weather Panel */}
-      {isOperating && (
+      {/* Real-Time Fort Erie Weather Panel */}
+      {weather && (
         <Card className="p-4 bg-blue-50 border border-blue-200">
           <div className="flex items-start justify-between">
-            <div className="flex items-start gap-3">
-              <Cloud className="w-5 h-5 text-blue-600 mt-0.5" />
-              <div>
-                <p className="font-semibold text-sm text-blue-700">Real-Time Weather</p>
-                {weather ? (
-                  <div className="text-xs text-blue-600 mt-1 space-y-1">
-                    <p>Temperature: {weather.temperature_2m}°C</p>
-                    <p>Precipitation: {weather.precipitation || 0}mm</p>
-                    <p>Wind Speed: {weather.wind_speed}km/h</p>
-                  </div>
-                ) : (
-                  <p className="text-xs text-blue-600 mt-1">Fetching weather data...</p>
-                )}
+            <div className="flex items-start gap-3 flex-1">
+              <Cloud className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+              <div className="flex-1">
+                <p className="font-semibold text-sm text-blue-700">Fort Erie Live Weather</p>
+                <div className="text-xs text-blue-600 mt-1 space-y-1">
+                  <p className="font-semibold text-blue-700">{weather.location || 'Fort Erie, Ontario, Canada'}</p>
+                  <p>🌡️ Temperature: {weather.temperature_2m}°C (feels like {weather.apparent_temperature}°C)</p>
+                  <p>💧 Humidity: {weather.relative_humidity_2m}%</p>
+                  <p>🌧️ Precipitation: {weather.precipitation || 0}mm | ❄️ Snowfall: {weather.snowfall || 0}mm</p>
+                  <p>💨 Wind: {weather.wind_speed_10m}km/h (gusts: {weather.wind_gusts_10m}km/h, direction: {weather.wind_direction_10m}°)</p>
+                  <p>👁️ Visibility: {weather.visibility || 10}km</p>
+                  <p className="text-xs text-blue-500 mt-2 font-semibold">📍 Location verified: 42.8900°N, 79.0000°W (Fort Erie, Ontario)</p>
+                </div>
               </div>
             </div>
             {lastWeatherUpdate && (
-              <p className="text-xs text-blue-500">
-                Updated: {lastWeatherUpdate.toLocaleTimeString()}
-              </p>
+              <div className="text-right">
+                <p className="text-xs text-blue-500">
+                  Updated: {lastWeatherUpdate.toLocaleTimeString()}
+                </p>
+                <p className="text-xs text-blue-400 mt-1">
+                  (Auto-refresh: 10 min)
+                </p>
+              </div>
             )}
           </div>
         </Card>
@@ -278,127 +317,87 @@ export default function AIPredictionMap({ predictions }: AIPredictionMapProps) {
         <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start gap-2">
           <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
           <div>
-            <p className="font-semibold text-sm text-red-700">Geo AI Service Error</p>
-            <p className="text-xs text-red-600">Unable to fetch live predictions. Please try again.</p>
+            <p className="text-sm font-semibold text-red-700">Geo AI Service Unavailable</p>
+            <p className="text-xs text-red-600 mt-1">
+              The prediction service is temporarily unavailable. Forecasting will resume when service is restored.
+            </p>
           </div>
         </div>
       )}
       
-      {/* OpenStreetMap Container */}
-      <Card className="p-4 bg-white border-2 border-purple-200 h-96 overflow-hidden">
-        {hotspotsLoading ? (
-          <div className="flex items-center justify-center h-full bg-gray-50">
-            <p className="text-gray-500">Loading live predictions...</p>
-          </div>
-        ) : hotspots.length === 0 ? (
-          <div className="flex items-center justify-center h-full bg-gray-50">
-            <p className="text-gray-500">No active demand hotspots detected</p>
-          </div>
-        ) : (
-          <MapContainer 
-            center={mapCenter} 
-            zoom={13} 
-            style={{ height: '100%', width: '100%' }}
-            className="rounded-lg"
-          >
-            <TileLayer
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            />
-            
-            {/* Fort Erie Boundary Polygon */}
-            <Polygon 
-              positions={FORT_ERIE_BOUNDARY}
-              pathOptions={{
-                color: '#9333EA',
-                weight: 2,
-                opacity: 0.8,
-                fillColor: '#9333EA',
-                fillOpacity: 0.15,
-              }}
-            />
-            
-            {/* Real Hotspot Markers */}
-            {hotspots.map((hotspot: any, idx: number) => (
-              <CircleMarker
-                key={idx}
-                center={[hotspot.lat, hotspot.lng]}
-                radius={12}
-                pathOptions={{
-                  color: '#fff',
-                  weight: 2,
-                  opacity: 1,
-                  fill: true,
-                  fillColor: hotspot.intensity === 'high' ? '#EF4444' : hotspot.intensity === 'medium' ? '#F97316' : '#FBBF24',
-                  fillOpacity: 0.7,
-                }}
-              >
-                <Popup>
-                  <div className="text-sm">
-                    <p className="font-semibold">{hotspot.intensity.toUpperCase()} Demand Zone</p>
-                    <p>Predicted Orders: {hotspot.orders}</p>
-                    <p>Confidence: {((hotspot.confidence || 0.85) * 100).toFixed(0)}%</p>
-                  </div>
-                </Popup>
-              </CircleMarker>
-            ))}
-          </MapContainer>
-        )}
+      {/* Map Container */}
+      <Card className="overflow-hidden">
+        <MapContainer
+          center={calculateCenter()}
+          zoom={13}
+          style={{ height: '400px', width: '100%' }}
+        >
+          <TileLayer
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution='&copy; OpenStreetMap contributors'
+          />
+          
+          {/* Fort Erie Boundary Polygon */}
+          <Polygon
+            positions={FORT_ERIE_BOUNDARY}
+            color="purple"
+            weight={2}
+            opacity={0.7}
+            fillOpacity={0.1}
+          />
+          
+          {/* Hotspot Markers */}
+          {hotspots.map((hotspot: any, idx: number) => (
+            <CircleMarker
+              key={idx}
+              center={[hotspot.latitude, hotspot.longitude]}
+              radius={hotspot.intensity * 10}
+              fillColor={
+                hotspot.intensity > 0.7 ? '#ef4444' :
+                hotspot.intensity > 0.4 ? '#f97316' :
+                '#eab308'
+              }
+              color={
+                hotspot.intensity > 0.7 ? '#dc2626' :
+                hotspot.intensity > 0.4 ? '#ea580c' :
+                '#ca8a04'
+              }
+              weight={2}
+              opacity={0.8}
+              fillOpacity={0.6}
+            >
+              <Popup>
+                <div className="text-xs">
+                  <p className="font-semibold">Hotspot {idx + 1}</p>
+                  <p>Intensity: {(hotspot.intensity * 100).toFixed(0)}%</p>
+                  <p>Orders: {hotspot.orderCount || 'N/A'}</p>
+                </div>
+              </Popup>
+            </CircleMarker>
+          ))}
+        </MapContainer>
       </Card>
-
-      {/* Prediction Details Grid */}
+      
+      {/* Hotspot Summary */}
       {hotspots.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {/* High Demand */}
-          <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-3 h-3 bg-red-400 rounded-full" />
-              <span className="font-semibold text-sm text-red-700">High Demand Zones</span>
+        <Card className="p-4">
+          <p className="text-sm font-semibold text-gray-700 mb-2">Active Hotspots: {hotspots.length}</p>
+          <div className="grid grid-cols-3 gap-2 text-xs">
+            <div className="bg-red-50 p-2 rounded border border-red-200">
+              <p className="text-red-700 font-semibold">High</p>
+              <p className="text-red-600">{hotspots.filter((h: any) => h.intensity > 0.7).length}</p>
             </div>
-            <p className="text-xs text-red-600">
-              {hotspots.filter((h: any) => h.intensity === 'high').length} active hotspots
-            </p>
-          </div>
-
-          {/* Medium Demand */}
-          <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-3 h-3 bg-orange-400 rounded-full" />
-              <span className="font-semibold text-sm text-orange-700">Medium Demand</span>
+            <div className="bg-orange-50 p-2 rounded border border-orange-200">
+              <p className="text-orange-700 font-semibold">Medium</p>
+              <p className="text-orange-600">{hotspots.filter((h: any) => h.intensity > 0.4 && h.intensity <= 0.7).length}</p>
             </div>
-            <p className="text-xs text-orange-600">
-              {hotspots.filter((h: any) => h.intensity === 'medium').length} moderate zones
-            </p>
-          </div>
-
-          {/* Low Demand */}
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-3 h-3 bg-yellow-400 rounded-full" />
-              <span className="font-semibold text-sm text-yellow-700">Low Demand</span>
+            <div className="bg-yellow-50 p-2 rounded border border-yellow-200">
+              <p className="text-yellow-700 font-semibold">Low</p>
+              <p className="text-yellow-600">{hotspots.filter((h: any) => h.intensity <= 0.4).length}</p>
             </div>
-            <p className="text-xs text-yellow-600">
-              {hotspots.filter((h: any) => h.intensity === 'low').length} emerging zones
-            </p>
           </div>
-        </div>
+        </Card>
       )}
-
-      {/* Service Area Info */}
-      <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
-        <div className="flex items-center gap-2 mb-2">
-          <Zap className="w-4 h-4 text-purple-600" />
-          <span className="font-semibold text-sm text-purple-700">Service Area</span>
-        </div>
-        <p className="text-xs text-purple-600">Purple boundary shows Fort Erie delivery service area</p>
-      </div>
-
-      {/* Data Source Info */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-        <p className="text-xs text-blue-600">
-          ✓ Live predictions from Geo AI service ({hotspots.length} hotspots detected)
-        </p>
-      </div>
     </div>
   );
-}
+};

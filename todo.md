@@ -3036,3 +3036,16 @@ Note: All framework components are in place. Deployment and testing can proceed 
 - [x] Handle API rate limiting gracefully (try/catch error handling)
 - [x] Implement fallback weather sources (Open-Meteo as primary)
 - [x] Add weather data quality validation (is_valid flag, location validation)
+
+
+## Phase 69: CRITICAL BUG - Fix Weather Data Not Updating Dynamically
+- [ ] Debug weather fetch implementation in AIPredictionMap
+- [ ] Verify Open-Meteo API is returning fresh data
+- [ ] Check if weather state is actually updating
+- [ ] Verify useEffect dependency array for weather fetch
+- [ ] Test weather refresh interval (10 minutes)
+- [ ] Ensure no caching of weather responses
+- [ ] Verify Fort Erie coordinates are correct (42.8900, -79.0000)
+- [ ] Test with actual current Fort Erie weather
+- [ ] Implement forced refresh for testing
+- [ ] Verify weather updates display in real-time
