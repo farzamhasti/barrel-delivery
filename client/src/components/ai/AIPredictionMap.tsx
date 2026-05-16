@@ -1,4 +1,4 @@
-/**
+/*
  * AI Prediction Map Component - LIVE OPERATIONAL MODE
  * Enforces operating hours, integrates real geoAI APIs, and displays live weather data
  * No mock data - only real operational intelligence
@@ -101,12 +101,11 @@ const isWithinOperatingHours = (): boolean => {
   return currentHour >= hours.start && currentHour < hours.end;
 };
 
-// Get next operating window
+// Get next operating window message
 const getNextOperatingWindow = (): string => {
   const now = new Date();
   const dayOfWeek = now.getDay();
   const currentHour = now.getHours();
-  
   const hours = OPERATING_HOURS[dayOfWeek as keyof typeof OPERATING_HOURS];
   
   if (currentHour < hours.start) {
@@ -151,8 +150,17 @@ export const AIPredictionMap: React.FC<AIPredictionMapProps> = () => {
         url.searchParams.append('longitude', '-79.0000');
         url.searchParams.append('current', 'temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,snowfall,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,visibility');
         url.searchParams.append('timezone', 'America/Toronto');
+        // Add cache-busting parameter to prevent stale data
+        url.searchParams.append('_t', Date.now().toString());
         
-        const response = await fetch(url.toString());
+        const response = await fetch(url.toString(), {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+          }
+        });
         const data = await response.json();
         
         if (data.current) {
@@ -162,18 +170,32 @@ export const AIPredictionMap: React.FC<AIPredictionMapProps> = () => {
             Math.abs(data.longitude - (-79.0000)) < 0.05;
           
           if (isValidLocation) {
-            setWeather({
-              ...data.current,
+            // CRITICAL: Only use current temperature, not forecast
+            const weatherData = {
+              temperature_2m: data.current.temperature_2m,
+              relative_humidity_2m: data.current.relative_humidity_2m,
+              apparent_temperature: data.current.apparent_temperature,
+              precipitation: data.current.precipitation,
+              snowfall: data.current.snowfall,
+              weather_code: data.current.weather_code,
+              wind_speed_10m: data.current.wind_speed_10m,
+              wind_direction_10m: data.current.wind_direction_10m,
+              wind_gusts_10m: data.current.wind_gusts_10m,
+              visibility: data.current.visibility,
               location: 'Fort Erie, Ontario, Canada',
               latitude: data.latitude,
               longitude: data.longitude,
-              timestamp: new Date().toISOString()
-            });
+              timestamp: new Date().toISOString(),
+              time: data.current.time
+            };
+            
+            setWeather(weatherData);
             setLastWeatherUpdate(new Date());
-            console.log('✓ Fort Erie weather updated:', {
+            console.log('✓ Fort Erie CURRENT weather updated:', {
               temp: data.current.temperature_2m,
-              condition: data.current.weather_code,
-              time: new Date().toLocaleTimeString()
+              humidity: data.current.relative_humidity_2m,
+              time: new Date().toLocaleTimeString(),
+              apiTime: data.current.time
             });
           } else {
             console.warn('Weather location validation failed - coordinates not Fort Erie');
@@ -218,23 +240,18 @@ export const AIPredictionMap: React.FC<AIPredictionMapProps> = () => {
     return (
       <div className="space-y-4">
         <Card className="p-6 bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200">
-          <div className="flex items-center gap-3 mb-4">
+          <div className="flex items-center gap-3">
             <Clock className="w-6 h-6 text-gray-600" />
             <div>
-              <p className="font-semibold text-lg text-gray-800">Business Closed</p>
-              <p className="text-sm text-gray-600">{getNextOperatingWindow()}</p>
+              <p className="font-semibold text-gray-800">Business Closed</p>
+              <p className="text-sm text-gray-600 mt-1">
+                Delivery operations are currently closed. {getNextOperatingWindow()}
+              </p>
             </div>
-          </div>
-          <div className="bg-white rounded p-3 text-sm text-gray-700">
-            <p className="font-semibold mb-2">Operating Hours:</p>
-            <ul className="space-y-1 text-xs">
-              <li>Sunday - Thursday: 4:00 PM - 10:00 PM</li>
-              <li>Friday - Saturday: 4:00 PM - 11:00 PM</li>
-            </ul>
           </div>
         </Card>
         
-        {/* Display live weather even when closed */}
+        {/* Still show weather even when closed */}
         {weather && (
           <Card className="p-4 bg-blue-50 border border-blue-200">
             <div className="flex items-start justify-between">
@@ -247,16 +264,20 @@ export const AIPredictionMap: React.FC<AIPredictionMapProps> = () => {
                     <p>🌡️ Temperature: {weather.temperature_2m}°C (feels like {weather.apparent_temperature}°C)</p>
                     <p>💧 Humidity: {weather.relative_humidity_2m}%</p>
                     <p>🌧️ Precipitation: {weather.precipitation || 0}mm | ❄️ Snowfall: {weather.snowfall || 0}mm</p>
-                    <p>💨 Wind: {weather.wind_speed_10m}km/h (gusts: {weather.wind_gusts_10m}km/h)</p>
+                    <p>💨 Wind: {weather.wind_speed_10m}km/h (gusts: {weather.wind_gusts_10m}km/h, direction: {weather.wind_direction_10m}°)</p>
                     <p>👁️ Visibility: {weather.visibility || 10}km</p>
-                    <p className="text-xs text-blue-500 mt-2 font-semibold">📍 Location: 42.8900°N, 79.0000°W</p>
+                    <p className="text-xs text-blue-500 mt-2 font-semibold">📍 Location verified: 42.8900°N, 79.0000°W (Fort Erie, Ontario)</p>
                   </div>
                 </div>
               </div>
               {lastWeatherUpdate && (
-                <div className="text-right text-xs">
-                  <p className="text-blue-500">Updated: {lastWeatherUpdate.toLocaleTimeString()}</p>
-                  <p className="text-blue-400 mt-1">(Auto-refresh: 10 min)</p>
+                <div className="text-right">
+                  <p className="text-xs text-blue-500">
+                    Updated: {lastWeatherUpdate.toLocaleTimeString()}
+                  </p>
+                  <p className="text-xs text-blue-400 mt-1">
+                    (Auto-refresh: 10 min)
+                  </p>
                 </div>
               )}
             </div>
@@ -269,14 +290,9 @@ export const AIPredictionMap: React.FC<AIPredictionMapProps> = () => {
   return (
     <div className="space-y-4">
       {/* Operating Status Header */}
-      <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg p-3">
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
-          <p className="text-sm font-semibold text-green-700">Operating • Forecasting Active</p>
-        </div>
-        <p className="text-xs text-green-600">
-          {new Date().toLocaleTimeString()}
-        </p>
+      <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+        <div className="w-2 h-2 bg-green-600 rounded-full animate-pulse" />
+        <span className="text-sm font-semibold text-green-700">🟢 Operating - AI Ready</span>
       </div>
       
       {/* Real-Time Fort Erie Weather Panel */}
@@ -289,12 +305,13 @@ export const AIPredictionMap: React.FC<AIPredictionMapProps> = () => {
                 <p className="font-semibold text-sm text-blue-700">Fort Erie Live Weather</p>
                 <div className="text-xs text-blue-600 mt-1 space-y-1">
                   <p className="font-semibold text-blue-700">{weather.location || 'Fort Erie, Ontario, Canada'}</p>
-                  <p>🌡️ Temperature: {weather.temperature_2m}°C (feels like {weather.apparent_temperature}°C)</p>
+                  <p>🌡️ Temperature: <span className="font-bold text-lg text-blue-800">{weather.temperature_2m}°C</span> (feels like {weather.apparent_temperature}°C)</p>
                   <p>💧 Humidity: {weather.relative_humidity_2m}%</p>
                   <p>🌧️ Precipitation: {weather.precipitation || 0}mm | ❄️ Snowfall: {weather.snowfall || 0}mm</p>
                   <p>💨 Wind: {weather.wind_speed_10m}km/h (gusts: {weather.wind_gusts_10m}km/h, direction: {weather.wind_direction_10m}°)</p>
                   <p>👁️ Visibility: {weather.visibility || 10}km</p>
                   <p className="text-xs text-blue-500 mt-2 font-semibold">📍 Location verified: 42.8900°N, 79.0000°W (Fort Erie, Ontario)</p>
+                  <p className="text-xs text-blue-400 mt-1">API Time: {weather.time}</p>
                 </div>
               </div>
             </div>
@@ -351,7 +368,7 @@ export const AIPredictionMap: React.FC<AIPredictionMapProps> = () => {
             <CircleMarker
               key={idx}
               center={[hotspot.latitude, hotspot.longitude]}
-              radius={hotspot.intensity * 10}
+              radius={Math.max(5, hotspot.intensity * 15)}
               fillColor={
                 hotspot.intensity > 0.7 ? '#ef4444' :
                 hotspot.intensity > 0.4 ? '#f97316' :
@@ -364,13 +381,13 @@ export const AIPredictionMap: React.FC<AIPredictionMapProps> = () => {
               }
               weight={2}
               opacity={0.8}
-              fillOpacity={0.6}
+              fillOpacity={0.7}
             >
               <Popup>
                 <div className="text-xs">
                   <p className="font-semibold">Hotspot {idx + 1}</p>
                   <p>Intensity: {(hotspot.intensity * 100).toFixed(0)}%</p>
-                  <p>Orders: {hotspot.orderCount || 'N/A'}</p>
+                  <p>Orders: {hotspot.orderCount || 0}</p>
                 </div>
               </Popup>
             </CircleMarker>
@@ -378,26 +395,26 @@ export const AIPredictionMap: React.FC<AIPredictionMapProps> = () => {
         </MapContainer>
       </Card>
       
-      {/* Hotspot Summary */}
+      {/* Hotspots Summary */}
       {hotspots.length > 0 && (
         <Card className="p-4">
-          <p className="text-sm font-semibold text-gray-700 mb-2">Active Hotspots: {hotspots.length}</p>
-          <div className="grid grid-cols-3 gap-2 text-xs">
-            <div className="bg-red-50 p-2 rounded border border-red-200">
-              <p className="text-red-700 font-semibold">High</p>
-              <p className="text-red-600">{hotspots.filter((h: any) => h.intensity > 0.7).length}</p>
-            </div>
-            <div className="bg-orange-50 p-2 rounded border border-orange-200">
-              <p className="text-orange-700 font-semibold">Medium</p>
-              <p className="text-orange-600">{hotspots.filter((h: any) => h.intensity > 0.4 && h.intensity <= 0.7).length}</p>
-            </div>
-            <div className="bg-yellow-50 p-2 rounded border border-yellow-200">
-              <p className="text-yellow-700 font-semibold">Low</p>
-              <p className="text-yellow-600">{hotspots.filter((h: any) => h.intensity <= 0.4).length}</p>
-            </div>
+          <div className="flex items-center gap-2 mb-3">
+            <MapPin className="w-5 h-5 text-orange-600" />
+            <p className="font-semibold text-sm">Active Hotspots: {hotspots.length}</p>
+          </div>
+          <div className="grid grid-cols-1 gap-2">
+            {hotspots.map((hotspot: any, idx: number) => (
+              <div key={idx} className="text-xs p-2 bg-gray-50 rounded border border-gray-200">
+                <p className="font-semibold">Zone {idx + 1}</p>
+                <p>Intensity: {(hotspot.intensity * 100).toFixed(0)}%</p>
+                <p>Orders: {hotspot.orderCount || 0}</p>
+              </div>
+            ))}
           </div>
         </Card>
       )}
     </div>
   );
 };
+
+export default AIPredictionMap;
