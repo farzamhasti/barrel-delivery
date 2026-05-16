@@ -125,6 +125,8 @@ export const AIPredictionMap: React.FC<AIPredictionMapProps> = () => {
   const [lastWeatherUpdate, setLastWeatherUpdate] = useState<Date | null>(null);
   const [isOperating, setIsOperating] = useState(isWithinOperatingHours());
   
+  // Use tRPC weather API
+  
   // Check operating hours every minute
   useEffect(() => {
     setIsOperating(isWithinOperatingHours());
@@ -136,87 +138,50 @@ export const AIPredictionMap: React.FC<AIPredictionMapProps> = () => {
     return () => clearInterval(interval);
   }, []);
   
-  // Fetch real-time Fort Erie weather data ALWAYS (every 10 minutes)
+  // Fetch real-time Fort Erie weather data via tRPC (server-side to bypass CORS)
   // Weather is fetched regardless of operating hours to ensure live data
+  const { data: weatherResponse, isLoading: weatherApiLoading } = trpc.geoAI.weather.current.useQuery(undefined, {
+    refetchInterval: 600000, // 10 minutes
+  });
+  
+  // Update weather state when tRPC response arrives
   useEffect(() => {
-    const fetchFortErieWeather = async () => {
-      try {
-        setWeatherLoading(true);
-        
-        // Fort Erie exact coordinates: 42.8900°N, 79.0000°W
-        // Enhanced API parameters for complete real-time weather data
-        const url = new URL('https://api.open-meteo.com/v1/forecast');
-        url.searchParams.append('latitude', '42.8900');
-        url.searchParams.append('longitude', '-79.0000');
-        url.searchParams.append('current', 'temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,snowfall,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,visibility');
-        url.searchParams.append('timezone', 'America/Toronto');
-        // Add cache-busting parameter to prevent stale data
-        url.searchParams.append('_t', Date.now().toString());
-        
-        const response = await fetch(url.toString(), {
-          cache: 'no-store',
-          headers: {
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0'
-          }
-        });
-        const data = await response.json();
-        
-        if (data.current) {
-          // Validate Fort Erie location (ensure we're getting Fort Erie data, not nearby)
-          const isValidLocation = 
-            Math.abs(data.latitude - 42.8900) < 0.05 && 
-            Math.abs(data.longitude - (-79.0000)) < 0.05;
-          
-          if (isValidLocation) {
-            // CRITICAL: Only use current temperature, not forecast
-            const weatherData = {
-              temperature_2m: data.current.temperature_2m,
-              relative_humidity_2m: data.current.relative_humidity_2m,
-              apparent_temperature: data.current.apparent_temperature,
-              precipitation: data.current.precipitation,
-              snowfall: data.current.snowfall,
-              weather_code: data.current.weather_code,
-              wind_speed_10m: data.current.wind_speed_10m,
-              wind_direction_10m: data.current.wind_direction_10m,
-              wind_gusts_10m: data.current.wind_gusts_10m,
-              visibility: data.current.visibility,
-              location: 'Fort Erie, Ontario, Canada',
-              latitude: data.latitude,
-              longitude: data.longitude,
-              timestamp: new Date().toISOString(),
-              time: data.current.time
-            };
-            
-            setWeather(weatherData);
-            setLastWeatherUpdate(new Date());
-            console.log('✓ Fort Erie CURRENT weather updated:', {
-              temp: data.current.temperature_2m,
-              humidity: data.current.relative_humidity_2m,
-              time: new Date().toLocaleTimeString(),
-              apiTime: data.current.time
-            });
-          } else {
-            console.warn('Weather location validation failed - coordinates not Fort Erie');
-          }
-        }
-      } catch (error) {
-        console.error('Fort Erie weather fetch error:', error);
-      } finally {
-        setWeatherLoading(false);
-      }
-    };
-    
-    // Fetch immediately on component mount
-    fetchFortErieWeather();
-    
-    // Then fetch every 10 minutes (600000 ms) - ALWAYS, regardless of operating hours
-    // This ensures weather data is always fresh and ready
-    const interval = setInterval(fetchFortErieWeather, 600000);
-    
-    return () => clearInterval(interval);
-  }, []);
+    if (weatherResponse?.success && weatherResponse.data) {
+      const data = weatherResponse.data;
+      const weatherData = {
+        temperature_2m: data.temperature,
+        relative_humidity_2m: data.humidity,
+        apparent_temperature: data.apparent_temperature,
+        precipitation: data.precipitation,
+        snowfall: data.snowfall,
+        weather_code: data.weather_code,
+        wind_speed_10m: data.wind_speed,
+        wind_direction_10m: data.wind_direction,
+        wind_gusts_10m: data.wind_gusts,
+        visibility: data.visibility,
+        location: 'Fort Erie, Ontario, Canada',
+        latitude: data.latitude,
+        longitude: data.longitude,
+        timestamp: data.timestamp,
+        time: data.time
+      };
+      
+      setWeather(weatherData);
+      setLastWeatherUpdate(new Date());
+      console.log('✓ Fort Erie CURRENT weather updated via tRPC:', {
+        temp: data.temperature,
+        humidity: data.humidity,
+        time: new Date().toLocaleTimeString()
+      });
+    } else if (weatherResponse?.success === false) {
+      console.error('Fort Erie weather fetch error:', weatherResponse.error);
+    }
+  }, [weatherResponse]);
+  
+  // Update loading state
+  useEffect(() => {
+    setWeatherLoading(weatherApiLoading);
+  }, [weatherApiLoading]);
   
   // Try to fetch real hotspots from Geo AI service ONLY if operating
   const { data: hotspotsData, isLoading: hotspotsLoading, error: hotspotsFetchError } = trpc.geoAI.hotspots.active.useQuery(

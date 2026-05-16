@@ -3168,3 +3168,40 @@ Weather Impact card now displays:
 - Impact Score: 30% (base impact)
 
 The condition will update correctly when weather changes throughout the day.
+
+
+## Phase 74: AIPredictionMap CORS Fix (COMPLETED)
+
+ERROR REPORTED:
+- "Failed to fetch" error in AIPredictionMap.tsx at line 129
+- Browser CORS restrictions blocking direct Open-Meteo API calls
+- Same issue as SpatialAIIntelligenceCard (Phase 72)
+
+ROOT CAUSE:
+- AIPredictionMap was still making direct fetch() calls to Open-Meteo
+- Browser CORS policy blocks cross-origin requests to external APIs
+- Solution: Route API calls through backend tRPC server
+
+SOLUTION IMPLEMENTED:
+- [x] Replaced direct fetch() call with trpc.geoAI.weather.current.useQuery()
+- [x] Removed 200+ lines of direct fetch logic
+- [x] Added useEffect to map tRPC response to component state
+- [x] Maintained auto-refetch every 10 minutes via refetchInterval
+- [x] Mapped API response fields to expected format
+- [x] Added error handling for failed API responses
+- [x] Updated loading state from tRPC loading indicator
+
+VERIFICATION:
+- TypeScript compilation: 0 errors
+- Dev server: Running successfully
+- tRPC procedure properly integrated
+- No CORS errors expected
+
+RESULT:
+AIPredictionMap now loads weather data correctly via tRPC server-side fetch.
+Both SpatialAIIntelligenceCard and AIPredictionMap now use the same tRPC weather API.
+No more CORS errors in either component.
+
+FILES MODIFIED:
+- client/src/components/ai/AIPredictionMap.tsx: Replaced direct fetch with tRPC weather
+- todo.md: Added Phase 74 completion details
