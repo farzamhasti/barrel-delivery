@@ -432,6 +432,78 @@ export const geoAIRouter = router({
   }),
 
   /**
+   * Fort Erie Weather Data
+   * Fetch real-time weather from Open-Meteo (server-side to bypass CORS)
+   */
+  weather: router({
+    current: publicProcedure.query(async () => {
+      try {
+        const url = new URL('https://api.open-meteo.com/v1/forecast');
+        url.searchParams.append('latitude', '42.8900');
+        url.searchParams.append('longitude', '-79.0000');
+        url.searchParams.append('current', 'temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,snowfall,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,visibility');
+        url.searchParams.append('timezone', 'America/Toronto');
+        
+        const response = await fetch(url.toString(), {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Open-Meteo API error: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        
+        // Validate Fort Erie location
+        const isValidLocation = 
+          Math.abs(data.latitude - 42.8900) < 0.05 && 
+          Math.abs(data.longitude - (-79.0000)) < 0.05;
+        
+        if (!isValidLocation) {
+          throw new Error('Weather data location validation failed');
+        }
+        
+        return {
+          success: true,
+          data: {
+            temperature: data.current.temperature_2m,
+            humidity: data.current.relative_humidity_2m,
+            apparent_temperature: data.current.apparent_temperature,
+            precipitation: data.current.precipitation,
+            snowfall: data.current.snowfall,
+            weather_code: data.current.weather_code,
+            wind_speed: data.current.wind_speed_10m,
+            wind_direction: data.current.wind_direction_10m,
+            wind_gusts: data.current.wind_gusts_10m,
+            visibility: data.current.visibility,
+            time: data.current.time,
+            latitude: data.latitude,
+            longitude: data.longitude,
+            timezone: data.timezone,
+            timestamp: new Date().toISOString()
+          },
+          metadata: {
+            location: 'Fort Erie, Ontario, Canada',
+            coordinates: { lat: 42.8900, lng: -79.0000 }
+          }
+        };
+      } catch (error) {
+        console.error('Weather fetch error:', error);
+        return {
+          success: false,
+          error: `Failed to fetch Fort Erie weather: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          data: null
+        };
+      }
+    }),
+  }),
+
+  /**
    * Composite Dashboard Data
    * Get all AI predictions for dashboard display
    */

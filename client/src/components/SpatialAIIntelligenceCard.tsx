@@ -37,56 +37,30 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
   const [recommendations, setRecommendations] = useState<any[]>([]);
   const [weatherData, setWeatherData] = useState<any>(null);
 
-  // Fetch real Fort Erie weather data
+  // Fetch real Fort Erie weather data via tRPC (server-side to bypass CORS)
+  const { data: weatherResponse, isLoading: weatherLoading } = trpc.geoAI.weather.current.useQuery(undefined, {
+    refetchInterval: 600000, // 10 minutes
+  });
+  
+  // Update weather state when tRPC response arrives
   useEffect(() => {
-    const fetchFortErieWeather = async () => {
-      try {
-        const url = new URL('https://api.open-meteo.com/v1/forecast');
-        url.searchParams.append('latitude', '42.8900');
-        url.searchParams.append('longitude', '-79.0000');
-        url.searchParams.append('current', 'temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,snowfall,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,visibility');
-        url.searchParams.append('timezone', 'America/Toronto');
-        url.searchParams.append('_t', Date.now().toString()); // Cache-busting
-        
-        const response = await fetch(url.toString(), {
-          cache: 'no-store',
-          headers: {
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0'
-          }
-        });
-        const data = await response.json();
-        
-        if (data.current) {
-          const isValidLocation = 
-            Math.abs(data.latitude - 42.8900) < 0.05 && 
-            Math.abs(data.longitude - (-79.0000)) < 0.05;
-          
-          if (isValidLocation) {
-            setWeatherData({
-              temperature: Math.round(data.current.temperature_2m),
-              condition: getWeatherCondition(data.current.weather_code),
-              impact_score: calculateWeatherImpact(data.current),
-              precipitation_chance: data.current.precipitation || 0,
-              humidity: data.current.relative_humidity_2m,
-              wind_speed: data.current.wind_speed_10m,
-              timestamp: new Date().toLocaleTimeString()
-            });
-          }
-        }
-      } catch (error) {
-        console.error('Weather fetch error:', error);
-      }
-    };
-    
-    fetchFortErieWeather();
-    const interval = setInterval(fetchFortErieWeather, 600000); // 10 minutes
-    return () => clearInterval(interval);
-  }, []);
+    if (weatherResponse?.success && weatherResponse.data) {
+      const current = weatherResponse.data;
+      setWeatherData({
+        temperature: Math.round(current.temperature),
+        condition: getWeatherCondition(current.weather_code),
+        impact_score: calculateWeatherImpact(current),
+        precipitation_chance: current.precipitation || 0,
+        humidity: current.humidity,
+        wind_speed: current.wind_speed,
+        timestamp: new Date().toLocaleTimeString()
+      });
+    }
+  }, [weatherResponse]);
   
   // Helper function to get weather condition from WMO code
-  const getWeatherCondition = (code: number): string => {
+  const getWeatherCondition = (code: number | undefined): string => {
+    if (!code) return 'Unknown';
     if (code === 0 || code === 1) return 'Clear';
     if (code === 2) return 'Partly Cloudy';
     if (code === 3) return 'Cloudy';
@@ -109,7 +83,7 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
     if (current.snowfall > 0) impact += 0.3;
     
     // Wind speed affects impact
-    if (current.wind_speed_10m > 20) impact += 0.2;
+    if (current.wind_speed > 20) impact += 0.2;
     
     return Math.min(impact, 1.0);
   };
