@@ -150,40 +150,6 @@ export default function AIKPISummary({ data }: AIKPISummaryProps) {
 
       {/* Secondary Metrics Row */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Weather Impact Card */}
-        <Card className="p-4 bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200">
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-gray-700">Weather Impact</h3>
-              <Cloud className="w-5 h-5 text-blue-600" />
-            </div>
-
-            <div className="space-y-2 text-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-gray-600">Condition</span>
-                <span className="font-semibold">{data.weatherImpact.condition}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-600">Temperature</span>
-                <span className="font-semibold">{data.weatherImpact.temperature}°C</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-600">Precipitation</span>
-                <span className="font-semibold">{data.weatherImpact.precipitation_chance}%</span>
-              </div>
-            </div>
-
-            <div className="pt-2 border-t">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-gray-600">Impact Score</span>
-                <span className="font-semibold text-blue-600">
-                  {(data.weatherImpact.impact_score * 100).toFixed(0)}%
-                </span>
-              </div>
-            </div>
-          </div>
-        </Card>
-
         {/* Event Impact Card */}
         <Card className="p-4 bg-gradient-to-br from-orange-50 to-red-50 border-orange-200">
           <div className="space-y-3">

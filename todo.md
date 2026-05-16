@@ -3297,3 +3297,38 @@ Better visual organization with emoji icons for each metric.
 FILES MODIFIED:
 - client/src/components/SpatialAIIntelligenceCard.tsx: Updated Weather Impact card with complete weather metrics and emojis
 - todo.md: Added Phase 76 completion details
+
+
+## Phase 77: Remove Simplified Weather Impact Card (COMPLETED)
+
+FEATURE REQUEST:
+- Remove the old simplified "Weather Impact" card that showed only Condition, Temperature, and Precipitation
+- Keep only the detailed Weather Impact card with complete metrics and emojis
+
+SOLUTION IMPLEMENTED:
+- [x] Located simplified Weather Impact card in AIKPISummary.tsx (lines 153-185)
+- [x] Removed the entire card component
+- [x] Kept Event Impact card in the grid
+- [x] Maintained grid layout with remaining cards
+
+CARDS REMOVED:
+- Weather Impact card showing:
+  - Condition
+  - Temperature (9°C)
+  - Precipitation (0%)
+  - Impact Score
+
+VERIFICATION:
+- TypeScript compilation: 0 errors
+- Dev server: Running successfully
+- No duplicate weather cards
+- Grid layout preserved
+
+RESULT:
+Simplified Weather Impact card removed from AIKPISummary.
+Only the detailed Weather Impact card with complete Fort Erie Live Weather metrics remains.
+Dashboard now displays comprehensive weather information without duplication.
+
+FILES MODIFIED:
+- client/src/components/ai/AIKPISummary.tsx: Removed simplified Weather Impact card
+- todo.md: Added Phase 77 completion details
