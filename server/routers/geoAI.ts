@@ -262,9 +262,9 @@ export const geoAIRouter = router({
               adjustedData.predictions = adjustedData.predictions.map((pred: any) => ({
                 ...pred,
                 base_forecast: pred.predicted_orders,
-                predicted_orders: applyWeatherToDemand(pred.predicted_orders, weatherImpact),
+                predicted_orders: applyWeatherToDemand(pred.predicted_orders, weatherImpact!),
                 weather_adjusted: true,
-                demand_multiplier: weatherImpact.demandMultiplier,
+                demand_multiplier: weatherImpact!.demandMultiplier,
               }));
             }
             
@@ -380,7 +380,7 @@ export const geoAIRouter = router({
             weatherImpact = calculateWeatherImpact(weatherData);
             
             // Apply weather multiplier to hotspot intensity
-            if (adjustedData.intensity !== undefined) {
+            if (adjustedData.intensity !== undefined && weatherImpact) {
               adjustedData.base_intensity = adjustedData.intensity;
               adjustedData.intensity = applyWeatherToHotspotIntensity(
                 adjustedData.intensity,
@@ -430,11 +430,11 @@ export const geoAIRouter = router({
           weatherImpact = calculateWeatherImpact(weatherData);
           
           // Apply weather multiplier to all active hotspots
-          if (Array.isArray(adjustedData.hotspots)) {
+          if (Array.isArray(adjustedData.hotspots) && weatherImpact) {
             adjustedData.hotspots = adjustedData.hotspots.map((hotspot: any) => ({
               ...hotspot,
               base_intensity: hotspot.intensity,
-              intensity: applyWeatherToHotspotIntensity(hotspot.intensity, weatherImpact),
+              intensity: applyWeatherToHotspotIntensity(hotspot.intensity, weatherImpact!),
             }));
           }
           
