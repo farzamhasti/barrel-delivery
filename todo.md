@@ -3249,3 +3249,51 @@ Better visibility of all weather conditions for delivery operations.
 FILES MODIFIED:
 - client/src/components/SpatialAIIntelligenceCard.tsx: Replaced Weather Impact with Fort Erie Live Weather
 - todo.md: Added Phase 75 completion details
+
+
+## Phase 76: Weather Impact Card - Complete Fort Erie Live Weather with Emojis (COMPLETED)
+
+FEATURE REQUEST:
+- Update Weather Impact card to display complete Fort Erie Live Weather information
+- Format with emojis for better visual clarity
+- Keep card structure but replace content
+
+SOLUTION IMPLEMENTED:
+- [x] Replaced Weather Impact card content with complete weather metrics
+- [x] Added emoji icons for each weather metric
+- [x] Display header: 🌤️ Fort Erie Live Weather
+- [x] Display temperature: 🌡️ with apparent temperature
+- [x] Display humidity: 💧 percentage
+- [x] Display precipitation: 🌧️ and snowfall: ❄️
+- [x] Display wind: 💨 with gusts and direction
+- [x] Display visibility: 👁️ in kilometers
+- [x] Display location: 📍 with coordinates
+- [x] Maintained card styling (white background, blue border)
+- [x] Kept card as col-span-2 for proper grid layout
+- [x] Added proper number formatting (toFixed, toLocaleString)
+
+WEATHER METRICS DISPLAYED:
+- 🌤️ Fort Erie Live Weather
+- Fort Erie, Ontario, Canada
+- 🌡️ Temperature: 8.9°C (feels like 5.5°C)
+- 💧 Humidity: 70%
+- 🌧️ Precipitation: 0 mm | ❄️ Snowfall: 0 mm
+- 💨 Wind: 12.8 km/h (gust: 28.4 km/h, direction: 170°)
+- 👁️ Visibility: 23,000 km
+- 📍 Confirmed location: 42.8900°N, 79.0000°W (Fort Erie, Ontario)
+
+VERIFICATION:
+- TypeScript compilation: 0 errors
+- Dev server: Running successfully
+- All weather data displays correctly with emojis
+- Card layout maintains proper grid positioning
+- Responsive design preserved
+
+RESULT:
+Weather Impact card now displays complete Fort Erie Live Weather information with emoji formatting.
+All operational weather metrics visible at a glance.
+Better visual organization with emoji icons for each metric.
+
+FILES MODIFIED:
+- client/src/components/SpatialAIIntelligenceCard.tsx: Updated Weather Impact card with complete weather metrics and emojis
+- todo.md: Added Phase 76 completion details

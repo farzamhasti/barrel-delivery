@@ -314,27 +314,24 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
                     </div>
                   </div>
 
-                  {/* Fort Erie Live Weather - Complete Information */}
-                  <div className="col-span-2 md:col-span-2 p-4 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-lg border-2 border-blue-300 shadow-md">
-                    <div className="space-y-3">
+                  {/* Weather Impact - Fort Erie Live Weather with Emojis */}
+                  <div className="col-span-2 md:col-span-2 p-4 bg-white rounded-lg border border-blue-200 shadow-sm">
+                    <div className="space-y-2 text-sm">
                       {/* Header */}
-                      <div className="flex items-center gap-2 mb-3">
-                        <Cloud className="w-5 h-5 text-blue-600" />
-                        <div>
-                          <h3 className="font-bold text-blue-900">Fort Erie Live Weather</h3>
-                          <p className="text-xs text-blue-700">Fort Erie, Ontario, Canada</p>
-                        </div>
+                      <div className="mb-3 pb-2 border-b border-blue-200">
+                        <h3 className="font-bold text-blue-900 text-base">🌤️ Fort Erie Live Weather</h3>
+                        <p className="text-xs text-blue-700">Fort Erie, Ontario, Canada</p>
                       </div>
 
                       {/* Temperature */}
                       <div className="flex items-baseline gap-2">
-                        <span className="text-sm text-gray-600">Temperature:</span>
-                        <span className="text-lg font-bold text-blue-700">
-                          {weatherData?.temperature_2m ? Math.round(weatherData.temperature_2m) : predictionData?.weatherImpact?.temperature}°C
+                        <span>🌡️ Temperature:</span>
+                        <span className="font-bold text-blue-700">
+                          {weatherData?.temperature_2m ? weatherData.temperature_2m.toFixed(1) : predictionData?.weatherImpact?.temperature}°C
                         </span>
                         {weatherData?.apparent_temperature && (
-                          <span className="text-xs text-gray-500">
-                            (feels like {Math.round(weatherData.apparent_temperature)}°C)
+                          <span className="text-xs text-gray-600">
+                            (feels like {weatherData.apparent_temperature.toFixed(1)}°C)
                           </span>
                         )}
                       </div>
@@ -342,21 +339,21 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
                       {/* Humidity */}
                       {weatherData?.relative_humidity_2m && (
                         <div className="flex items-baseline gap-2">
-                          <span className="text-sm text-gray-600">Humidity:</span>
-                          <span className="text-lg font-bold text-blue-600">{weatherData.relative_humidity_2m}%</span>
+                          <span>💧 Humidity:</span>
+                          <span className="font-bold text-blue-600">{weatherData.relative_humidity_2m}%</span>
                         </div>
                       )}
 
                       {/* Precipitation & Snowfall */}
                       {weatherData && (
                         <div className="flex items-baseline gap-2">
-                          <span className="text-sm text-gray-600">Precipitation:</span>
-                          <span className="text-lg font-bold text-blue-600">
-                            {weatherData.precipitation || 0}mm
+                          <span>🌧️ Precipitation:</span>
+                          <span className="font-bold text-blue-600">
+                            {weatherData.precipitation || 0} mm
                           </span>
                           {weatherData.snowfall > 0 && (
-                            <span className="text-lg font-bold text-cyan-600 ml-2">
-                              | Snowfall: {weatherData.snowfall}mm
+                            <span className="font-bold text-cyan-600">
+                              | ❄️ Snowfall: {weatherData.snowfall} mm
                             </span>
                           )}
                         </div>
@@ -365,13 +362,13 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
                       {/* Wind */}
                       {weatherData?.wind_speed_10m && (
                         <div className="flex items-baseline gap-2">
-                          <span className="text-sm text-gray-600">Wind:</span>
-                          <span className="text-lg font-bold text-blue-600">
-                            {Math.round(weatherData.wind_speed_10m)} km/h
+                          <span>💨 Wind:</span>
+                          <span className="font-bold text-blue-600">
+                            {weatherData.wind_speed_10m.toFixed(1)} km/h
                           </span>
                           {weatherData.wind_gusts_10m && (
-                            <span className="text-xs text-gray-500">
-                              (gusts: {Math.round(weatherData.wind_gusts_10m)} km/h, direction: {weatherData.wind_direction_10m}°)
+                            <span className="text-xs text-gray-600">
+                              (gust: {weatherData.wind_gusts_10m.toFixed(1)} km/h, direction: {weatherData.wind_direction_10m}°)
                             </span>
                           )}
                         </div>
@@ -380,9 +377,9 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
                       {/* Visibility */}
                       {weatherData?.visibility && (
                         <div className="flex items-baseline gap-2">
-                          <span className="text-sm text-gray-600">Visibility:</span>
-                          <span className="text-lg font-bold text-blue-600">
-                            {(weatherData.visibility / 1000).toFixed(1)} km
+                          <span>👁️ Visibility:</span>
+                          <span className="font-bold text-blue-600">
+                            {(weatherData.visibility / 1000).toLocaleString('en-US', { maximumFractionDigits: 0 })} km
                           </span>
                         </div>
                       )}
@@ -390,14 +387,7 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
                       {/* Location Verification */}
                       {weatherData?.latitude && weatherData?.longitude && (
                         <div className="text-xs text-gray-600 pt-2 border-t border-blue-200">
-                          <span className="font-semibold">Location verified:</span> {weatherData.latitude.toFixed(4)}°N, {Math.abs(weatherData.longitude).toFixed(4)}°W (Fort Erie, Ontario)
-                        </div>
-                      )}
-
-                      {/* Last Updated */}
-                      {weatherData?.timestamp && (
-                        <div className="text-xs text-gray-500 pt-1">
-                          Last updated: {new Date(weatherData.timestamp).toLocaleTimeString()}
+                          <span>📍 Confirmed location:</span> {weatherData.latitude.toFixed(4)}°N, {Math.abs(weatherData.longitude).toFixed(4)}°W (Fort Erie, Ontario)
                         </div>
                       )}
                     </div>
