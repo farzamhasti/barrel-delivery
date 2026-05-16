@@ -292,40 +292,42 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
 
   // Update forecast data when today forecast response arrives
   useEffect(() => {
-    if (todayForecastResponse?.data) {
+    if (todayForecastResponse?.data?.data) {
+      const forecastData = todayForecastResponse.data.data;
       setTodayForecast({
-        expectedDemand: Math.round(todayForecastResponse.data.predicted_orders),
-        expectedDemandVolume: Math.round(todayForecastResponse.data.predicted_orders),
+        expectedDemand: Math.round(forecastData.predicted_orders),
+        expectedDemandVolume: Math.round(forecastData.predicted_orders),
         expectedPeakHours: '6:00 PM - 8:00 PM',
-        expectedOperationalPressure: Math.round(todayForecastResponse.data.confidence_score * 100),
-        expectedDriverShortageRisk: Math.round((1 - todayForecastResponse.data.confidence_score) * 100),
-        expectedStaffingNeeds: Math.max(3, Math.ceil(todayForecastResponse.data.predicted_orders / 8)),
+        expectedOperationalPressure: Math.round(forecastData.confidence_score * 100),
+        expectedDriverShortageRisk: Math.round((1 - forecastData.confidence_score) * 100),
+        expectedStaffingNeeds: Math.max(3, Math.ceil(forecastData.predicted_orders / 8)),
         expectedHotspots: [],
         weatherImpact: {
-          demandMultiplier: todayForecastResponse.data.demand_multiplier || 1.0
+          demandMultiplier: forecastData.demand_multiplier || 1.0
         },
-        learningPhase: todayForecastResponse.data.learning_phase,
-        confidence: todayForecastResponse.data.confidence_score
+        learningPhase: forecastData.learning_phase,
+        confidence: forecastData.confidence_score
       });
     }
   }, [todayForecastResponse]);
 
   // Update forecast data when tomorrow forecast response arrives
   useEffect(() => {
-    if (tomorrowForecastResponse?.data) {
+    if (tomorrowForecastResponse?.data?.data) {
+      const forecastData = tomorrowForecastResponse.data.data;
       setTomorrowForecast({
-        expectedDemand: Math.round(tomorrowForecastResponse.data.predicted_orders),
-        expectedDemandVolume: Math.round(tomorrowForecastResponse.data.predicted_orders),
+        expectedDemand: Math.round(forecastData.predicted_orders),
+        expectedDemandVolume: Math.round(forecastData.predicted_orders),
         expectedPeakHours: '6:00 PM - 8:00 PM',
-        expectedOperationalPressure: Math.round(tomorrowForecastResponse.data.confidence_score * 100),
-        expectedDriverShortageRisk: Math.round((1 - tomorrowForecastResponse.data.confidence_score) * 100),
-        expectedStaffingNeeds: Math.max(3, Math.ceil(tomorrowForecastResponse.data.predicted_orders / 8)),
+        expectedOperationalPressure: Math.round(forecastData.confidence_score * 100),
+        expectedDriverShortageRisk: Math.round((1 - forecastData.confidence_score) * 100),
+        expectedStaffingNeeds: Math.max(3, Math.ceil(forecastData.predicted_orders / 8)),
         expectedHotspots: [],
         weatherImpact: {
-          demandMultiplier: tomorrowForecastResponse.data.demand_multiplier || 1.0
+          demandMultiplier: forecastData.demand_multiplier || 1.0
         },
-        learningPhase: tomorrowForecastResponse.data.learning_phase,
-        confidence: tomorrowForecastResponse.data.confidence_score
+        learningPhase: forecastData.learning_phase,
+        confidence: forecastData.confidence_score
       });
     }
   }, [tomorrowForecastResponse]);
