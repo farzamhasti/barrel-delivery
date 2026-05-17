@@ -235,13 +235,15 @@ export class MLRetrainingJob {
 
       // Get unique zones from recent orders
       const db = getDb();
+      if (!db) return [];
+
       const result = await db
         .selectDistinct({ zone_id: orders.zone_id })
         .from(orders)
         .where(sql`${orders.created_at} >= DATE_SUB(NOW(), INTERVAL 30 DAY)`)
         .limit(10);
 
-      return result.map((r) => r.zone_id).filter((z) => z);
+      return result.map((r: any) => r.zone_id).filter((z: any) => z);
     } catch (error) {
       logger.error('Failed to get zones for retraining:', error);
       return [];
