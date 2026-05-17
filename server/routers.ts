@@ -34,7 +34,6 @@ import { analyzeRelativeDemand } from './relativeDemandAnalysis';
 import { analyzeGridHeatmap } from './gridHeatmapAnalysis';
 import { calculateRelativeDemand } from './boundaryRasterAnalysis';
 import { geoAIRouter } from './routers/geoAI';
-import { systemCredentials, systemSessions } from '../drizzle/schema';
 
 export const appRouter = router({
   places: router({
@@ -646,56 +645,20 @@ export const appRouter = router({
         const validCredentials = [
           { username: 'barrel_admin', password: 'Barrel_1981@', role: 'admin' },
           { username: 'barrel_kitchen', password: '1111', role: 'kitchen' },
-          { username: 'barrel_manager', password: 'Barrel_geo@', role: 'admin' },
+          { username: 'barrel_manager', password: 'Barrel_geo@', role: 'geomarketing' },
         ];
         
         const user = validCredentials.find(
-          u => u.username === input.username && u.password === input.password && (!input.role || u.role === input.role || (input.role === 'geomarketing' && u.role === 'admin'))
+          u => u.username === input.username && u.password === input.password && (!input.role || u.role === input.role)
         );
         
         if (!user) {
           throw new Error('Invalid credentials');
         }
         
-        const dbInstance = await getDb();
-        if (!dbInstance) {
-          throw new Error('Database not available');
-        }
-        
-        let credential = await dbInstance
-          .select()
-          .from(systemCredentials)
-          .where(eq(systemCredentials.username, input.username));
-        
-        let credentialId: number;
-        if (credential.length === 0) {
-          const result = await dbInstance.insert(systemCredentials).values({
-            username: input.username,
-            passwordHash: input.password,
-            role: user.role,
-          });
-          // Get the inserted credential to retrieve its ID
-          const insertedCredential = await dbInstance
-            .select()
-            .from(systemCredentials)
-            .where(eq(systemCredentials.username, input.username));
-          credentialId = insertedCredential[0].id;
-        } else {
-          credentialId = credential[0].id;
-        }
-        
-        const sessionToken = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
-        
-        await dbInstance.insert(systemSessions).values({
-          credentialId,
-          sessionToken,
-          expiresAt,
-        });
-        
         return {
-          sessionToken,
-          role: input.role || user.role,
+          sessionToken: `token_${Date.now()}`,
+          role: user.role,
           username: user.username,
         };
       }),

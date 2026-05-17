@@ -7,7 +7,7 @@
  * WEATHER-AWARE: All predictions are adjusted based on real-time Fort Erie weather
  */
 
-import { router, publicProcedure, protectedProcedure, adminOrSystemAdminProcedure } from '../_core/trpc';
+import { router, publicProcedure, protectedProcedure } from '../_core/trpc';
 import { z } from 'zod';
 import { isWithinOperatingHours, getDayCategory, extractTemporalFeatures } from '../utils/operatingHours';
 import { calculateWeatherImpact, applyWeatherToDemand, applyWeatherToDelayRisk, applyWeatherToHotspotIntensity, applyWeatherToDriverShortageRisk, generateWeatherRecommendations, type WeatherData, type WeatherImpactScore } from '../utils/weatherImpact';
@@ -162,7 +162,7 @@ export const geoAIRouter = router({
    * Predict demand for a specific zone with weather adjustments
    */
   demand: router({
-    predict: adminOrSystemAdminProcedure
+    predict: protectedProcedure
       .input(
         z.object({
           zoneId: z.string().describe('Zone identifier (e.g., "42.8_-79.0")'),
@@ -187,16 +187,13 @@ export const geoAIRouter = router({
           }
 
           const now = new Date();
-          const requestPayload = {
+          const response = await callGeoAIService('/api/v1/demand/predict', 'POST', {
             zone_id: input.zoneId,
             forecast_hours: forecastContext.forecastHours,
             include_features: input.includeFeatures,
             forecast_mode: forecastMode,
             target_date: forecastContext.targetDate.toISOString(),
-          };
-          console.log("[tRPC DEBUG] REQUEST TO FASTAPI:", requestPayload);
-          const response = await callGeoAIService('/api/v1/demand/predict', 'POST', requestPayload);
-          console.log("[tRPC DEBUG] RAW FASTAPI RESPONSE:", response);
+          });
 
           // Fetch weather data and apply weather-aware adjustments
           const weatherData = await getWeatherData();
@@ -221,7 +218,7 @@ export const geoAIRouter = router({
             adjustedData.demand_multiplier = weatherImpact.demandMultiplier;
           }
 
-          const finalResponse = {
+          return {
             success: true,
             data: adjustedData,
             metadata: {
@@ -231,8 +228,6 @@ export const geoAIRouter = router({
               weatherAdjusted: !!weatherImpact,
             },
           };
-          console.log("[tRPC DEBUG] FINAL tRPC RESPONSE:", finalResponse);
-          return finalResponse;
         } catch (error) {
           return {
             success: false,
@@ -246,7 +241,7 @@ export const geoAIRouter = router({
      * Batch Demand Predictions (WEATHER-AWARE)
      * Predict demand for multiple zones with weather adjustments
      */
-    batchPredict: adminOrSystemAdminProcedure
+    batchPredict: protectedProcedure
       .input(
         z.object({
           zoneIds: z.array(z.string()).min(1).max(50),
@@ -314,7 +309,7 @@ export const geoAIRouter = router({
      * Get Prediction History
      * Retrieve historical predictions for a zone
      */
-    history: adminOrSystemAdminProcedure
+    history: protectedProcedure
       .input(
         z.object({
           zoneId: z.string(),
