@@ -50,51 +50,67 @@ const redirectToLoginIfUnauthorized = (error: unknown) => {
   window.location.href = getLoginUrl();
 };
 
-queryClient.getQueryCache().subscribe(event => {
-  if (event.type === "updated" && event.action?.type === "error") {
+try {
+  queryClient.getQueryCache().subscribe(event => {
     try {
-      const error = event.query.state.error;
-      // Only redirect on auth errors, not on other failures
-      if (error instanceof TRPCClientError && error.data?.code === 'UNAUTHORIZED') {
-        redirectToLoginIfUnauthorized(error);
-      }
-      // Log all errors for debugging but don't treat them as fatal
-      if (error) {
-        const errorMsg = error instanceof Error ? error.message : String(error);
-        // Don't spam console with auth errors on system dashboards
-        if (!errorMsg.includes('UNAUTHED')) {
-          console.error("[API Query Error]", errorMsg);
+      if (event.type === "updated" && event.action?.type === "error") {
+        try {
+          const error = event.query.state.error;
+          // Only redirect on auth errors, not on other failures
+          if (error instanceof TRPCClientError && error.data?.code === 'UNAUTHORIZED') {
+            redirectToLoginIfUnauthorized(error);
+          }
+          // Log all errors for debugging but don't treat them as fatal
+          if (error) {
+            const errorMsg = error instanceof Error ? error.message : String(error);
+            // Don't spam console with auth errors on system dashboards
+            if (!errorMsg.includes('UNAUTHED')) {
+              console.error("[API Query Error]", errorMsg);
+            }
+          }
+        } catch (e) {
+          // Silently catch any errors in error handling to prevent cascading failures
+          console.debug("[Error Handler] Failed to process query error", e);
         }
       }
     } catch (e) {
-      // Silently catch any errors in error handling to prevent cascading failures
-      console.debug("[Error Handler] Failed to process query error", e);
+      console.debug("[Error Handler] Subscriber error", e);
     }
-  }
-});
+  });
+} catch (e) {
+  console.debug("[Error Handler] Failed to subscribe to query cache", e);
+}
 
-queryClient.getMutationCache().subscribe(event => {
-  if (event.type === "updated" && event.action?.type === "error") {
+try {
+  queryClient.getMutationCache().subscribe(event => {
     try {
-      const error = event.mutation.state.error;
-      // Only redirect on auth errors, not on other failures
-      if (error instanceof TRPCClientError && error.data?.code === 'UNAUTHORIZED') {
-        redirectToLoginIfUnauthorized(error);
-      }
-      // Log all errors for debugging but don't treat them as fatal
-      if (error) {
-        const errorMsg = error instanceof Error ? error.message : String(error);
-        // Don't spam console with auth errors on system dashboards
-        if (!errorMsg.includes('UNAUTHED')) {
-          console.error("[API Mutation Error]", errorMsg);
+      if (event.type === "updated" && event.action?.type === "error") {
+        try {
+          const error = event.mutation.state.error;
+          // Only redirect on auth errors, not on other failures
+          if (error instanceof TRPCClientError && error.data?.code === 'UNAUTHORIZED') {
+            redirectToLoginIfUnauthorized(error);
+          }
+          // Log all errors for debugging but don't treat them as fatal
+          if (error) {
+            const errorMsg = error instanceof Error ? error.message : String(error);
+            // Don't spam console with auth errors on system dashboards
+            if (!errorMsg.includes('UNAUTHED')) {
+              console.error("[API Mutation Error]", errorMsg);
+            }
+          }
+        } catch (e) {
+          // Silently catch any errors in error handling to prevent cascading failures
+          console.debug("[Error Handler] Failed to process mutation error", e);
         }
       }
     } catch (e) {
-      // Silently catch any errors in error handling to prevent cascading failures
-      console.debug("[Error Handler] Failed to process mutation error", e);
+      console.debug("[Error Handler] Subscriber error", e);
     }
-  }
-});
+  });
+} catch (e) {
+  console.debug("[Error Handler] Failed to subscribe to mutation cache", e);
+}
 
 const trpcClient = trpc.createClient({
   links: [
