@@ -116,9 +116,14 @@ export class MLRetrainingJob {
 
     try {
       // Get current model metrics
-      const currentMetrics = await mlServiceClient.getMetrics({
+      const currentMetricsResp = await mlServiceClient.getMetrics({
         zone_id,
       });
+      const currentMetrics: Record<string, number> = {
+        mae: (currentMetricsResp as any).mae || 10,
+        rmse: (currentMetricsResp as any).rmse || 15,
+        mape: (currentMetricsResp as any).mape || 0.15,
+      };
 
       // Start training
       const training = await mlServiceClient.train({
@@ -130,10 +135,11 @@ export class MLRetrainingJob {
       logger.info(`Training job ${training.model_id} started for zone ${zone_id}`);
 
       // Wait for training to complete (with timeout)
-      const newMetrics = await this.waitForTrainingCompletion(
+      const newMetricsResp = await this.waitForTrainingCompletion(
         training.model_id,
         300000 // 5 minute timeout
       );
+      const newMetrics = newMetricsResp as Record<string, number> | null;
 
       if (!newMetrics) {
         return {
