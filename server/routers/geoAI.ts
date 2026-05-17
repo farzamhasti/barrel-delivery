@@ -187,13 +187,16 @@ export const geoAIRouter = router({
           }
 
           const now = new Date();
-          const response = await callGeoAIService('/api/v1/demand/predict', 'POST', {
+          const requestPayload = {
             zone_id: input.zoneId,
             forecast_hours: forecastContext.forecastHours,
             include_features: input.includeFeatures,
             forecast_mode: forecastMode,
             target_date: forecastContext.targetDate.toISOString(),
-          });
+          };
+          console.log("[tRPC DEBUG] REQUEST TO FASTAPI:", requestPayload);
+          const response = await callGeoAIService('/api/v1/demand/predict', 'POST', requestPayload);
+          console.log("[tRPC DEBUG] RAW FASTAPI RESPONSE:", response);
 
           // Fetch weather data and apply weather-aware adjustments
           const weatherData = await getWeatherData();
@@ -218,7 +221,7 @@ export const geoAIRouter = router({
             adjustedData.demand_multiplier = weatherImpact.demandMultiplier;
           }
 
-          return {
+          const finalResponse = {
             success: true,
             data: adjustedData,
             metadata: {
@@ -228,6 +231,8 @@ export const geoAIRouter = router({
               weatherAdjusted: !!weatherImpact,
             },
           };
+          console.log("[tRPC DEBUG] FINAL tRPC RESPONSE:", finalResponse);
+          return finalResponse;
         } catch (error) {
           return {
             success: false,
