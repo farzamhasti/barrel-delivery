@@ -6,7 +6,14 @@
 
 import { z } from 'zod';
 import { adminOrSystemAdminProcedure, publicProcedure, router } from '../_core/trpc';
-import { generateLearningForecast, updateLearningWithOutcome } from '../learning';
+import {
+  generateLearningForecast,
+  updateLearningWithOutcome,
+  generateMLBaseline,
+  getModelPerformanceMetrics,
+  getAccuracyTrend,
+  getAccuracyBreakdown,
+} from '../learning';
 
 export const learningRouter = router({
   /**
@@ -104,6 +111,127 @@ export const learningRouter = router({
           success: false,
           message: 'Error recording outcome',
           error: error instanceof Error ? error.message : 'Unknown error',
+        };
+      }
+    }),
+
+  /**
+   * Get ML forecast for a specific hour
+   */
+  getMLForecast: publicProcedure
+    .input(
+      z.object({
+        zoneId: z.string().default('default'),
+        forecastHour: z.number().min(0).max(23).default(new Date().getHours()),
+      }),
+    )
+    .query(async ({ input }) => {
+      try {
+        const forecastTime = new Date();
+        forecastTime.setHours(input.forecastHour);
+        forecastTime.setMinutes(0);
+        forecastTime.setSeconds(0);
+        forecastTime.setMilliseconds(0);
+
+        const mlForecast = await generateMLBaseline(input.zoneId, forecastTime);
+
+        return {
+          success: true,
+          data: mlForecast,
+        };
+      } catch (error) {
+        console.error('[Learning] Error getting ML forecast:', error);
+        return {
+          success: false,
+          message: 'Error generating ML forecast',
+          error: error instanceof Error ? error.message : 'Unknown error',
+          data: null,
+        };
+      }
+    }),
+
+  /**
+   * Get model performance metrics
+   */
+  getMetrics: publicProcedure
+    .input(
+      z.object({
+        zoneId: z.string().default('default'),
+        lookbackDays: z.number().min(1).max(365).default(30),
+      }),
+    )
+    .query(async ({ input }) => {
+      try {
+        const metrics = await getModelPerformanceMetrics(input.zoneId, input.lookbackDays);
+        return {
+          success: true,
+          data: metrics,
+        };
+      } catch (error) {
+        console.error('[Learning] Error getting metrics:', error);
+        return {
+          success: false,
+          message: 'Error getting model metrics',
+          error: error instanceof Error ? error.message : 'Unknown error',
+          data: null,
+        };
+      }
+    }),
+
+  /**
+   * Get accuracy trend
+   */
+  getTrend: publicProcedure
+    .input(
+      z.object({
+        zoneId: z.string().default('default'),
+      }),
+    )
+    .query(async ({ input }) => {
+      try {
+        const trend = await getAccuracyTrend(input.zoneId);
+        return {
+          success: true,
+          data: trend,
+        };
+      } catch (error) {
+        console.error('[Learning] Error getting trend:', error);
+        return {
+          success: false,
+          message: 'Error getting accuracy trend',
+          error: error instanceof Error ? error.message : 'Unknown error',
+          data: null,
+        };
+      }
+    }),
+
+  /**
+   * Get accuracy breakdown by hour and day
+   */
+  getBreakdown: publicProcedure
+    .input(
+      z.object({
+        zoneId: z.string().default('default'),
+      }),
+    )
+    .query(async ({ input }) => {
+      try {
+        const breakdown = await getAccuracyBreakdown(input.zoneId);
+        return {
+          success: true,
+          data: {
+            byHour: Object.fromEntries(breakdown.byHour),
+            byDayOfWeek: Object.fromEntries(breakdown.byDayOfWeek),
+            byTimeOfDay: breakdown.byTimeOfDay,
+          },
+        };
+      } catch (error) {
+        console.error('[Learning] Error getting breakdown:', error);
+        return {
+          success: false,
+          message: 'Error getting accuracy breakdown',
+          error: error instanceof Error ? error.message : 'Unknown error',
+          data: null,
         };
       }
     }),
