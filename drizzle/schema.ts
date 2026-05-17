@@ -364,3 +364,133 @@ export const spatialAnalysisJobLog = mysqlTable("spatial_analysis_job_log", {
 
 export type SpatialAnalysisJobLog = typeof spatialAnalysisJobLog.$inferSelect;
 export type InsertSpatialAnalysisJobLog = typeof spatialAnalysisJobLog.$inferInsert;
+
+
+// ============================================================================
+// PHASE 2: REAL DATABASE LEARNING INTEGRATION
+// ============================================================================
+
+// Forecasts table - stores AI-generated forecasts for learning and accuracy tracking
+export const forecasts = mysqlTable("forecasts", {
+  id: int("id").autoincrement().primaryKey(),
+  zoneId: varchar("zone_id", { length: 100 }).notNull(), // e.g., "1", "42.8_-79.0"
+  forecastMode: varchar("forecast_mode", { length: 50 }).notNull(), // "LIVE_OPERATION", "TODAY_FORECAST", "TOMORROW_FORECAST"
+  predictedOrders: int("predicted_orders"),
+  predictedPeakHours: varchar("predicted_peak_hours", { length: 100 }), // e.g., "6:00 PM - 8:00 PM"
+  predictedOperationalPressure: int("predicted_operational_pressure"), // 0-100
+  predictedDriverShortageRisk: int("predicted_driver_shortage_risk"), // 0-100
+  predictedStaffingNeeds: int("predicted_staffing_needs"),
+  weatherImpact: decimal("weather_impact", { precision: 5, scale: 2 }), // 0.5-2.0 multiplier
+  confidenceScore: int("confidence_score"), // 0-100
+  learningPhase: varchar("learning_phase", { length: 50 }), // "EARLY_LEARNING", "LEARNING", "TRAINED", "PRODUCTION"
+  actualOrders: int("actual_orders"), // filled in after the forecast period
+  actualPeakHours: varchar("actual_peak_hours", { length: 100 }), // filled in after the forecast period
+  actualOperationalPressure: int("actual_operational_pressure"), // filled in after the forecast period
+  forecastAccuracyScore: int("forecast_accuracy_score"), // 0-100, calculated after actual data arrives
+  accuracyCalculatedAt: timestamp("accuracy_calculated_at"),
+  forecastedAt: timestamp("forecasted_at").defaultNow().notNull(),
+  forecastPeriodStart: timestamp("forecast_period_start").notNull(),
+  forecastPeriodEnd: timestamp("forecast_period_end").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Forecast = typeof forecasts.$inferSelect;
+export type InsertForecast = typeof forecasts.$inferInsert;
+
+// Delivery zones table - aggregates operational data by zone
+export const deliveryZones = mysqlTable("delivery_zones", {
+  id: int("id").autoincrement().primaryKey(),
+  zoneId: varchar("zone_id", { length: 100 }).notNull().unique(), // e.g., "1", "42.8_-79.0"
+  zoneName: varchar("zone_name", { length: 255 }),
+  centroidLatitude: decimal("centroid_latitude", { precision: 10, scale: 6 }),
+  centroidLongitude: decimal("centroid_longitude", { precision: 10, scale: 6 }),
+  // Historical aggregated metrics
+  totalOrdersDelivered: int("total_orders_delivered").default(0),
+  averageDeliveryTimeMinutes: decimal("average_delivery_time_minutes", { precision: 10, scale: 2 }),
+  actualPeakHours: varchar("actual_peak_hours", { length: 100 }), // e.g., "6:00 PM - 8:00 PM"
+  driverShortageOccurred: boolean("driver_shortage_occurred").default(false),
+  actualOperationalPressure: int("actual_operational_pressure"), // 0-100
+  weatherConditionsActual: text("weather_conditions_actual"), // JSON
+  // Learning metrics
+  forecastAccuracyAverage: decimal("forecast_accuracy_average", { precision: 5, scale: 2 }), // 0-100
+  learningPhase: varchar("learning_phase", { length: 50 }), // "EARLY_LEARNING", "LEARNING", "TRAINED", "PRODUCTION"
+  confidenceScoreAverage: decimal("confidence_score_average", { precision: 5, scale: 2 }), // 0-100
+  dataPointsCollected: int("data_points_collected").default(0),
+  lastAggregatedAt: timestamp("last_aggregated_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type DeliveryZone = typeof deliveryZones.$inferSelect;
+export type InsertDeliveryZone = typeof deliveryZones.$inferInsert;
+
+// Driver performance metrics - tracks individual driver performance for learning
+export const driverPerformanceMetrics = mysqlTable("driver_performance_metrics", {
+  id: int("id").autoincrement().primaryKey(),
+  driverId: int("driver_id").notNull(),
+  averageDeliveryTimeMinutes: decimal("average_delivery_time_minutes", { precision: 10, scale: 2 }),
+  onTimeDeliveryRate: decimal("on_time_delivery_rate", { precision: 5, scale: 2 }), // 0-100
+  totalDeliveriesCompleted: int("total_deliveries_completed").default(0),
+  weatherPerformanceMultiplier: decimal("weather_performance_multiplier", { precision: 5, scale: 2 }), // 0.5-2.0
+  performanceScore: int("performance_score"), // 0-100
+  lastUpdatedAt: timestamp("last_updated_at").defaultNow().onUpdateNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type DriverPerformanceMetrics = typeof driverPerformanceMetrics.$inferSelect;
+export type InsertDriverPerformanceMetrics = typeof driverPerformanceMetrics.$inferInsert;
+
+// Learning metrics history - tracks learning progress over time
+export const learningMetricsHistory = mysqlTable("learning_metrics_history", {
+  id: int("id").autoincrement().primaryKey(),
+  zoneId: varchar("zone_id", { length: 100 }).notNull(),
+  recordedDate: timestamp("recorded_date").notNull(),
+  forecastAccuracyScore: int("forecast_accuracy_score"), // 0-100
+  confidenceScore: int("confidence_score"), // 0-100
+  learningPhase: varchar("learning_phase", { length: 50 }), // "EARLY_LEARNING", "LEARNING", "TRAINED", "PRODUCTION"
+  dataPointsCollected: int("data_points_collected"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type LearningMetricsHistory = typeof learningMetricsHistory.$inferSelect;
+export type InsertLearningMetricsHistory = typeof learningMetricsHistory.$inferInsert;
+
+// Anomalies table - flags unusual data for manual review
+export const anomalies = mysqlTable("anomalies", {
+  id: int("id").autoincrement().primaryKey(),
+  zoneId: varchar("zone_id", { length: 100 }).notNull(),
+  anomalyType: varchar("anomaly_type", { length: 50 }).notNull(), // "delivery_time_outlier", "demand_spike", "driver_shortage", "weather_impact"
+  severity: varchar("severity", { length: 20 }).notNull(), // "low", "medium", "high"
+  description: text("description"),
+  detectedValue: varchar("detected_value", { length: 255 }),
+  expectedRange: varchar("expected_range", { length: 255 }),
+  isReviewed: boolean("is_reviewed").default(false),
+  reviewedBy: int("reviewed_by"),
+  reviewedAt: timestamp("reviewed_at"),
+  reviewNotes: text("review_notes"),
+  detectedAt: timestamp("detected_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type Anomaly = typeof anomalies.$inferSelect;
+export type InsertAnomaly = typeof anomalies.$inferInsert;
+
+// Scheduled task tracking - for Heartbeat jobs
+export const scheduledTasks = mysqlTable("scheduled_tasks", {
+  id: int("id").autoincrement().primaryKey(),
+  taskName: varchar("task_name", { length: 255 }).notNull(),
+  taskUid: varchar("task_uid", { length: 255 }).unique(),
+  cronExpression: varchar("cron_expression", { length: 100 }).notNull(),
+  callbackPath: varchar("callback_path", { length: 255 }).notNull(),
+  isEnabled: boolean("is_enabled").default(true),
+  lastExecutedAt: timestamp("last_executed_at"),
+  nextExecutionAt: timestamp("next_execution_at"),
+  lastExecutionStatus: varchar("last_execution_status", { length: 50 }), // "success", "failed", "pending"
+  lastExecutionError: text("last_execution_error"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ScheduledTask = typeof scheduledTasks.$inferSelect;
+export type InsertScheduledTask = typeof scheduledTasks.$inferInsert;

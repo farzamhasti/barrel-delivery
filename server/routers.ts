@@ -34,6 +34,7 @@ import { analyzeRelativeDemand } from './relativeDemandAnalysis';
 import { analyzeGridHeatmap } from './gridHeatmapAnalysis';
 import { calculateRelativeDemand } from './boundaryRasterAnalysis';
 import { geoAIRouter } from './routers/geoAI';
+import { learningRouter } from './routers/learning';
 
 export const appRouter = router({
   places: router({
@@ -1530,5 +1531,6 @@ export const appRouter = router({
   
   // Geo AI Spatial Intelligence Router
   geoAI: geoAIRouter,
+  learning: learningRouter,
 });
 export type AppRouter = typeof appRouter;
