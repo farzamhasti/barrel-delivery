@@ -17,7 +17,7 @@ interface RiskAssessment {
   timestamp: number;
 }
 
-interface OperationalMetrics {
+export interface OperationalMetrics {
   activeOrders: number;
   averageOrderTime: number;
   kitchenCapacity: number;
