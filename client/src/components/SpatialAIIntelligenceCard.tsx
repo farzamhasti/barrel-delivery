@@ -525,24 +525,24 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
                 </div>
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div>
-                    <p className="text-blue-700 font-medium">Operating Window</p>
-                    <p className="text-blue-900">{todayForecast.operatingWindow}</p>
-                  </div>
-                  <div>
                     <p className="text-blue-700 font-medium">Expected Demand</p>
-                    <p className="text-blue-900">{todayForecast.expectedDemand?.volume || 'N/A'} orders</p>
+                    <p className="text-blue-900">{todayForecast.expectedDemandVolume} orders</p>
                   </div>
                   <div>
                     <p className="text-blue-700 font-medium">Peak Hours</p>
                     <p className="text-blue-900">{todayForecast.expectedPeakHours}</p>
                   </div>
                   <div>
-                    <p className="text-blue-700 font-medium">Delay Risk</p>
-                    <p className="text-blue-900">{todayForecast.expectedDelayProbability}%</p>
+                    <p className="text-blue-700 font-medium">Operational Pressure</p>
+                    <p className="text-blue-900">{todayForecast.expectedOperationalPressure}%</p>
                   </div>
                   <div>
                     <p className="text-blue-700 font-medium">Driver Shortage Risk</p>
                     <p className="text-blue-900">{todayForecast.expectedDriverShortageRisk}%</p>
+                  </div>
+                  <div>
+                    <p className="text-blue-700 font-medium">Staffing Needs</p>
+                    <p className="text-blue-900">{todayForecast.expectedStaffingNeeds} drivers</p>
                   </div>
                   <div>
                     <p className="text-blue-700 font-medium">Weather Impact</p>

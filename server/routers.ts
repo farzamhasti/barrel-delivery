@@ -655,9 +655,58 @@ export const appRouter = router({
         if (!user) {
           throw new Error('Invalid credentials');
         }
+
+        // Create system session in database
+        const dbInstance = await getDb();
+        if (!dbInstance) {
+          throw new Error('Database not available');
+        }
+
+        // Import schema
+        const { systemCredentials, systemSessions } = await import('../drizzle/schema');
+        const { createHash } = await import('crypto');
+
+        // Get or create credential
+        const credentialResult = await dbInstance
+          .select({ id: systemCredentials.id })
+          .from(systemCredentials)
+          .where(eq(systemCredentials.username, input.username));
+        
+        let credentialId: number;
+        if (credentialResult.length > 0) {
+          credentialId = credentialResult[0].id;
+        } else {
+          // Create new credential with password hash
+          const passwordHash = createHash('sha256').update(input.password).digest('hex');
+          await dbInstance
+            .insert(systemCredentials)
+            .values({
+              username: input.username,
+              passwordHash,
+              role: user.role,
+            });
+          // Get the inserted ID from the result
+          const newCredentials = await dbInstance
+            .select({ id: systemCredentials.id })
+            .from(systemCredentials)
+            .where(eq(systemCredentials.username, input.username));
+          credentialId = newCredentials[0].id;
+        }
+
+        // Create session
+        const sessionToken = `session_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+        const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+        await dbInstance
+          .insert(systemSessions)
+          .values({
+            credentialId,
+            sessionToken,
+            expiresAt,
+          });
         
         return {
-          sessionToken: `token_${Date.now()}`,
+          sessionToken,
           role: user.role,
           username: user.username,
         };
