@@ -37,6 +37,7 @@ import { geoAIRouter } from './routers/geoAI';
 import { learningRouter } from './routers/learning';
 import { mlRouter } from './routers/mlRouter';
 import { spatialRouter } from './routers/spatialRouter';
+import { operationalRouter } from './routers/operationalRouter';
 
 export const appRouter = router({
   places: router({
@@ -1536,5 +1537,6 @@ export const appRouter = router({
   learning: learningRouter,
   ml: mlRouter,
   spatial: spatialRouter,
+  operational: operationalRouter,
 });
 export type AppRouter = typeof appRouter;

@@ -63,8 +63,12 @@ export const spatialRouter = router({
     )
     .query(({ input }) => {
       try {
+        const hotspotsWithRadius = input.currentHotspots.map((h: any) => ({
+          ...h,
+          radius: 1.0,
+        }));
         const predicted = spatialHotspotDetector.predictFutureHotspots(
-          input.currentHotspots,
+          hotspotsWithRadius,
           input.forecastHours
         );
         return {
@@ -262,7 +266,7 @@ export const spatialRouter = router({
     )
     .query(({ input }) => {
       try {
-        const demandMap = new Map(Object.entries(input.demandByZone));
+        const demandMap = new Map<string, number>(Object.entries(input.demandByZone) as [string, number][]);
         const zones = new Map([
           ['downtown', { lat: 43.0, lng: -79.15, name: 'Downtown' }],
           ['north', { lat: 43.12, lng: -79.15, name: 'North' }],
