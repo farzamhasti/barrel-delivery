@@ -105,7 +105,7 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
   });
 
   // Fetch today forecast via unified demand.predict with TODAY_FORECAST mode
-  const todayQueryInput = { zoneId: '42.8_-79.0', forecastMode: 'TODAY_FORECAST' as any };
+  const todayQueryInput = { zoneId: '1', forecastHours: 2, forecastMode: 'TODAY_FORECAST' as any };
   const { data: todayForecastResponse, isLoading: todayForecastLoading, error: todayForecastError, isFetching: todayForecastFetching, status: todayForecastStatus } = trpc.geoAI.demand.predict.useQuery(
     todayQueryInput,
     {
@@ -117,7 +117,7 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
 
   // Fetch tomorrow forecast via unified demand.predict with TOMORROW_FORECAST mode
   const { data: tomorrowForecastResponse, isLoading: tomorrowForecastLoading } = trpc.geoAI.demand.predict.useQuery(
-    { zoneId: '42.8_-79.0', forecastMode: 'TOMORROW_FORECAST' as any },
+    { zoneId: '1', forecastHours: 2, forecastMode: 'TOMORROW_FORECAST' as any },
     {
       refetchInterval: 3600000,  // 1 hour
       enabled: true  // Always enabled
