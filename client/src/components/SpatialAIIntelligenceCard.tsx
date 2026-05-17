@@ -292,8 +292,8 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
 
   // Update forecast data when today forecast response arrives
   useEffect(() => {
-    if (todayForecastResponse?.data?.data) {
-      const forecastData = todayForecastResponse.data.data;
+    if (todayForecastResponse?.data) {
+      const forecastData = todayForecastResponse.data;
       setTodayForecast({
         expectedDemand: Math.round(forecastData.predicted_orders),
         expectedDemandVolume: Math.round(forecastData.predicted_orders),
@@ -313,8 +313,8 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
 
   // Update forecast data when tomorrow forecast response arrives
   useEffect(() => {
-    if (tomorrowForecastResponse?.data?.data) {
-      const forecastData = tomorrowForecastResponse.data.data;
+    if (tomorrowForecastResponse?.data) {
+      const forecastData = tomorrowForecastResponse.data;
       setTomorrowForecast({
         expectedDemand: Math.round(forecastData.predicted_orders),
         expectedDemandVolume: Math.round(forecastData.predicted_orders),
