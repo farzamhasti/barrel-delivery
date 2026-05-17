@@ -7,7 +7,7 @@
  * WEATHER-AWARE: All predictions are adjusted based on real-time Fort Erie weather
  */
 
-import { router, publicProcedure, protectedProcedure } from '../_core/trpc';
+import { router, publicProcedure, protectedProcedure, adminOrSystemAdminProcedure } from '../_core/trpc';
 import { z } from 'zod';
 import { isWithinOperatingHours, getDayCategory, extractTemporalFeatures } from '../utils/operatingHours';
 import { calculateWeatherImpact, applyWeatherToDemand, applyWeatherToDelayRisk, applyWeatherToHotspotIntensity, applyWeatherToDriverShortageRisk, generateWeatherRecommendations, type WeatherData, type WeatherImpactScore } from '../utils/weatherImpact';
@@ -162,7 +162,7 @@ export const geoAIRouter = router({
    * Predict demand for a specific zone with weather adjustments
    */
   demand: router({
-    predict: protectedProcedure
+    predict: adminOrSystemAdminProcedure
       .input(
         z.object({
           zoneId: z.string().describe('Zone identifier (e.g., "42.8_-79.0")'),
@@ -241,7 +241,7 @@ export const geoAIRouter = router({
      * Batch Demand Predictions (WEATHER-AWARE)
      * Predict demand for multiple zones with weather adjustments
      */
-    batchPredict: protectedProcedure
+    batchPredict: adminOrSystemAdminProcedure
       .input(
         z.object({
           zoneIds: z.array(z.string()).min(1).max(50),
@@ -309,7 +309,7 @@ export const geoAIRouter = router({
      * Get Prediction History
      * Retrieve historical predictions for a zone
      */
-    history: protectedProcedure
+    history: adminOrSystemAdminProcedure
       .input(
         z.object({
           zoneId: z.string(),
@@ -361,7 +361,7 @@ export const geoAIRouter = router({
    * Hotspot Detection (WEATHER-AWARE)
    */
   hotspots: router({
-    predict: protectedProcedure
+    predict: adminOrSystemAdminProcedure
       .input(
         z.object({
           latitude: z.number(),
@@ -480,7 +480,7 @@ export const geoAIRouter = router({
    * Risk Prediction (WEATHER-AWARE)
    */
   risk: router({
-    predict: protectedProcedure
+    predict: adminOrSystemAdminProcedure
       .input(
         z.object({
           zoneId: z.string(),
@@ -570,7 +570,7 @@ export const geoAIRouter = router({
    * Recommendations (WEATHER-AWARE)
    */
   recommendations: router({
-    generate: protectedProcedure
+    generate: adminOrSystemAdminProcedure
       .input(
         z.object({
           zoneId: z.string(),
@@ -752,7 +752,7 @@ export const geoAIRouter = router({
    * Manual Refresh Mutation (PHASE 89)
    * Manually trigger prediction refresh and clear cache
    */
-  refresh: protectedProcedure
+  refresh: adminOrSystemAdminProcedure
     .input(
       z.object({
         types: z.array(z.enum(['demand', 'hotspots', 'risk', 'recommendations', 'all'])).default(['all']),
@@ -850,7 +850,7 @@ export const geoAIRouter = router({
    * Generate alerts only from live operational conditions
    */
   alerts: router({
-    generate: protectedProcedure
+    generate: adminOrSystemAdminProcedure
       .input(
         z.object({
           zoneId: z.string(),
@@ -922,7 +922,7 @@ export const geoAIRouter = router({
    * Get all AI predictions for dashboard display with weather adjustments
    */
   dashboard: router({
-    summary: protectedProcedure
+    summary: adminOrSystemAdminProcedure
       .input(
         z.object({
           zoneIds: z.array(z.string()).min(1),

@@ -105,13 +105,15 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
   });
 
   // Fetch today forecast via unified demand.predict with TODAY_FORECAST mode
-  const { data: todayForecastResponse, isLoading: todayForecastLoading } = trpc.geoAI.demand.predict.useQuery(
-    { zoneId: '42.8_-79.0', forecastMode: 'TODAY_FORECAST' as any },
+  const todayQueryInput = { zoneId: '42.8_-79.0', forecastMode: 'TODAY_FORECAST' as any };
+  const { data: todayForecastResponse, isLoading: todayForecastLoading, error: todayForecastError, isFetching: todayForecastFetching, status: todayForecastStatus } = trpc.geoAI.demand.predict.useQuery(
+    todayQueryInput,
     {
       refetchInterval: 300000,  // 5 minutes
       enabled: true  // Always enabled for pre-operation planning
     }
   );
+  console.log('[SpatialAI-INIT] Today query - input:', todayQueryInput, 'status:', todayForecastStatus, 'error:', todayForecastError);
 
   // Fetch tomorrow forecast via unified demand.predict with TOMORROW_FORECAST mode
   const { data: tomorrowForecastResponse, isLoading: tomorrowForecastLoading } = trpc.geoAI.demand.predict.useQuery(
@@ -292,6 +294,12 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
 
   // Update forecast data when today forecast response arrives
   useEffect(() => {
+    console.log('[SpatialAI-TODAY] ===== FULL QUERY STATE =====');
+    console.log('[SpatialAI-TODAY] todayForecastResponse:', JSON.stringify(todayForecastResponse, null, 2));
+    console.log('[SpatialAI-TODAY] todayForecastLoading:', todayForecastLoading);
+    console.log('[SpatialAI-TODAY] todayForecastError:', todayForecastError);
+    console.log('[SpatialAI-TODAY] todayForecastStatus:', todayForecastStatus);
+    console.log('[SpatialAI-TODAY] ===== END QUERY STATE =====');
     if (todayForecastResponse?.data?.data) {
       const forecastData = todayForecastResponse.data.data;
       setTodayForecast({

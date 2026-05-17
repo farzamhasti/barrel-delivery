@@ -25,19 +25,27 @@ export async function createContext(
 
   // Check for system session token in cookies or headers
   const systemSessionToken = (opts.req.cookies?.systemSessionToken || opts.req.headers['x-system-session-token']) as string | undefined;
+  
   if (systemSessionToken) {
+    console.log('[Context] System session token found:', systemSessionToken.substring(0, 20) + '...');
     try {
       const session = await getSystemSessionByToken(systemSessionToken);
+      console.log('[Context] Session lookup result:', session ? `Found - role: ${session.role}` : 'Not found');
       if (session) {
         systemSession = {
           username: session.username,
           role: session.role,
         };
+        console.log('[Context] System session set - username:', session.username, 'role:', session.role);
+      } else {
+        console.log('[Context] Session token not found in database or expired');
       }
     } catch (error) {
-      // System session is optional
+      console.error('[Context] Error retrieving system session:', error);
       systemSession = null;
     }
+  } else {
+    console.log('[Context] No system session token in request');
   }
 
   return {

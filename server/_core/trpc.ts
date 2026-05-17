@@ -74,9 +74,20 @@ export const adminOrSystemAdminProcedure = t.procedure.use(
     const isOAuthAdmin = ctx.user && ctx.user.role === 'admin';
     const isSystemAdmin = ctx.systemSession && ctx.systemSession.role === 'admin';
 
+    console.log('[adminOrSystemAdminProcedure] Auth check:', {
+      hasUser: !!ctx.user,
+      userRole: ctx.user?.role,
+      hasSystemSession: !!ctx.systemSession,
+      systemSessionRole: ctx.systemSession?.role,
+      isOAuthAdmin,
+      isSystemAdmin,
+    });
+
     if (!isOAuthAdmin && !isSystemAdmin) {
+      console.log('[adminOrSystemAdminProcedure] UNAUTHORIZED - neither OAuth admin nor system admin');
       throw new TRPCError({ code: "UNAUTHORIZED", message: UNAUTHED_ERR_MSG });
     }
+    console.log('[adminOrSystemAdminProcedure] AUTHORIZED');
 
     return next({
       ctx: {
