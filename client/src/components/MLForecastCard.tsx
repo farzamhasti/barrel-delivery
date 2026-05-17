@@ -21,7 +21,7 @@ export function MLForecastCard({ zoneId = 'default', forecastHour }: MLForecastC
   const [showDetails, setShowDetails] = useState(false);
 
   // Fetch ML forecast
-  const { data: forecast, isLoading, error } = trpc.learning.getMLForecast.useQuery(
+  const { data: response, isLoading, error } = trpc.learning.getMLForecast.useQuery(
     {
       zoneId,
       forecastHour: selectedHour,
@@ -30,6 +30,8 @@ export function MLForecastCard({ zoneId = 'default', forecastHour }: MLForecastC
       refetchInterval: 5 * 60 * 1000, // Refresh every 5 minutes
     }
   );
+
+  const forecast = response?.data;
 
   if (isLoading) {
     return (
@@ -50,7 +52,7 @@ export function MLForecastCard({ zoneId = 'default', forecastHour }: MLForecastC
     );
   }
 
-  if (error || !forecast) {
+  if (error || !forecast || !response?.success) {
     return (
       <Card className="border-0 shadow-sm border-l-4 border-l-yellow-500">
         <CardHeader>
@@ -61,7 +63,7 @@ export function MLForecastCard({ zoneId = 'default', forecastHour }: MLForecastC
         </CardHeader>
         <CardContent>
           <p className="text-sm text-gray-600">
-            Unable to generate ML forecast at this time. Check back later.
+            {error ? 'Error loading forecast' : 'Unable to generate ML forecast at this time. Check back later.'}
           </p>
         </CardContent>
       </Card>
