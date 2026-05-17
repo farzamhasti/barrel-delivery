@@ -76,41 +76,19 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
     }
   );
 
-  // Fetch demand data
-  const { data: demandResponse, isLoading: demandLoading } = trpc.geoAI.demand.current.useQuery(undefined, {
-    refetchInterval: 300000,
-    enabled: true
-  });
-
-  // Fetch hotspots
-  const { data: hotspotsResponse, isLoading: hotspotsLoading } = trpc.geoAI.hotspots.current.useQuery(undefined, {
-    refetchInterval: 600000,
-    enabled: true
-  });
-
-  // Fetch risk assessment
-  const { data: riskResponse, isLoading: riskLoading } = trpc.geoAI.risk.assess.useQuery(undefined, {
-    refetchInterval: 300000,
-    enabled: true
-  });
-
-  // Fetch recommendations
-  const { data: recsResponse, isLoading: recsLoading } = trpc.geoAI.recommendations.get.useQuery(undefined, {
-    refetchInterval: 300000,
-    enabled: true
-  });
-
-  // Fetch weather data
-  const { data: weatherResponse, isLoading: weatherLoading } = trpc.geoAI.weather.current.useQuery(undefined, {
-    refetchInterval: 300000,
-    enabled: true
-  });
-
-  // Fetch active events via tRPC (Phase 92)
-  const { data: eventsResponse, isLoading: eventsLoading } = trpc.geoAI.events.active.useQuery(undefined, {
-    refetchInterval: 900000,
-    enabled: shouldForecastingBeActive() // 15 minutes during active operations
-  });
+  // Placeholder data for components
+  const demandResponse = null;
+  const demandLoading = false;
+  const hotspotsResponse = null;
+  const hotspotsLoading = false;
+  const riskResponse = null;
+  const riskLoading = false;
+  const recsResponse = null;
+  const recsLoading = false;
+  const weatherResponse = null;
+  const weatherLoading = false;
+  const eventsResponse = null;
+  const eventsLoading = false;
 
   // Update today forecast when response arrives
   useEffect(() => {
@@ -194,7 +172,8 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
       setOperatingMode(mode);
       setIsBusinessOpen(mode !== 'closed');
       if (mode === 'closed') {
-        setNextOpeningTime(getTimeUntilNextMode());
+        const timeUntil = getTimeUntilNextMode();
+        setNextOpeningTime(typeof timeUntil === 'string' ? timeUntil : timeUntil.formatted);
       }
     };
     checkOperatingMode();
@@ -254,13 +233,9 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
 
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-4 p-4">
-            <AIKPISummary
-              demandResponse={demandResponse}
-              hotspotsResponse={hotspotsResponse}
-              riskResponse={riskResponse}
-              weatherResponse={weatherResponse}
-              isLoading={demandLoading || hotspotsLoading || riskLoading || weatherLoading}
-            />
+            <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+              <p className="text-gray-600">AI KPI Summary - Coming Soon</p>
+            </div>
           </TabsContent>
 
           {/* Today Forecast Tab */}
