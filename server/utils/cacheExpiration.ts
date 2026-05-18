@@ -3,7 +3,7 @@
  * Phase 94: Implement Cache Expiration and Stale Data Prevention
  */
 
-import { predictCache } from './predictCache';
+import { predictCache } from './predictionCache';
 
 interface CacheExpirationConfig {
   checkIntervalMs: number; // How often to check for expired entries

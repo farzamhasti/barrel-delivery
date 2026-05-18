@@ -204,7 +204,6 @@ export function getPredictingStatus(time?: DateTime): PredictingStatus {
     return {
       canPredict: false,
       canAlert: false,
-      canPredict: false,
       reason: `Business closed. Predicting paused until ${nextOpen.toFormat('EEEE, h:mm a')}`,
       nextAvailableTime: nextOpen,
     };
@@ -213,7 +212,6 @@ export function getPredictingStatus(time?: DateTime): PredictingStatus {
   return {
     canPredict: true,
     canAlert: true,
-    canPredict: true,
     reason: 'Business open. Predicting active.',
     nextAvailableTime: getNextClosingTime(now),
   };
