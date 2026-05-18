@@ -116,34 +116,34 @@ export const learningRouter = router({
     }),
 
   /**
-   * Get ML forecast for a specific hour
+   * Get ML prediction for a specific hour
    */
-  getMLForecast: publicProcedure
+  getMLPrediction: publicProcedure
     .input(
       z.object({
         zoneId: z.string().default('default'),
-        forecastHour: z.number().min(0).max(23).default(new Date().getHours()),
+        predictionHour: z.number().min(0).max(23).default(new Date().getHours()),
       }),
     )
     .query(async ({ input }) => {
       try {
-        const forecastTime = new Date();
-        forecastTime.setHours(input.forecastHour);
-        forecastTime.setMinutes(0);
-        forecastTime.setSeconds(0);
-        forecastTime.setMilliseconds(0);
+        const predictionTime = new Date();
+        predictionTime.setHours(input.predictionHour);
+        predictionTime.setMinutes(0);
+        predictionTime.setSeconds(0);
+        predictionTime.setMilliseconds(0);
 
-        const mlForecast = await generateMLBaseline(input.zoneId, forecastTime);
+        const mlPrediction = await generateMLBaseline(input.zoneId, predictionTime);
 
         return {
           success: true,
-          data: mlForecast,
+          data: mlPrediction,
         };
       } catch (error) {
-        console.error('[Learning] Error getting ML forecast:', error);
+        console.error('[Learning] Error getting ML prediction:', error);
         return {
           success: false,
-          message: 'Error generating ML forecast',
+          message: 'Error generating ML prediction',
           error: error instanceof Error ? error.message : 'Unknown error',
           data: null,
         };
