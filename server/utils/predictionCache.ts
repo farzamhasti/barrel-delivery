@@ -1,10 +1,10 @@
 /**
- * Prediction Cache Management
- * Handles caching of predictions with TTL (Time To Live)
+ * Predict Cache Management
+ * Handles caching of predicts with TTL (Time To Live)
  * Prevents stale data and manages cache expiration
  */
 
-interface CachedPrediction {
+interface CachedPredict {
   data: any;
   timestamp: number;
   ttl: number; // Time to live in milliseconds
@@ -17,8 +17,8 @@ interface CacheStats {
   expirations: number;
 }
 
-class PredictionCache {
-  private cache: Map<string, CachedPrediction> = new Map();
+class PredictCache {
+  private cache: Map<string, CachedPredict> = new Map();
   private stats: CacheStats = { hits: 0, misses: 0, expirations: 0 };
 
   /**
@@ -33,7 +33,7 @@ class PredictionCache {
   };
 
   /**
-   * Set a prediction in cache with TTL
+   * Set a predict in cache with TTL
    */
   set(key: string, data: any, ttl: number): void {
     const now = Date.now();
@@ -46,7 +46,7 @@ class PredictionCache {
   }
 
   /**
-   * Get a prediction from cache
+   * Get a predict from cache
    * Returns null if expired or not found
    */
   get(key: string): any | null {
@@ -169,7 +169,7 @@ class PredictionCache {
 }
 
 // Export singleton instance
-export const predictionCache = new PredictionCache();
+export const predictCache = new PredictCache();
 
 /**
  * Helper function to generate cache keys
@@ -184,21 +184,21 @@ export function generateCacheKey(type: string, params: Record<string, any>): str
 }
 
 /**
- * Helper function to get appropriate TTL for prediction type
+ * Helper function to get appropriate TTL for predict type
  */
 export function getTTLForType(type: string): number {
   const typeUpper = type.toUpperCase();
 
   if (typeUpper.includes('DEMAND')) {
-    return PredictionCache.TTL.DEMAND_FORECAST;
+    return PredictCache.TTL.DEMAND_FORECAST;
   } else if (typeUpper.includes('HOTSPOT')) {
-    return PredictionCache.TTL.HOTSPOT_DATA;
+    return PredictCache.TTL.HOTSPOT_DATA;
   } else if (typeUpper.includes('RISK')) {
-    return PredictionCache.TTL.RISK_ASSESSMENT;
+    return PredictCache.TTL.RISK_ASSESSMENT;
   } else if (typeUpper.includes('WEATHER')) {
-    return PredictionCache.TTL.WEATHER_DATA;
+    return PredictCache.TTL.WEATHER_DATA;
   } else if (typeUpper.includes('RECOMMENDATION')) {
-    return PredictionCache.TTL.RECOMMENDATIONS;
+    return PredictCache.TTL.RECOMMENDATIONS;
   }
 
   return 10 * 60 * 1000; // Default 10 minutes

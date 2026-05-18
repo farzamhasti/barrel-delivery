@@ -303,7 +303,7 @@ export type RoadsResult = {
  * PLACE AUTOCOMPLETE - Real-time place suggestions as user types
  * Endpoint: /maps/api/place/autocomplete/json
  * Input: { input: string, location?: string, radius?: number }
- * Output: { predictions: Array<{ description: string, place_id: string }> }
+ * Output: { predicts: Array<{ description: string, place_id: string }> }
  */
 
 /**

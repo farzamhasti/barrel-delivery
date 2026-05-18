@@ -191,11 +191,11 @@ export const MLMonitoringDashboard: React.FC<{ zone_id: string }> = ({ zone_id }
             {/* Additional Metrics */}
             <div className="space-y-2 border-t pt-4">
               <div className="flex justify-between">
-                <span className="text-sm font-medium">Prediction Interval Coverage</span>
+                <span className="text-sm font-medium">Predict Interval Coverage</span>
                 <span className="text-sm">{(metrics.pi_coverage * 100).toFixed(1)}%</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm font-medium">Prediction Interval Width</span>
+                <span className="text-sm font-medium">Predict Interval Width</span>
                 <span className="text-sm">{metrics.pi_width.toFixed(2)}</span>
               </div>
               <div className="flex justify-between">

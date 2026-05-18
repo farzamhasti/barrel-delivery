@@ -4,15 +4,15 @@ import { Button } from '@/components/ui/button';
 import { Calendar } from 'lucide-react';
 import { DatePickerModal } from './DatePickerModal';
 
-interface DemandPredictionTimeFilterProps {
+interface DemandPredictTimeFilterProps {
   onDateRangeChange: (startDate: Date, endDate: Date) => void;
   onModeChange?: (mode: 'single' | 'range') => void;
 }
 
-export function DemandPredictionTimeFilter({
+export function DemandPredictTimeFilter({
   onDateRangeChange,
   onModeChange,
-}: DemandPredictionTimeFilterProps) {
+}: DemandPredictTimeFilterProps) {
   const [mode, setMode] = useState<'single' | 'range'>('single');
   const [selectedDates, setSelectedDates] = useState<Date[]>([new Date()]);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);

@@ -7,7 +7,7 @@ import { router, publicProcedure, protectedProcedure } from '../_core/trpc';
 import { z } from 'zod';
 import { spatialHotspotDetector } from '../ml/spatialHotspotDetection';
 import { heatmapEngine } from '../ml/heatmapEngine';
-import { spatialDemandForecaster } from '../ml/spatialDemandForecasting';
+import { spatialDemandPredicter } from '../ml/spatialDemandForecasting';
 import { driverSpatialIntelligence } from '../ml/driverSpatialIntelligence';
 import { canadianEventsIntegration } from '../ml/canadianEventsIntegration';
 import { logger } from '../utils/logger';
@@ -58,7 +58,7 @@ export const spatialRouter = router({
             timestamp: z.number(),
           })
         ),
-        forecastHours: z.number().default(1),
+        predictHours: z.number().default(1),
       })
     )
     .query(({ input }) => {
@@ -69,14 +69,14 @@ export const spatialRouter = router({
         }));
         const predicted = spatialHotspotDetector.predictFutureHotspots(
           hotspotsWithRadius,
-          input.forecastHours
+          input.predictHours
         );
         return {
           success: true,
           data: predicted,
         };
       } catch (error) {
-        logger.error('Future hotspot prediction failed:', error);
+        logger.error('Future hotspot predict failed:', error);
         return {
           success: false,
           error: 'Failed to predict hotspots',
@@ -185,8 +185,8 @@ export const spatialRouter = router({
       }
     }),
 
-  // Forecast Demand by Zone
-  forecastByZone: protectedProcedure
+  // Predict Demand by Zone
+  predictByZone: protectedProcedure
     .input(
       z.object({
         zoneId: z.string(),
@@ -198,26 +198,26 @@ export const spatialRouter = router({
     )
     .query(({ input }) => {
       try {
-        const forecast = spatialDemandForecaster.forecastByZone(input.zoneId, input.historicalDemand, {
+        const predict = spatialDemandPredicter.predictByZone(input.zoneId, input.historicalDemand, {
           weather: input.weather,
           events: input.events,
           timeOfDay: input.timeOfDay,
         });
         return {
           success: true,
-          data: forecast,
+          data: predict,
         };
       } catch (error) {
-        logger.error('Zone forecast failed:', error);
+        logger.error('Zone predict failed:', error);
         return {
           success: false,
-          error: 'Failed to forecast demand',
+          error: 'Failed to predict demand',
         };
       }
     }),
 
-  // Forecast Demand by Cluster
-  forecastByCluster: protectedProcedure
+  // Predict Demand by Cluster
+  predictByCluster: protectedProcedure
     .input(
       z.object({
         clusterId: z.string(),
@@ -228,7 +228,7 @@ export const spatialRouter = router({
     )
     .query(({ input }) => {
       try {
-        const forecast = spatialDemandForecaster.forecastByCluster(
+        const predict = spatialDemandPredicter.predictByCluster(
           input.clusterId,
           input.clusterCenter,
           input.clusterPoints,
@@ -236,13 +236,13 @@ export const spatialRouter = router({
         );
         return {
           success: true,
-          data: forecast,
+          data: predict,
         };
       } catch (error) {
-        logger.error('Cluster forecast failed:', error);
+        logger.error('Cluster predict failed:', error);
         return {
           success: false,
-          error: 'Failed to forecast cluster demand',
+          error: 'Failed to predict cluster demand',
         };
       }
     }),

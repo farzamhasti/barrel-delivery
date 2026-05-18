@@ -1,4 +1,4 @@
-import { FallbackForecastData } from "./fallbackForecasting";
+import { FallbackPredictData } from "./fallbackPredicting";
 import {
   analyzeWeekdayPatterns,
   analyzeHourlyPatterns,
@@ -6,7 +6,7 @@ import {
   analyzeHotspots,
 } from "./historicalPatterns";
 
-export interface ProbabilisticForecast {
+export interface ProbabilisticPredict {
   demandLevelProbabilities: {
     low: number;
     moderate: number;
@@ -32,11 +32,11 @@ export interface ProbabilisticForecast {
 }
 
 /**
- * Generate probabilistic forecast with confidence intervals
+ * Generate probabilistic predict with confidence intervals
  */
-export async function generateProbabilisticForecast(
-  baseForecast: FallbackForecastData
-): Promise<ProbabilisticForecast> {
+export async function generateProbabilisticPredict(
+  basePredict: FallbackPredictData
+): Promise<ProbabilisticPredict> {
   try {
     // Get historical patterns
     const weekdayPatterns = await analyzeWeekdayPatterns();
@@ -45,7 +45,7 @@ export async function generateProbabilisticForecast(
     const hotspots = await analyzeHotspots();
 
     // Calculate demand level probabilities
-    const baseVolume = baseForecast.expectedVolume;
+    const baseVolume = basePredict.expectedVolume;
     const demandLevelProbabilities = calculateDemandProbabilities(baseVolume);
 
     // Calculate peak hour probabilities
@@ -70,11 +70,11 @@ export async function generateProbabilisticForecast(
     // Calculate confidence interval
     const confidenceInterval = calculateConfidenceInterval(
       baseVolume,
-      baseForecast.confidenceScore
+      basePredict.confidenceScore
     );
 
     // Quantify uncertainty
-    const uncertaintyQuantification = 1 - baseForecast.confidenceScore;
+    const uncertaintyQuantification = 1 - basePredict.confidenceScore;
 
     return {
       demandLevelProbabilities,
@@ -86,8 +86,8 @@ export async function generateProbabilisticForecast(
       uncertaintyQuantification,
     };
   } catch (error) {
-    console.error("Error generating probabilistic forecast:", error);
-    // Return default probabilistic forecast
+    console.error("Error generating probabilistic predict:", error);
+    // Return default probabilistic predict
     return {
       demandLevelProbabilities: { low: 0.3, moderate: 0.5, high: 0.2 },
       peakHourProbabilities: { "6-8 PM": 0.7, "7-9 PM": 0.6 },

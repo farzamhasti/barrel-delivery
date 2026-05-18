@@ -2,11 +2,11 @@
  * PHASE 3: Real Machine Learning Integration
  * 
  * Orchestrates all learning components with ML baseline:
- * - ML Baseline Forecasting (weighted regression)
+ * - ML Baseline Predicting (weighted regression)
  * - Historical Order Learning
- * - Forecast Memory System
+ * - Predict Memory System
  * - Confidence Engine
- * - Forecast Adaptation
+ * - Predict Adaptation
  */
 
 import {
@@ -16,7 +16,7 @@ import {
 } from './historicalOrderLearning';
 
 import {
-  storeForecast,
+  storePredict,
   recordActualOutcome,
   calculateAccuracyMetrics,
   determineLearningPhase,
@@ -26,17 +26,17 @@ import {
 import {
   assessConfidence,
   getConfidenceExplanation,
-  shouldUseForecast,
+  shouldUsePredict,
 } from './confidenceEngine';
 
 import {
-  adaptForecast,
+  adaptPredict,
   getAdaptationExplanation,
 } from './forecastAdaptation';
 
 import {
   generateMLBaseline,
-  type MLForecast,
+  type MLPredict,
 } from './mlBaseline';
 
 import {
@@ -47,10 +47,10 @@ import {
   getAccuracyBreakdown,
 } from './learningFeedback';
 
-export interface LearningForecast {
+export interface LearningPredict {
   zoneId: string;
-  baselineForecast: number;
-  adaptedForecast: number;
+  baselinePredict: number;
+  adaptedPredict: number;
   confidence: number;
   confidenceExplanation: string;
   learningPhase: 'early_learning' | 'learning' | 'trained';
@@ -68,12 +68,12 @@ export interface LearningForecast {
 }
 
 /**
- * Generate a learning-based forecast for a zone using ML baseline
+ * Generate a learning-based predict for a zone using ML baseline
  * 
  * This function now uses statistical ML (weighted regression) instead of simple heuristics.
  * The ML model learns from historical patterns and applies temporal weights.
  */
-export async function generateLearningForecast(params: {
+export async function generateLearningPredict(params: {
   zoneId: string;
   currentHour: number;
   dayOfWeek: number;
@@ -85,16 +85,16 @@ export async function generateLearningForecast(params: {
   weatherCondition: string;
   activeEvents: Array<{ type: string; intensity: 'low' | 'medium' | 'high' }>;
   hoursUntilDeadline: number;
-}): Promise<LearningForecast | null> {
+}): Promise<LearningPredict | null> {
   try {
-    // Step 1: Generate ML baseline forecast (replaces simple heuristic)
-    const forecastTime = new Date();
-    forecastTime.setHours(params.currentHour);
+    // Step 1: Generate ML baseline predict (replaces simple heuristic)
+    const predictTime = new Date();
+    predictTime.setHours(params.currentHour);
     
-    const mlForecast = await generateMLBaseline(params.zoneId, forecastTime);
-    const baselineForecast = mlForecast.baselineForecast;
+    const mlPredict = await generateMLBaseline(params.zoneId, predictTime);
+    const baselinePredict = mlPredict.baselinePredict;
     
-    console.log(`[Learning] ML baseline forecast for zone ${params.zoneId}: ${baselineForecast.toFixed(1)} orders (confidence: ${(mlForecast.confidenceScore * 100).toFixed(0)}%)`);
+    console.log(`[Learning] ML baseline predict for zone ${params.zoneId}: ${baselinePredict.toFixed(1)} orders (confidence: ${(mlPredict.confidenceScore * 100).toFixed(0)}%)`);
     
     // Get historical patterns for adaptation context
     const patterns = await buildHistoricalPatterns(params.zoneId);
@@ -115,16 +115,16 @@ export async function generateLearningForecast(params: {
     // Step 2: Use ML model's confidence score (already calculated)
     const metrics = await calculateAccuracyMetrics(params.zoneId);
     const confidenceFactors = {
-      overallConfidence: mlForecast.confidenceScore,
-      dataVolumeConfidence: Math.min(1.0, mlForecast.modelMetadata.trainingDataPoints / 100),
+      overallConfidence: mlPredict.confidenceScore,
+      dataVolumeConfidence: Math.min(1.0, mlPredict.modelMetadata.trainingDataPoints / 100),
       accuracyConfidence: (metrics?.accuracyRate || 50) / 100,
-      temporalConsistencyConfidence: 1 - mlForecast.modelMetadata.volatility,
-      uncertaintyConfidence: 1 - mlForecast.modelMetadata.volatility,
+      temporalConsistencyConfidence: 1 - mlPredict.modelMetadata.volatility,
+      uncertaintyConfidence: 1 - mlPredict.modelMetadata.volatility,
     };
 
-    // Step 3: Adapt ML forecast based on real-time factors
-    const adaptationFactors = adaptForecast({
-      baselineForecast: Math.round(baselineForecast),
+    // Step 3: Adapt ML predict based on real-time factors
+    const adaptationFactors = adaptPredict({
+      baselinePredict: Math.round(baselinePredict),
       ordersInLastHour: params.ordersInLastHour,
       historicalAveragePerHour: historicalDemand.average,
       availableDrivers: params.availableDrivers,
@@ -140,42 +140,42 @@ export async function generateLearningForecast(params: {
     // Step 4: Determine learning phase based on ML model performance
     const learningProgress = await getLearningProgress(params.zoneId);
     const learningPhase = determineLearningPhase(
-      mlForecast.modelMetadata.trainingDataPoints,
-      mlForecast.confidenceScore * 100,
+      mlPredict.modelMetadata.trainingDataPoints,
+      mlPredict.confidenceScore * 100,
     );
 
-    // Step 5: Store ML forecast for later comparison and retraining
-    await storeForecast({
+    // Step 5: Store ML predict for later comparison and retraining
+    await storePredict({
       zoneId: params.zoneId,
-      forecastTime: forecastTime,
-      forecastedDemand: adaptationFactors.finalAdaptedForecast,
-      forecastedConfidence: confidenceFactors.overallConfidence,
+      predictTime: predictTime,
+      predictedDemand: adaptationFactors.finalAdaptedPredict,
+      predictedConfidence: confidenceFactors.overallConfidence,
       learningPhase,
     });
 
     // Step 6: Return aggregated learning result with ML insights
     return {
       zoneId: params.zoneId,
-      baselineForecast: Math.round(baselineForecast),
-      adaptedForecast: adaptationFactors.finalAdaptedForecast,
+      baselinePredict: Math.round(baselinePredict),
+      adaptedPredict: adaptationFactors.finalAdaptedPredict,
       confidence: confidenceFactors.overallConfidence,
-      confidenceExplanation: mlForecast.confidenceExplanation,
+      confidenceExplanation: mlPredict.confidenceExplanation,
       learningPhase,
       learningProgress: learningProgress?.progress || 0,
       adaptationReasons: adaptationFactors.adaptationReason,
       adaptationExplanation: getAdaptationExplanation(adaptationFactors),
       metadata: {
         modelType: 'ml_weighted_regression',
-        historicalAverage: mlForecast.modelMetadata.averageHistoricalDemand,
-        trend: mlForecast.modelMetadata.trendDirection,
-        temporalConsistency: 1 - mlForecast.modelMetadata.volatility,
-        dataVolume: mlForecast.modelMetadata.trainingDataPoints,
-        volatility: mlForecast.modelMetadata.volatility,
+        historicalAverage: mlPredict.modelMetadata.averageHistoricalDemand,
+        trend: mlPredict.modelMetadata.trendDirection,
+        temporalConsistency: 1 - mlPredict.modelMetadata.volatility,
+        dataVolume: mlPredict.modelMetadata.trainingDataPoints,
+        volatility: mlPredict.modelMetadata.volatility,
       },
     };
 
   } catch (error) {
-    console.error('[Learning] Error generating learning forecast:', error);
+    console.error('[Learning] Error generating learning predict:', error);
     console.error('[Learning] Stack trace:', (error as Error).stack);
     return null;
   }
@@ -189,12 +189,12 @@ export async function generateLearningForecast(params: {
  */
 export async function updateLearningWithOutcome(
   zoneId: string,
-  forecastTime: Date,
+  predictTime: Date,
   actualDemand: number,
 ): Promise<void> {
   try {
-    const outcome = await recordActualOutcome(zoneId, forecastTime, actualDemand);
-    const feedbackOutcome = await recordOrderOutcome(zoneId, forecastTime, actualDemand);
+    const outcome = await recordActualOutcome(zoneId, predictTime, actualDemand);
+    const feedbackOutcome = await recordOrderOutcome(zoneId, predictTime, actualDemand);
     
     if (outcome || feedbackOutcome) {
       console.log(`[Learning] Updated ML system with actual outcome for zone ${zoneId}: ${actualDemand} orders`);
@@ -214,15 +214,15 @@ export {
   buildHistoricalPatterns,
   calculateDemandTrend,
   getHistoricalDemandForTimeSlot,
-  storeForecast,
+  storePredict,
   recordActualOutcome,
   calculateAccuracyMetrics,
   determineLearningPhase,
   getLearningProgress,
   assessConfidence,
   getConfidenceExplanation,
-  shouldUseForecast,
-  adaptForecast,
+  shouldUsePredict,
+  adaptPredict,
   getAdaptationExplanation,
   generateMLBaseline,
   recordOrderOutcome,

@@ -1,5 +1,5 @@
 /**
- * ML Prediction Card Component
+ * ML Predict Card Component
  * 
  * Displays machine learning demand predictions with confidence scoring
  * and temporal feature analysis for the Geomarketing dashboard.
@@ -11,27 +11,27 @@ import { Button } from '@/components/ui/button';
 import { TrendingUp, BarChart3, AlertCircle, CheckCircle2, Clock, Zap } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
 
-interface MLPredictionCardProps {
+interface MLPredictCardProps {
   zoneId?: string;
-  predictionHour?: number;
+  predictHour?: number;
 }
 
-export function MLPredictionCard({ zoneId = 'default', predictionHour }: MLPredictionCardProps) {
-  const [selectedHour, setSelectedHour] = useState(predictionHour || new Date().getHours());
+export function MLPredictCard({ zoneId = 'default', predictHour }: MLPredictCardProps) {
+  const [selectedHour, setSelectedHour] = useState(predictHour || new Date().getHours());
   const [showDetails, setShowDetails] = useState(false);
 
-  // Fetch ML prediction
-  const { data: response, isLoading, error } = trpc.learning.getMLPrediction.useQuery(
+  // Fetch ML predict
+  const { data: response, isLoading, error } = trpc.learning.getMLPredict.useQuery(
     {
       zoneId,
-      predictionHour: selectedHour,
+      predictHour: selectedHour,
     },
     {
       refetchInterval: 5 * 60 * 1000, // Refresh every 5 minutes
     }
   );
 
-  const prediction = response?.data;
+  const predict = response?.data;
 
   if (isLoading) {
     return (
@@ -52,18 +52,18 @@ export function MLPredictionCard({ zoneId = 'default', predictionHour }: MLPredi
     );
   }
 
-  if (error || !prediction || !response?.success) {
+  if (error || !predict || !response?.success) {
     return (
       <Card className="border-0 shadow-sm border-l-4 border-l-yellow-500">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-yellow-700">
             <AlertCircle className="h-5 w-5" />
-            ML Prediction Unavailable
+            ML Predict Unavailable
           </CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-gray-600">
-            {error ? 'Error loading prediction' : 'Unable to generate ML prediction at this time. Check back later.'}
+            {error ? 'Error loading predict' : 'Unable to generate ML predict at this time. Check back later.'}
           </p>
         </CardContent>
       </Card>
@@ -71,9 +71,9 @@ export function MLPredictionCard({ zoneId = 'default', predictionHour }: MLPredi
   }
 
   const confidenceLevel =
-    prediction.confidenceScore > 0.8
+    predict.confidenceScore > 0.8
       ? 'high'
-      : prediction.confidenceScore > 0.6
+      : predict.confidenceScore > 0.6
       ? 'moderate'
       : 'low';
 
@@ -85,9 +85,9 @@ export function MLPredictionCard({ zoneId = 'default', predictionHour }: MLPredi
       : 'text-yellow-600 bg-yellow-50';
 
   const trendIcon =
-    prediction.modelMetadata.trendDirection === 'increasing' ? (
+    predict.modelMetadata.trendDirection === 'increasing' ? (
       <TrendingUp className="h-4 w-4 text-green-600" />
-    ) : prediction.modelMetadata.trendDirection === 'decreasing' ? (
+    ) : predict.modelMetadata.trendDirection === 'decreasing' ? (
       <TrendingUp className="h-4 w-4 text-red-600 rotate-180" />
     ) : (
       <div className="h-4 w-4 text-gray-600">—</div>
@@ -120,7 +120,7 @@ export function MLPredictionCard({ zoneId = 'default', predictionHour }: MLPredi
         {/* Hour Selector */}
         <div className="flex items-center gap-2">
           <Clock className="h-4 w-4 text-gray-500" />
-          <label className="text-sm font-medium">Prediction Hour:</label>
+          <label className="text-sm font-medium">Predict Hour:</label>
           <select
             value={selectedHour}
             onChange={(e) => setSelectedHour(parseInt(e.target.value))}
@@ -134,13 +134,13 @@ export function MLPredictionCard({ zoneId = 'default', predictionHour }: MLPredi
           </select>
         </div>
 
-        {/* Main Prediction Display */}
+        {/* Main Predict Display */}
         <div className="grid grid-cols-2 gap-4">
-          {/* Baseline Prediction */}
+          {/* Baseline Predict */}
           <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-            <div className="text-sm text-gray-600 mb-1">Baseline Prediction</div>
+            <div className="text-sm text-gray-600 mb-1">Baseline Predict</div>
             <div className="text-3xl font-bold text-blue-600">
-              {prediction.baselineForecast.toFixed(1)}
+              {predict.baselinePredict.toFixed(1)}
             </div>
             <div className="text-xs text-gray-500 mt-1">orders predicted</div>
           </div>
@@ -149,7 +149,7 @@ export function MLPredictionCard({ zoneId = 'default', predictionHour }: MLPredi
           <div className={`rounded-lg p-4 border ${confidenceColor.split(' ')[1]}`}>
             <div className="text-sm text-gray-600 mb-1">Confidence</div>
             <div className="text-3xl font-bold">
-              {(prediction.confidenceScore * 100).toFixed(0)}%
+              {(predict.confidenceScore * 100).toFixed(0)}%
             </div>
             <div className="text-xs text-gray-500 mt-1 capitalize">{confidenceLevel}</div>
           </div>
@@ -163,7 +163,7 @@ export function MLPredictionCard({ zoneId = 'default', predictionHour }: MLPredi
             <div>
               <div className="text-xs text-gray-600">Trend</div>
               <div className="text-sm font-semibold capitalize">
-                {prediction.modelMetadata.trendDirection}
+                {predict.modelMetadata.trendDirection}
               </div>
             </div>
           </div>
@@ -174,7 +174,7 @@ export function MLPredictionCard({ zoneId = 'default', predictionHour }: MLPredi
             <div>
               <div className="text-xs text-gray-600">Volatility</div>
               <div className="text-sm font-semibold">
-                {(prediction.modelMetadata.volatility * 100).toFixed(0)}%
+                {(predict.modelMetadata.volatility * 100).toFixed(0)}%
               </div>
             </div>
           </div>
@@ -184,7 +184,7 @@ export function MLPredictionCard({ zoneId = 'default', predictionHour }: MLPredi
         <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
           <div className="text-sm text-blue-900">
             <strong>Why this confidence?</strong>
-            <p className="text-xs mt-1">{prediction.confidenceExplanation}</p>
+            <p className="text-xs mt-1">{predict.confidenceExplanation}</p>
           </div>
         </div>
 
@@ -195,13 +195,13 @@ export function MLPredictionCard({ zoneId = 'default', predictionHour }: MLPredi
               <div>
                 <div className="text-xs text-gray-600">Training Data Points</div>
                 <div className="font-semibold">
-                  {prediction.modelMetadata.trainingDataPoints}
+                  {predict.modelMetadata.trainingDataPoints}
                 </div>
               </div>
               <div>
                 <div className="text-xs text-gray-600">Historical Average</div>
                 <div className="font-semibold">
-                  {prediction.modelMetadata.averageHistoricalDemand.toFixed(1)}
+                  {predict.modelMetadata.averageHistoricalDemand.toFixed(1)}
                 </div>
               </div>
             </div>
@@ -214,26 +214,26 @@ export function MLPredictionCard({ zoneId = 'default', predictionHour }: MLPredi
                   <span className="text-gray-600">Day of Week:</span>
                   <span className="ml-1 font-semibold">
                     {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][
-                      prediction.modelMetadata.temporalFeatures.dayOfWeek
+                      predict.modelMetadata.temporalFeatures.dayOfWeek
                     ]}
                   </span>
                 </div>
                 <div>
                   <span className="text-gray-600">Hour:</span>
                   <span className="ml-1 font-semibold">
-                    {prediction.modelMetadata.temporalFeatures.hour.toString().padStart(2, '0')}:00
+                    {predict.modelMetadata.temporalFeatures.hour.toString().padStart(2, '0')}:00
                   </span>
                 </div>
                 <div>
                   <span className="text-gray-600">Peak Hour:</span>
                   <span className="ml-1 font-semibold">
-                    {prediction.modelMetadata.temporalFeatures.isPeakHour ? 'Yes' : 'No'}
+                    {predict.modelMetadata.temporalFeatures.isPeakHour ? 'Yes' : 'No'}
                   </span>
                 </div>
                 <div>
                   <span className="text-gray-600">Demand Intensity:</span>
                   <span className="ml-1 font-semibold">
-                    {(prediction.modelMetadata.temporalFeatures.demandIntensity * 100).toFixed(0)}%
+                    {(predict.modelMetadata.temporalFeatures.demandIntensity * 100).toFixed(0)}%
                   </span>
                 </div>
               </div>
@@ -245,7 +245,7 @@ export function MLPredictionCard({ zoneId = 'default', predictionHour }: MLPredi
               <div>Weighted Regression with Temporal Features</div>
               <div className="mt-2">
                 Uses historical demand patterns, day-of-week effects, and peak hour analysis
-                to generate statistically-grounded predictions.
+                to generate statistically-grounded predicts.
               </div>
             </div>
           </div>
@@ -255,7 +255,7 @@ export function MLPredictionCard({ zoneId = 'default', predictionHour }: MLPredi
         <div className="text-xs text-gray-500 border-t pt-3">
           <div className="flex items-center gap-1">
             <CheckCircle2 className="h-3 w-3 text-green-600" />
-            ML model trained on {prediction.modelMetadata.trainingDataPoints} historical data points
+            ML model trained on {predict.modelMetadata.trainingDataPoints} historical data points
           </div>
         </div>
       </CardContent>

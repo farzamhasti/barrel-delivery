@@ -1,13 +1,13 @@
 /**
  * PHASE 2: Learning System tRPC Router
  * 
- * Exposes learning-based forecasting through tRPC
+ * Exposes learning-based predicting through tRPC
  */
 
 import { z } from 'zod';
 import { adminOrSystemAdminProcedure, publicProcedure, router } from '../_core/trpc';
 import {
-  generateLearningForecast,
+  generateLearningPredict,
   updateLearningWithOutcome,
   generateMLBaseline,
   getModelPerformanceMetrics,
@@ -17,9 +17,9 @@ import {
 
 export const learningRouter = router({
   /**
-   * Generate a learning-based forecast
+   * Generate a learning-based predict
    */
-  forecast: adminOrSystemAdminProcedure
+  predict: adminOrSystemAdminProcedure
     .input(
       z.object({
         zoneId: z.string(),
@@ -44,7 +44,7 @@ export const learningRouter = router({
     )
     .query(async ({ input }) => {
       try {
-        const forecast = await generateLearningForecast({
+        const predict = await generateLearningPredict({
           zoneId: input.zoneId,
           currentHour: input.currentHour,
           dayOfWeek: input.dayOfWeek,
@@ -58,24 +58,24 @@ export const learningRouter = router({
           hoursUntilDeadline: input.hoursUntilDeadline,
         });
 
-        if (!forecast) {
+        if (!predict) {
           return {
             success: false,
-            message: 'Unable to generate learning forecast - insufficient data',
+            message: 'Unable to generate learning predict - insufficient data',
             data: null,
           };
         }
 
         return {
           success: true,
-          message: 'Learning forecast generated successfully',
-          data: forecast,
+          message: 'Learning predict generated successfully',
+          data: predict,
         };
       } catch (error) {
-        console.error('[Learning] Error in forecast procedure:', error);
+        console.error('[Learning] Error in predict procedure:', error);
         return {
           success: false,
-          message: 'Error generating forecast',
+          message: 'Error generating predict',
           error: error instanceof Error ? error.message : 'Unknown error',
           data: null,
         };
@@ -89,7 +89,7 @@ export const learningRouter = router({
     .input(
       z.object({
         zoneId: z.string(),
-        forecastTime: z.date(),
+        predictTime: z.date(),
         actualDemand: z.number().min(0),
       }),
     )
@@ -97,7 +97,7 @@ export const learningRouter = router({
       try {
         await updateLearningWithOutcome(
           input.zoneId,
-          input.forecastTime,
+          input.predictTime,
           input.actualDemand,
         );
 
@@ -116,34 +116,34 @@ export const learningRouter = router({
     }),
 
   /**
-   * Get ML prediction for a specific hour
+   * Get ML predict for a specific hour
    */
-  getMLPrediction: publicProcedure
+  getMLPredict: publicProcedure
     .input(
       z.object({
         zoneId: z.string().default('default'),
-        predictionHour: z.number().min(0).max(23).default(new Date().getHours()),
+        predictHour: z.number().min(0).max(23).default(new Date().getHours()),
       }),
     )
     .query(async ({ input }) => {
       try {
-        const predictionTime = new Date();
-        predictionTime.setHours(input.predictionHour);
-        predictionTime.setMinutes(0);
-        predictionTime.setSeconds(0);
-        predictionTime.setMilliseconds(0);
+        const predictTime = new Date();
+        predictTime.setHours(input.predictHour);
+        predictTime.setMinutes(0);
+        predictTime.setSeconds(0);
+        predictTime.setMilliseconds(0);
 
-        const mlPrediction = await generateMLBaseline(input.zoneId, predictionTime);
+        const mlPredict = await generateMLBaseline(input.zoneId, predictTime);
 
         return {
           success: true,
-          data: mlPrediction,
+          data: mlPredict,
         };
       } catch (error) {
-        console.error('[Learning] Error getting ML prediction:', error);
+        console.error('[Learning] Error getting ML predict:', error);
         return {
           success: false,
-          message: 'Error generating ML prediction',
+          message: 'Error generating ML predict',
           error: error instanceof Error ? error.message : 'Unknown error',
           data: null,
         };
@@ -255,7 +255,7 @@ export const learningRouter = router({
             zoneId: input.zoneId,
             phase: 'early_learning',
             progress: 35,
-            nextMilestone: 'Collect 30 more forecasts to reach Learning phase',
+            nextMilestone: 'Collect 30 more predicts to reach Learning phase',
             estimatedTimeToTrained: '7-14 days',
             message: 'Learning system initialized',
           },

@@ -1,6 +1,6 @@
 /**
  * AI KPI Summary Section
- * Displays key performance indicators from AI predictions
+ * Displays key performance indicators from AI predicts
  */
 
 import React from 'react';
@@ -9,7 +9,7 @@ import { TrendingUp, TrendingDown, Cloud, Users, AlertCircle } from 'lucide-reac
 
 interface AIKPISummaryProps {
   data: {
-    demandForecast: {
+    demandPredict: {
       predicted_demand: number;
       confidence_score: number;
       trend: 'up' | 'down' | 'stable';
@@ -68,26 +68,26 @@ export default function AIKPISummary({ data }: AIKPISummaryProps) {
     <div className="space-y-4">
       {/* Primary Metrics Row */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Demand Forecast Card */}
+        {/* Demand Prediction Card */}
         <Card className="p-4 bg-gradient-to-br from-purple-50 to-blue-50 border-purple-200">
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="font-semibold text-gray-700">Predicted Demand</h3>
               <div className="flex items-center gap-1">
-                {getTrendIcon(data.demandForecast.trend)}
+                {getTrendIcon(data.demandPredict.trend)}
                 <span className={`text-sm font-semibold ${
-                  data.demandForecast.trend === 'up' ? 'text-green-600' : 
-                  data.demandForecast.trend === 'down' ? 'text-red-600' : 
+                  data.demandPredict.trend === 'up' ? 'text-green-600' : 
+                  data.demandPredict.trend === 'down' ? 'text-red-600' : 
                   'text-gray-600'
                 }`}>
-                  {data.demandForecast.change_percent > 0 ? '+' : ''}{data.demandForecast.change_percent}%
+                  {data.demandPredict.change_percent > 0 ? '+' : ''}{data.demandPredict.change_percent}%
                 </span>
               </div>
             </div>
             
             <div className="flex items-baseline gap-2">
               <span className="text-4xl font-bold text-purple-700">
-                {data.demandForecast.predicted_demand}
+                {data.demandPredict.predicted_demand}
               </span>
               <span className="text-sm text-gray-600">orders expected</span>
             </div>
@@ -97,13 +97,13 @@ export default function AIKPISummary({ data }: AIKPISummaryProps) {
               <div className="flex items-center justify-between text-xs">
                 <span className="text-gray-600">Confidence</span>
                 <span className="font-semibold text-purple-700">
-                  {(data.demandForecast.confidence_score * 100).toFixed(0)}%
+                  {(data.demandPredict.confidence_score * 100).toFixed(0)}%
                 </span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
                 <div
                   className="bg-gradient-to-r from-purple-500 to-blue-500 h-2 rounded-full transition-all"
-                  style={{ width: `${data.demandForecast.confidence_score * 100}%` }}
+                  style={{ width: `${data.demandPredict.confidence_score * 100}%` }}
                 />
               </div>
             </div>

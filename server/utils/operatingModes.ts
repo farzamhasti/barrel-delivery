@@ -1,10 +1,10 @@
 /**
  * Operating Modes Utility
- * Phase 97: Dual-mode operation (Pre-Operation Forecasting vs Active Operations)
+ * Phase 97: Dual-mode operation (Pre-Operation Predicting vs Active Operations)
  * 
  * Distinguishes between:
- * 1. Pre-Operation Forecasting Mode (before 4 PM): Forecasting active, live metrics inactive
- * 2. Active Operations Mode (4 PM - 10/11 PM): Both forecasting and live metrics active
+ * 1. Pre-Operation Predicting Mode (before 4 PM): Predicting active, live metrics inactive
+ * 2. Active Operations Mode (4 PM - 10/11 PM): Both predicting and live metrics active
  * 3. Closed Mode (after 10/11 PM): All metrics paused, next-day planning available
  */
 
@@ -15,7 +15,7 @@ interface ModeInfo {
   isPreOperation: boolean;
   isActiveOperations: boolean;
   isClosed: boolean;
-  forecastingActive: boolean;
+  predictingActive: boolean;
   liveMetricsActive: boolean;
   nextModeTime: Date;
   nextModeLabel: string;
@@ -78,7 +78,7 @@ export function getModeInfo(now: Date = new Date()): ModeInfo {
   let nextModeTime: Date;
   let nextModeLabel: string;
   let modeDescription: string;
-  let forecastingActive: boolean;
+  let predictingActive: boolean;
   let liveMetricsActive: boolean;
 
   if (mode === 'pre-operation') {
@@ -89,16 +89,16 @@ export function getModeInfo(now: Date = new Date()): ModeInfo {
       nextModeTime.setDate(nextModeTime.getDate() + 1);
     }
     nextModeLabel = 'Active Operations';
-    modeDescription = 'Pre-Operation Forecasting Mode - Planning for tonight\'s delivery service';
-    forecastingActive = true;
+    modeDescription = 'Pre-Operation Predicting Mode - Planning for tonight\'s delivery service';
+    predictingActive = true;
     liveMetricsActive = false;
   } else if (mode === 'active-operations') {
     // Next mode is closed at closing hour
     nextModeTime = new Date(now);
     nextModeTime.setHours(closingHour, 0, 0, 0);
     nextModeLabel = 'Business Closed';
-    modeDescription = `Active Operations Mode - Live delivery tracking and forecasting (closes at ${closingHour}:00)`;
-    forecastingActive = true;
+    modeDescription = `Active Operations Mode - Live delivery tracking and predicting (closes at ${closingHour}:00)`;
+    predictingActive = true;
     liveMetricsActive = true;
   } else {
     // Closed mode - next mode is pre-operation at 4 AM (or active at 4 PM if after 4 AM)
@@ -106,9 +106,9 @@ export function getModeInfo(now: Date = new Date()): ModeInfo {
     nextDay.setDate(nextDay.getDate() + 1);
     nextDay.setHours(4, 0, 0, 0);
     nextModeTime = nextDay;
-    nextModeLabel = 'Pre-Operation Forecasting';
+    nextModeLabel = 'Pre-Operation Predicting';
     modeDescription = 'Business Closed - Next-day planning available';
-    forecastingActive = false;
+    predictingActive = false;
     liveMetricsActive = false;
   }
 
@@ -117,7 +117,7 @@ export function getModeInfo(now: Date = new Date()): ModeInfo {
     isPreOperation: mode === 'pre-operation',
     isActiveOperations: mode === 'active-operations',
     isClosed: mode === 'closed',
-    forecastingActive,
+    predictingActive,
     liveMetricsActive,
     nextModeTime,
     nextModeLabel,
@@ -169,7 +169,7 @@ export function getModeBadgeInfo(now: Date = new Date()): {
   if (modeInfo.isPreOperation) {
     return {
       mode: 'pre-operation',
-      label: 'Pre-Operation Forecasting',
+      label: 'Pre-Operation Predicting',
       emoji: '🔵',
       color: 'text-blue-900',
       bgColor: 'bg-blue-100',
@@ -182,7 +182,7 @@ export function getModeBadgeInfo(now: Date = new Date()): {
       emoji: '🟢',
       color: 'text-green-900',
       bgColor: 'bg-green-100',
-      description: 'Live delivery tracking and forecasting',
+      description: 'Live delivery tracking and predicting',
     };
   } else {
     return {
@@ -197,11 +197,11 @@ export function getModeBadgeInfo(now: Date = new Date()): {
 }
 
 /**
- * Validate if forecasting should be active
+ * Validate if predicting should be active
  */
-export function shouldForecastingBeActive(now: Date = new Date()): boolean {
+export function shouldPredictingBeActive(now: Date = new Date()): boolean {
   const modeInfo = getModeInfo(now);
-  return modeInfo.forecastingActive;
+  return modeInfo.predictingActive;
 }
 
 /**

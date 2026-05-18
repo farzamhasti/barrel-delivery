@@ -1,16 +1,16 @@
 /**
- * Spatial Demand Forecasting
- * Forecasts demand geographically by zone, cluster, neighborhood, and corridor
+ * Spatial Demand Predictioning
+ * Predicts demand geographically by zone, cluster, neighborhood, and corridor
  */
 
 import { logger } from '../utils/logger';
 
-interface SpatialForecast {
+interface SpatialPredict {
   id: string;
   location: { lat: number; lng: number };
   locationType: 'zone' | 'cluster' | 'neighborhood' | 'corridor';
   locationName: string;
-  forecastedDemand: number;
+  predictedDemand: number;
   confidence: number;
   timeWindow: { start: Date; end: Date };
   trend: 'increasing' | 'decreasing' | 'stable';
@@ -19,7 +19,7 @@ interface SpatialForecast {
   timestamp: number;
 }
 
-interface DeliveryCorridorForecast {
+interface DeliveryCorridorPredict {
   corridorId: string;
   startZone: string;
   endZone: string;
@@ -31,11 +31,11 @@ interface DeliveryCorridorForecast {
 }
 
 /**
- * Spatial Demand Forecasting Engine
+ * Spatial Demand Predictioning Engine
  */
-export class SpatialDemandForecaster {
+export class SpatialDemandPredicter {
   private zones: Map<string, { lat: number; lng: number; name: string }> = new Map();
-  private corridors: Map<string, DeliveryCorridorForecast> = new Map();
+  private corridors: Map<string, DeliveryCorridorPredict> = new Map();
 
   constructor() {
     this.initializeZones();
@@ -89,19 +89,19 @@ export class SpatialDemandForecaster {
   }
 
   /**
-   * Forecast demand by zone
+   * Predict demand by zone
    */
-  forecastByZone(
+  predictByZone(
     zoneId: string,
     historicalDemand: number[],
     currentConditions: { weather?: string; events?: string[]; timeOfDay?: string }
-  ): SpatialForecast {
+  ): SpatialPredict {
     const zone = this.zones.get(zoneId);
     if (!zone) {
       throw new Error(`Zone ${zoneId} not found`);
     }
 
-    // Calculate base forecast from historical data
+    // Calculate base predict from historical data
     const avgDemand = historicalDemand.reduce((a, b) => a + b, 0) / Math.max(historicalDemand.length, 1);
     const trend = this.calculateTrend(historicalDemand);
 
@@ -122,7 +122,7 @@ export class SpatialDemandForecaster {
     if (currentConditions.timeOfDay === 'peak') timeMultiplier = 1.4;
     else if (currentConditions.timeOfDay === 'off_peak') timeMultiplier = 0.6;
 
-    const forecastedDemand = avgDemand * weatherMultiplier * eventMultiplier * timeMultiplier;
+    const predictedDemand = avgDemand * weatherMultiplier * eventMultiplier * timeMultiplier;
     const confidence = this.calculateConfidence(historicalDemand, currentConditions);
 
     const riskFactors: string[] = [];
@@ -133,17 +133,17 @@ export class SpatialDemandForecaster {
       recommendations.push('Increase driver availability');
     }
 
-    if (forecastedDemand > avgDemand * 1.5) {
+    if (predictedDemand > avgDemand * 1.5) {
       recommendations.push('Pre-position drivers in zone');
       recommendations.push('Prepare for surge pricing');
     }
 
     return {
-      id: `forecast_zone_${zoneId}_${Date.now()}`,
+      id: `predict_zone_${zoneId}_${Date.now()}`,
       location: { lat: zone.lat, lng: zone.lng },
       locationType: 'zone',
       locationName: zone.name,
-      forecastedDemand,
+      predictedDemand,
       confidence,
       timeWindow: {
         start: new Date(),
@@ -157,25 +157,25 @@ export class SpatialDemandForecaster {
   }
 
   /**
-   * Forecast demand by cluster
+   * Predict demand by cluster
    */
-  forecastByCluster(
+  predictByCluster(
     clusterId: string,
     clusterCenter: { lat: number; lng: number },
     clusterPoints: number,
     historicalDemand: number[]
-  ): SpatialForecast {
+  ): SpatialPredict {
     const avgDemand = historicalDemand.reduce((a, b) => a + b, 0) / Math.max(historicalDemand.length, 1);
     const densityFactor = clusterPoints / 10; // Normalize by typical cluster size
-    const forecastedDemand = avgDemand * densityFactor;
+    const predictedDemand = avgDemand * densityFactor;
     const confidence = Math.min(1, clusterPoints / 20); // Higher confidence with more points
 
     return {
-      id: `forecast_cluster_${clusterId}_${Date.now()}`,
+      id: `predict_cluster_${clusterId}_${Date.now()}`,
       location: clusterCenter,
       locationType: 'cluster',
       locationName: `Cluster ${clusterId}`,
-      forecastedDemand,
+      predictedDemand,
       confidence,
       timeWindow: {
         start: new Date(),
@@ -189,20 +189,20 @@ export class SpatialDemandForecaster {
   }
 
   /**
-   * Forecast demand by neighborhood
+   * Predict demand by neighborhood
    */
-  forecastByNeighborhood(
+  predictByNeighborhood(
     neighborhoodId: string,
     neighborhoodName: string,
     center: { lat: number; lng: number },
     historicalDemand: number[],
     competitorDensity: number
-  ): SpatialForecast {
+  ): SpatialPredict {
     const avgDemand = historicalDemand.reduce((a, b) => a + b, 0) / Math.max(historicalDemand.length, 1);
 
     // Adjust for competitor density
     const competitorFactor = Math.max(0.5, 1 - competitorDensity * 0.1);
-    const forecastedDemand = avgDemand * competitorFactor;
+    const predictedDemand = avgDemand * competitorFactor;
 
     const riskFactors: string[] = [];
     const recommendations: string[] = [];
@@ -214,11 +214,11 @@ export class SpatialDemandForecaster {
     }
 
     return {
-      id: `forecast_neighborhood_${neighborhoodId}_${Date.now()}`,
+      id: `predict_neighborhood_${neighborhoodId}_${Date.now()}`,
       location: center,
       locationType: 'neighborhood',
       locationName: neighborhoodName,
-      forecastedDemand,
+      predictedDemand,
       confidence: 0.75,
       timeWindow: {
         start: new Date(),
@@ -232,14 +232,14 @@ export class SpatialDemandForecaster {
   }
 
   /**
-   * Forecast demand by delivery corridor
+   * Predict demand by delivery corridor
    */
-  forecastByCorridorDemand(
+  predictByCorridorDemand(
     startZoneId: string,
     endZoneId: string,
     historicalOrders: number[],
     currentDrivers: number
-  ): DeliveryCorridorForecast {
+  ): DeliveryCorridorPredict {
     const corridorId = `${startZoneId}_${endZoneId}`;
     const avgOrders = historicalOrders.reduce((a, b) => a + b, 0) / Math.max(historicalOrders.length, 1);
 
@@ -308,42 +308,42 @@ export class SpatialDemandForecaster {
   }
 
   /**
-   * Get all zone forecasts
+   * Get all zone predicts
    */
-  getAllZoneForecasts(
+  getAllZonePredicts(
     historicalData: Map<string, number[]>,
     conditions: { weather?: string; events?: string[]; timeOfDay?: string }
-  ): SpatialForecast[] {
-    const forecasts: SpatialForecast[] = [];
+  ): SpatialPredict[] {
+    const predicts: SpatialPredict[] = [];
 
     for (const [zoneId] of this.zones) {
       const data = historicalData.get(zoneId) || [5, 6, 7, 8, 9];
-      forecasts.push(this.forecastByZone(zoneId, data, conditions));
+      predicts.push(this.predictByZone(zoneId, data, conditions));
     }
 
-    return forecasts;
+    return predicts;
   }
 
   /**
-   * Get corridor forecasts
+   * Get corridor predicts
    */
-  getCorridorForecasts(
+  getCorridorPredicts(
     historicalData: Map<string, number[]>,
     driverLocations: Map<string, number>
-  ): DeliveryCorridorForecast[] {
-    const forecasts: DeliveryCorridorForecast[] = [];
+  ): DeliveryCorridorPredict[] {
+    const predicts: DeliveryCorridorPredict[] = [];
 
     for (const [corridorId, corridor] of this.corridors) {
       const data = historicalData.get(corridorId) || [3, 4, 5, 6, 7];
       const drivers = driverLocations.get(corridor.startZone) || 2;
-      forecasts.push(
-        this.forecastByCorridorDemand(corridor.startZone, corridor.endZone, data, drivers)
+      predicts.push(
+        this.predictByCorridorDemand(corridor.startZone, corridor.endZone, data, drivers)
       );
     }
 
-    return forecasts;
+    return predicts;
   }
 }
 
 // Export singleton instance
-export const spatialDemandForecaster = new SpatialDemandForecaster();
+export const spatialDemandPredicter = new SpatialDemandPredicter();

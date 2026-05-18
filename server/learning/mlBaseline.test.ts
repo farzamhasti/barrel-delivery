@@ -1,36 +1,36 @@
 /**
  * ML Baseline Module Tests
  * 
- * Tests for the weighted regression forecasting model
+ * Tests for the weighted regression predicting model
  */
 
 import { describe, it, expect } from 'vitest';
 import { generateMLBaseline } from './mlBaseline';
 
-describe('ML Baseline Forecasting', () => {
+describe('ML Baseline Predicting', () => {
   const testZoneId = 'test-zone-downtown';
   
   describe('generateMLBaseline', () => {
-    it('should generate a forecast with required fields', async () => {
-      const forecastTime = new Date();
-      forecastTime.setHours(12, 0, 0, 0);
+    it('should generate a predict with required fields', async () => {
+      const predictTime = new Date();
+      predictTime.setHours(12, 0, 0, 0);
 
-      const forecast = await generateMLBaseline(testZoneId, forecastTime);
+      const predict = await generateMLBaseline(testZoneId, predictTime);
 
-      expect(forecast).toBeDefined();
-      expect(forecast.baselineForecast).toBeGreaterThan(0);
-      expect(forecast.confidenceScore).toBeGreaterThanOrEqual(0);
-      expect(forecast.confidenceScore).toBeLessThanOrEqual(1);
-      expect(forecast.confidenceExplanation).toBeDefined();
-      expect(forecast.modelMetadata).toBeDefined();
+      expect(predict).toBeDefined();
+      expect(predict.baselinePredict).toBeGreaterThan(0);
+      expect(predict.confidenceScore).toBeGreaterThanOrEqual(0);
+      expect(predict.confidenceScore).toBeLessThanOrEqual(1);
+      expect(predict.confidenceExplanation).toBeDefined();
+      expect(predict.modelMetadata).toBeDefined();
     });
 
     it('should have valid model metadata', async () => {
-      const forecastTime = new Date();
-      forecastTime.setHours(14, 0, 0, 0);
+      const predictTime = new Date();
+      predictTime.setHours(14, 0, 0, 0);
 
-      const forecast = await generateMLBaseline(testZoneId, forecastTime);
-      const metadata = forecast.modelMetadata;
+      const predict = await generateMLBaseline(testZoneId, predictTime);
+      const metadata = predict.modelMetadata;
 
       expect(metadata.trainingDataPoints).toBeGreaterThanOrEqual(0);
       expect(metadata.averageHistoricalDemand).toBeGreaterThanOrEqual(0);
@@ -39,51 +39,51 @@ describe('ML Baseline Forecasting', () => {
       expect(metadata.volatility).toBeLessThanOrEqual(1);
     });
 
-    it('should generate forecasts for different hours', async () => {
+    it('should generate predicts for different hours', async () => {
       const morning = new Date();
       morning.setHours(8, 0, 0, 0);
 
       const evening = new Date();
       evening.setHours(18, 0, 0, 0);
 
-      const morningForecast = await generateMLBaseline(testZoneId, morning);
-      const eveningForecast = await generateMLBaseline(testZoneId, evening);
+      const morningPredict = await generateMLBaseline(testZoneId, morning);
+      const eveningPredict = await generateMLBaseline(testZoneId, evening);
 
-      // Both should generate valid forecasts
-      expect(morningForecast.baselineForecast).toBeGreaterThan(0);
-      expect(eveningForecast.baselineForecast).toBeGreaterThan(0);
+      // Both should generate valid predicts
+      expect(morningPredict.baselinePredict).toBeGreaterThan(0);
+      expect(eveningPredict.baselinePredict).toBeGreaterThan(0);
     });
 
     it('should have reasonable confidence for adequate data', async () => {
-      const forecastTime = new Date();
-      forecastTime.setHours(12, 0, 0, 0);
+      const predictTime = new Date();
+      predictTime.setHours(12, 0, 0, 0);
 
-      const forecast = await generateMLBaseline(testZoneId, forecastTime);
+      const predict = await generateMLBaseline(testZoneId, predictTime);
 
       // With sufficient training data, confidence should be reasonable
-      if (forecast.modelMetadata.trainingDataPoints >= 50) {
-        expect(forecast.confidenceScore).toBeGreaterThan(0.3);
+      if (predict.modelMetadata.trainingDataPoints >= 50) {
+        expect(predict.confidenceScore).toBeGreaterThan(0.3);
       }
     });
 
     it('should have lower confidence for insufficient data', async () => {
-      const forecastTime = new Date();
-      forecastTime.setHours(12, 0, 0, 0);
+      const predictTime = new Date();
+      predictTime.setHours(12, 0, 0, 0);
 
-      const forecast = await generateMLBaseline(testZoneId, forecastTime);
+      const predict = await generateMLBaseline(testZoneId, predictTime);
 
       // With minimal data, confidence should be lower
-      if (forecast.modelMetadata.trainingDataPoints < 10) {
-        expect(forecast.confidenceScore).toBeLessThan(0.6);
+      if (predict.modelMetadata.trainingDataPoints < 10) {
+        expect(predict.confidenceScore).toBeLessThan(0.6);
       }
     });
 
     it('should include temporal features in metadata', async () => {
-      const forecastTime = new Date();
-      forecastTime.setHours(12, 0, 0, 0);
+      const predictTime = new Date();
+      predictTime.setHours(12, 0, 0, 0);
 
-      const forecast = await generateMLBaseline(testZoneId, forecastTime);
-      const temporal = forecast.modelMetadata.temporalFeatures;
+      const predict = await generateMLBaseline(testZoneId, predictTime);
+      const temporal = predict.modelMetadata.temporalFeatures;
 
       expect(temporal).toBeDefined();
       expect(temporal.hour).toBe(12);
@@ -95,107 +95,107 @@ describe('ML Baseline Forecasting', () => {
     });
   });
 
-  describe('Multiple hour forecasting', () => {
-    it('should generate different forecasts for different hours in a day', async () => {
-      const forecasts = [];
+  describe('Multiple hour predicting', () => {
+    it('should generate different predicts for different hours in a day', async () => {
+      const predicts = [];
       const baseDate = new Date();
       baseDate.setHours(0, 0, 0, 0);
 
       for (let hour = 0; hour < 6; hour++) {
-        const forecastTime = new Date(baseDate);
-        forecastTime.setHours(hour);
-        const forecast = await generateMLBaseline(testZoneId, forecastTime);
-        forecasts.push(forecast);
+        const predictTime = new Date(baseDate);
+        predictTime.setHours(hour);
+        const predict = await generateMLBaseline(testZoneId, predictTime);
+        predicts.push(predict);
       }
 
-      expect(forecasts).toHaveLength(6);
-      forecasts.forEach((forecast) => {
-        expect(forecast.baselineForecast).toBeGreaterThan(0);
-        expect(forecast.confidenceScore).toBeGreaterThanOrEqual(0);
-        expect(forecast.confidenceScore).toBeLessThanOrEqual(1);
+      expect(predicts).toHaveLength(6);
+      predicts.forEach((predict) => {
+        expect(predict.baselinePredict).toBeGreaterThan(0);
+        expect(predict.confidenceScore).toBeGreaterThanOrEqual(0);
+        expect(predict.confidenceScore).toBeLessThanOrEqual(1);
       });
     });
   });
 
   describe('Confidence Scoring', () => {
     it('should increase confidence with more training data', async () => {
-      const forecastTime = new Date();
-      forecastTime.setHours(12, 0, 0, 0);
+      const predictTime = new Date();
+      predictTime.setHours(12, 0, 0, 0);
 
-      const forecast = await generateMLBaseline(testZoneId, forecastTime);
+      const predict = await generateMLBaseline(testZoneId, predictTime);
 
       // Confidence should scale with training data
-      const dataRatio = forecast.modelMetadata.trainingDataPoints / 100;
+      const dataRatio = predict.modelMetadata.trainingDataPoints / 100;
       const expectedMinConfidence = Math.min(0.5, dataRatio * 0.5);
       
-      expect(forecast.confidenceScore).toBeGreaterThanOrEqual(expectedMinConfidence);
+      expect(predict.confidenceScore).toBeGreaterThanOrEqual(expectedMinConfidence);
     });
 
     it('should reduce confidence for high volatility', async () => {
-      const forecastTime = new Date();
-      forecastTime.setHours(12, 0, 0, 0);
+      const predictTime = new Date();
+      predictTime.setHours(12, 0, 0, 0);
 
-      const forecast = await generateMLBaseline(testZoneId, forecastTime);
+      const predict = await generateMLBaseline(testZoneId, predictTime);
 
       // High volatility should reduce confidence
-      const volatilityPenalty = forecast.modelMetadata.volatility * 0.3;
+      const volatilityPenalty = predict.modelMetadata.volatility * 0.3;
       const expectedMaxConfidence = 1.0 - volatilityPenalty;
       
-      expect(forecast.confidenceScore).toBeLessThanOrEqual(expectedMaxConfidence + 0.1);
+      expect(predict.confidenceScore).toBeLessThanOrEqual(expectedMaxConfidence + 0.1);
     });
   });
 
   describe('Trend Analysis', () => {
     it('should identify trend direction', async () => {
-      const forecastTime = new Date();
-      forecastTime.setHours(12, 0, 0, 0);
+      const predictTime = new Date();
+      predictTime.setHours(12, 0, 0, 0);
 
-      const forecast = await generateMLBaseline(testZoneId, forecastTime);
-      const trend = forecast.modelMetadata.trendDirection;
+      const predict = await generateMLBaseline(testZoneId, predictTime);
+      const trend = predict.modelMetadata.trendDirection;
 
       expect(['increasing', 'decreasing', 'stable']).toContain(trend);
     });
 
     it('should have explanation for confidence', async () => {
-      const forecastTime = new Date();
-      forecastTime.setHours(12, 0, 0, 0);
+      const predictTime = new Date();
+      predictTime.setHours(12, 0, 0, 0);
 
-      const forecast = await generateMLBaseline(testZoneId, forecastTime);
+      const predict = await generateMLBaseline(testZoneId, predictTime);
 
-      expect(forecast.confidenceExplanation).toBeTruthy();
-      expect(forecast.confidenceExplanation.length).toBeGreaterThan(10);
+      expect(predict.confidenceExplanation).toBeTruthy();
+      expect(predict.confidenceExplanation.length).toBeGreaterThan(10);
     });
   });
 
   describe('Edge Cases', () => {
-    it('should handle midnight forecast', async () => {
+    it('should handle midnight predict', async () => {
       const midnight = new Date();
       midnight.setHours(0, 0, 0, 0);
 
-      const forecast = await generateMLBaseline(testZoneId, midnight);
+      const predict = await generateMLBaseline(testZoneId, midnight);
 
-      expect(forecast).toBeDefined();
-      expect(forecast.baselineForecast).toBeGreaterThan(0);
-      expect(forecast.modelMetadata.temporalFeatures.hour).toBe(0);
+      expect(predict).toBeDefined();
+      expect(predict.baselinePredict).toBeGreaterThan(0);
+      expect(predict.modelMetadata.temporalFeatures.hour).toBe(0);
     });
 
-    it('should handle late evening forecast', async () => {
+    it('should handle late evening predict', async () => {
       const lateEvening = new Date();
       lateEvening.setHours(23, 0, 0, 0);
 
-      const forecast = await generateMLBaseline(testZoneId, lateEvening);
+      const predict = await generateMLBaseline(testZoneId, lateEvening);
 
-      expect(forecast).toBeDefined();
-      expect(forecast.baselineForecast).toBeGreaterThan(0);
-      expect(forecast.modelMetadata.temporalFeatures.hour).toBe(23);
+      expect(predict).toBeDefined();
+      expect(predict.baselinePredict).toBeGreaterThan(0);
+      expect(predict.modelMetadata.temporalFeatures.hour).toBe(23);
     });
 
     it('should handle different zone IDs', async () => {
-      const forecastTime = new Date();
-      forecastTime.setHours(12, 0, 0, 0);
+      const predictTime = new Date();
+      predictTime.setHours(12, 0, 0, 0);
 
-      const zone1 = await generateMLBaseline('zone-1', forecastTime);
-      const zone2 = await generateMLBaseline('zone-2', forecastTime);
+      const zone1 = await generateMLBaseline('zone-1', predictTime);
+      const zone2 = await generateMLBaseline('zone-2', predictTime);
 
       expect(zone1).toBeDefined();
       expect(zone2).toBeDefined();

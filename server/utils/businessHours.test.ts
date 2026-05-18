@@ -7,12 +7,12 @@ import {
   getNextClosingTime,
   getHoursUntilOpen,
   getHoursUntilClose,
-  getForecastingStatus,
-  shouldAllowForecasting,
+  getPredictingStatus,
+  shouldAllowPredicting,
   shouldAllowAlerts,
-  shouldAllowPredictions,
+  shouldAllowPredicts,
   getBusinessStatusMessage,
-  getForecastingDisabledMessage,
+  getPredictingDisabledMessage,
 } from './businessHours';
 
 describe('Business Hours Management', () => {
@@ -118,38 +118,38 @@ describe('Business Hours Management', () => {
     });
   });
 
-  describe('Forecasting Status', () => {
-    it('should allow forecasting during operating hours', () => {
+  describe('Predicting Status', () => {
+    it('should allow predicting during operating hours', () => {
       const monday5pm = DateTime.fromObject({ weekday: 1, hour: 17, minute: 0 });
-      const status = getForecastingStatus(monday5pm);
-      expect(status.canForecast).toBe(true);
+      const status = getPredictingStatus(monday5pm);
+      expect(status.canPredict).toBe(true);
       expect(status.canAlert).toBe(true);
       expect(status.canPredict).toBe(true);
     });
 
-    it('should disable forecasting outside operating hours', () => {
+    it('should disable predicting outside operating hours', () => {
       const monday2pm = DateTime.fromObject({ weekday: 1, hour: 14, minute: 0 });
-      const status = getForecastingStatus(monday2pm);
-      expect(status.canForecast).toBe(false);
+      const status = getPredictingStatus(monday2pm);
+      expect(status.canPredict).toBe(false);
       expect(status.canAlert).toBe(false);
       expect(status.canPredict).toBe(false);
     });
 
-    it('should provide reason for disabled forecasting', () => {
+    it('should provide reason for disabled predicting', () => {
       const monday2pm = DateTime.fromObject({ weekday: 1, hour: 14, minute: 0 });
-      const status = getForecastingStatus(monday2pm);
+      const status = getPredictingStatus(monday2pm);
       expect(status.reason).toContain('Business closed');
-      expect(status.reason).toContain('Forecasting paused');
+      expect(status.reason).toContain('Predicting paused');
     });
   });
 
   describe('Helper Functions', () => {
-    it('shouldAllowForecasting returns correct value', () => {
+    it('shouldAllowPredicting returns correct value', () => {
       const monday5pm = DateTime.fromObject({ weekday: 1, hour: 17, minute: 0 });
       const monday2pm = DateTime.fromObject({ weekday: 1, hour: 14, minute: 0 });
 
-      expect(shouldAllowForecasting(monday5pm)).toBe(true);
-      expect(shouldAllowForecasting(monday2pm)).toBe(false);
+      expect(shouldAllowPredicting(monday5pm)).toBe(true);
+      expect(shouldAllowPredicting(monday2pm)).toBe(false);
     });
 
     it('shouldAllowAlerts returns correct value', () => {
@@ -160,12 +160,12 @@ describe('Business Hours Management', () => {
       expect(shouldAllowAlerts(monday2pm)).toBe(false);
     });
 
-    it('shouldAllowPredictions returns correct value', () => {
+    it('shouldAllowPredicts returns correct value', () => {
       const monday5pm = DateTime.fromObject({ weekday: 1, hour: 17, minute: 0 });
       const monday2pm = DateTime.fromObject({ weekday: 1, hour: 14, minute: 0 });
 
-      expect(shouldAllowPredictions(monday5pm)).toBe(true);
-      expect(shouldAllowPredictions(monday2pm)).toBe(false);
+      expect(shouldAllowPredicts(monday5pm)).toBe(true);
+      expect(shouldAllowPredicts(monday2pm)).toBe(false);
     });
   });
 
@@ -184,16 +184,16 @@ describe('Business Hours Management', () => {
       expect(message).toContain('Opens');
     });
 
-    it('should generate correct forecasting disabled message', () => {
+    it('should generate correct predicting disabled message', () => {
       const monday2pm = DateTime.fromObject({ weekday: 1, hour: 14, minute: 0 });
-      const message = getForecastingDisabledMessage(monday2pm);
+      const message = getPredictingDisabledMessage(monday2pm);
       expect(message).toContain('⏸️');
-      expect(message).toContain('Forecasting paused');
+      expect(message).toContain('Predicting paused');
     });
 
-    it('should return empty string for forecasting message when open', () => {
+    it('should return empty string for predicting message when open', () => {
       const monday5pm = DateTime.fromObject({ weekday: 1, hour: 17, minute: 0 });
-      const message = getForecastingDisabledMessage(monday5pm);
+      const message = getPredictingDisabledMessage(monday5pm);
       expect(message).toBe('');
     });
   });

@@ -144,7 +144,7 @@ export default function Home() {
               </div>
               <div className="text-center">
                 <div className="text-2xl mb-2">🧠</div>
-                <p className="text-xs text-muted-foreground">Geo-AI Prediction</p>
+                <p className="text-xs text-muted-foreground">Geo-AI Predict</p>
               </div>
             </div>
           </div>

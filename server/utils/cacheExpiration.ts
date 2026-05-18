@@ -3,7 +3,7 @@
  * Phase 94: Implement Cache Expiration and Stale Data Prevention
  */
 
-import { predictionCache } from './predictionCache';
+import { predictCache } from './predictCache';
 
 interface CacheExpirationConfig {
   checkIntervalMs: number; // How often to check for expired entries
@@ -57,7 +57,7 @@ class CacheExpirationMonitor {
    * Check and clean expired entries
    */
   private checkAndCleanExpiredEntries(): void {
-    const expiredCount = predictionCache.clearExpired();
+    const expiredCount = predictCache.clearExpired();
 
     if (expiredCount > 0 && this.config.logExpirations) {
       console.log(`[Cache] Cleaned ${expiredCount} expired entries`);
@@ -75,8 +75,8 @@ class CacheExpirationMonitor {
   } {
     return {
       isRunning: this.cleanupIntervalId !== null,
-      cacheSize: predictionCache.size(),
-      stats: predictionCache.getStats(),
+      cacheSize: predictCache.size(),
+      stats: predictCache.getStats(),
       expirationLogSize: this.expirationLog.length,
     };
   }
@@ -104,7 +104,7 @@ export const cacheExpirationMonitor = new CacheExpirationMonitor({
 });
 
 /**
- * Middleware to prevent serving expired predictions
+ * Middleware to prevent serving expired predicts
  */
 export function preventStaleDataMiddleware(
   data: any,
@@ -140,7 +140,7 @@ export function getCacheTTLRemaining(cacheKey: string): {
   remainingSeconds: number;
   isExpired: boolean;
 } {
-  const remaining = predictionCache.getTimeRemaining(cacheKey);
+  const remaining = predictCache.getTimeRemaining(cacheKey);
 
   return {
     hasEntry: remaining > 0,
@@ -157,7 +157,7 @@ export function batchCheckCacheExpiration(
   cacheKeys: string[]
 ): Array<{ key: string; expired: boolean; remainingMs: number }> {
   return cacheKeys.map(key => {
-    const remaining = predictionCache.getTimeRemaining(key);
+    const remaining = predictCache.getTimeRemaining(key);
     return {
       key,
       expired: remaining <= 0,
@@ -176,7 +176,7 @@ export function getCacheEfficiencyMetrics(): {
   avgCacheSize: number;
   recommendation: string;
 } {
-  const stats = predictionCache.getStats();
+  const stats = predictCache.getStats();
   const total = stats.hits + stats.misses;
   const hitRate = total > 0 ? (stats.hits / total) * 100 : 0;
   const missRate = total > 0 ? (stats.misses / total) * 100 : 0;

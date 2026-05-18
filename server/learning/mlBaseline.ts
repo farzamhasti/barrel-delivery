@@ -1,11 +1,11 @@
 /**
- * ML Baseline Forecasting Module
+ * ML Baseline Predicting Module
  * 
- * Implements statistical machine learning for demand forecasting using:
+ * Implements statistical machine learning for demand predictioning using:
  * - Temporal feature engineering (day-of-week, hour, peak patterns)
  * - Historical demand aggregation (rolling averages, trend analysis)
  * - Weighted regression model (simple linear model with temporal weights)
- * - Confidence scoring based on data volume and prediction variance
+ * - Confidence scoring based on data volume and predict variance
  * 
  * This module provides a production-grade baseline that can be replaced
  * with more advanced models (XGBoost, neural networks) in the future.
@@ -17,10 +17,10 @@ import { and, gte, lte } from 'drizzle-orm';
 import { extractTemporalFeaturesForML, TemporalFeatures } from '../utils/temporalFeatures';
 
 /**
- * ML Forecast Result
+ * ML Predict Result
  */
-export interface MLForecast {
-  baselineForecast: number;
+export interface MLPredict {
+  baselinePredict: number;
   confidenceScore: number;
   confidenceExplanation: string;
   modelMetadata: {
@@ -46,32 +46,32 @@ interface HistoricalDemandData {
 }
 
 /**
- * Generate ML baseline forecast for a given time and zone
+ * Generate ML baseline predict for a given time and zone
  * 
  * Uses weighted regression with temporal features to predict demand.
  * The model learns from historical order patterns and applies weights
  * based on temporal similarity (same hour, same day of week, etc.)
  * 
- * @param zoneId Zone ID for localized forecasting
- * @param forecastTime Time to forecast for
+ * @param zoneId Zone ID for localized predicting
+ * @param predictTime Time to predict for
  * @param lookbackDays Number of historical days to use for training (default: 90)
- * @returns ML forecast with confidence score
+ * @returns ML predict with confidence score
  */
 export async function generateMLBaseline(
   zoneId: string,
-  forecastTime: Date,
+  predictTime: Date,
   lookbackDays: number = 90
-): Promise<MLForecast> {
+): Promise<MLPredict> {
   const db = await getDb();
   if (!db) {
-    return createDefaultForecast(forecastTime);
+    return createDefaultPredict(predictTime);
   }
 
-  // Extract temporal features for the forecast time
-  const temporalFeatures = extractTemporalFeaturesForML(forecastTime);
+  // Extract temporal features for the predict time
+  const temporalFeatures = extractTemporalFeaturesForML(predictTime);
   
   // Fetch historical orders for training (last N days)
-  const trainingStartDate = new Date(forecastTime);
+  const trainingStartDate = new Date(predictTime);
   trainingStartDate.setDate(trainingStartDate.getDate() - lookbackDays);
   
   const historicalOrders = await db
@@ -80,12 +80,12 @@ export async function generateMLBaseline(
     .where(
       and(
         gte(orders.createdAt, trainingStartDate),
-        lte(orders.createdAt, forecastTime)
+        lte(orders.createdAt, predictTime)
       )
     );
 
   if (historicalOrders.length === 0) {
-    return createDefaultForecast(forecastTime);
+    return createDefaultPredict(predictTime);
   }
 
   // Aggregate historical demand by hour and day of week
@@ -99,7 +99,7 @@ export async function generateMLBaseline(
   );
 
   // Calculate weighted average demand using temporal similarity
-  const baselineForecast = calculateWeightedForecast(
+  const baselinePredict = calculateWeightedPredict(
     temporalFeatures,
     similarPatterns,
     historicalOrders.length
@@ -118,14 +118,14 @@ export async function generateMLBaseline(
     confidenceScore,
     similarPatterns.length,
     volatility,
-    baselineForecast
+    baselinePredict
   );
 
   // Calculate trend direction
   const trendDirection = calculateTrendDirection(similarPatterns);
 
   return {
-    baselineForecast,
+    baselinePredict,
     confidenceScore,
     confidenceExplanation,
     modelMetadata: {
@@ -221,9 +221,9 @@ function findSimilarPatterns(
 }
 
 /**
- * Calculate weighted forecast using temporal similarity
+ * Calculate weighted predict using temporal similarity
  */
-function calculateWeightedForecast(
+function calculateWeightedPredict(
   temporalFeatures: TemporalFeatures,
   similarPatterns: HistoricalDemandData[],
   totalDataPoints: number
@@ -315,7 +315,7 @@ function generateConfidenceExplanation(
   confidenceScore: number,
   patternCount: number,
   volatility: number,
-  forecast: number
+  predict: number
 ): string {
   const factors: string[] = [];
 
@@ -342,7 +342,7 @@ function generateConfidenceExplanation(
       ? 'low'
       : 'very low';
 
-  return `${confidenceLevel} confidence (${(confidenceScore * 100).toFixed(0)}%) based on ${factors.join(', ')}. Forecast: ${forecast.toFixed(1)} orders.`;
+  return `${confidenceLevel} confidence (${(confidenceScore * 100).toFixed(0)}%) based on ${factors.join(', ')}. Predict: ${predict.toFixed(1)} orders.`;
 }
 
 /**
@@ -362,15 +362,15 @@ function calculateTrendDirection(
 }
 
 /**
- * Create default forecast when no data is available
+ * Create default predict when no data is available
  */
-function createDefaultForecast(forecastTime: Date): MLForecast {
-  const temporalFeatures = extractTemporalFeaturesForML(forecastTime);
+function createDefaultPredict(predictTime: Date): MLPredict {
+  const temporalFeatures = extractTemporalFeaturesForML(predictTime);
   
   return {
-    baselineForecast: 5, // Conservative default
+    baselinePredict: 5, // Conservative default
     confidenceScore: 0.2,
-    confidenceExplanation: 'Insufficient historical data. Using default forecast.',
+    confidenceExplanation: 'Insufficient historical data. Using default predict.',
     modelMetadata: {
       modelType: 'weighted_regression',
       temporalFeatures,
@@ -383,15 +383,15 @@ function createDefaultForecast(forecastTime: Date): MLForecast {
 }
 
 /**
- * Batch generate ML forecasts for multiple time periods
+ * Batch generate ML predicts for multiple time periods
  */
-export async function generateMLForecastBatch(
+export async function generateMLPredictBatch(
   zoneId: string,
-  forecastTimes: Date[],
+  predictTimes: Date[],
   lookbackDays?: number
-): Promise<MLForecast[]> {
+): Promise<MLPredict[]> {
   return Promise.all(
-    forecastTimes.map(time => generateMLBaseline(zoneId, time, lookbackDays))
+    predictTimes.map(time => generateMLBaseline(zoneId, time, lookbackDays))
   );
 }
 

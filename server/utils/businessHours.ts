@@ -6,9 +6,9 @@
  * - Friday & Saturday: 4:00 PM - 11:00 PM (16:00 - 23:00)
  * 
  * Outside operating hours:
- * - All forecasting is disabled
+ * - All predicting is disabled
  * - All alerts are disabled
- * - All predictions are disabled
+ * - All predicts are disabled
  * - System shows "Business Closed" mode
  */
 
@@ -33,8 +33,8 @@ export interface BusinessStatus {
   message: string;
 }
 
-export interface ForecastingStatus {
-  canForecast: boolean;
+export interface PredictingStatus {
+  canPredict: boolean;
   canAlert: boolean;
   canPredict: boolean;
   reason: string;
@@ -193,28 +193,28 @@ export function getHoursUntilClose(time?: DateTime): number {
 }
 
 /**
- * Get forecasting status based on business hours
+ * Get predicting status based on business hours
  */
-export function getForecastingStatus(time?: DateTime): ForecastingStatus {
+export function getPredictingStatus(time?: DateTime): PredictingStatus {
   const now = time || DateTime.now();
   const isOpen = isOperatingHours(now);
 
   if (!isOpen) {
     const nextOpen = getNextOpeningTime(now);
     return {
-      canForecast: false,
+      canPredict: false,
       canAlert: false,
       canPredict: false,
-      reason: `Business closed. Forecasting paused until ${nextOpen.toFormat('EEEE, h:mm a')}`,
+      reason: `Business closed. Predicting paused until ${nextOpen.toFormat('EEEE, h:mm a')}`,
       nextAvailableTime: nextOpen,
     };
   }
 
   return {
-    canForecast: true,
+    canPredict: true,
     canAlert: true,
     canPredict: true,
-    reason: 'Business open. Forecasting active.',
+    reason: 'Business open. Predicting active.',
     nextAvailableTime: getNextClosingTime(now),
   };
 }
@@ -296,12 +296,12 @@ export function getBusinessStatusMessage(time?: DateTime): string {
 }
 
 /**
- * Get forecasting disabled message for UI
+ * Get predicting disabled message for UI
  */
-export function getForecastingDisabledMessage(time?: DateTime): string {
-  const status = getForecastingStatus(time);
+export function getPredictingDisabledMessage(time?: DateTime): string {
+  const status = getPredictingStatus(time);
 
-  if (status.canForecast) {
+  if (status.canPredict) {
     return '';
   }
 
@@ -309,26 +309,26 @@ export function getForecastingDisabledMessage(time?: DateTime): string {
 }
 
 /**
- * Validate if forecasting should be allowed
+ * Validate if predicting should be allowed
  */
-export function shouldAllowForecasting(time?: DateTime): boolean {
-  const status = getForecastingStatus(time);
-  return status.canForecast;
+export function shouldAllowPredicting(time?: DateTime): boolean {
+  const status = getPredictingStatus(time);
+  return status.canPredict;
 }
 
 /**
  * Validate if alerts should be allowed
  */
 export function shouldAllowAlerts(time?: DateTime): boolean {
-  const status = getForecastingStatus(time);
+  const status = getPredictingStatus(time);
   return status.canAlert;
 }
 
 /**
- * Validate if predictions should be allowed
+ * Validate if predicts should be allowed
  */
-export function shouldAllowPredictions(time?: DateTime): boolean {
-  const status = getForecastingStatus(time);
+export function shouldAllowPredicts(time?: DateTime): boolean {
+  const status = getPredictingStatus(time);
   return status.canPredict;
 }
 
@@ -339,7 +339,7 @@ export default {
   getNextClosingTime,
   getHoursUntilOpen,
   getHoursUntilClose,
-  getForecastingStatus,
+  getPredictingStatus,
   getRemainingOperatingMinutes,
   getTodayOperatingHours,
   getOperatingHoursForDate,
@@ -347,8 +347,8 @@ export default {
   getAllOperatingHours,
   isTimeWithinOperatingHours,
   getBusinessStatusMessage,
-  getForecastingDisabledMessage,
-  shouldAllowForecasting,
+  getPredictingDisabledMessage,
+  shouldAllowPredicting,
   shouldAllowAlerts,
-  shouldAllowPredictions,
+  shouldAllowPredicts,
 };

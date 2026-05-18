@@ -2,7 +2,7 @@
  * PHASE 2: Historical Order Learning
  * 
  * Loads all real orders and builds temporal aggregation patterns
- * for accurate demand forecasting based on actual historical data.
+ * for accurate demand predictioning based on actual historical data.
  */
 
 import { getDb } from '../db';

@@ -1,5 +1,5 @@
 /*
- * AI Prediction Map Component - LIVE OPERATIONAL MODE
+ * AI Predict Map Component - LIVE OPERATIONAL MODE
  * Enforces operating hours, integrates real geoAI APIs, and displays live weather data
  * No mock data - only real operational intelligence
  */
@@ -12,8 +12,8 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { trpc } from '@/lib/trpc';
 
-interface AIPredictionMapProps {
-  predictions?: any;
+interface AIPredictMapProps {
+  predicts?: any;
 }
 
 // Fort Erie boundary polygon (accurate coordinates from GeoJSON)
@@ -119,7 +119,7 @@ const getNextOperatingWindow = (): string => {
   return `Closes at ${hours.end === 22 ? '10:00 PM' : '11:00 PM'} today`;
 };
 
-export const AIPredictionMap: React.FC<AIPredictionMapProps> = () => {
+export const AIPredictMap: React.FC<AIPredictMapProps> = () => {
   const [weather, setWeather] = useState<any>(null);
   const [weatherLoading, setWeatherLoading] = useState(false);
   const [lastWeatherUpdate, setLastWeatherUpdate] = useState<Date | null>(null);
@@ -260,7 +260,7 @@ export const AIPredictionMap: React.FC<AIPredictionMapProps> = () => {
           <div>
             <p className="text-sm font-semibold text-red-700">Geo AI Service Unavailable</p>
             <p className="text-xs text-red-600 mt-1">
-              The prediction service is temporarily unavailable. Forecasting will resume when service is restored.
+              The predict service is temporarily unavailable. Predicting will resume when service is restored.
             </p>
           </div>
         </div>
@@ -341,4 +341,4 @@ export const AIPredictionMap: React.FC<AIPredictionMapProps> = () => {
   );
 };
 
-export default AIPredictionMap;
+export default AIPredictMap;

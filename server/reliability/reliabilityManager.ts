@@ -1,6 +1,6 @@
 /**
  * Reliability Manager
- * Handles retry mechanisms, graceful degradation, and fallback forecasting
+ * Handles retry mechanisms, graceful degradation, and fallback predicting
  */
 
 import { logger } from '../utils/logger';
@@ -12,7 +12,7 @@ interface RetryConfig {
   backoffMultiplier: number;
 }
 
-interface FallbackForecast {
+interface FallbackPredict {
   source: 'fallback';
   baselineValue: number;
   confidence: 'low';
@@ -157,10 +157,10 @@ export class ReliabilityManager {
   }
 
   /**
-   * Generate fallback forecast
+   * Generate fallback predict
    */
-  generateFallbackForecast(baselineValue: number, reason: string): FallbackForecast {
-    logger.warn(`Generating fallback forecast: ${reason}`);
+  generateFallbackPredict(baselineValue: number, reason: string): FallbackPredict {
+    logger.warn(`Generating fallback predict: ${reason}`);
 
     return {
       source: 'fallback',

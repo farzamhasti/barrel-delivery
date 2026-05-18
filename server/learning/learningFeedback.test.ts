@@ -18,39 +18,39 @@ describe('Learning Feedback System', () => {
 
   describe('recordOrderOutcome', () => {
     it('should record outcome with required fields', async () => {
-      const forecastTime = new Date();
-      forecastTime.setHours(12, 0, 0, 0);
+      const predictTime = new Date();
+      predictTime.setHours(12, 0, 0, 0);
 
-      const outcome = await recordOrderOutcome(testZoneId, forecastTime, 15);
+      const outcome = await recordOrderOutcome(testZoneId, predictTime, 15);
 
       if (outcome) {
         expect(outcome).toBeDefined();
         expect(outcome.zoneId).toBe(testZoneId);
-        expect(outcome.forecastTime).toEqual(forecastTime);
-        expect(outcome.forecastedDemand).toBeGreaterThanOrEqual(0);
-        expect(outcome.forecastError).toBeGreaterThanOrEqual(0);
+        expect(outcome.predictTime).toEqual(predictTime);
+        expect(outcome.predictedDemand).toBeGreaterThanOrEqual(0);
+        expect(outcome.predictError).toBeGreaterThanOrEqual(0);
         expect(outcome.accuracyScore).toBeGreaterThanOrEqual(0);
         expect(outcome.accuracyScore).toBeLessThanOrEqual(1);
       }
     });
 
     it('should calculate accuracy correctly', async () => {
-      const forecastTime = new Date();
-      forecastTime.setHours(14, 0, 0, 0);
+      const predictTime = new Date();
+      predictTime.setHours(14, 0, 0, 0);
 
-      const outcome = await recordOrderOutcome(testZoneId, forecastTime, 10);
+      const outcome = await recordOrderOutcome(testZoneId, predictTime, 10);
 
       if (outcome) {
-        const expectedError = Math.abs(outcome.forecastedDemand - outcome.actualDemand);
-        expect(outcome.forecastError).toBe(expectedError);
+        const expectedError = Math.abs(outcome.predictedDemand - outcome.actualDemand);
+        expect(outcome.predictError).toBe(expectedError);
       }
     });
 
     it('should handle zero actual demand', async () => {
-      const forecastTime = new Date();
-      forecastTime.setHours(3, 0, 0, 0);
+      const predictTime = new Date();
+      predictTime.setHours(3, 0, 0, 0);
 
-      const outcome = await recordOrderOutcome(testZoneId, forecastTime, 0);
+      const outcome = await recordOrderOutcome(testZoneId, predictTime, 0);
 
       if (outcome) {
         expect(outcome.actualDemand).toBe(0);
@@ -64,7 +64,7 @@ describe('Learning Feedback System', () => {
       const metrics = await getModelPerformanceMetrics(testZoneId);
 
       expect(metrics).toBeDefined();
-      expect(metrics.totalForecasts).toBeGreaterThanOrEqual(0);
+      expect(metrics.totalPredicts).toBeGreaterThanOrEqual(0);
       expect(metrics.totalAccuracy).toBeGreaterThanOrEqual(0);
       expect(metrics.totalAccuracy).toBeLessThanOrEqual(1);
       expect(metrics.meanAbsoluteError).toBeGreaterThanOrEqual(0);
@@ -79,7 +79,7 @@ describe('Learning Feedback System', () => {
 
       expect(metrics7).toBeDefined();
       expect(metrics30).toBeDefined();
-      expect(metrics30.totalForecasts).toBeGreaterThanOrEqual(metrics7.totalForecasts);
+      expect(metrics30.totalPredicts).toBeGreaterThanOrEqual(metrics7.totalPredicts);
     });
 
     it('should have RMSE >= MAE', async () => {
@@ -217,8 +217,8 @@ describe('Learning Feedback System', () => {
       const metrics1 = await getModelPerformanceMetrics(testZoneId);
       const metrics2 = await getModelPerformanceMetrics(testZoneId);
 
-      expect(metrics2.totalForecasts).toBeGreaterThanOrEqual(0);
-      expect(metrics1.totalForecasts).toBeGreaterThanOrEqual(0);
+      expect(metrics2.totalPredicts).toBeGreaterThanOrEqual(0);
+      expect(metrics1.totalPredicts).toBeGreaterThanOrEqual(0);
       expect(metrics2.totalAccuracy).toBeGreaterThanOrEqual(0);
       expect(metrics1.totalAccuracy).toBeGreaterThanOrEqual(0);
     });
@@ -229,21 +229,21 @@ describe('Learning Feedback System', () => {
       const metrics = await getModelPerformanceMetrics('non-existent-zone-xyz');
       
       expect(metrics).toBeDefined();
-      expect(metrics.totalForecasts).toBeGreaterThanOrEqual(0);
+      expect(metrics.totalPredicts).toBeGreaterThanOrEqual(0);
     });
 
     it('should handle very large lookback period', async () => {
       const metrics = await getModelPerformanceMetrics(testZoneId, 365);
       
       expect(metrics).toBeDefined();
-      expect(metrics.totalForecasts).toBeGreaterThanOrEqual(0);
+      expect(metrics.totalPredicts).toBeGreaterThanOrEqual(0);
     });
 
     it('should handle minimum lookback period', async () => {
       const metrics = await getModelPerformanceMetrics(testZoneId, 1);
       
       expect(metrics).toBeDefined();
-      expect(metrics.totalForecasts).toBeGreaterThanOrEqual(0);
+      expect(metrics.totalPredicts).toBeGreaterThanOrEqual(0);
     });
   });
 });

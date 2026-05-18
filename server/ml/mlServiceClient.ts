@@ -13,9 +13,9 @@ const consoleLogger = {
   error: (msg: string, data?: any) => console.error(`[ERROR] ${msg}`, data),
 };
 
-export interface PredictionRequest {
+export interface PredictRequest {
   zone_id: string;
-  forecast_time: string;
+  predict_time: string;
   active_drivers?: number;
   current_backlog?: number;
   weather_condition?: string;
@@ -25,7 +25,7 @@ export interface PredictionRequest {
   zone_density?: number;
 }
 
-export interface PredictionResponse {
+export interface PredictResponse {
   predicted_demand: number;
   confidence: number;
   interval_lower: number;
@@ -37,7 +37,7 @@ export interface PredictionResponse {
   }>;
   explanation: string;
   model_version: string;
-  prediction_timestamp: string;
+  predict_timestamp: string;
 }
 
 export interface TrainingRequest {
@@ -149,16 +149,16 @@ export class MLServiceClient {
   /**
    * Predict demand
    */
-  async predict(request: PredictionRequest): Promise<PredictionResponse> {
+  async predict(request: PredictRequest): Promise<PredictResponse> {
     try {
-      logger.info(`ML prediction for zone ${request.zone_id}`);
-      const response = await this.client.post<PredictionResponse>(
+      logger.info(`ML predict for zone ${request.zone_id}`);
+      const response = await this.client.post<PredictResponse>(
         '/api/ml/predict',
         request
       );
       return response.data;
     } catch (error) {
-      logger.error('ML prediction failed:', error);
+      logger.error('ML predict failed:', error);
       throw error;
     }
   }
@@ -168,16 +168,16 @@ export class MLServiceClient {
    */
   async predictBatch(
     zone_id: string,
-    requests: PredictionRequest[]
-  ): Promise<PredictionResponse[]> {
+    requests: PredictRequest[]
+  ): Promise<PredictResponse[]> {
     try {
-      logger.info(`ML batch prediction for zone ${zone_id} (${requests.length} items)`);
-      const predictions = await Promise.all(
+      logger.info(`ML batch predict for zone ${zone_id} (${requests.length} items)`);
+      const predicts = await Promise.all(
         requests.map((req) => this.predict(req))
       );
-      return predictions;
+      return predicts;
     } catch (error) {
-      logger.error('ML batch prediction failed:', error);
+      logger.error('ML batch predict failed:', error);
       throw error;
     }
   }

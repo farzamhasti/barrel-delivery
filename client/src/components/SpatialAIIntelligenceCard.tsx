@@ -1,8 +1,8 @@
 /*
  * Spatial AI Intelligence Card - REALTIME OPERATIONAL VERSION
  * 
- * Fully dynamic Geo AI forecasting engine with:
- * - Real predictions from Python Geo AI microservice
+ * Fully dynamic Geo AI predicting engine with:
+ * - Real predicts from Python Geo AI microservice
  * - 5-15 minute auto-refresh during business hours
  * - Business hours enforcement (Sun-Thu 4PM-10PM, Fri-Sat 4PM-11PM)
  * - Live weather-driven recalculation
@@ -17,14 +17,14 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, TrendingUp, Zap, Brain, MapPin, Clock, Users, Lightbulb, Cloud, Calendar } from 'lucide-react';
 import AIKPISummary from './ai/AIKPISummary';
-import { AIPredictionMap } from './ai/AIPredictionMap';
+import { AIPredictMap } from './ai/AIPredictionMap';
 import AIAlertsPanel from './ai/AIAlertsPanel';
 import AIRecommendationsPanel from './ai/AIRecommendationsPanel';
 import AIConfidenceIndicator from './ai/AIConfidenceIndicator';
 import WeatherImpactPanel from './ai/WeatherImpactPanel';
 import { trpc } from '@/lib/trpc';
 import { useWeatherChangeDetection, useWeatherChangeHistory } from '@/hooks/useWeatherChangeDetection';
-import { getOperatingMode, getModeInfo, shouldForecastingBeActive, shouldLiveMetricsBeActive, getTimeUntilNextMode } from '@/lib/operatingModes';
+import { getOperatingMode, getModeInfo, shouldPredictingBeActive, shouldLiveMetricsBeActive, getTimeUntilNextMode } from '@/lib/operatingModes';
 
 interface SpatialAIProps {
   selectedMonth?: string;
@@ -45,8 +45,8 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
   const [eventMultiplier, setEventMultiplier] = useState(1.0);
   const [weatherChangeLog, setWeatherChangeLog] = useState<string[]>([]);
   const weatherHistory = useWeatherChangeHistory(5);
-  const [todayForecast, setTodayForecast] = useState<any>(null);
-  const [tomorrowForecast, setTomorrowForecast] = useState<any>(null);
+  const [todayPredict, setTodayPredict] = useState<any>(null);
+  const [tomorrowPredict, setTomorrowPredict] = useState<any>(null);
   const [showAISection, setShowAISection] = useState(false); // Toggle for optional AI section
 
   // Operating mode check (pre-operation, active-operations, or closed)
@@ -77,48 +77,48 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
 
   // Fetch demand prediction via tRPC
   const { data: demandResponse, isLoading: demandLoading } = trpc.geoAI.demand.predict.useQuery(
-    { zoneId: '1', forecastHours: 2 },
-    { refetchInterval: 900000, enabled: shouldForecastingBeActive() } // 15 minutes during active operations
+    { zoneId: '1', predictHours: 2 },
+    { refetchInterval: 900000, enabled: shouldPredictingBeActive() } // 15 minutes during active operations
   );
 
   // Fetch hotspots via tRPC
   const { data: hotspotsResponse, isLoading: hotspotsLoading } = trpc.geoAI.hotspots.active.useQuery(undefined, {
     refetchInterval: 900000,
-    enabled: shouldForecastingBeActive() // 15 minutes during active operations
+    enabled: shouldPredictingBeActive() // 15 minutes during active operations
   });
 
   // Fetch risk assessment via tRPC
   const { data: riskResponse, isLoading: riskLoading } = trpc.geoAI.risk.predict.useQuery(
-    { zoneId: '1', forecastHours: 2 },
-    { refetchInterval: 900000, enabled: shouldForecastingBeActive() } // 15 minutes during active operations
+    { zoneId: '1', predictHours: 2 },
+    { refetchInterval: 900000, enabled: shouldPredictingBeActive() } // 15 minutes during active operations
   );
 
   // Fetch recommendations via tRPC
   const { data: recsResponse, isLoading: recsLoading } = trpc.geoAI.recommendations.generate.useQuery(
     { zoneId: '1' },
-    { refetchInterval: 900000, enabled: shouldForecastingBeActive() } // 15 minutes during active operations
+    { refetchInterval: 900000, enabled: shouldPredictingBeActive() } // 15 minutes during active operations
   );
 
   // Fetch active events via tRPC (Phase 92)
   const { data: eventsResponse, isLoading: eventsLoading } = trpc.geoAI.events.active.useQuery(undefined, {
     refetchInterval: 900000,
-    enabled: shouldForecastingBeActive() // 15 minutes during active operations
+    enabled: shouldPredictingBeActive() // 15 minutes during active operations
   });
 
-  // Fetch today forecast via unified demand.predict with TODAY_FORECAST mode
-  const todayQueryInput = { zoneId: '42.8_-79.0', forecastMode: 'TODAY_FORECAST' as any };
-  const { data: todayForecastResponse, isLoading: todayForecastLoading, error: todayForecastError, isFetching: todayForecastFetching, status: todayForecastStatus } = trpc.geoAI.demand.predict.useQuery(
+  // Fetch today predict via unified demand.predict with TODAY_FORECAST mode
+  const todayQueryInput = { zoneId: '42.8_-79.0', predictMode: 'TODAY_FORECAST' as any };
+  const { data: todayPredictResponse, isLoading: todayPredictLoading, error: todayPredictError, isFetching: todayPredictFetching, status: todayPredictStatus } = trpc.geoAI.demand.predict.useQuery(
     todayQueryInput,
     {
       refetchInterval: 300000,  // 5 minutes
       enabled: true  // Always enabled for pre-operation planning
     }
   );
-  console.log('[SpatialAI-INIT] Today query - input:', todayQueryInput, 'status:', todayForecastStatus, 'error:', todayForecastError);
+  console.log('[SpatialAI-INIT] Today query - input:', todayQueryInput, 'status:', todayPredictStatus, 'error:', todayPredictError);
 
-  // Fetch tomorrow forecast via unified demand.predict with TOMORROW_FORECAST mode
-  const { data: tomorrowForecastResponse, isLoading: tomorrowForecastLoading } = trpc.geoAI.demand.predict.useQuery(
-    { zoneId: '42.8_-79.0', forecastMode: 'TOMORROW_FORECAST' as any },
+  // Fetch tomorrow predict via unified demand.predict with TOMORROW_FORECAST mode
+  const { data: tomorrowPredictResponse, isLoading: tomorrowPredictLoading } = trpc.geoAI.demand.predict.useQuery(
+    { zoneId: '42.8_-79.0', predictMode: 'TOMORROW_FORECAST' as any },
     {
       refetchInterval: 3600000,  // 1 hour
       enabled: true  // Always enabled
@@ -203,7 +203,7 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
         id: 'demand-surge',
         type: 'warning',
         title: 'High Demand Surge Predicted',
-        message: `Demand forecast shows ${demandResponse.data.predicted_orders} orders expected in next 2 hours`,
+        message: `Demand predict shows ${demandResponse.data.predicted_orders} orders expected in next 2 hours`,
         confidence: demandResponse.data.confidence_score || 0.85,
         timestamp: new Date(),
         priority: 'high'
@@ -286,60 +286,60 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
     }
 
     // Update AI status
-    if (demandLoading || hotspotsLoading || riskLoading || recsLoading || weatherLoading || todayForecastLoading || tomorrowForecastLoading) {
+    if (demandLoading || hotspotsLoading || riskLoading || recsLoading || weatherLoading || todayPredictLoading || tomorrowPredictLoading) {
       setAiStatus('loading');
     } else {
       setAiStatus('ready');
     }
-  }, [demandResponse, hotspotsResponse, riskResponse, recsResponse, weatherResponse, demandLoading, hotspotsLoading, riskLoading, recsLoading, weatherLoading, todayForecastLoading, tomorrowForecastLoading, todayForecastResponse, tomorrowForecastResponse]);
+  }, [demandResponse, hotspotsResponse, riskResponse, recsResponse, weatherResponse, demandLoading, hotspotsLoading, riskLoading, recsLoading, weatherLoading, todayPredictLoading, tomorrowPredictLoading, todayPredictResponse, tomorrowPredictResponse]);
 
-  // Update forecast data when today forecast response arrives
+  // Update predict data when today predict response arrives
   useEffect(() => {
     console.log('[SpatialAI-TODAY] ===== FULL QUERY STATE =====');
-    console.log('[SpatialAI-TODAY] todayForecastResponse:', JSON.stringify(todayForecastResponse, null, 2));
-    console.log('[SpatialAI-TODAY] todayForecastLoading:', todayForecastLoading);
-    console.log('[SpatialAI-TODAY] todayForecastError:', todayForecastError);
-    console.log('[SpatialAI-TODAY] todayForecastStatus:', todayForecastStatus);
+    console.log('[SpatialAI-TODAY] todayPredictResponse:', JSON.stringify(todayPredictResponse, null, 2));
+    console.log('[SpatialAI-TODAY] todayPredictLoading:', todayPredictLoading);
+    console.log('[SpatialAI-TODAY] todayPredictError:', todayPredictError);
+    console.log('[SpatialAI-TODAY] todayPredictStatus:', todayPredictStatus);
     console.log('[SpatialAI-TODAY] ===== END QUERY STATE =====');
-    if (todayForecastResponse?.data?.data) {
-      const forecastData = todayForecastResponse.data.data;
-      setTodayForecast({
-        expectedDemand: Math.round(forecastData.predicted_orders),
-        expectedDemandVolume: Math.round(forecastData.predicted_orders),
+    if (todayPredictResponse?.data?.data) {
+      const predictData = todayPredictResponse.data.data;
+      setTodayPredict({
+        expectedDemand: Math.round(predictData.predicted_orders),
+        expectedDemandVolume: Math.round(predictData.predicted_orders),
         expectedPeakHours: '6:00 PM - 8:00 PM',
-        expectedOperationalPressure: Math.round(forecastData.confidence_score * 100),
-        expectedDriverShortageRisk: Math.round((1 - forecastData.confidence_score) * 100),
-        expectedStaffingNeeds: Math.max(3, Math.ceil(forecastData.predicted_orders / 8)),
+        expectedOperationalPressure: Math.round(predictData.confidence_score * 100),
+        expectedDriverShortageRisk: Math.round((1 - predictData.confidence_score) * 100),
+        expectedStaffingNeeds: Math.max(3, Math.ceil(predictData.predicted_orders / 8)),
         expectedHotspots: [],
         weatherImpact: {
-          demandMultiplier: forecastData.demand_multiplier || 1.0
+          demandMultiplier: predictData.demand_multiplier || 1.0
         },
-        learningPhase: forecastData.learning_phase,
-        confidence: forecastData.confidence_score
+        learningPhase: predictData.learning_phase,
+        confidence: predictData.confidence_score
       });
     }
-  }, [todayForecastResponse]);
+  }, [todayPredictResponse]);
 
-  // Update forecast data when tomorrow forecast response arrives
+  // Update predict data when tomorrow predict response arrives
   useEffect(() => {
-    if (tomorrowForecastResponse?.data?.data) {
-      const forecastData = tomorrowForecastResponse.data.data;
-      setTomorrowForecast({
-        expectedDemand: Math.round(forecastData.predicted_orders),
-        expectedDemandVolume: Math.round(forecastData.predicted_orders),
+    if (tomorrowPredictResponse?.data?.data) {
+      const predictData = tomorrowPredictResponse.data.data;
+      setTomorrowPredict({
+        expectedDemand: Math.round(predictData.predicted_orders),
+        expectedDemandVolume: Math.round(predictData.predicted_orders),
         expectedPeakHours: '6:00 PM - 8:00 PM',
-        expectedOperationalPressure: Math.round(forecastData.confidence_score * 100),
-        expectedDriverShortageRisk: Math.round((1 - forecastData.confidence_score) * 100),
-        expectedStaffingNeeds: Math.max(3, Math.ceil(forecastData.predicted_orders / 8)),
+        expectedOperationalPressure: Math.round(predictData.confidence_score * 100),
+        expectedDriverShortageRisk: Math.round((1 - predictData.confidence_score) * 100),
+        expectedStaffingNeeds: Math.max(3, Math.ceil(predictData.predicted_orders / 8)),
         expectedHotspots: [],
         weatherImpact: {
-          demandMultiplier: forecastData.demand_multiplier || 1.0
+          demandMultiplier: predictData.demand_multiplier || 1.0
         },
-        learningPhase: forecastData.learning_phase,
-        confidence: forecastData.confidence_score
+        learningPhase: predictData.learning_phase,
+        confidence: predictData.confidence_score
       });
     }
-  }, [tomorrowForecastResponse]);
+  }, [tomorrowPredictResponse]);
 
   // Check business hours
   useEffect(() => {
@@ -348,9 +348,9 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
     return () => clearInterval(hoursCheckInterval);
   }, []);
 
-  // Build prediction data object for child components (MUST be before early return)
-  const predictionData = useMemo(() => ({
-    demandForecast: {
+  // Build predict data object for child components (MUST be before early return)
+  const predictData = useMemo(() => ({
+    demandPredict: {
       predicted_demand: demandResponse?.data?.predicted_orders || 0,
       confidence_score: demandResponse?.data?.confidence_score || 0,
       trend: 'stable' as const,
@@ -391,7 +391,7 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
             <Clock className="w-5 h-5 text-red-600" />
             Business Closed
           </CardTitle>
-          <CardDescription>Forecasting paused - Next-day planning available</CardDescription>
+          <CardDescription>Predicting paused - Next-day planning available</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -403,14 +403,14 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
             </Alert>
             <div className="text-center py-8">
               <p className="text-lg font-semibold text-gray-700">{nextOpeningTime}</p>
-              <p className="text-sm text-gray-600 mt-2">Next-day planning and forecasting available for tomorrow's operations.</p>
+              <p className="text-sm text-gray-600 mt-2">Next-day planning and predicting available for tomorrow's operations.</p>
             </div>
             <button
               onClick={() => setShowAISection(true)}
               className="w-full mt-4 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors"
             >
               <Brain className="inline w-4 h-4 mr-2" />
-              View AI Planning & Forecasts
+              View AI Planning & Predictions
             </button>
           </div>
         </CardContent>
@@ -435,9 +435,9 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
               Spatial AI Intelligence
             </CardTitle>
             <CardDescription>
-              {operatingMode === 'pre-operation' ? 'Pre-Operation Forecasting Mode - Planning for tonight' : 'Real-time operational forecasting engine'}
-              {predictionData?.refreshedAt && (
-                <span className="ml-2 text-xs text-gray-500">Last updated: {predictionData.refreshedAt}</span>
+              {operatingMode === 'pre-operation' ? 'Pre-Operation Predicting Mode - Planning for tonight' : 'Real-time operational predicting engine'}
+              {predictData?.refreshedAt && (
+                <span className="ml-2 text-xs text-gray-500">Last updated: {predictData.refreshedAt}</span>
               )}
             </CardDescription>
           </div>
@@ -465,12 +465,12 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
 
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-4 p-4">
-          {predictionData && <AIKPISummary data={predictionData} />}
+          {predictData && <AIKPISummary data={predictData} />}
         </TabsContent>
 
         {/* Map Tab */}
         <TabsContent value="map" className="space-y-4 p-4">
-          {predictionData && <AIPredictionMap predictions={predictionData} />}
+          {predictData && <AIPredictMap predicts={predictData} />}
         </TabsContent>
 
         {/* Alerts Tab */}
@@ -532,46 +532,46 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
           )}
         </TabsContent>
 
-        {/* Today Forecast Tab */}
+        {/* Today Predict Tab */}
         <TabsContent value="today" className="space-y-4 p-4">
-          {todayForecast ? (
+          {todayPredict ? (
             <div className="space-y-4">
               <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
                 <div className="flex items-center gap-2 mb-3">
                   <TrendingUp className="w-5 h-5 text-blue-600" />
-                  <h3 className="font-semibold text-blue-900">Tonight's Forecast</h3>
+                  <h3 className="font-semibold text-blue-900">Tonight's Predict</h3>
                 </div>
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div>
                     <p className="text-blue-700 font-medium">Expected Demand</p>
-                    <p className="text-blue-900">{todayForecast.expectedDemandVolume} orders</p>
+                    <p className="text-blue-900">{todayPredict.expectedDemandVolume} orders</p>
                   </div>
                   <div>
                     <p className="text-blue-700 font-medium">Peak Hours</p>
-                    <p className="text-blue-900">{todayForecast.expectedPeakHours}</p>
+                    <p className="text-blue-900">{todayPredict.expectedPeakHours}</p>
                   </div>
                   <div>
                     <p className="text-blue-700 font-medium">Operational Pressure</p>
-                    <p className="text-blue-900">{todayForecast.expectedOperationalPressure}%</p>
+                    <p className="text-blue-900">{todayPredict.expectedOperationalPressure}%</p>
                   </div>
                   <div>
                     <p className="text-blue-700 font-medium">Driver Shortage Risk</p>
-                    <p className="text-blue-900">{todayForecast.expectedDriverShortageRisk}%</p>
+                    <p className="text-blue-900">{todayPredict.expectedDriverShortageRisk}%</p>
                   </div>
                   <div>
                     <p className="text-blue-700 font-medium">Staffing Needs</p>
-                    <p className="text-blue-900">{todayForecast.expectedStaffingNeeds} drivers</p>
+                    <p className="text-blue-900">{todayPredict.expectedStaffingNeeds} drivers</p>
                   </div>
                   <div>
                     <p className="text-blue-700 font-medium">Weather Impact</p>
-                    <p className="text-blue-900">{todayForecast.weatherImpact?.demandMultiplier.toFixed(2)}x multiplier</p>
+                    <p className="text-blue-900">{todayPredict.weatherImpact?.demandMultiplier.toFixed(2)}x multiplier</p>
                   </div>
                 </div>
-                {todayForecast.expectedHotspots && todayForecast.expectedHotspots.length > 0 && (
+                {todayPredict.expectedHotspots && todayPredict.expectedHotspots.length > 0 && (
                   <div className="mt-3 pt-3 border-t border-blue-200">
                     <p className="text-blue-700 font-medium mb-2">Expected Hotspots</p>
                     <ul className="text-sm text-blue-800 space-y-1">
-                      {todayForecast.expectedHotspots.map((hotspot: any, idx: number) => (
+                      {todayPredict.expectedHotspots.map((hotspot: any, idx: number) => (
                         <li key={idx}>• {hotspot.zone || hotspot.name} - {hotspot.intensity || hotspot.demand}</li>
                       ))}
                     </ul>
@@ -582,52 +582,52 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
           ) : (
             <Alert className="border-gray-300 bg-gray-50">
               <AlertDescription className="text-gray-800">
-                {todayForecastLoading ? 'Loading today forecast...' : 'No today forecast available'}
+                {todayPredictLoading ? 'Loading today predict...' : 'No today predict available'}
               </AlertDescription>
             </Alert>
           )}
         </TabsContent>
 
-        {/* Tomorrow Forecast Tab */}
+        {/* Tomorrow Predict Tab */}
         <TabsContent value="tomorrow" className="space-y-4 p-4">
-          {tomorrowForecast ? (
+          {tomorrowPredict ? (
             <div className="space-y-4">
               <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
                 <div className="flex items-center gap-2 mb-3">
                   <Calendar className="w-5 h-5 text-purple-600" />
-                  <h3 className="font-semibold text-purple-900">Tomorrow's Forecast</h3>
+                  <h3 className="font-semibold text-purple-900">Tomorrow's Predict</h3>
                 </div>
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div>
                     <p className="text-purple-700 font-medium">Expected Demand</p>
-                    <p className="text-purple-900">{tomorrowForecast.expectedDemand}</p>
+                    <p className="text-purple-900">{tomorrowPredict.expectedDemand}</p>
                   </div>
                   <div>
                     <p className="text-purple-700 font-medium">Demand Volume</p>
-                    <p className="text-purple-900">{Math.round(tomorrowForecast.expectedDemandVolume || 0)} orders</p>
+                    <p className="text-purple-900">{Math.round(tomorrowPredict.expectedDemandVolume || 0)} orders</p>
                   </div>
                   <div>
                     <p className="text-purple-700 font-medium">Peak Hours</p>
-                    <p className="text-purple-900">{tomorrowForecast.expectedPeakHours}</p>
+                    <p className="text-purple-900">{tomorrowPredict.expectedPeakHours}</p>
                   </div>
                   <div>
                     <p className="text-purple-700 font-medium">Operational Pressure</p>
-                    <p className="text-purple-900">{tomorrowForecast.expectedOperationalPressure}%</p>
+                    <p className="text-purple-900">{tomorrowPredict.expectedOperationalPressure}%</p>
                   </div>
                   <div>
                     <p className="text-purple-700 font-medium">Weather Impact</p>
-                    <p className="text-purple-900">{tomorrowForecast.weatherImpact?.demandMultiplier.toFixed(2)}x multiplier</p>
+                    <p className="text-purple-900">{tomorrowPredict.weatherImpact?.demandMultiplier.toFixed(2)}x multiplier</p>
                   </div>
                   <div>
                     <p className="text-purple-700 font-medium">Staffing Needs</p>
-                    <p className="text-purple-900">{tomorrowForecast.expectedStaffingNeeds} drivers</p>
+                    <p className="text-purple-900">{tomorrowPredict.expectedStaffingNeeds} drivers</p>
                   </div>
                 </div>
-                {tomorrowForecast.expectedHotspots && tomorrowForecast.expectedHotspots.length > 0 && (
+                {tomorrowPredict.expectedHotspots && tomorrowPredict.expectedHotspots.length > 0 && (
                   <div className="mt-3 pt-3 border-t border-purple-200">
                     <p className="text-purple-700 font-medium mb-2">Expected Hotspots</p>
                     <ul className="text-sm text-purple-800 space-y-1">
-                      {tomorrowForecast.expectedHotspots.map((hotspot: any, idx: number) => (
+                      {tomorrowPredict.expectedHotspots.map((hotspot: any, idx: number) => (
                         <li key={idx}>• {hotspot.zone || hotspot.name} - {hotspot.intensity || hotspot.demand}</li>
                       ))}
                     </ul>
@@ -638,7 +638,7 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
           ) : (
             <Alert className="border-gray-300 bg-gray-50">
               <AlertDescription className="text-gray-800">
-                {tomorrowForecastLoading ? 'Loading tomorrow forecast...' : 'No tomorrow forecast available'}
+                {tomorrowPredictLoading ? 'Loading tomorrow predict...' : 'No tomorrow predict available'}
               </AlertDescription>
             </Alert>
           )}

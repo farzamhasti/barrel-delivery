@@ -1,6 +1,6 @@
 /**
  * AI Confidence Indicator Component
- * Visual indicator for prediction confidence scores
+ * Visual indicator for predict confidence scores
  */
 
 import React from 'react';

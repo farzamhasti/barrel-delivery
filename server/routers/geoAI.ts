@@ -1,21 +1,21 @@
 /**
  * Geo AI tRPC Router
  * 
- * Procedures for integrating Geo AI predictions with the Node.js backend
+ * Procedures for integrating Geo AI predicts with the Node.js backend
  * Communicates with the separate Python Geo AI service
  * 
- * WEATHER-AWARE: All predictions are adjusted based on real-time Fort Erie weather
+ * WEATHER-AWARE: All predicts are adjusted based on real-time Fort Erie weather
  */
 
 import { router, publicProcedure, protectedProcedure, adminOrSystemAdminProcedure } from '../_core/trpc';
 import { z } from 'zod';
 import { isWithinOperatingHours, getDayCategory, extractTemporalFeatures } from '../utils/operatingHours';
 import { calculateWeatherImpact, applyWeatherToDemand, applyWeatherToDelayRisk, applyWeatherToHotspotIntensity, applyWeatherToDriverShortageRisk, generateWeatherRecommendations, type WeatherData, type WeatherImpactScore } from '../utils/weatherImpact';
-import { predictionCache, generateCacheKey, getTTLForType } from '../utils/predictionCache';
+import { predictCache, generateCacheKey, getTTLForType } from '../utils/predictionCache';
 import { getActiveEvents, calculateEventDemandMultiplier, getEventImpactDescription } from '../utils/eventValidator';
 import { generateDynamicAlerts, filterResolvedAlerts } from '../utils/alertGenerator';
 import { cacheExpirationMonitor, preventStaleDataMiddleware } from '../utils/cacheExpiration';
-import { determineForecastMode, buildForecastContext, getForecastModeDescription, getRefreshInterval, type ForecastMode } from '../utils/forecastModes';
+import { determinePredictMode, buildPredictContext, getPredictModeDescription, getRefreshInterval, type PredictMode } from '../utils/forecastModes';
 
 // Environment variables
 const GEO_AI_SERVICE_URL = process.env.GEO_AI_SERVICE_URL || 'http://localhost:8000';
@@ -69,7 +69,7 @@ async function getWeatherData(): Promise<WeatherData | null> {
   }
 
   try {
-    const url = new URL('https://api.open-meteo.com/v1/forecast');
+    const url = new URL('https://api.open-meteo.com/v1/predict');
     url.searchParams.append('latitude', '42.8900');
     url.searchParams.append('longitude', '-79.0000');
     url.searchParams.append('current', 'temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,snowfall,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,visibility');
@@ -122,7 +122,7 @@ function validateOperatingHours() {
     const temporalFeatures = extractTemporalFeatures(now);
     return {
       success: false,
-      error: 'Predictions not available outside operating hours',
+      error: 'Predicts not available outside operating hours',
       data: null,
       metadata: {
         isOperatingHours: false,
@@ -166,20 +166,20 @@ export const geoAIRouter = router({
       .input(
         z.object({
           zoneId: z.string().describe('Zone identifier (e.g., "42.8_-79.0")'),
-          forecastHours: z.number().int().min(1).max(168).default(24),
+          predictHours: z.number().int().min(1).max(168).default(24),
           includeFeatures: z.boolean().default(false),
-          forecastMode: z.enum(['TODAY_FORECAST', 'LIVE_OPERATION', 'TOMORROW_FORECAST']).optional().describe('Forecast mode: TODAY_FORECAST (pre-op), LIVE_OPERATION (during ops), TOMORROW_FORECAST (next day)'),
+          predictMode: z.enum(['TODAY_FORECAST', 'LIVE_OPERATION', 'TOMORROW_FORECAST']).optional().describe('Predict mode: TODAY_FORECAST (pre-op), LIVE_OPERATION (during ops), TOMORROW_FORECAST (next day)'),
         })
       )
       .query(async ({ input }) => {
         try {
-          // Determine forecast mode
-          const forecastMode = determineForecastMode(input.forecastMode as ForecastMode | undefined);
-          const forecastContext = buildForecastContext(forecastMode);
+          // Determine predict mode
+          const predictMode = determinePredictMode(input.predictMode as PredictMode | undefined);
+          const predictContext = buildPredictContext(predictMode);
           
-          // For TODAY_FORECAST and TOMORROW_FORECAST, allow forecasting outside operating hours
+          // For TODAY_FORECAST and TOMORROW_FORECAST, allow predicting outside operating hours
           // For LIVE_OPERATION, enforce operating hours
-          if (forecastMode === 'LIVE_OPERATION') {
+          if (predictMode === 'LIVE_OPERATION') {
             const operatingHoursError = validateOperatingHours();
             if (operatingHoursError) {
               return operatingHoursError;
@@ -189,10 +189,10 @@ export const geoAIRouter = router({
           const now = new Date();
           const response = await callGeoAIService('/api/v1/demand/predict', 'POST', {
             zone_id: input.zoneId,
-            forecast_hours: forecastContext.forecastHours,
+            predict_hours: predictContext.predictHours,
             include_features: input.includeFeatures,
-            forecast_mode: forecastMode,
-            target_date: forecastContext.targetDate.toISOString(),
+            predict_mode: predictMode,
+            target_date: predictContext.targetDate.toISOString(),
           });
 
           // Fetch weather data and apply weather-aware adjustments
@@ -205,7 +205,7 @@ export const geoAIRouter = router({
             
             // Apply weather multiplier to predicted orders if available
             if (adjustedData.predicted_orders) {
-              adjustedData.base_forecast = adjustedData.predicted_orders; // Store original
+              adjustedData.base_predict = adjustedData.predicted_orders; // Store original
               adjustedData.predicted_orders = applyWeatherToDemand(
                 adjustedData.predicted_orders,
                 weatherImpact
@@ -245,7 +245,7 @@ export const geoAIRouter = router({
       .input(
         z.object({
           zoneIds: z.array(z.string()).min(1).max(50),
-          forecastHours: z.number().int().min(1).max(168).default(24),
+          predictHours: z.number().int().min(1).max(168).default(24),
           includeAllTypes: z.boolean().default(false),
         })
       )
@@ -260,7 +260,7 @@ export const geoAIRouter = router({
           const now = new Date();
           const response = await callGeoAIService('/api/v1/demand/batch-predict', 'POST', {
             zone_ids: input.zoneIds,
-            forecast_hours: input.forecastHours,
+            predict_hours: input.predictHours,
             include_all_types: input.includeAllTypes,
           });
 
@@ -273,10 +273,10 @@ export const geoAIRouter = router({
             weatherImpact = calculateWeatherImpact(weatherData);
             
             // Apply weather multiplier to all zones if available
-            if (Array.isArray(adjustedData.predictions)) {
-              adjustedData.predictions = adjustedData.predictions.map((pred: any) => ({
+            if (Array.isArray(adjustedData.predicts)) {
+              adjustedData.predicts = adjustedData.predicts.map((pred: any) => ({
                 ...pred,
-                base_forecast: pred.predicted_orders,
+                base_predict: pred.predicted_orders,
                 predicted_orders: applyWeatherToDemand(pred.predicted_orders, weatherImpact!),
                 weather_adjusted: true,
                 demand_multiplier: weatherImpact!.demandMultiplier,
@@ -299,15 +299,15 @@ export const geoAIRouter = router({
         } catch (error) {
           return {
             success: false,
-            error: 'Failed to get batch predictions',
+            error: 'Failed to get batch predicts',
             data: null,
           };
         }
       }),
 
     /**
-     * Get Prediction History
-     * Retrieve historical predictions for a zone
+     * Get Predict History
+     * Retrieve historical predicts for a zone
      */
     history: adminOrSystemAdminProcedure
       .input(
@@ -329,7 +329,7 @@ export const geoAIRouter = router({
         } catch (error) {
           return {
             success: false,
-            error: 'Failed to get prediction history',
+            error: 'Failed to get predict history',
             data: null,
           };
         }
@@ -337,7 +337,7 @@ export const geoAIRouter = router({
 
     /**
      * Get Available Zones
-     * Retrieve list of zones available for prediction
+     * Retrieve list of zones available for predict
      */
     zones: publicProcedure.query(async () => {
       try {
@@ -367,7 +367,7 @@ export const geoAIRouter = router({
           latitude: z.number(),
           longitude: z.number(),
           radiusMeters: z.number().default(1000),
-          forecastHours: z.number().int().default(24),
+          predictHours: z.number().int().default(24),
         })
       )
       .query(async ({ input }) => {
@@ -383,7 +383,7 @@ export const geoAIRouter = router({
             latitude: input.latitude,
             longitude: input.longitude,
             radius_meters: input.radiusMeters,
-            forecast_hours: input.forecastHours,
+            predict_hours: input.predictHours,
           });
 
           // Fetch weather data and apply weather-aware adjustments
@@ -477,14 +477,14 @@ export const geoAIRouter = router({
   }),
 
   /**
-   * Risk Prediction (WEATHER-AWARE)
+   * Risk Predict (WEATHER-AWARE)
    */
   risk: router({
     predict: adminOrSystemAdminProcedure
       .input(
         z.object({
           zoneId: z.string(),
-          forecastHours: z.number().int().default(24),
+          predictHours: z.number().int().default(24),
         })
       )
       .query(async ({ input }) => {
@@ -498,7 +498,7 @@ export const geoAIRouter = router({
           const now = new Date();
           const response = await callGeoAIService('/api/v1/risk/predict', 'POST', {
             zone_id: input.zoneId,
-            forecast_hours: input.forecastHours,
+            predict_hours: input.predictHours,
           });
 
           // Fetch weather data and apply weather-aware adjustments
@@ -683,7 +683,7 @@ export const geoAIRouter = router({
   weather: router({
     current: publicProcedure.query(async () => {
       try {
-        const url = new URL('https://api.open-meteo.com/v1/forecast');
+        const url = new URL('https://api.open-meteo.com/v1/predict');
         url.searchParams.append('latitude', '42.8900');
         url.searchParams.append('longitude', '-79.0000');
         url.searchParams.append('current', 'temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,snowfall,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,visibility');
@@ -750,7 +750,7 @@ export const geoAIRouter = router({
 
   /**
    * Manual Refresh Mutation (PHASE 89)
-   * Manually trigger prediction refresh and clear cache
+   * Manually trigger predict refresh and clear cache
    */
   refresh: adminOrSystemAdminProcedure
     .input(
@@ -771,12 +771,12 @@ export const geoAIRouter = router({
 
         // Clear cache for specified types
         if (input.types.includes('all')) {
-          predictionCache.clear();
+          predictCache.clear();
           cleared.push('all');
         } else {
           for (const type of input.types) {
-            const keys = predictionCache.keys().filter(k => k.includes(type));
-            keys.forEach(k => predictionCache.delete(k));
+            const keys = predictCache.keys().filter(k => k.includes(type));
+            keys.forEach(k => predictCache.delete(k));
             if (keys.length > 0) {
               cleared.push(type);
             }
@@ -788,7 +788,7 @@ export const geoAIRouter = router({
           data: {
             cleared,
             timestamp: now.toISOString(),
-            cacheStats: predictionCache.getStats(),
+            cacheStats: predictCache.getStats(),
           },
           metadata: {
             isOperatingHours: true,
@@ -798,7 +798,7 @@ export const geoAIRouter = router({
       } catch (error) {
         return {
           success: false,
-          error: 'Failed to refresh predictions',
+          error: 'Failed to refresh predicts',
           data: null,
         };
       }
@@ -919,14 +919,14 @@ export const geoAIRouter = router({
 
   /**
    * Composite Dashboard Data (WEATHER-AWARE)
-   * Get all AI predictions for dashboard display with weather adjustments
+   * Get all AI predicts for dashboard display with weather adjustments
    */
   dashboard: router({
     summary: adminOrSystemAdminProcedure
       .input(
         z.object({
           zoneIds: z.array(z.string()).min(1),
-          forecastHours: z.number().int().default(24),
+          predictHours: z.number().int().default(24),
         })
       )
       .query(async ({ input }) => {
@@ -939,7 +939,7 @@ export const geoAIRouter = router({
 
           const now = new Date();
           
-          // Fetch weather data once for all predictions
+          // Fetch weather data once for all predicts
           const weatherData = await getWeatherData();
           let weatherImpact: WeatherImpactScore | null = null;
           
@@ -951,7 +951,7 @@ export const geoAIRouter = router({
           const [demandRes, riskRes, recsRes] = await Promise.all([
             callGeoAIService('/api/v1/demand/batch-predict', 'POST', {
               zone_ids: input.zoneIds,
-              forecast_hours: input.forecastHours,
+              predict_hours: input.predictHours,
             }),
             callGeoAIService('/api/v1/risk/alerts'),
             callGeoAIService('/api/v1/recommendations/dashboard'),
@@ -963,10 +963,10 @@ export const geoAIRouter = router({
 
           if (weatherImpact) {
             // Apply weather to demand
-            if (Array.isArray(adjustedDemand.predictions)) {
-              adjustedDemand.predictions = adjustedDemand.predictions.map((pred: any) => ({
+            if (Array.isArray(adjustedDemand.predicts)) {
+              adjustedDemand.predicts = adjustedDemand.predicts.map((pred: any) => ({
                 ...pred,
-                base_forecast: pred.predicted_orders,
+                base_predict: pred.predicted_orders,
                 predicted_orders: applyWeatherToDemand(pred.predicted_orders, weatherImpact),
                 demand_multiplier: weatherImpact.demandMultiplier,
               }));

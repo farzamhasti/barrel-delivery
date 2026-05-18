@@ -1,11 +1,11 @@
 /**
- * Forecast Validator
- * Ensures all forecasts are real, verified, and properly sourced
+ * Predict Validator
+ * Ensures all predicts are real, verified, and properly sourced
  */
 
 import { logger } from '../utils/logger';
 
-interface ForecastValidation {
+interface PredictValidation {
   isValid: boolean;
   source: 'ml' | 'heuristic' | 'fallback';
   confidence: 'high' | 'medium' | 'low';
@@ -21,7 +21,7 @@ interface ForecastValidation {
   warnings: string[];
 }
 
-interface ForecastSource {
+interface PredictSource {
   type: 'ml' | 'heuristic' | 'fallback';
   model?: string;
   version?: string;
@@ -31,28 +31,28 @@ interface ForecastSource {
 }
 
 /**
- * Forecast Validator
- * Validates forecasts and ensures they are real and verified
+ * Predict Validator
+ * Validates predicts and ensures they are real and verified
  */
-export class ForecastValidator {
+export class PredictValidator {
   private readonly MIN_HISTORICAL_POINTS = 10;
   private readonly MIN_DATA_COMPLETENESS = 0.6; // 60%
   private readonly MIN_DATA_FRESHNESS = 0.3; // 30% of max age
 
   constructor() {
-    logger.info('Forecast Validator initialized');
+    logger.info('Predict Validator initialized');
   }
 
   /**
-   * Validate forecast
+   * Validate predict
    */
-  validateForecast(
-    forecast: any,
+  validatePredict(
+    predict: any,
     historicalDataPoints: number,
     dataCompleteness: number,
     dataFreshness: number,
-    source: ForecastSource
-  ): ForecastValidation {
+    source: PredictSource
+  ): PredictValidation {
     const errors: string[] = [];
     const warnings: string[] = [];
     let isValid = true;
@@ -78,25 +78,25 @@ export class ForecastValidator {
       );
     }
 
-    // Validate forecast values
-    if (forecast.demand === undefined || forecast.demand === null) {
-      errors.push('Forecast demand value is missing');
+    // Validate predict values
+    if (predict.demand === undefined || predict.demand === null) {
+      errors.push('Predict demand value is missing');
       isValid = false;
     }
 
-    if (typeof forecast.demand !== 'number' || forecast.demand < 0) {
-      errors.push('Forecast demand value is invalid');
+    if (typeof predict.demand !== 'number' || predict.demand < 0) {
+      errors.push('Predict demand value is invalid');
       isValid = false;
     }
 
-    if (forecast.confidence === undefined || !['high', 'medium', 'low'].includes(forecast.confidence)) {
-      errors.push('Forecast confidence level is invalid');
+    if (predict.confidence === undefined || !['high', 'medium', 'low'].includes(predict.confidence)) {
+      errors.push('Predict confidence level is invalid');
       isValid = false;
     }
 
     // Validate source
     if (!source || !['ml', 'heuristic', 'fallback'].includes(source.type)) {
-      errors.push('Forecast source is invalid or missing');
+      errors.push('Predict source is invalid or missing');
       isValid = false;
     }
 
@@ -143,10 +143,10 @@ export class ForecastValidator {
   }
 
   /**
-   * Generate reasoning for forecast
+   * Generate reasoning for predict
    */
   private generateReasoning(
-    source: ForecastSource,
+    source: PredictSource,
     learningStatus: string,
     historicalDataPoints: number,
     dataCompleteness: number,
@@ -183,7 +183,7 @@ export class ForecastValidator {
     switch (learningStatus) {
       case 'early_learning':
         parts.push(`Early learning phase (${historicalDataPoints} data points)`);
-        parts.push('Predictions may have higher variance');
+        parts.push('Predicts may have higher variance');
         break;
 
       case 'learning':
@@ -193,12 +193,12 @@ export class ForecastValidator {
 
       case 'trained':
         parts.push(`Trained model (${historicalDataPoints} data points)`);
-        parts.push('Stable predictions expected');
+        parts.push('Stable predicts expected');
         break;
 
       case 'production':
         parts.push(`Production model (${historicalDataPoints} data points)`);
-        parts.push('High accuracy predictions');
+        parts.push('High accuracy predicts');
         break;
 
       case 'fallback_mode':
@@ -220,37 +220,37 @@ export class ForecastValidator {
   }
 
   /**
-   * Verify forecast is not fake
+   * Verify predict is not fake
    */
-  verifyForecastIsReal(forecast: any, source: ForecastSource): {
+  verifyPredictIsReal(predict: any, source: PredictSource): {
     isReal: boolean;
     issues: string[];
   } {
     const issues: string[] = [];
 
     // Check for hardcoded values (only for round numbers like 50, 100)
-    if (this.isLikelyHardcoded(forecast.demand) && forecast.demand >= 50) {
-      issues.push('Forecast demand appears to be hardcoded');
+    if (this.isLikelyHardcoded(predict.demand) && predict.demand >= 50) {
+      issues.push('Predict demand appears to be hardcoded');
     }
 
     // Check for missing source information
     if (!source || !source.type) {
-      issues.push('Forecast source is missing');
+      issues.push('Predict source is missing');
     }
 
     // Check for missing confidence
-    if (!forecast.confidence) {
-      issues.push('Forecast confidence is missing');
+    if (!predict.confidence) {
+      issues.push('Predict confidence is missing');
     }
 
     // Check for missing reasoning (must be meaningful)
-    if (!forecast.reasoning || forecast.reasoning.length < 5) {
-      issues.push('Forecast reasoning is missing or too brief');
+    if (!predict.reasoning || predict.reasoning.length < 5) {
+      issues.push('Predict reasoning is missing or too brief');
     }
 
     // Check for missing learning status
-    if (!forecast.learningStatus) {
-      issues.push('Forecast learning status is missing');
+    if (!predict.learningStatus) {
+      issues.push('Predict learning status is missing');
     }
 
     return {
@@ -272,8 +272,8 @@ export class ForecastValidator {
    * Generate validation report
    */
   generateValidationReport(
-    forecast: any,
-    validation: ForecastValidation,
+    predict: any,
+    validation: PredictValidation,
     realityCheck: { isReal: boolean; issues: string[] }
   ): string {
     const lines: string[] = [];
@@ -331,12 +331,12 @@ export class ForecastValidator {
   }
 
   /**
-   * Should forecast be shown to user
+   * Should predict be shown to user
    */
-  shouldShowForecast(validation: ForecastValidation, realityCheck: { isReal: boolean }): boolean {
+  shouldShowPredict(validation: PredictValidation, realityCheck: { isReal: boolean }): boolean {
     // Only show if:
-    // 1. Forecast is real (not hardcoded)
-    // 2. Forecast is valid
+    // 1. Predict is real (not hardcoded)
+    // 2. Predict is valid
     // 3. Has sufficient data or is in learning mode
     return (
       realityCheck.isReal &&
@@ -347,30 +347,30 @@ export class ForecastValidator {
   }
 
   /**
-   * Get forecast disclaimer
+   * Get predict disclaimer
    */
-  getForecastDisclaimer(validation: ForecastValidation): string {
+  getPredictDisclaimer(validation: PredictValidation): string {
     switch (validation.learningStatus) {
       case 'early_learning':
-        return '🔵 Early Learning: This forecast is based on limited data. Accuracy will improve as more orders are processed.';
+        return '🔵 Early Learning: This predict is based on limited data. Accuracy will improve as more orders are processed.';
 
       case 'learning':
-        return '🟡 Learning Phase: This forecast is improving. Confidence will increase with more data.';
+        return '🟡 Learning Phase: This predict is improving. Confidence will increase with more data.';
 
       case 'trained':
-        return '🟢 Trained Model: This forecast is based on trained ML model with good accuracy.';
+        return '🟢 Trained Model: This predict is based on trained ML model with good accuracy.';
 
       case 'production':
-        return '✅ Production Ready: This forecast is based on a highly accurate production model.';
+        return '✅ Production Ready: This predict is based on a highly accurate production model.';
 
       case 'fallback_mode':
         return '⚠️ Fallback Mode: ML service is unavailable. Using historical baseline.';
 
       default:
-        return 'Forecast source unknown.';
+        return 'Predict source unknown.';
     }
   }
 }
 
 // Export singleton instance
-export const forecastValidator = new ForecastValidator();
+export const predictValidator = new PredictValidator();

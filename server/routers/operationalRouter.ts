@@ -5,14 +5,14 @@
 
 import { router, publicProcedure, protectedProcedure } from '../_core/trpc';
 import { z } from 'zod';
-import { liveForecastEngine } from '../operational/liveForecastEngine';
+import { livePredictEngine } from '../operational/liveForecastEngine';
 import { operationalRiskEngine } from '../operational/operationalRiskEngine';
 import { scenarioSimulation } from '../operational/scenarioSimulation';
 import { canadianEventsIntegration } from '../ml/canadianEventsIntegration';
 import { logger } from '../utils/logger';
 
 export const operationalRouter = router({
-  // Live Forecast Updates
+  // Live Predict Updates
   startLiveUpdates: protectedProcedure
     .input(
       z.object({
@@ -22,10 +22,10 @@ export const operationalRouter = router({
     )
     .mutation(({ input }) => {
       try {
-        liveForecastEngine.startLiveUpdates(input.zoneId, input.updateInterval);
+        livePredictEngine.startLiveUpdates(input.zoneId, input.updateInterval);
         return {
           success: true,
-          message: `Live forecast updates started for zone ${input.zoneId}`,
+          message: `Live predict updates started for zone ${input.zoneId}`,
         };
       } catch (error) {
         logger.error('Failed to start live updates:', error);
@@ -40,10 +40,10 @@ export const operationalRouter = router({
     .input(z.object({ zoneId: z.string() }))
     .mutation(({ input }) => {
       try {
-        liveForecastEngine.stopLiveUpdates(input.zoneId);
+        livePredictEngine.stopLiveUpdates(input.zoneId);
         return {
           success: true,
-          message: `Live forecast updates stopped for zone ${input.zoneId}`,
+          message: `Live predict updates stopped for zone ${input.zoneId}`,
         };
       } catch (error) {
         logger.error('Failed to stop live updates:', error);
@@ -63,12 +63,12 @@ export const operationalRouter = router({
     )
     .mutation(({ input }) => {
       try {
-        const triggeredUpdate = liveForecastEngine.recordNewOrder(input.zoneId, input.orderData);
+        const triggeredUpdate = livePredictEngine.recordNewOrder(input.zoneId, input.orderData);
         return {
           success: true,
           triggeredUpdate,
           message: triggeredUpdate
-            ? 'Adaptation threshold reached, forecast updated'
+            ? 'Adaptation threshold reached, predict updated'
             : 'Order recorded',
         };
       } catch (error) {
@@ -80,36 +80,36 @@ export const operationalRouter = router({
       }
     }),
 
-  getCurrentForecast: publicProcedure
+  getCurrentPredict: publicProcedure
     .input(z.object({ zoneId: z.string() }))
     .query(({ input }) => {
       try {
-        const forecast = liveForecastEngine.getForecast(input.zoneId);
+        const predict = livePredictEngine.getPredict(input.zoneId);
         return {
           success: true,
-          data: forecast,
+          data: predict,
         };
       } catch (error) {
-        logger.error('Failed to get forecast:', error);
+        logger.error('Failed to get predict:', error);
         return {
           success: false,
-          error: 'Failed to get forecast',
+          error: 'Failed to get predict',
         };
       }
     }),
 
-  getForecastStats: publicProcedure.query(() => {
+  getPredictStats: publicProcedure.query(() => {
     try {
-      const stats = liveForecastEngine.getForecastStats();
+      const stats = livePredictEngine.getPredictStats();
       return {
         success: true,
         data: stats,
       };
     } catch (error) {
-      logger.error('Failed to get forecast stats:', error);
+      logger.error('Failed to get predict stats:', error);
       return {
         success: false,
-        error: 'Failed to get forecast stats',
+        error: 'Failed to get predict stats',
       };
     }
   }),
@@ -162,14 +162,14 @@ export const operationalRouter = router({
     .query(({ input }) => {
       try {
         const { minutesAhead, expectedNewOrders, ...metrics } = input;
-        const prediction = operationalRiskEngine.predictFutureRisk(
+        const predict = operationalRiskEngine.predictFutureRisk(
           metrics,
           minutesAhead,
           expectedNewOrders
         );
         return {
           success: true,
-          data: prediction,
+          data: predict,
         };
       } catch (error) {
         logger.error('Failed to predict future risk:', error);

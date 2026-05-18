@@ -1,7 +1,7 @@
 /**
- * PHASE 2: Forecast Adaptation Engine
+ * PHASE 2: Predict Adaptation Engine
  * 
- * Dynamically adapts forecasts based on:
+ * Dynamically adapts predicts based on:
  * - Real-time orders
  * - Driver availability
  * - Current backlog
@@ -11,14 +11,14 @@
  */
 
 export interface AdaptationFactors {
-  baselineForecast: number;
+  baselinePredict: number;
   realtimeOrderMultiplier: number;
   driverAvailabilityMultiplier: number;
   backlogMultiplier: number;
   weatherMultiplier: number;
   eventMultiplier: number;
   timeProgressionMultiplier: number;
-  finalAdaptedForecast: number;
+  finalAdaptedPredict: number;
   adaptationReason: string[];
 }
 
@@ -33,7 +33,7 @@ export function calculateRealtimeOrderMultiplier(
 
   const ratio = ordersInLastHour / historicalAveragePerHour;
 
-  // If orders are coming in faster than average, increase forecast
+  // If orders are coming in faster than average, increase predict
   if (ratio > 1.5) return 1.4;
   if (ratio > 1.2) return 1.2;
   if (ratio > 1.0) return 1.1;
@@ -53,7 +53,7 @@ export function calculateDriverAvailabilityMultiplier(
 ): number {
   const availabilityRatio = availableDrivers / totalDrivers;
 
-  // If drivers are scarce, reduce forecast to realistic levels
+  // If drivers are scarce, reduce predict to realistic levels
   if (availabilityRatio < 0.3) return 0.6;
   if (availabilityRatio < 0.5) return 0.8;
   if (availabilityRatio < 0.7) return 0.9;
@@ -71,7 +71,7 @@ export function calculateBacklogMultiplier(
   const backlogRatio = currentBacklog / maxCapacity;
 
   // High backlog means we're near capacity
-  if (backlogRatio > 0.9) return 0.5; // Severely reduce forecast
+  if (backlogRatio > 0.9) return 0.5; // Severely reduce predict
   if (backlogRatio > 0.7) return 0.7;
   if (backlogRatio > 0.5) return 0.85;
 
@@ -162,10 +162,10 @@ export function calculateTimeProgressionMultiplier(
 }
 
 /**
- * Adapt forecast based on all factors
+ * Adapt predict based on all factors
  */
-export function adaptForecast(params: {
-  baselineForecast: number;
+export function adaptPredict(params: {
+  baselinePredict: number;
   ordersInLastHour: number;
   historicalAveragePerHour: number;
   availableDrivers: number;
@@ -222,9 +222,9 @@ export function adaptForecast(params: {
     reasons.push(`Time progression: ${params.hoursUntilDeadline} hours until deadline`);
   }
 
-  // Calculate final adapted forecast
-  const finalAdaptedForecast = Math.round(
-    params.baselineForecast *
+  // Calculate final adapted predict
+  const finalAdaptedPredict = Math.round(
+    params.baselinePredict *
     realtimeOrderMultiplier *
     driverAvailabilityMultiplier *
     backlogMultiplier *
@@ -234,14 +234,14 @@ export function adaptForecast(params: {
   );
 
   return {
-    baselineForecast: params.baselineForecast,
+    baselinePredict: params.baselinePredict,
     realtimeOrderMultiplier,
     driverAvailabilityMultiplier,
     backlogMultiplier,
     weatherMultiplier,
     eventMultiplier,
     timeProgressionMultiplier,
-    finalAdaptedForecast,
+    finalAdaptedPredict,
     adaptationReason: reasons,
   };
 }
@@ -251,11 +251,11 @@ export function adaptForecast(params: {
  */
 export function getAdaptationExplanation(factors: AdaptationFactors): string {
   if (factors.adaptationReason.length === 0) {
-    return 'Using baseline forecast';
+    return 'Using baseline predict';
   }
 
-  const change = factors.finalAdaptedForecast - factors.baselineForecast;
-  const changePercent = ((change / factors.baselineForecast) * 100).toFixed(0);
+  const change = factors.finalAdaptedPredict - factors.baselinePredict;
+  const changePercent = ((change / factors.baselinePredict) * 100).toFixed(0);
 
-  return `Forecast ${change > 0 ? 'increased' : 'decreased'} by ${Math.abs(Number(changePercent))}% due to: ${factors.adaptationReason.join(', ')}`;
+  return `Predict ${change > 0 ? 'increased' : 'decreased'} by ${Math.abs(Number(changePercent))}% due to: ${factors.adaptationReason.join(', ')}`;
 }

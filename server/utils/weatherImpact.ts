@@ -2,8 +2,8 @@
  * Weather Impact Calculation Module
  * 
  * Calculates weather-aware multipliers for:
- * - Demand forecasting
- * - Delay risk prediction
+ * - Demand predicting
+ * - Delay risk predict
  * - Hotspot intensity
  * - Driver shortage risk
  * - Operational recommendations
@@ -260,7 +260,7 @@ export function calculateWeatherImpact(weather: WeatherData): WeatherImpactScore
 }
 
 /**
- * Apply weather adjustments to demand forecast
+ * Apply weather adjustments to demand prediction
  */
 export function applyWeatherToDemand(baseDemand: number, weatherImpact: WeatherImpactScore): number {
   return Math.round(baseDemand * weatherImpact.demandMultiplier);

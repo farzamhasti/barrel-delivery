@@ -4,60 +4,60 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { predictionCache } from '../utils/predictionCache';
+import { predictCache } from '../utils/predictionCache';
 import { generateDynamicAlerts } from '../utils/alertGenerator';
 import { isCanadianHoliday, getActiveEvents, calculateEventDemandMultiplier } from '../utils/eventValidator';
 
 describe('Geo AI System - Phase 96 Comprehensive Testing', () => {
   beforeEach(() => {
-    predictionCache.clear();
+    predictCache.clear();
   });
 
   afterEach(() => {
-    predictionCache.clear();
+    predictCache.clear();
   });
 
-  describe('Prediction Cache Management', () => {
-    it('should cache predictions with TTL', () => {
+  describe('Predict Cache Management', () => {
+    it('should cache predicts with TTL', () => {
       const testData = { orders: 50, confidence: 0.95 };
-      predictionCache.set('demand:zone1', testData, 5 * 60 * 1000);
+      predictCache.set('demand:zone1', testData, 5 * 60 * 1000);
 
-      expect(predictionCache.get('demand:zone1')).toEqual(testData);
+      expect(predictCache.get('demand:zone1')).toEqual(testData);
     });
 
     it('should return null for expired cache entries', (done) => {
       const testData = { orders: 50 };
-      predictionCache.set('demand:zone1', testData, 100); // 100ms TTL
+      predictCache.set('demand:zone1', testData, 100); // 100ms TTL
 
-      expect(predictionCache.get('demand:zone1')).toEqual(testData);
+      expect(predictCache.get('demand:zone1')).toEqual(testData);
 
       setTimeout(() => {
-        expect(predictionCache.get('demand:zone1')).toBeNull();
+        expect(predictCache.get('demand:zone1')).toBeNull();
         done();
       }, 150);
     });
 
     it('should track cache statistics', () => {
-      predictionCache.resetStats();
-      predictionCache.set('demand:zone1', { orders: 50 }, 5 * 60 * 1000);
-      predictionCache.get('demand:zone1'); // Hit
-      predictionCache.get('demand:zone2'); // Miss
+      predictCache.resetStats();
+      predictCache.set('demand:zone1', { orders: 50 }, 5 * 60 * 1000);
+      predictCache.get('demand:zone1'); // Hit
+      predictCache.get('demand:zone2'); // Miss
 
-      const stats = predictionCache.getStats();
+      const stats = predictCache.getStats();
       expect(stats.hits).toBeGreaterThanOrEqual(1);
       expect(stats.misses).toBeGreaterThanOrEqual(1);
       expect(stats.hitRate).toBeGreaterThan(0);
     });
 
     it('should clear expired entries', (done) => {
-      predictionCache.set('demand:zone1', { orders: 50 }, 100);
-      predictionCache.set('demand:zone2', { orders: 60 }, 5 * 60 * 1000);
+      predictCache.set('demand:zone1', { orders: 50 }, 100);
+      predictCache.set('demand:zone2', { orders: 60 }, 5 * 60 * 1000);
 
       setTimeout(() => {
-        const cleared = predictionCache.clearExpired();
+        const cleared = predictCache.clearExpired();
         expect(cleared).toBe(1);
-        expect(predictionCache.get('demand:zone1')).toBeNull();
-        expect(predictionCache.get('demand:zone2')).not.toBeNull();
+        expect(predictCache.get('demand:zone1')).toBeNull();
+        expect(predictCache.get('demand:zone2')).not.toBeNull();
         done();
       }, 150);
     });
@@ -260,8 +260,8 @@ describe('Geo AI System - Phase 96 Comprehensive Testing', () => {
         timestamp: new Date().toISOString(),
       };
 
-      predictionCache.set('test:data', originalData, 5 * 60 * 1000);
-      const retrievedData = predictionCache.get('test:data');
+      predictCache.set('test:data', originalData, 5 * 60 * 1000);
+      const retrievedData = predictCache.get('test:data');
 
       expect(retrievedData).toEqual(originalData);
       expect(retrievedData.orders).toBe(50);
@@ -270,15 +270,15 @@ describe('Geo AI System - Phase 96 Comprehensive Testing', () => {
 
     it('should handle multiple concurrent cache operations', () => {
       for (let i = 0; i < 10; i++) {
-        predictionCache.set(`zone:${i}`, { orders: i * 10 }, 5 * 60 * 1000);
+        predictCache.set(`zone:${i}`, { orders: i * 10 }, 5 * 60 * 1000);
       }
 
       for (let i = 0; i < 10; i++) {
-        const data = predictionCache.get(`zone:${i}`);
+        const data = predictCache.get(`zone:${i}`);
         expect(data.orders).toBe(i * 10);
       }
 
-      expect(predictionCache.size()).toBe(10);
+      expect(predictCache.size()).toBe(10);
     });
   });
 
@@ -315,11 +315,11 @@ describe('Geo AI System - Phase 96 Comprehensive Testing', () => {
       const startTime = Date.now();
 
       for (let i = 0; i < 100; i++) {
-        predictionCache.set(`perf:${i}`, { value: i }, 5 * 60 * 1000);
+        predictCache.set(`perf:${i}`, { value: i }, 5 * 60 * 1000);
       }
 
       for (let i = 0; i < 100; i++) {
-        predictionCache.get(`perf:${i}`);
+        predictCache.get(`perf:${i}`);
       }
 
       const duration = Date.now() - startTime;

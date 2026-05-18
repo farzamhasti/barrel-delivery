@@ -179,7 +179,7 @@ function generateRecommendations(
 
 /**
  * Detect surge for multiple timestamps
- * Useful for forecasting and planning
+ * Useful for predicting and planning
  */
 export function detectBatchSurges(dates: Date[]): SurgeDetectionResult[] {
   return dates

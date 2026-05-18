@@ -236,7 +236,7 @@ export class DriverSpatialIntelligence {
    */
   predictFutureDriverShortage(
     currentDrivers: DriverLocation[],
-    forecastedDemand: Map<string, number>,
+    predictedDemand: Map<string, number>,
     zones: Map<string, { lat: number; lng: number; name: string }>,
     hoursAhead: number = 1
   ): DriverImbalance[] {
@@ -247,7 +247,7 @@ export class DriverSpatialIntelligence {
     const demandMultiplier = 1 + hoursAhead * 0.1; // 10% increase per hour
 
     const adjustedDemand = new Map<string, number>();
-    for (const [zone, demand] of forecastedDemand) {
+    for (const [zone, demand] of predictedDemand) {
       adjustedDemand.set(zone, demand * demandMultiplier);
     }
 

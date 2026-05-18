@@ -3,7 +3,7 @@
  * 
  * Implements database-backed accuracy tracking and continuous improvement:
  * - Records actual order outcomes
- * - Calculates forecast accuracy metrics
+ * - Calculates predict accuracy metrics
  * - Tracks model performance over time
  * - Enables model retraining with real data
  */
@@ -16,12 +16,12 @@ import { and, gte, lte, eq } from 'drizzle-orm';
  * Learning feedback record
  */
 export interface LearningFeedbackRecord {
-  forecastId: string;
+  predictId: string;
   zoneId: string;
-  forecastTime: Date;
-  forecastedDemand: number;
+  predictTime: Date;
+  predictedDemand: number;
   actualDemand: number;
-  forecastError: number;
+  predictError: number;
   accuracyScore: number;
   recordedAt: Date;
 }
@@ -30,7 +30,7 @@ export interface LearningFeedbackRecord {
  * Model performance metrics
  */
 export interface ModelPerformanceMetrics {
-  totalForecasts: number;
+  totalPredicts: number;
   totalAccuracy: number;
   meanAbsoluteError: number;
   rootMeanSquaredError: number;
@@ -42,25 +42,25 @@ export interface ModelPerformanceMetrics {
  * Record actual order outcome for learning feedback
  * 
  * Called when an order is completed. Stores the actual demand
- * for comparison with forecasts.
+ * for comparison with predicts.
  * 
  * @param zoneId Zone ID
- * @param forecastTime Time the forecast was made
+ * @param predictTime Time the predict was made
  * @param actualDemand Actual number of orders delivered
  * @returns Feedback record
  */
 export async function recordOrderOutcome(
   zoneId: string,
-  forecastTime: Date,
+  predictTime: Date,
   actualDemand: number
 ): Promise<LearningFeedbackRecord | null> {
   const db = await getDb();
   if (!db) return null;
 
   try {
-    // Count actual orders in the time window (hour after forecast)
-    const windowStart = new Date(forecastTime);
-    const windowEnd = new Date(forecastTime);
+    // Count actual orders in the time window (hour after predict)
+    const windowStart = new Date(predictTime);
+    const windowEnd = new Date(predictTime);
     windowEnd.setHours(windowEnd.getHours() + 1);
 
     const actualOrders = await db
@@ -76,26 +76,26 @@ export async function recordOrderOutcome(
     const actualOrderCount = actualOrders.length;
 
     // In a production system, we would:
-    // 1. Query the forecasts table for the prediction
+    // 1. Query the predicts table for the predict
     // 2. Calculate accuracy metrics
     // 3. Store feedback in a learning_feedback table
     // 4. Update model performance metrics
 
     const feedback: LearningFeedbackRecord = {
-      forecastId: `forecast_${zoneId}_${forecastTime.getTime()}`,
+      predictId: `predict_${zoneId}_${predictTime.getTime()}`,
       zoneId,
-      forecastTime,
-      forecastedDemand: actualDemand, // Placeholder - would come from forecasts table
+      predictTime,
+      predictedDemand: actualDemand, // Placeholder - would come from predicts table
       actualDemand: actualOrderCount,
-      forecastError: Math.abs(actualOrderCount - actualDemand),
+      predictError: Math.abs(actualOrderCount - actualDemand),
       accuracyScore: calculateAccuracy(actualDemand, actualOrderCount),
       recordedAt: new Date(),
     };
 
     console.log(`[Learning Feedback] Recorded outcome for zone ${zoneId}:`, {
-      forecasted: feedback.forecastedDemand,
+      predicted: feedback.predictedDemand,
       actual: feedback.actualDemand,
-      error: feedback.forecastError,
+      error: feedback.predictError,
       accuracy: feedback.accuracyScore,
     });
 
@@ -107,18 +107,18 @@ export async function recordOrderOutcome(
 }
 
 /**
- * Calculate accuracy score from forecast vs actual
+ * Calculate accuracy score from predict vs actual
  * 
  * Uses MAPE (Mean Absolute Percentage Error) approach:
- * - 100% = perfect prediction
+ * - 100% = perfect predict
  * - 50% = off by 100%
  * - 0% = completely wrong
  */
-function calculateAccuracy(forecasted: number, actual: number): number {
-  if (actual === 0 && forecasted === 0) return 1.0; // Both zero = perfect
+function calculateAccuracy(predicted: number, actual: number): number {
+  if (actual === 0 && predicted === 0) return 1.0; // Both zero = perfect
   if (actual === 0) return 0; // Predicted something when nothing happened
   
-  const error = Math.abs(forecasted - actual) / actual;
+  const error = Math.abs(predicted - actual) / actual;
   const accuracy = Math.max(0, 1 - error);
   
   return Math.min(1.0, accuracy);
@@ -166,15 +166,15 @@ export async function getModelPerformanceMetrics(
     }
 
     // Calculate metrics
-    const totalForecasts = Math.ceil(rangeOrders.length / 5); // Estimate: ~5 orders per forecast
+    const totalPredicts = Math.ceil(rangeOrders.length / 5); // Estimate: ~5 orders per predict
     const accuracies = rangeOrders.map(() => Math.random() * 0.6 + 0.4); // Placeholder
     const totalAccuracy = accuracies.reduce((a, b) => a + b, 0) / accuracies.length;
 
     // Calculate errors
     const errors = rangeOrders.map((order, i) => {
-      const forecasted = Math.random() * 10 + 5;
+      const predicted = Math.random() * 10 + 5;
       const actual = 1;
-      return Math.abs(forecasted - actual);
+      return Math.abs(predicted - actual);
     });
 
     const meanAbsoluteError = errors.reduce((a, b) => a + b, 0) / errors.length;
@@ -186,7 +186,7 @@ export async function getModelPerformanceMetrics(
     const accuracyTrend: 'improving' | 'stable' | 'declining' = 'stable';
 
     return {
-      totalForecasts,
+      totalPredicts,
       totalAccuracy,
       meanAbsoluteError,
       rootMeanSquaredError,
@@ -204,7 +204,7 @@ export async function getModelPerformanceMetrics(
  */
 function createDefaultMetrics(): ModelPerformanceMetrics {
   return {
-    totalForecasts: 0,
+    totalPredicts: 0,
     totalAccuracy: 0,
     meanAbsoluteError: 0,
     rootMeanSquaredError: 0,
@@ -239,7 +239,7 @@ export async function getLearningProgress(zoneId: string): Promise<{
   if (metrics.totalAccuracy < 0.3) {
     phase = 'early_learning';
     progress = Math.min(100, (metrics.totalAccuracy / 0.3) * 25);
-    nextMilestone = 'Collect 30+ forecasts to reach Learning phase';
+    nextMilestone = 'Collect 30+ predicts to reach Learning phase';
     estimatedDaysToTrained = 14;
   } else if (metrics.totalAccuracy < 0.6) {
     phase = 'learning';

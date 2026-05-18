@@ -1,11 +1,11 @@
 /**
- * Live Forecast Update Engine
- * Updates forecasts every few minutes and adapts to new orders
+ * Live Predict Update Engine
+ * Updates predicts every few minutes and adapts to new orders
  */
 
 import { logger } from '../utils/logger';
 
-interface ForecastUpdate {
+interface PredictUpdate {
   timestamp: number;
   zoneId: string;
   predictedDemand: number;
@@ -15,20 +15,20 @@ interface ForecastUpdate {
   adaptationFactor: number;
 }
 
-interface LiveForecastState {
+interface LivePredictState {
   lastUpdate: number;
-  forecasts: Map<string, ForecastUpdate>;
+  predicts: Map<string, PredictUpdate>;
   updateInterval: number;
   newOrdersSinceUpdate: number;
   adaptationThreshold: number;
 }
 
 /**
- * Live Forecast Engine
- * Continuously updates forecasts based on real-time order data
+ * Live Predict Engine
+ * Continuously updates predicts based on real-time order data
  */
-export class LiveForecastEngine {
-  private state: LiveForecastState;
+export class LivePredictEngine {
+  private state: LivePredictState;
   private updateIntervals: Map<string, NodeJS.Timeout> = new Map();
   private readonly DEFAULT_UPDATE_INTERVAL = 5 * 60 * 1000; // 5 minutes
   private readonly ADAPTATION_THRESHOLD = 3; // Trigger update after 3 new orders
@@ -36,16 +36,16 @@ export class LiveForecastEngine {
   constructor() {
     this.state = {
       lastUpdate: Date.now(),
-      forecasts: new Map(),
+      predicts: new Map(),
       updateInterval: this.DEFAULT_UPDATE_INTERVAL,
       newOrdersSinceUpdate: 0,
       adaptationThreshold: this.ADAPTATION_THRESHOLD,
     };
-    logger.info('Live Forecast Engine initialized');
+    logger.info('Live Predict Engine initialized');
   }
 
   /**
-   * Start live forecast updates for a zone
+   * Start live predict updates for a zone
    */
   startLiveUpdates(zoneId: string, updateInterval?: number): void {
     const interval = updateInterval || this.DEFAULT_UPDATE_INTERVAL;
@@ -57,21 +57,21 @@ export class LiveForecastEngine {
 
     // Set up periodic updates
     const intervalId = setInterval(() => {
-      this.updateForecast(zoneId);
+      this.updatePredict(zoneId);
     }, interval);
 
     this.updateIntervals.set(zoneId, intervalId);
-    logger.info(`Live forecast updates started for zone ${zoneId} (interval: ${interval}ms)`);
+    logger.info(`Live predict updates started for zone ${zoneId} (interval: ${interval}ms)`);
   }
 
   /**
-   * Stop live forecast updates for a zone
+   * Stop live predict updates for a zone
    */
   stopLiveUpdates(zoneId: string): void {
     if (this.updateIntervals.has(zoneId)) {
       clearInterval(this.updateIntervals.get(zoneId)!);
       this.updateIntervals.delete(zoneId);
-      logger.info(`Live forecast updates stopped for zone ${zoneId}`);
+      logger.info(`Live predict updates stopped for zone ${zoneId}`);
     }
   }
 
@@ -86,7 +86,7 @@ export class LiveForecastEngine {
       logger.info(
         `Adaptation threshold reached (${this.state.newOrdersSinceUpdate} orders). Triggering immediate update.`
       );
-      this.updateForecast(zoneId);
+      this.updatePredict(zoneId);
       return true;
     }
 
@@ -94,47 +94,47 @@ export class LiveForecastEngine {
   }
 
   /**
-   * Update forecast for a zone
+   * Update predict for a zone
    */
-  private updateForecast(zoneId: string): void {
+  private updatePredict(zoneId: string): void {
     const now = Date.now();
     const timeSinceLastUpdate = now - this.state.lastUpdate;
 
     // Calculate adaptation factor based on new orders
     const adaptationFactor = Math.min(1.0 + this.state.newOrdersSinceUpdate * 0.1, 1.5);
 
-    // Get current forecast
-    const currentForecast = this.state.forecasts.get(zoneId);
+    // Get current predict
+    const currentPredict = this.state.predicts.get(zoneId);
 
-    // Calculate new forecast (simplified - in production would use ML model)
-    const newForecast: ForecastUpdate = {
+    // Calculate new predict (simplified - in production would use ML model)
+    const newPredict: PredictUpdate = {
       timestamp: now,
       zoneId,
-      predictedDemand: currentForecast
-        ? currentForecast.predictedDemand * adaptationFactor
+      predictedDemand: currentPredict
+        ? currentPredict.predictedDemand * adaptationFactor
         : 25 * adaptationFactor,
       confidence: Math.min(0.5 + this.state.newOrdersSinceUpdate * 0.1, 0.95),
-      trend: this.calculateTrend(currentForecast),
+      trend: this.calculateTrend(currentPredict),
       newOrdersCount: this.state.newOrdersSinceUpdate,
       adaptationFactor,
     };
 
-    this.state.forecasts.set(zoneId, newForecast);
+    this.state.predicts.set(zoneId, newPredict);
     this.state.lastUpdate = now;
     this.state.newOrdersSinceUpdate = 0;
 
     logger.info(
-      `Forecast updated for zone ${zoneId}: demand=${newForecast.predictedDemand.toFixed(1)}, confidence=${newForecast.confidence.toFixed(2)}, factor=${adaptationFactor.toFixed(2)}`
+      `Predict updated for zone ${zoneId}: demand=${newPredict.predictedDemand.toFixed(1)}, confidence=${newPredict.confidence.toFixed(2)}, factor=${adaptationFactor.toFixed(2)}`
     );
   }
 
   /**
-   * Calculate trend based on previous forecast
+   * Calculate trend based on previous predict
    */
   private calculateTrend(
-    previousForecast: ForecastUpdate | undefined
+    previousPredict: PredictUpdate | undefined
   ): 'increasing' | 'decreasing' | 'stable' {
-    if (!previousForecast) return 'stable';
+    if (!previousPredict) return 'stable';
 
     const change = this.state.newOrdersSinceUpdate;
     if (change >= 2) return 'increasing';
@@ -143,40 +143,40 @@ export class LiveForecastEngine {
   }
 
   /**
-   * Get current forecast for a zone
+   * Get current predict for a zone
    */
-  getForecast(zoneId: string): ForecastUpdate | null {
-    return this.state.forecasts.get(zoneId) || null;
+  getPredict(zoneId: string): PredictUpdate | null {
+    return this.state.predicts.get(zoneId) || null;
   }
 
   /**
-   * Get all active forecasts
+   * Get all active predicts
    */
-  getAllForecasts(): Map<string, ForecastUpdate> {
-    return new Map(this.state.forecasts);
+  getAllPredicts(): Map<string, PredictUpdate> {
+    return new Map(this.state.predicts);
   }
 
   /**
-   * Get forecast statistics
+   * Get predict statistics
    */
-  getForecastStats(): {
+  getPredictStats(): {
     totalZones: number;
     averageDemand: number;
     averageConfidence: number;
     lastUpdateTime: number;
     timeSinceLastUpdate: number;
   } {
-    const forecasts = Array.from(this.state.forecasts.values());
+    const predicts = Array.from(this.state.predicts.values());
 
     return {
-      totalZones: forecasts.length,
+      totalZones: predicts.length,
       averageDemand:
-        forecasts.length > 0
-          ? forecasts.reduce((sum, f) => sum + f.predictedDemand, 0) / forecasts.length
+        predicts.length > 0
+          ? predicts.reduce((sum, f) => sum + f.predictedDemand, 0) / predicts.length
           : 0,
       averageConfidence:
-        forecasts.length > 0
-          ? forecasts.reduce((sum, f) => sum + f.confidence, 0) / forecasts.length
+        predicts.length > 0
+          ? predicts.reduce((sum, f) => sum + f.confidence, 0) / predicts.length
           : 0,
       lastUpdateTime: this.state.lastUpdate,
       timeSinceLastUpdate: Date.now() - this.state.lastUpdate,
@@ -187,26 +187,26 @@ export class LiveForecastEngine {
    * Predict next update time
    */
   getNextUpdateTime(zoneId: string): number {
-    const forecast = this.state.forecasts.get(zoneId);
-    if (!forecast) return Date.now() + this.state.updateInterval;
+    const predict = this.state.predicts.get(zoneId);
+    if (!predict) return Date.now() + this.state.updateInterval;
 
-    const timeSinceUpdate = Date.now() - forecast.timestamp;
-    const nextUpdate = forecast.timestamp + this.state.updateInterval;
+    const timeSinceUpdate = Date.now() - predict.timestamp;
+    const nextUpdate = predict.timestamp + this.state.updateInterval;
 
     return Math.max(nextUpdate, Date.now());
   }
 
   /**
-   * Get forecast validity period
+   * Get predict validity period
    */
-  getForecastValidity(zoneId: string): {
+  getPredictValidity(zoneId: string): {
     validFrom: number;
     validUntil: number;
     isValid: boolean;
     ageSeconds: number;
   } {
-    const forecast = this.state.forecasts.get(zoneId);
-    if (!forecast) {
+    const predict = this.state.predicts.get(zoneId);
+    if (!predict) {
       return {
         validFrom: 0,
         validUntil: 0,
@@ -216,28 +216,28 @@ export class LiveForecastEngine {
     }
 
     const now = Date.now();
-    const ageSeconds = Math.floor((now - forecast.timestamp) / 1000);
+    const ageSeconds = Math.floor((now - predict.timestamp) / 1000);
     const validityPeriod = 15 * 60 * 1000; // 15 minutes
 
     return {
-      validFrom: forecast.timestamp,
-      validUntil: forecast.timestamp + validityPeriod,
+      validFrom: predict.timestamp,
+      validUntil: predict.timestamp + validityPeriod,
       isValid: ageSeconds < 900, // Valid for 15 minutes
       ageSeconds,
     };
   }
 
   /**
-   * Simulate forecast update with custom parameters
+   * Simulate predict update with custom parameters
    */
-  simulateUpdate(zoneId: string, newOrders: number, weatherFactor?: number): ForecastUpdate {
-    const currentForecast = this.state.forecasts.get(zoneId);
-    const baseDemand = currentForecast?.predictedDemand || 25;
+  simulateUpdate(zoneId: string, newOrders: number, weatherFactor?: number): PredictUpdate {
+    const currentPredict = this.state.predicts.get(zoneId);
+    const baseDemand = currentPredict?.predictedDemand || 25;
 
     const weather = weatherFactor || 1.0;
     const orderFactor = 1.0 + newOrders * 0.15;
 
-    const simulatedForecast: ForecastUpdate = {
+    const simulatedPredict: PredictUpdate = {
       timestamp: Date.now(),
       zoneId,
       predictedDemand: baseDemand * orderFactor * weather,
@@ -248,14 +248,14 @@ export class LiveForecastEngine {
     };
 
     logger.info(
-      `Simulated forecast for zone ${zoneId}: demand=${simulatedForecast.predictedDemand.toFixed(1)}`
+      `Simulated predict for zone ${zoneId}: demand=${simulatedPredict.predictedDemand.toFixed(1)}`
     );
 
-    return simulatedForecast;
+    return simulatedPredict;
   }
 
   /**
-   * Get forecast trend analysis
+   * Get predict trend analysis
    */
   getTrendAnalysis(zoneId: string): {
     trend: string;
@@ -263,8 +263,8 @@ export class LiveForecastEngine {
     direction: 'up' | 'down' | 'stable';
     confidence: number;
   } {
-    const forecast = this.state.forecasts.get(zoneId);
-    if (!forecast) {
+    const predict = this.state.predicts.get(zoneId);
+    if (!predict) {
       return {
         trend: 'no_data',
         momentum: 0,
@@ -273,15 +273,15 @@ export class LiveForecastEngine {
       };
     }
 
-    const momentum = forecast.newOrdersCount * 0.2; // Simplified momentum calculation
+    const momentum = predict.newOrdersCount * 0.2; // Simplified momentum calculation
     const direction =
-      forecast.trend === 'increasing' ? 'up' : forecast.trend === 'decreasing' ? 'down' : 'stable';
+      predict.trend === 'increasing' ? 'up' : predict.trend === 'decreasing' ? 'down' : 'stable';
 
     return {
-      trend: forecast.trend,
+      trend: predict.trend,
       momentum,
       direction,
-      confidence: forecast.confidence,
+      confidence: predict.confidence,
     };
   }
 
@@ -293,10 +293,10 @@ export class LiveForecastEngine {
       clearInterval(intervalId);
     }
     this.updateIntervals.clear();
-    this.state.forecasts.clear();
-    logger.info('Live Forecast Engine destroyed');
+    this.state.predicts.clear();
+    logger.info('Live Predict Engine destroyed');
   }
 }
 
 // Export singleton instance
-export const liveForecastEngine = new LiveForecastEngine();
+export const livePredictEngine = new LivePredictEngine();

@@ -214,7 +214,7 @@ export function normalizeTemporalFeatures(features: TemporalFeatures): Record<st
 
 /**
  * Get feature importance weights for different demand patterns
- * Helps prioritize which features matter most for predictions
+ * Helps prioritize which features matter most for predicts
  */
 export function getFeatureImportanceWeights(): Record<string, number> {
   // Normalized to sum to 1.0 (original weights / 1.13)

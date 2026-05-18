@@ -20,10 +20,10 @@ interface HealthMetrics {
   cacheHealth: 'online' | 'offline' | 'degraded';
 }
 
-interface ForecastMetrics {
-  totalForecasts: number;
-  successfulForecasts: number;
-  failedForecasts: number;
+interface PredictMetrics {
+  totalPredicts: number;
+  successfulPredicts: number;
+  failedPredicts: number;
   averageLatency: number;
   p95Latency: number;
   p99Latency: number;
@@ -54,10 +54,10 @@ interface APIMetrics {
 export class MonitoringService {
   private startTime = Date.now();
   private requestMetrics: Map<string, APIMetrics> = new Map();
-  private forecastMetrics: ForecastMetrics = {
-    totalForecasts: 0,
-    successfulForecasts: 0,
-    failedForecasts: 0,
+  private predictMetrics: PredictMetrics = {
+    totalPredicts: 0,
+    successfulPredicts: 0,
+    failedPredicts: 0,
     averageLatency: 0,
     p95Latency: 0,
     p99Latency: 0,
@@ -128,36 +128,36 @@ export class MonitoringService {
   }
 
   /**
-   * Record forecast metrics
+   * Record predict metrics
    */
-  recordForecast(
+  recordPredict(
     success: boolean,
     latency: number,
     confidence: 'high' | 'medium' | 'low',
     accuracy?: number
   ): void {
-    this.forecastMetrics.totalForecasts++;
+    this.predictMetrics.totalPredicts++;
 
     if (success) {
-      this.forecastMetrics.successfulForecasts++;
+      this.predictMetrics.successfulPredicts++;
     } else {
-      this.forecastMetrics.failedForecasts++;
+      this.predictMetrics.failedPredicts++;
     }
 
     // Update latency
-    this.forecastMetrics.averageLatency =
-      (this.forecastMetrics.averageLatency * (this.forecastMetrics.totalForecasts - 1) + latency) /
-      this.forecastMetrics.totalForecasts;
+    this.predictMetrics.averageLatency =
+      (this.predictMetrics.averageLatency * (this.predictMetrics.totalPredicts - 1) + latency) /
+      this.predictMetrics.totalPredicts;
 
     // Update confidence distribution
-    this.forecastMetrics.confidenceDistribution[confidence]++;
+    this.predictMetrics.confidenceDistribution[confidence]++;
 
     // Update accuracy if provided
     if (accuracy !== undefined) {
-      this.forecastMetrics.mlModelAccuracy =
-        (this.forecastMetrics.mlModelAccuracy * (this.forecastMetrics.successfulForecasts - 1) +
+      this.predictMetrics.mlModelAccuracy =
+        (this.predictMetrics.mlModelAccuracy * (this.predictMetrics.successfulPredicts - 1) +
           accuracy) /
-        this.forecastMetrics.successfulForecasts;
+        this.predictMetrics.successfulPredicts;
     }
 
     // Calculate percentiles
@@ -174,8 +174,8 @@ export class MonitoringService {
     const p95Index = Math.floor(sorted.length * 0.95);
     const p99Index = Math.floor(sorted.length * 0.99);
 
-    this.forecastMetrics.p95Latency = sorted[p95Index] || 0;
-    this.forecastMetrics.p99Latency = sorted[p99Index] || 0;
+    this.predictMetrics.p95Latency = sorted[p95Index] || 0;
+    this.predictMetrics.p99Latency = sorted[p99Index] || 0;
   }
 
   /**
@@ -184,8 +184,8 @@ export class MonitoringService {
   getHealthStatus(): HealthMetrics {
     const uptime = Date.now() - this.startTime;
     const errorRate =
-      this.forecastMetrics.totalForecasts > 0
-        ? this.forecastMetrics.failedForecasts / this.forecastMetrics.totalForecasts
+      this.predictMetrics.totalPredicts > 0
+        ? this.predictMetrics.failedPredicts / this.predictMetrics.totalPredicts
         : 0;
 
     const sorted = [...this.responseTimes].sort((a, b) => a - b);
@@ -197,13 +197,13 @@ export class MonitoringService {
     if (
       this.mlServiceStatus === 'offline' ||
       errorRate > 0.1 ||
-      this.forecastMetrics.p99Latency > 5000
+      this.predictMetrics.p99Latency > 5000
     ) {
       status = 'unhealthy';
     } else if (
       this.mlServiceStatus === 'degraded' ||
       errorRate > 0.05 ||
-      this.forecastMetrics.p99Latency > 2000
+      this.predictMetrics.p99Latency > 2000
     ) {
       status = 'degraded';
     }
@@ -225,10 +225,10 @@ export class MonitoringService {
   }
 
   /**
-   * Get forecast metrics
+   * Get predict metrics
    */
-  getForecastMetrics(): ForecastMetrics {
-    return { ...this.forecastMetrics };
+  getPredictMetrics(): PredictMetrics {
+    return { ...this.predictMetrics };
   }
 
   /**
@@ -276,26 +276,26 @@ export class MonitoringService {
    */
   getDetailedHealthReport(): any {
     const health = this.getHealthStatus();
-    const forecasts = this.getForecastMetrics();
+    const predicts = this.getPredictMetrics();
     const apis = this.getAPIMetrics();
 
     return {
       timestamp: Date.now(),
       health,
-      forecasts,
+      predicts,
       apis,
       topErrors: apis
         .filter((a) => a.lastError)
         .sort((a, b) => (b.lastErrorTime || 0) - (a.lastErrorTime || 0))
         .slice(0, 5),
-      recommendations: this.generateRecommendations(health, forecasts),
+      recommendations: this.generateRecommendations(health, predicts),
     };
   }
 
   /**
    * Generate recommendations based on metrics
    */
-  private generateRecommendations(health: HealthMetrics, forecasts: ForecastMetrics): string[] {
+  private generateRecommendations(health: HealthMetrics, predicts: PredictMetrics): string[] {
     const recommendations: string[] = [];
 
     if (health.status === 'unhealthy') {
@@ -305,18 +305,18 @@ export class MonitoringService {
     }
 
     if (health.mlServiceHealth === 'offline') {
-      recommendations.push('→ ML service is offline, forecasts will use fallback');
+      recommendations.push('→ ML service is offline, predicts will use fallback');
     }
 
     if (health.responseTime.p99 > 5000) {
       recommendations.push('→ P99 latency is high (>5s), consider scaling');
     }
 
-    if (forecasts.failedForecasts / forecasts.totalForecasts > 0.1) {
-      recommendations.push('→ Forecast failure rate is high (>10%), check data quality');
+    if (predicts.failedPredicts / predicts.totalPredicts > 0.1) {
+      recommendations.push('→ Predict failure rate is high (>10%), check data quality');
     }
 
-    if (forecasts.mlModelAccuracy < 0.7) {
+    if (predicts.mlModelAccuracy < 0.7) {
       recommendations.push('→ ML model accuracy is low (<70%), retrain recommended');
     }
 
@@ -333,10 +333,10 @@ export class MonitoringService {
   resetMetrics(): void {
     this.requestMetrics.clear();
     this.responseTimes = [];
-    this.forecastMetrics = {
-      totalForecasts: 0,
-      successfulForecasts: 0,
-      failedForecasts: 0,
+    this.predictMetrics = {
+      totalPredicts: 0,
+      successfulPredicts: 0,
+      failedPredicts: 0,
       averageLatency: 0,
       p95Latency: 0,
       p99Latency: 0,

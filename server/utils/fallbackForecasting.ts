@@ -2,7 +2,7 @@ import { getDb } from "../db";
 import { orders } from "../../drizzle/schema";
 import { sql } from "drizzle-orm";
 
-export interface FallbackForecastData {
+export interface FallbackPredictData {
   demandLevel: "Low" | "Moderate" | "High";
   expectedVolume: number;
   confidenceScore: number;
@@ -15,19 +15,19 @@ export interface FallbackForecastData {
 }
 
 /**
- * Generate fallback forecast using historical patterns
+ * Generate fallback predict using historical patterns
  * when live operational data is unavailable
  */
-export async function generateFallbackForecast(
-  forecastDate: Date,
+export async function generateFallbackPredict(
+  predictDate: Date,
   isToday: boolean
-): Promise<FallbackForecastData> {
+): Promise<FallbackPredictData> {
   try {
     const db = await getDb();
     if (!db) throw new Error("Database not initialized");
     
     // Get historical data for similar days
-    const dayOfWeek = forecastDate.getDay();
+    const dayOfWeek = predictDate.getDay();
     
     // Query historical orders for same day of week
     const historicalOrders = await db
@@ -74,8 +74,8 @@ export async function generateFallbackForecast(
       historicalBasis: `Based on ${baselineVolume} historical orders from similar ${getDayName(dayOfWeek)}s`,
     };
   } catch (error) {
-    console.error("Fallback forecast generation error:", error);
-    // Return minimal safe forecast
+    console.error("Fallback predict generation error:", error);
+    // Return minimal safe predict
     return {
       demandLevel: "Moderate",
       expectedVolume: 20,
@@ -85,7 +85,7 @@ export async function generateFallbackForecast(
       delayProbability: 0.4,
       driverShortageRisk: 0.5,
       dataSource: "historical",
-      historicalBasis: "Default forecast - limited historical data available",
+      historicalBasis: "Default predict - limited historical data available",
     };
   }
 }
@@ -96,13 +96,13 @@ function getDayName(dayOfWeek: number): string {
 }
 
 /**
- * Apply weather adjustments to fallback forecast
+ * Apply weather adjustments to fallback predict
  */
 export function applyWeatherAdjustment(
-  forecast: FallbackForecastData,
+  predict: FallbackPredictData,
   weatherDescription: string,
   temperature: number
-): FallbackForecastData {
+): FallbackPredictData {
   let volumeMultiplier = 1.0;
 
   // Weather impact
@@ -120,22 +120,22 @@ export function applyWeatherAdjustment(
   }
 
   return {
-    ...forecast,
-    expectedVolume: Math.round(forecast.expectedVolume * volumeMultiplier),
-    confidenceScore: Math.max(0.4, forecast.confidenceScore - 0.1),
+    ...predict,
+    expectedVolume: Math.round(predict.expectedVolume * volumeMultiplier),
+    confidenceScore: Math.max(0.4, predict.confidenceScore - 0.1),
   };
 }
 
 /**
- * Apply event adjustments to fallback forecast
+ * Apply event adjustments to fallback predict
  */
 export function applyEventAdjustment(
-  forecast: FallbackForecastData,
+  predict: FallbackPredictData,
   eventMultiplier: number
-): FallbackForecastData {
+): FallbackPredictData {
   return {
-    ...forecast,
-    expectedVolume: Math.round(forecast.expectedVolume * eventMultiplier),
-    historicalBasis: `${forecast.historicalBasis} (adjusted for events)`,
+    ...predict,
+    expectedVolume: Math.round(predict.expectedVolume * eventMultiplier),
+    historicalBasis: `${predict.historicalBasis} (adjusted for events)`,
   };
 }

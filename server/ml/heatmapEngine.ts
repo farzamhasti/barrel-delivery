@@ -87,9 +87,9 @@ export class HeatmapEngine {
    * Generate predictive demand heatmap
    */
   generatePredictiveDemandHeatmap(
-    predictions: Array<{ lat: number; lng: number; predictedDemand: number; confidence: number }>
+    predicts: Array<{ lat: number; lng: number; predictedDemand: number; confidence: number }>
   ): Heatmap {
-    const points: HeatmapPoint[] = predictions.map((pred) => ({
+    const points: HeatmapPoint[] = predicts.map((pred) => ({
       lat: pred.lat,
       lng: pred.lng,
       intensity: pred.predictedDemand * pred.confidence,
@@ -105,8 +105,8 @@ export class HeatmapEngine {
       maxIntensity: Math.max(...grid.cells.flat().map((c) => c.intensity)),
       minIntensity: Math.min(...grid.cells.flat().map((c) => c.intensity)),
       metadata: {
-        source: 'ml_predictions',
-        predictionCount: predictions.length,
+        source: 'ml_predicts',
+        predictCount: predicts.length,
       },
       timestamp: Date.now(),
     };

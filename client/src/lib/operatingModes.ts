@@ -53,7 +53,7 @@ export function getModeInfo(now: Date = new Date()): {
   isPreOperation: boolean;
   isActiveOperations: boolean;
   isClosed: boolean;
-  forecastingActive: boolean;
+  predictingActive: boolean;
   liveMetricsActive: boolean;
 } {
   const mode = getOperatingMode(now);
@@ -63,7 +63,7 @@ export function getModeInfo(now: Date = new Date()): {
     isPreOperation: mode === 'pre-operation',
     isActiveOperations: mode === 'active-operations',
     isClosed: mode === 'closed',
-    forecastingActive: mode !== 'closed',
+    predictingActive: mode !== 'closed',
     liveMetricsActive: mode === 'active-operations',
   };
 }
@@ -83,7 +83,7 @@ export function getModeBadgeInfo(now: Date = new Date()): {
   if (mode === 'pre-operation') {
     return {
       mode: 'pre-operation',
-      label: 'Pre-Operation Forecasting',
+      label: 'Pre-Operation Predicting',
       emoji: '🔵',
       color: 'text-blue-900',
       bgColor: 'bg-blue-100',
@@ -153,9 +153,9 @@ export function getTimeUntilNextMode(now: Date = new Date()): {
 }
 
 /**
- * Should forecasting be active
+ * Should predicting be active
  */
-export function shouldForecastingBeActive(now: Date = new Date()): boolean {
+export function shouldPredictingBeActive(now: Date = new Date()): boolean {
   const mode = getOperatingMode(now);
   return mode !== 'closed';
 }

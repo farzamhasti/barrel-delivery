@@ -242,17 +242,17 @@ export class SpatialHotspotDetector {
    */
   predictFutureHotspots(
     currentHotspots: Hotspot[],
-    forecastHours: number = 1
+    predictHours: number = 1
   ): Hotspot[] {
     return currentHotspots
       .filter((h) => h.predictedGrowth > 0.1)
       .map((h) => ({
         ...h,
-        intensity: h.intensity * (1 + h.predictedGrowth * forecastHours),
+        intensity: h.intensity * (1 + h.predictedGrowth * predictHours),
         demandLevel:
-          h.intensity * (1 + h.predictedGrowth * forecastHours) > 8
+          h.intensity * (1 + h.predictedGrowth * predictHours) > 8
             ? 'critical'
-            : h.intensity * (1 + h.predictedGrowth * forecastHours) > 6
+            : h.intensity * (1 + h.predictedGrowth * predictHours) > 6
               ? 'high'
               : h.demandLevel,
       }));

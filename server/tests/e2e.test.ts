@@ -7,7 +7,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { monitoringService } from '../monitoring/monitoringService';
 import { structuredLogger } from '../monitoring/structuredLogger';
 import { reliabilityManager } from '../reliability/reliabilityManager';
-import { forecastValidator } from '../validation/forecastValidator';
+import { predictValidator } from '../validation/predictValidator';
 import { logger } from '../utils/logger';
 
 describe('E2E: Production Readiness Tests', () => {
@@ -21,11 +21,11 @@ describe('E2E: Production Readiness Tests', () => {
 
   describe('Monitoring Service', () => {
     it('should track API requests', () => {
-      monitoringService.recordAPIRequest('/api/forecast', 'GET', 150, true);
-      monitoringService.recordAPIRequest('/api/forecast', 'GET', 200, true);
-      monitoringService.recordAPIRequest('/api/forecast', 'GET', 100, false);
+      monitoringService.recordAPIRequest('/api/predict', 'GET', 150, true);
+      monitoringService.recordAPIRequest('/api/predict', 'GET', 200, true);
+      monitoringService.recordAPIRequest('/api/predict', 'GET', 100, false);
 
-      const metrics = monitoringService.getEndpointMetrics('/api/forecast', 'GET');
+      const metrics = monitoringService.getEndpointMetrics('/api/predict', 'GET');
       expect(metrics).toBeDefined();
       expect(metrics?.totalRequests).toBe(3);
       expect(metrics?.successfulRequests).toBe(2);
@@ -33,15 +33,15 @@ describe('E2E: Production Readiness Tests', () => {
       expect(metrics?.errorRate).toBeCloseTo(0.333, 2);
     });
 
-    it('should track forecast metrics', () => {
-      monitoringService.recordForecast(true, 150, 'high', 0.85);
-      monitoringService.recordForecast(true, 200, 'medium', 0.78);
-      monitoringService.recordForecast(false, 300, 'low');
+    it('should track predict metrics', () => {
+      monitoringService.recordPredict(true, 150, 'high', 0.85);
+      monitoringService.recordPredict(true, 200, 'medium', 0.78);
+      monitoringService.recordPredict(false, 300, 'low');
 
-      const metrics = monitoringService.getForecastMetrics();
-      expect(metrics.totalForecasts).toBe(3);
-      expect(metrics.successfulForecasts).toBe(2);
-      expect(metrics.failedForecasts).toBe(1);
+      const metrics = monitoringService.getPredictMetrics();
+      expect(metrics.totalPredicts).toBe(3);
+      expect(metrics.successfulPredicts).toBe(2);
+      expect(metrics.failedPredicts).toBe(1);
       expect(metrics.confidenceDistribution.high).toBe(1);
       expect(metrics.confidenceDistribution.medium).toBe(1);
       expect(metrics.confidenceDistribution.low).toBe(1);
@@ -61,7 +61,7 @@ describe('E2E: Production Readiness Tests', () => {
       const report = monitoringService.getDetailedHealthReport();
       expect(report).toBeDefined();
       expect(report.health).toBeDefined();
-      expect(report.forecasts).toBeDefined();
+      expect(report.predicts).toBeDefined();
       expect(report.apis).toBeDefined();
       expect(report.recommendations).toBeDefined();
       expect(Array.isArray(report.recommendations)).toBe(true);
@@ -70,10 +70,10 @@ describe('E2E: Production Readiness Tests', () => {
 
   describe('Structured Logger', () => {
     it('should start and end request trace', () => {
-      const requestId = structuredLogger.startRequestTrace('GET', '/api/forecast', 'user123');
+      const requestId = structuredLogger.startRequestTrace('GET', '/api/predict', 'user123');
       expect(requestId).toBeDefined();
 
-      structuredLogger.log('info', 'Processing forecast request', { zoneId: 'zone1' });
+      structuredLogger.log('info', 'Processing predict request', { zoneId: 'zone1' });
 
       const trace = structuredLogger.endRequestTrace(requestId, 200);
       expect(trace).toBeDefined();
@@ -83,14 +83,14 @@ describe('E2E: Production Readiness Tests', () => {
       expect(trace.logs.length).toBeGreaterThan(0);
     });
 
-    it('should start and end forecast trace', () => {
-      const forecastId = structuredLogger.startForecastTrace('zone1', 'ml', 'trained');
-      expect(forecastId).toBeDefined();
+    it('should start and end predict trace', () => {
+      const predictId = structuredLogger.startPredictTrace('zone1', 'ml', 'trained');
+      expect(predictId).toBeDefined();
 
-      structuredLogger.log('info', 'Generating forecast', { demand: 25 });
+      structuredLogger.log('info', 'Generating predict', { demand: 25 });
 
-      const trace = structuredLogger.endForecastTrace(
-        forecastId,
+      const trace = structuredLogger.endPredictTrace(
+        predictId,
         true,
         'high',
         'Based on temporal features and historical data',
@@ -98,7 +98,7 @@ describe('E2E: Production Readiness Tests', () => {
       );
 
       expect(trace).toBeDefined();
-      expect(trace.forecastId).toBe(forecastId);
+      expect(trace.predictId).toBe(predictId);
       expect(trace.success).toBe(true);
       expect(trace.confidence).toBe('high');
       expect(trace.accuracy).toBe(0.85);
@@ -172,8 +172,8 @@ describe('E2E: Production Readiness Tests', () => {
       expect(cached).toBeNull();
     });
 
-    it('should generate fallback forecast', () => {
-      const fallback = reliabilityManager.generateFallbackForecast(25, 'ML service unavailable');
+    it('should generate fallback predict', () => {
+      const fallback = reliabilityManager.generateFallbackPredict(25, 'ML service unavailable');
 
       expect(fallback).toBeDefined();
       expect(fallback.source).toBe('fallback');
@@ -202,9 +202,9 @@ describe('E2E: Production Readiness Tests', () => {
     });
   });
 
-  describe('Forecast Validator', () => {
-    it('should validate real forecast', () => {
-      const forecast = {
+  describe('Predict Validator', () => {
+    it('should validate real predict', () => {
+      const predict = {
         demand: 25,
         confidence: 'high',
         reasoning: 'Based on temporal features and historical demand patterns',
@@ -219,8 +219,8 @@ describe('E2E: Production Readiness Tests', () => {
         confidence: 'high' as const,
       };
 
-      const validation = forecastValidator.validateForecast(
-        forecast,
+      const validation = predictValidator.validatePredict(
+        predict,
         100, // historical data points
         0.9, // data completeness
         0.8, // data freshness
@@ -233,8 +233,8 @@ describe('E2E: Production Readiness Tests', () => {
       expect(['trained', 'production', 'learning']).toContain(validation.learningStatus);
     });
 
-    it('should reject forecast with insufficient data', () => {
-      const forecast = {
+    it('should reject predict with insufficient data', () => {
+      const predict = {
         demand: 25,
         confidence: 'high',
         reasoning: 'Test',
@@ -246,8 +246,8 @@ describe('E2E: Production Readiness Tests', () => {
         confidence: 'low' as const,
       };
 
-      const validation = forecastValidator.validateForecast(
-        forecast,
+      const validation = predictValidator.validatePredict(
+        predict,
         5, // insufficient data points
         0.5, // low completeness
         0.2, // low freshness
@@ -258,8 +258,8 @@ describe('E2E: Production Readiness Tests', () => {
       expect(validation.validationErrors.length).toBeGreaterThan(0);
     });
 
-    it('should verify forecast is real', () => {
-      const forecast = {
+    it('should verify predict is real', () => {
+      const predict = {
         demand: 25,
         confidence: 'high',
         reasoning: 'Based on ML model with 85% accuracy',
@@ -271,13 +271,13 @@ describe('E2E: Production Readiness Tests', () => {
         confidence: 'high' as const,
       };
 
-      const realityCheck = forecastValidator.verifyForecastIsReal(forecast, source);
+      const realityCheck = predictValidator.verifyPredictIsReal(predict, source);
       expect(realityCheck.isReal).toBe(true);
       expect(realityCheck.issues.length).toBe(0);
     });
 
     it('should detect hardcoded values', () => {
-      const forecast = {
+      const predict = {
         demand: 50, // Suspicious round number
         confidence: 'high',
         reasoning: 'Test',
@@ -289,13 +289,13 @@ describe('E2E: Production Readiness Tests', () => {
         confidence: 'low' as const,
       };
 
-      const realityCheck = forecastValidator.verifyForecastIsReal(forecast, source);
+      const realityCheck = predictValidator.verifyPredictIsReal(predict, source);
       // May flag as suspicious depending on implementation
       expect(realityCheck).toBeDefined();
     });
 
     it('should generate validation report', () => {
-      const forecast = {
+      const predict = {
         demand: 25,
         confidence: 'high',
         reasoning: 'Based on temporal features',
@@ -307,18 +307,18 @@ describe('E2E: Production Readiness Tests', () => {
         confidence: 'high' as const,
       };
 
-      const validation = forecastValidator.validateForecast(forecast, 100, 0.9, 0.8, source);
-      const realityCheck = forecastValidator.verifyForecastIsReal(forecast, source);
+      const validation = predictValidator.validatePredict(predict, 100, 0.9, 0.8, source);
+      const realityCheck = predictValidator.verifyPredictIsReal(predict, source);
 
-      const report = forecastValidator.generateValidationReport(forecast, validation, realityCheck);
+      const report = predictValidator.generateValidationReport(predict, validation, realityCheck);
       expect(report).toBeDefined();
       expect(report).toContain('VALIDATION REPORT');
       expect(report).toContain('FORECAST SOURCE');
       expect(report).toContain('DATA QUALITY');
     });
 
-    it('should determine if forecast should be shown', () => {
-      const forecast = {
+    it('should determine if predict should be shown', () => {
+      const predict = {
         demand: 25,
         confidence: 'high',
         reasoning: 'Based on ML model',
@@ -330,20 +330,20 @@ describe('E2E: Production Readiness Tests', () => {
         confidence: 'high' as const,
       };
 
-      const validation = forecastValidator.validateForecast(forecast, 100, 0.9, 0.8, source);
+      const validation = predictValidator.validatePredict(predict, 100, 0.9, 0.8, source);
       const realityCheck = { isReal: true };
 
-      const shouldShow = forecastValidator.shouldShowForecast(validation, realityCheck);
+      const shouldShow = predictValidator.shouldShowPredict(validation, realityCheck);
       expect(shouldShow).toBe(true);
     });
 
-    it('should provide forecast disclaimer', () => {
+    it('should provide predict disclaimer', () => {
       const source = {
         type: 'ml' as const,
         confidence: 'high' as const,
       };
 
-      const validation = forecastValidator.validateForecast(
+      const validation = predictValidator.validatePredict(
         { demand: 25, confidence: 'high', reasoning: 'Test', learningStatus: 'trained' },
         100,
         0.9,
@@ -351,15 +351,15 @@ describe('E2E: Production Readiness Tests', () => {
         source
       );
 
-      const disclaimer = forecastValidator.getForecastDisclaimer(validation);
+      const disclaimer = predictValidator.getPredictDisclaimer(validation);
       expect(disclaimer).toBeDefined();
       expect(disclaimer.length).toBeGreaterThan(0);
     });
   });
 
   describe('Integration: No Fake Data', () => {
-    it('should not allow forecasts without proper validation', () => {
-      const invalidForecast = {
+    it('should not allow predicts without proper validation', () => {
+      const invalidPredict = {
         demand: 50, // Suspicious round number
         confidence: undefined, // Missing confidence
         reasoning: '', // Empty reasoning
@@ -371,17 +371,17 @@ describe('E2E: Production Readiness Tests', () => {
         confidence: 'low' as const,
       };
 
-      const validation = forecastValidator.validateForecast(invalidForecast, 5, 0.4, 0.2, source);
-      const realityCheck = forecastValidator.verifyForecastIsReal(invalidForecast, source);
+      const validation = predictValidator.validatePredict(invalidPredict, 5, 0.4, 0.2, source);
+      const realityCheck = predictValidator.verifyPredictIsReal(invalidPredict, source);
 
       expect(validation.isValid).toBe(false);
       expect(realityCheck.isReal).toBe(false);
-      expect(forecastValidator.shouldShowForecast(validation, realityCheck)).toBe(false);
+      expect(predictValidator.shouldShowPredict(validation, realityCheck)).toBe(false);
     });
 
     it('should require real data and reasoning', () => {
-      // Forecast without real data
-      const forecast = {
+      // Predict without real data
+      const predict = {
         demand: 25,
         confidence: 'high',
         reasoning: 'Based on real historical data and ML model trained on 500+ orders',
@@ -397,14 +397,14 @@ describe('E2E: Production Readiness Tests', () => {
         confidence: 'high' as const,
       };
 
-      const validation = forecastValidator.validateForecast(forecast, 500, 0.95, 0.9, source);
-      const realityCheck = forecastValidator.verifyForecastIsReal(forecast, source);
+      const validation = predictValidator.validatePredict(predict, 500, 0.95, 0.9, source);
+      const realityCheck = predictValidator.verifyPredictIsReal(predict, source);
 
       expect(validation.isValid).toBe(true);
       expect(realityCheck.isReal).toBe(true);
       // With 500 data points and high accuracy, should be production ready
       expect(['trained', 'production', 'learning']).toContain(validation.learningStatus);
-      expect(forecastValidator.shouldShowForecast(validation, realityCheck)).toBe(true);
+      expect(predictValidator.shouldShowPredict(validation, realityCheck)).toBe(true);
     });
   });
 });

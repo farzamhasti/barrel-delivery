@@ -2,7 +2,7 @@ import { orders } from '../drizzle/schema';
 import { sql, and, gte, lte } from 'drizzle-orm';
 import { getDb } from './db';
 
-export interface DemandForecast {
+export interface DemandPredict {
   period: string;
   startDate: Date;
   endDate: Date;
@@ -13,7 +13,7 @@ export interface DemandForecast {
   averageDeliveryTime: number;
   newCustomerPercentage: number;
   topAreas: Array<{ area: string; orderCount: number; percentage: number }>;
-  forecastedDemand: number;
+  predictedDemand: number;
   confidenceScore: number;
   trends: {
     isGrowing: boolean;
@@ -23,12 +23,12 @@ export interface DemandForecast {
 }
 
 /**
- * Calculate demand forecast for a specific date range
+ * Calculate demand prediction for a specific date range
  */
-export async function calculateDemandForecast(
+export async function calculateDemandPredict(
   startDate: Date,
   endDate: Date
-): Promise<DemandForecast | null> {
+): Promise<DemandPredict | null> {
   const db = await getDb();
   if (!db) return null;
 
@@ -55,7 +55,7 @@ export async function calculateDemandForecast(
       averageDeliveryTime: 0,
       newCustomerPercentage: 0,
       topAreas: [],
-      forecastedDemand: 0,
+      predictedDemand: 0,
       confidenceScore: 0,
       trends: {
         isGrowing: false,
@@ -127,8 +127,8 @@ export async function calculateDemandForecast(
   const variance = dailyCounts.reduce((sum, count) => sum + Math.pow(count - meanDaily, 2), 0) / dailyCounts.length;
   const volatility = Math.sqrt(variance);
 
-  // Forecast future demand (simple linear extrapolation)
-  const forecastedDemand = averageDailyOrders * 7; // Project to 7 days
+  // Predict future demand (simple linear extrapolation)
+  const predictedDemand = averageDailyOrders * 7; // Project to 7 days
 
   // Calculate confidence score based on data quality
   const dataPoints = rangeOrders.length;
@@ -146,7 +146,7 @@ export async function calculateDemandForecast(
     averageDeliveryTime,
     newCustomerPercentage,
     topAreas,
-    forecastedDemand,
+    predictedDemand,
     confidenceScore,
     trends: {
       isGrowing: orderGrowthRate > 0,
@@ -157,29 +157,29 @@ export async function calculateDemandForecast(
 }
 
 /**
- * Get forecast comparison between two periods
+ * Get predict comparison between two periods
  */
-export async function compareDemandForecasts(
+export async function compareDemandPredicts(
   period1Start: Date,
   period1End: Date,
   period2Start: Date,
   period2End: Date
-): Promise<{ period1: DemandForecast | null; period2: DemandForecast | null; comparison: any } | null> {
-  const forecast1 = await calculateDemandForecast(period1Start, period1End);
-  const forecast2 = await calculateDemandForecast(period2Start, period2End);
+): Promise<{ period1: DemandPredict | null; period2: DemandPredict | null; comparison: any } | null> {
+  const predict1 = await calculateDemandPredict(period1Start, period1End);
+  const predict2 = await calculateDemandPredict(period2Start, period2End);
 
-  if (!forecast1 || !forecast2) return null;
+  if (!predict1 || !predict2) return null;
 
   return {
-    period1: forecast1,
-    period2: forecast2,
+    period1: predict1,
+    period2: predict2,
     comparison: {
-      orderGrowth: forecast2.totalOrders - forecast1.totalOrders,
-      orderGrowthPercentage: forecast1.totalOrders > 0
-        ? ((forecast2.totalOrders - forecast1.totalOrders) / forecast1.totalOrders) * 100
+      orderGrowth: predict2.totalOrders - predict1.totalOrders,
+      orderGrowthPercentage: predict1.totalOrders > 0
+        ? ((predict2.totalOrders - predict1.totalOrders) / predict1.totalOrders) * 100
         : 0,
-      deliveryTimeChange: forecast2.averageDeliveryTime - forecast1.averageDeliveryTime,
-      newCustomerChange: forecast2.newCustomerPercentage - forecast1.newCustomerPercentage,
+      deliveryTimeChange: predict2.averageDeliveryTime - predict1.averageDeliveryTime,
+      newCustomerChange: predict2.newCustomerPercentage - predict1.newCustomerPercentage,
     },
   };
 }

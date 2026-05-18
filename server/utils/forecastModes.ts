@@ -1,7 +1,7 @@
 /**
- * Unified Forecasting Engine - Forecast Mode Management
+ * Unified Predicting Engine - Predict Mode Management
  * 
- * Supports three operational forecasting modes:
+ * Supports three operational predicting modes:
  * - TODAY_FORECAST: Pre-operation planning (before 4 PM)
  * - LIVE_OPERATION: Realtime during operations (4 PM - 10/11 PM)
  * - TOMORROW_FORECAST: Next-day strategic planning (all day)
@@ -9,12 +9,12 @@
 
 import { getOperatingMode } from './operatingModes';
 
-export type ForecastMode = 'TODAY_FORECAST' | 'LIVE_OPERATION' | 'TOMORROW_FORECAST';
+export type PredictMode = 'TODAY_FORECAST' | 'LIVE_OPERATION' | 'TOMORROW_FORECAST';
 
-export interface ForecastContext {
-  mode: ForecastMode;
+export interface PredictContext {
+  mode: PredictMode;
   targetDate: Date;
-  forecastHours: number;
+  predictHours: number;
   isWeatherAware: boolean;
   isEventAware: boolean;
   includeHotspots: boolean;
@@ -22,9 +22,9 @@ export interface ForecastContext {
 }
 
 /**
- * Determine the appropriate forecast mode based on current time and user request
+ * Determine the appropriate predict mode based on current time and user request
  */
-export function determineForecastMode(requestedMode?: ForecastMode): ForecastMode {
+export function determinePredictMode(requestedMode?: PredictMode): PredictMode {
   const operatingMode = getOperatingMode();
   
   // If user explicitly requests a mode, respect it
@@ -38,21 +38,21 @@ export function determineForecastMode(requestedMode?: ForecastMode): ForecastMod
   } else if (operatingMode === 'active-operations') {
     return 'LIVE_OPERATION';
   } else {
-    // Closed mode - default to tomorrow forecast for planning
+    // Closed mode - default to tomorrow predict for planning
     return 'TOMORROW_FORECAST';
   }
 }
 
 /**
- * Build forecast context based on mode
+ * Build predict context based on mode
  */
-export function buildForecastContext(mode: ForecastMode): ForecastContext {
+export function buildPredictContext(mode: PredictMode): PredictContext {
   const now = new Date();
   let targetDate = new Date(now);
-  let forecastHours = 24;
+  let predictHours = 24;
   
   if (mode === 'TODAY_FORECAST') {
-    // Forecast from now until tonight's closing time
+    // Predict from now until tonight's closing time
     const dayOfWeek = now.getDay();
     const isWeekend = dayOfWeek === 5 || dayOfWeek === 6;
     const closingHour = isWeekend ? 23 : 22;
@@ -62,21 +62,21 @@ export function buildForecastContext(mode: ForecastMode): ForecastContext {
     
     // Calculate hours until closing
     const currentHour = now.getHours();
-    forecastHours = Math.max(closingHour - currentHour, 1);
+    predictHours = Math.max(closingHour - currentHour, 1);
   } else if (mode === 'LIVE_OPERATION') {
-    // Forecast for next 15 minutes to 2 hours ahead
-    forecastHours = 2;
+    // Predict for next 15 minutes to 2 hours ahead
+    predictHours = 2;
   } else if (mode === 'TOMORROW_FORECAST') {
-    // Forecast for full day tomorrow
+    // Predict for full day tomorrow
     targetDate.setDate(targetDate.getDate() + 1);
     targetDate.setHours(12, 0, 0, 0);
-    forecastHours = 24;
+    predictHours = 24;
   }
   
   return {
     mode,
     targetDate,
-    forecastHours,
+    predictHours,
     isWeatherAware: true,
     isEventAware: true,
     includeHotspots: mode !== 'TOMORROW_FORECAST', // Hotspots less relevant for tomorrow
@@ -85,25 +85,25 @@ export function buildForecastContext(mode: ForecastMode): ForecastContext {
 }
 
 /**
- * Get forecast mode description for UI display
+ * Get predict mode description for UI display
  */
-export function getForecastModeDescription(mode: ForecastMode): string {
+export function getPredictModeDescription(mode: PredictMode): string {
   switch (mode) {
     case 'TODAY_FORECAST':
-      return 'Tonight\'s Operational Forecast';
+      return 'Tonight\'s Operational Predict';
     case 'LIVE_OPERATION':
       return 'Live Operational Intelligence';
     case 'TOMORROW_FORECAST':
-      return 'Tomorrow\'s Strategic Forecast';
+      return 'Tomorrow\'s Strategic Predict';
     default:
-      return 'Operational Forecast';
+      return 'Operational Predict';
   }
 }
 
 /**
  * Get refresh interval for each mode (in milliseconds)
  */
-export function getRefreshInterval(mode: ForecastMode): number {
+export function getRefreshInterval(mode: PredictMode): number {
   switch (mode) {
     case 'TODAY_FORECAST':
       return 5 * 60 * 1000; // 5 minutes
@@ -119,7 +119,7 @@ export function getRefreshInterval(mode: ForecastMode): number {
 /**
  * Determine if a mode should be active based on current time
  */
-export function isModeActive(mode: ForecastMode): boolean {
+export function isModeActive(mode: PredictMode): boolean {
   const operatingMode = getOperatingMode();
   
   if (mode === 'TODAY_FORECAST') {

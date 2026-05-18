@@ -1,75 +1,75 @@
 /**
- * PHASE 2: Forecast Memory System
+ * PHASE 2: Predict Memory System
  * 
- * Stores previous forecasts and actual outcomes to create
+ * Stores previous predicts and actual outcomes to create
  * a learning feedback loop for continuous improvement.
  */
 
-// Forecast memory system - stores forecasts and outcomes for learning feedback
+// Predict memory system - stores predicts and outcomes for learning feedback
 
-export interface ForecastRecord {
+export interface PredictRecord {
   zoneId: string;
-  forecastTime: Date;
-  forecastedDemand: number;
-  forecastedConfidence: number;
+  predictTime: Date;
+  predictedDemand: number;
+  predictedConfidence: number;
   actualDemand?: number;
   actualOutcomeTime?: Date;
-  forecastError?: number;
+  predictError?: number;
   isAccurate?: boolean;
   learningPhase: 'early_learning' | 'learning' | 'trained';
 }
 
 /**
- * Store a forecast for later comparison with actual outcomes
+ * Store a predict for later comparison with actual outcomes
  */
-export async function storeForecast(forecast: ForecastRecord): Promise<boolean> {
+export async function storePredict(predict: PredictRecord): Promise<boolean> {
   try {
-    // This would insert into a forecasts table
+    // This would insert into a predicts table
     // For now, we'll log it
-    console.log(`[Learning] Stored forecast for zone ${forecast.zoneId}:`, {
-      forecastedDemand: forecast.forecastedDemand,
-      confidence: forecast.forecastedConfidence,
-      phase: forecast.learningPhase,
+    console.log(`[Learning] Stored predict for zone ${predict.zoneId}:`, {
+      predictedDemand: predict.predictedDemand,
+      confidence: predict.predictedConfidence,
+      phase: predict.learningPhase,
     });
     return true;
   } catch (error) {
-    console.error('[Learning] Error storing forecast:', error);
+    console.error('[Learning] Error storing predict:', error);
     return false;
   }
 }
 
 /**
- * Record actual outcome and calculate forecast error
+ * Record actual outcome and calculate predict error
  */
 export async function recordActualOutcome(
   zoneId: string,
-  forecastTime: Date,
+  predictTime: Date,
   actualDemand: number,
-): Promise<ForecastRecord | null> {
+): Promise<PredictRecord | null> {
   try {
-    // This would query the forecasts table and update with actual outcome
+    // This would query the predicts table and update with actual outcome
     // Calculate error
-    const forecastedDemand = 25; // Placeholder - would come from database
-    const forecastError = Math.abs(actualDemand - forecastedDemand);
-    const errorPercentage = (forecastError / forecastedDemand) * 100;
+    const predictedDemand = 25; // Placeholder - would come from database
+    const predictError = Math.abs(actualDemand - predictedDemand);
+    const errorPercentage = (predictError / predictedDemand) * 100;
     const isAccurate = errorPercentage < 20; // Within 20% is considered accurate
 
     console.log(`[Learning] Recorded outcome for zone ${zoneId}:`, {
-      forecasted: forecastedDemand,
+      predicted: predictedDemand,
       actual: actualDemand,
-      error: forecastError,
+      error: predictError,
       errorPercentage: errorPercentage.toFixed(2) + '%',
       accurate: isAccurate,
     });
 
     return {
       zoneId,
-      forecastTime,
-      forecastedDemand,
-      forecastedConfidence: 0.4,
+      predictTime,
+      predictedDemand,
+      predictedConfidence: 0.4,
       actualDemand,
       actualOutcomeTime: new Date(),
-      forecastError,
+      predictError,
       isAccurate,
       learningPhase: 'early_learning',
     };
@@ -81,35 +81,35 @@ export async function recordActualOutcome(
 }
 
 /**
- * Calculate forecast accuracy metrics
+ * Calculate predict accuracy metrics
  */
 export async function calculateAccuracyMetrics(zoneId: string): Promise<{
-  totalForecasts: number;
-  accurateForecasts: number;
+  totalPredicts: number;
+  accuratePredicts: number;
   accuracyRate: number;
   averageError: number;
   confidenceCalibration: number;
 } | null> {
   try {
-    // This would query all forecasts for the zone and calculate metrics
+    // This would query all predicts for the zone and calculate metrics
     // Placeholder values for now
-    const totalForecasts = 100;
-    const accurateForecasts = 72;
-    const accuracyRate = (accurateForecasts / totalForecasts) * 100;
+    const totalPredicts = 100;
+    const accuratePredicts = 72;
+    const accuracyRate = (accuratePredicts / totalPredicts) * 100;
     const averageError = 3.5;
     const confidenceCalibration = 0.75; // How well confidence scores match actual accuracy
 
     console.log(`[Learning] Accuracy metrics for zone ${zoneId}:`, {
-      totalForecasts,
-      accurateForecasts,
+      totalPredicts,
+      accuratePredicts,
       accuracyRate: accuracyRate.toFixed(2) + '%',
       averageError: averageError.toFixed(2),
       confidenceCalibration: (confidenceCalibration * 100).toFixed(2) + '%',
     });
 
     return {
-      totalForecasts,
-      accurateForecasts,
+      totalPredicts,
+      accuratePredicts,
       accuracyRate,
       averageError,
       confidenceCalibration,
@@ -150,15 +150,15 @@ export async function getLearningProgress(zoneId: string): Promise<{
     const metrics = await calculateAccuracyMetrics(zoneId);
     if (!metrics) return null;
 
-    const phase = determineLearningPhase(metrics.totalForecasts, metrics.accuracyRate);
+    const phase = determineLearningPhase(metrics.totalPredicts, metrics.accuracyRate);
     let progress = 0;
     let nextMilestone = '';
 
     if (phase === 'early_learning') {
-      progress = (metrics.totalForecasts / 50) * 33;
-      nextMilestone = `Collect ${50 - metrics.totalForecasts} more forecasts to reach Learning phase`;
+      progress = (metrics.totalPredicts / 50) * 33;
+      nextMilestone = `Collect ${50 - metrics.totalPredicts} more predicts to reach Learning phase`;
     } else if (phase === 'learning') {
-      progress = 33 + ((metrics.totalForecasts - 50) / 150) * 33;
+      progress = 33 + ((metrics.totalPredicts - 50) / 150) * 33;
       nextMilestone = `Achieve 75% accuracy (currently ${metrics.accuracyRate.toFixed(1)}%) to reach Trained phase`;
     } else {
       progress = 100;

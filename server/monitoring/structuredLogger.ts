@@ -1,6 +1,6 @@
 /**
  * Structured Logging System
- * Centralized logging with request tracing and forecast tracing
+ * Centralized logging with request tracing and predict tracing
  */
 
 import fs from 'fs';
@@ -13,7 +13,7 @@ interface LogEntry {
   context?: Record<string, any>;
   traceId?: string;
   requestId?: string;
-  forecastId?: string;
+  predictId?: string;
   duration?: number;
   error?: {
     message: string;
@@ -34,8 +34,8 @@ interface RequestTrace {
   logs: LogEntry[];
 }
 
-interface ForecastTrace {
-  forecastId: string;
+interface PredictTrace {
+  predictId: string;
   zoneId: string;
   timestamp: number;
   source: 'ml' | 'heuristic' | 'fallback';
@@ -56,9 +56,9 @@ interface ForecastTrace {
 export class StructuredLogger {
   private logsDir = '.manus-logs';
   private requestTraces: Map<string, RequestTrace> = new Map();
-  private forecastTraces: Map<string, ForecastTrace> = new Map();
+  private predictTraces: Map<string, PredictTrace> = new Map();
   private currentRequestId: string | null = null;
-  private currentForecastId: string | null = null;
+  private currentPredictId: string | null = null;
 
   constructor() {
     this.ensureLogsDirectory();
@@ -120,16 +120,16 @@ export class StructuredLogger {
   }
 
   /**
-   * Start forecast trace
+   * Start predict trace
    */
-  startForecastTrace(
+  startPredictTrace(
     zoneId: string,
     source: 'ml' | 'heuristic' | 'fallback',
     learningStatus: 'early_learning' | 'learning' | 'trained' | 'production'
   ): string {
-    const forecastId = this.generateId();
-    const trace: ForecastTrace = {
-      forecastId,
+    const predictId = this.generateId();
+    const trace: PredictTrace = {
+      predictId,
       zoneId,
       timestamp: Date.now(),
       source,
@@ -141,25 +141,25 @@ export class StructuredLogger {
       logs: [],
     };
 
-    this.forecastTraces.set(forecastId, trace);
-    this.currentForecastId = forecastId;
-    return forecastId;
+    this.predictTraces.set(predictId, trace);
+    this.currentPredictId = predictId;
+    return predictId;
   }
 
   /**
-   * End forecast trace
+   * End predict trace
    */
-  endForecastTrace(
-    forecastId: string,
+  endPredictTrace(
+    predictId: string,
     success: boolean,
     confidence: 'high' | 'medium' | 'low',
     reasoning: string,
     accuracy?: number,
     error?: string
-  ): ForecastTrace {
-    const trace = this.forecastTraces.get(forecastId);
+  ): PredictTrace {
+    const trace = this.predictTraces.get(predictId);
     if (!trace) {
-      throw new Error(`Forecast trace not found: ${forecastId}`);
+      throw new Error(`Predict trace not found: ${predictId}`);
     }
 
     trace.latency = Date.now() - trace.timestamp;
@@ -173,7 +173,7 @@ export class StructuredLogger {
       trace.error = error;
     }
 
-    this.currentForecastId = null;
+    this.currentPredictId = null;
     return trace;
   }
 
@@ -191,7 +191,7 @@ export class StructuredLogger {
       message,
       context,
       requestId: this.currentRequestId || undefined,
-      forecastId: this.currentForecastId || undefined,
+      predictId: this.currentPredictId || undefined,
     };
 
     // Add to current traces
@@ -202,8 +202,8 @@ export class StructuredLogger {
       }
     }
 
-    if (this.currentForecastId) {
-      const trace = this.forecastTraces.get(this.currentForecastId);
+    if (this.currentPredictId) {
+      const trace = this.predictTraces.get(this.currentPredictId);
       if (trace) {
         trace.logs.push(entry);
       }
@@ -271,10 +271,10 @@ export class StructuredLogger {
   }
 
   /**
-   * Get forecast trace
+   * Get predict trace
    */
-  getForecastTrace(forecastId: string): ForecastTrace | null {
-    return this.forecastTraces.get(forecastId) || null;
+  getPredictTrace(predictId: string): PredictTrace | null {
+    return this.predictTraces.get(predictId) || null;
   }
 
   /**
@@ -285,16 +285,16 @@ export class StructuredLogger {
   }
 
   /**
-   * Get all forecast traces
+   * Get all predict traces
    */
-  getAllForecastTraces(): ForecastTrace[] {
-    return Array.from(this.forecastTraces.values());
+  getAllPredictTraces(): PredictTrace[] {
+    return Array.from(this.predictTraces.values());
   }
 
   /**
    * Export trace to file
    */
-  exportTrace(type: 'request' | 'forecast', id: string): string {
+  exportTrace(type: 'request' | 'predict', id: string): string {
     const filename = `${type}-trace-${id}.json`;
     const filepath = path.join(this.logsDir, filename);
 
@@ -305,9 +305,9 @@ export class StructuredLogger {
       }
       fs.writeFileSync(filepath, JSON.stringify(trace, null, 2));
     } else {
-      const trace = this.getForecastTrace(id);
+      const trace = this.getPredictTrace(id);
       if (!trace) {
-        throw new Error(`Forecast trace not found: ${id}`);
+        throw new Error(`Predict trace not found: ${id}`);
       }
       fs.writeFileSync(filepath, JSON.stringify(trace, null, 2));
     }
@@ -331,13 +331,13 @@ export class StructuredLogger {
       });
     }
 
-    if (this.forecastTraces.size > maxTraces) {
-      const entries = Array.from(this.forecastTraces.entries());
+    if (this.predictTraces.size > maxTraces) {
+      const entries = Array.from(this.predictTraces.entries());
       const sorted = entries.sort((a, b) => a[1].timestamp - b[1].timestamp);
       const toDelete = sorted.slice(0, sorted.length - maxTraces);
 
       toDelete.forEach(([key]) => {
-        this.forecastTraces.delete(key);
+        this.predictTraces.delete(key);
       });
     }
   }

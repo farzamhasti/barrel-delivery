@@ -44,7 +44,7 @@ export function calculateAccuracyConfidence(accuracyRate: number): number {
 
 /**
  * Calculate confidence based on temporal consistency
- * How consistent are forecasts across similar time periods?
+ * How consistent are predicts across similar time periods?
  */
 export function calculateTemporalConsistencyConfidence(
   demandVariance: number,
@@ -152,13 +152,13 @@ export function getConfidenceExplanation(confidence: number): string {
   } else if (confidence < 0.85) {
     return 'High - Well-trained model';
   } else {
-    return 'Very High - Highly accurate predictions';
+    return 'Very High - Highly accurate predicts';
   }
 }
 
 /**
- * Determine if forecast should be used or if fallback is needed
+ * Determine if predict should be used or if fallback is needed
  */
-export function shouldUseForecast(confidence: number, threshold: number = 0.3): boolean {
+export function shouldUsePredict(confidence: number, threshold: number = 0.3): boolean {
   return confidence >= threshold;
 }
