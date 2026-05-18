@@ -1,4 +1,3 @@
-'use client';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
@@ -98,8 +97,8 @@ export function LiveDriverTrackingWindow({ onClose, onMinimize, initialPosition,
         const deltaX = e.clientX - resizeStart.x;
         const deltaY = e.clientY - resizeStart.y;
         const newSize = {
-          width: Math.max(300, resizeStart.width + deltaX),
-          height: Math.max(200, resizeStart.height + deltaY),
+          width: Math.max(400, resizeStart.width + deltaX),
+          height: Math.max(300, resizeStart.height + deltaY),
         };
         setSize(newSize);
       }
@@ -110,74 +109,92 @@ export function LiveDriverTrackingWindow({ onClose, onMinimize, initialPosition,
       setIsResizing(false);
     };
 
-    if (isDragging || isResizing) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-    }
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
 
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging, dragOffset, isResizing, resizeStart]);
+  }, [isDragging, isResizing, dragOffset, resizeStart]);
 
-  const handleMinimize = () => {
+  const handleMinimize = useCallback(() => {
     const newMinimized = !isMinimized;
     setIsMinimized(newMinimized);
-    if (newMinimized) {
-      minimizedWindows.set('liveDriverTracking', { position, size });
-    } else {
-      minimizedWindows.delete('liveDriverTracking');
-    }
     onMinimize?.(newMinimized);
-  };
 
-  const getDriverColor = (index: number) => {
-    return DRIVER_COLORS[index % DRIVER_COLORS.length];
-  };
+    if (newMinimized) {
+      minimizedWindows.set('tracking', { position, size });
+    } else {
+      minimizedWindows.delete('tracking');
+    }
+  }, [isMinimized, position, size, onMinimize]);
 
-  const createColoredIcon = (color: string, driverName: string) => {
+  const createDriverIcon = (color: string, driverName: string) => {
     return L.divIcon({
       html: `
         <div style="
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 2px;
+          gap: 6px;
         ">
           <div style="
-            width: 32px;
-            height: 32px;
-            background-color: ${color};
+            width: 52px;
+            height: 52px;
+            background: linear-gradient(135deg, ${color} 0%, ${color}dd 100%);
             border: 3px solid white;
-            border-radius: 50%;
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.3);
             font-weight: bold;
             color: white;
-            font-size: 12px;
+            font-size: 28px;
+            position: relative;
+            transform: perspective(600px) rotateX(5deg);
           ">
             🚗
+            <div style="
+              position: absolute;
+              bottom: -8px;
+              right: -8px;
+              background-color: #10b981;
+              color: white;
+              border: 2px solid white;
+              border-radius: 50%;
+              width: 22px;
+              height: 22px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 11px;
+              font-weight: bold;
+              box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+            ">
+              ✓
+            </div>
           </div>
           <div style="
-            background-color: rgba(0, 0, 0, 0.7);
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.75) 100%);
             color: white;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-size: 11px;
-            font-weight: bold;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: 600;
             white-space: nowrap;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            box-shadow: 0 3px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
+            letter-spacing: 0.3px;
+            border: 1px solid rgba(255,255,255,0.2);
           ">
             ${driverName}
           </div>
         </div>
       `,
-      iconSize: [60, 50],
-      iconAnchor: [30, 45],
-      popupAnchor: [0, -45],
+      iconSize: [70, 80],
+      iconAnchor: [35, 75],
+      popupAnchor: [0, -75],
     });
   };
 
@@ -249,37 +266,36 @@ export function LiveDriverTrackingWindow({ onClose, onMinimize, initialPosition,
               center={[RESTAURANT_LAT, RESTAURANT_LNG] as any}
               zoom={13}
               style={{ height: '100%', width: '100%' }}
-              {...({} as any)}
             >
               <TileLayer
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 attribution='&copy; OpenStreetMap contributors'
-                {...({} as any)}
               />
 
               {/* Restaurant marker */}
-              <Marker position={[RESTAURANT_LAT, RESTAURANT_LNG]} icon={restaurantIcon as any} {...({} as any)}>
+              <Marker position={[RESTAURANT_LAT, RESTAURANT_LNG]} icon={restaurantIcon}>
                 <Popup>
-                  <div className="text-sm font-semibold">The Barrel Restaurant</div>
+                  <div className="text-center">
+                    <p className="font-bold">The Barrel Restaurant</p>
+                    <p className="text-sm text-gray-600">224 Garrison Rd</p>
+                  </div>
                 </Popup>
               </Marker>
 
-              {/* Driver markers - only show online drivers */}
-              {drivers
-                .filter(driver => driver.status === 'online')
-                .map((driver, index) => (
+              {/* Driver markers */}
+              {drivers.map((driver, index) => (
                 <Marker
                   key={driver.driverId}
                   position={[driver.latitude, driver.longitude]}
-                  icon={createColoredIcon(getDriverColor(index), driver.driverName) as any}
-                  {...({} as any)}
+                  icon={createDriverIcon(DRIVER_COLORS[index % DRIVER_COLORS.length], driver.driverName)}
                 >
                   <Popup>
-                    <div className="text-sm">
-                      <div className="font-semibold">{driver.driverName}</div>
-                      <div className="text-xs text-muted-foreground">
+                    <div className="text-center">
+                      <p className="font-bold">{driver.driverName}</p>
+                      <p className="text-sm text-gray-600 capitalize">{driver.status}</p>
+                      <p className="text-xs text-gray-500 mt-1">
                         {new Date(driver.timestamp).toLocaleTimeString()}
-                      </div>
+                      </p>
                     </div>
                   </Popup>
                 </Marker>
@@ -287,20 +303,13 @@ export function LiveDriverTrackingWindow({ onClose, onMinimize, initialPosition,
             </MapContainer>
           </div>
 
-          {/* Resize Handle */}
+          {/* Footer - Resize handle */}
           <div
             onMouseDown={handleResizeMouseDown}
-            className="absolute bottom-0 right-0 w-4 h-4 bg-blue-400 cursor-se-resize rounded-tl"
-            style={{ cursor: 'nwse-resize' }}
+            className="h-2 bg-gray-200 hover:bg-gray-300 cursor-se-resize rounded-b-lg"
+            style={{ cursor: 'se-resize' }}
           />
         </>
-      )}
-
-      {/* Minimized State Info */}
-      {isMinimized && (
-        <div className="px-3 py-2 text-xs text-muted-foreground">
-          {drivers.filter(d => d.status === 'online').length} online drivers • Updates every 10s
-        </div>
       )}
     </div>
   );
