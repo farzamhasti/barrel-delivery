@@ -1,7 +1,7 @@
 /**
- * ML Forecast Card Component
+ * ML Prediction Card Component
  * 
- * Displays machine learning demand forecasts with confidence scoring
+ * Displays machine learning demand predictions with confidence scoring
  * and temporal feature analysis for the Geomarketing dashboard.
  */
 
@@ -11,27 +11,27 @@ import { Button } from '@/components/ui/button';
 import { TrendingUp, BarChart3, AlertCircle, CheckCircle2, Clock, Zap } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
 
-interface MLForecastCardProps {
+interface MLPredictionCardProps {
   zoneId?: string;
-  forecastHour?: number;
+  predictionHour?: number;
 }
 
-export function MLForecastCard({ zoneId = 'default', forecastHour }: MLForecastCardProps) {
-  const [selectedHour, setSelectedHour] = useState(forecastHour || new Date().getHours());
+export function MLPredictionCard({ zoneId = 'default', predictionHour }: MLPredictionCardProps) {
+  const [selectedHour, setSelectedHour] = useState(predictionHour || new Date().getHours());
   const [showDetails, setShowDetails] = useState(false);
 
-  // Fetch ML forecast
-  const { data: response, isLoading, error } = trpc.learning.getMLForecast.useQuery(
+  // Fetch ML prediction
+  const { data: response, isLoading, error } = trpc.learning.getMLPrediction.useQuery(
     {
       zoneId,
-      forecastHour: selectedHour,
+      predictionHour: selectedHour,
     },
     {
       refetchInterval: 5 * 60 * 1000, // Refresh every 5 minutes
     }
   );
 
-  const forecast = response?.data;
+  const prediction = response?.data;
 
   if (isLoading) {
     return (
@@ -39,7 +39,7 @@ export function MLForecastCard({ zoneId = 'default', forecastHour }: MLForecastC
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Zap className="h-5 w-5 text-blue-500" />
-            ML Demand Forecast
+            ML Demand Prediction
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -52,18 +52,18 @@ export function MLForecastCard({ zoneId = 'default', forecastHour }: MLForecastC
     );
   }
 
-  if (error || !forecast || !response?.success) {
+  if (error || !prediction || !response?.success) {
     return (
       <Card className="border-0 shadow-sm border-l-4 border-l-yellow-500">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-yellow-700">
             <AlertCircle className="h-5 w-5" />
-            ML Forecast Unavailable
+            ML Prediction Unavailable
           </CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-gray-600">
-            {error ? 'Error loading forecast' : 'Unable to generate ML forecast at this time. Check back later.'}
+            {error ? 'Error loading prediction' : 'Unable to generate ML prediction at this time. Check back later.'}
           </p>
         </CardContent>
       </Card>
@@ -71,9 +71,9 @@ export function MLForecastCard({ zoneId = 'default', forecastHour }: MLForecastC
   }
 
   const confidenceLevel =
-    forecast.confidenceScore > 0.8
+    prediction.confidenceScore > 0.8
       ? 'high'
-      : forecast.confidenceScore > 0.6
+      : prediction.confidenceScore > 0.6
       ? 'moderate'
       : 'low';
 
@@ -85,9 +85,9 @@ export function MLForecastCard({ zoneId = 'default', forecastHour }: MLForecastC
       : 'text-yellow-600 bg-yellow-50';
 
   const trendIcon =
-    forecast.modelMetadata.trendDirection === 'increasing' ? (
+    prediction.modelMetadata.trendDirection === 'increasing' ? (
       <TrendingUp className="h-4 w-4 text-green-600" />
-    ) : forecast.modelMetadata.trendDirection === 'decreasing' ? (
+    ) : prediction.modelMetadata.trendDirection === 'decreasing' ? (
       <TrendingUp className="h-4 w-4 text-red-600 rotate-180" />
     ) : (
       <div className="h-4 w-4 text-gray-600">—</div>
@@ -100,7 +100,7 @@ export function MLForecastCard({ zoneId = 'default', forecastHour }: MLForecastC
           <div className="flex-1">
             <CardTitle className="flex items-center gap-2">
               <Zap className="h-5 w-5 text-blue-500" />
-              ML Demand Forecast
+              ML Demand Prediction
             </CardTitle>
             <CardDescription>
               Statistical machine learning model with temporal feature engineering
@@ -120,7 +120,7 @@ export function MLForecastCard({ zoneId = 'default', forecastHour }: MLForecastC
         {/* Hour Selector */}
         <div className="flex items-center gap-2">
           <Clock className="h-4 w-4 text-gray-500" />
-          <label className="text-sm font-medium">Forecast Hour:</label>
+          <label className="text-sm font-medium">Prediction Hour:</label>
           <select
             value={selectedHour}
             onChange={(e) => setSelectedHour(parseInt(e.target.value))}
@@ -134,13 +134,13 @@ export function MLForecastCard({ zoneId = 'default', forecastHour }: MLForecastC
           </select>
         </div>
 
-        {/* Main Forecast Display */}
+        {/* Main Prediction Display */}
         <div className="grid grid-cols-2 gap-4">
-          {/* Baseline Forecast */}
+          {/* Baseline Prediction */}
           <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-            <div className="text-sm text-gray-600 mb-1">Baseline Forecast</div>
+            <div className="text-sm text-gray-600 mb-1">Baseline Prediction</div>
             <div className="text-3xl font-bold text-blue-600">
-              {forecast.baselineForecast.toFixed(1)}
+              {prediction.baselinePrediction.toFixed(1)}
             </div>
             <div className="text-xs text-gray-500 mt-1">orders predicted</div>
           </div>
@@ -149,7 +149,7 @@ export function MLForecastCard({ zoneId = 'default', forecastHour }: MLForecastC
           <div className={`rounded-lg p-4 border ${confidenceColor.split(' ')[1]}`}>
             <div className="text-sm text-gray-600 mb-1">Confidence</div>
             <div className="text-3xl font-bold">
-              {(forecast.confidenceScore * 100).toFixed(0)}%
+              {(prediction.confidenceScore * 100).toFixed(0)}%
             </div>
             <div className="text-xs text-gray-500 mt-1 capitalize">{confidenceLevel}</div>
           </div>
@@ -163,7 +163,7 @@ export function MLForecastCard({ zoneId = 'default', forecastHour }: MLForecastC
             <div>
               <div className="text-xs text-gray-600">Trend</div>
               <div className="text-sm font-semibold capitalize">
-                {forecast.modelMetadata.trendDirection}
+                {prediction.modelMetadata.trendDirection}
               </div>
             </div>
           </div>
@@ -174,7 +174,7 @@ export function MLForecastCard({ zoneId = 'default', forecastHour }: MLForecastC
             <div>
               <div className="text-xs text-gray-600">Volatility</div>
               <div className="text-sm font-semibold">
-                {(forecast.modelMetadata.volatility * 100).toFixed(0)}%
+                {(prediction.modelMetadata.volatility * 100).toFixed(0)}%
               </div>
             </div>
           </div>
@@ -184,7 +184,7 @@ export function MLForecastCard({ zoneId = 'default', forecastHour }: MLForecastC
         <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
           <div className="text-sm text-blue-900">
             <strong>Why this confidence?</strong>
-            <p className="text-xs mt-1">{forecast.confidenceExplanation}</p>
+            <p className="text-xs mt-1">{prediction.confidenceExplanation}</p>
           </div>
         </div>
 
@@ -195,13 +195,13 @@ export function MLForecastCard({ zoneId = 'default', forecastHour }: MLForecastC
               <div>
                 <div className="text-xs text-gray-600">Training Data Points</div>
                 <div className="font-semibold">
-                  {forecast.modelMetadata.trainingDataPoints}
+                  {prediction.modelMetadata.trainingDataPoints}
                 </div>
               </div>
               <div>
                 <div className="text-xs text-gray-600">Historical Average</div>
                 <div className="font-semibold">
-                  {forecast.modelMetadata.averageHistoricalDemand.toFixed(1)}
+                  {prediction.modelMetadata.averageHistoricalDemand.toFixed(1)}
                 </div>
               </div>
             </div>
@@ -214,26 +214,26 @@ export function MLForecastCard({ zoneId = 'default', forecastHour }: MLForecastC
                   <span className="text-gray-600">Day of Week:</span>
                   <span className="ml-1 font-semibold">
                     {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][
-                      forecast.modelMetadata.temporalFeatures.dayOfWeek
+                      prediction.modelMetadata.temporalFeatures.dayOfWeek
                     ]}
                   </span>
                 </div>
                 <div>
                   <span className="text-gray-600">Hour:</span>
                   <span className="ml-1 font-semibold">
-                    {forecast.modelMetadata.temporalFeatures.hour.toString().padStart(2, '0')}:00
+                    {prediction.modelMetadata.temporalFeatures.hour.toString().padStart(2, '0')}:00
                   </span>
                 </div>
                 <div>
                   <span className="text-gray-600">Peak Hour:</span>
                   <span className="ml-1 font-semibold">
-                    {forecast.modelMetadata.temporalFeatures.isPeakHour ? 'Yes' : 'No'}
+                    {prediction.modelMetadata.temporalFeatures.isPeakHour ? 'Yes' : 'No'}
                   </span>
                 </div>
                 <div>
                   <span className="text-gray-600">Demand Intensity:</span>
                   <span className="ml-1 font-semibold">
-                    {(forecast.modelMetadata.temporalFeatures.demandIntensity * 100).toFixed(0)}%
+                    {(prediction.modelMetadata.temporalFeatures.demandIntensity * 100).toFixed(0)}%
                   </span>
                 </div>
               </div>
@@ -245,7 +245,7 @@ export function MLForecastCard({ zoneId = 'default', forecastHour }: MLForecastC
               <div>Weighted Regression with Temporal Features</div>
               <div className="mt-2">
                 Uses historical demand patterns, day-of-week effects, and peak hour analysis
-                to generate statistically-grounded forecasts.
+                to generate statistically-grounded predictions.
               </div>
             </div>
           </div>

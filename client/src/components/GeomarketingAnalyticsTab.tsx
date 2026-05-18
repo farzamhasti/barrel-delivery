@@ -494,7 +494,7 @@ export function GeomarketingAnalyticsTab() {
         </div>
             )}
       
-      {/* AI Planning & Forecasts Card - At Bottom */}
+      {/* AI Planning & Predictions Card - At Bottom */}
       <Card
         className="border-0 shadow-sm cursor-pointer hover:shadow-md transition-shadow w-full mt-6"
         onClick={() => setShowAIPlanningModal(true)}
@@ -502,9 +502,9 @@ export function GeomarketingAnalyticsTab() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
             <Brain className="w-5 h-5" />
-            AI Planning & Forecasts
+            AI Planning & Predictions
           </CardTitle>
-          <CardDescription>Real-time demand forecasting and operational intelligence</CardDescription>
+          <CardDescription>Real-time demand prediction and operational intelligence</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="bg-gray-100 rounded-lg h-48 flex items-center justify-center">
@@ -524,8 +524,8 @@ export function GeomarketingAnalyticsTab() {
               <div className="flex items-center gap-3">
                 <Brain className="w-6 h-6" />
                 <div>
-                  <h2 className="text-2xl font-bold">AI Planning & Forecasts</h2>
-                  <p className="text-sm text-gray-600">Real-time demand forecasting and operational intelligence</p>
+                  <h2 className="text-2xl font-bold">AI Planning & Predictions</h2>
+                  <p className="text-sm text-gray-600">Real-time demand prediction and operational intelligence</p>
                 </div>
               </div>
               <button

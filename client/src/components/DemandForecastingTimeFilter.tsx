@@ -4,15 +4,15 @@ import { Button } from '@/components/ui/button';
 import { Calendar } from 'lucide-react';
 import { DatePickerModal } from './DatePickerModal';
 
-interface DemandForecastingTimeFilterProps {
+interface DemandPredictionTimeFilterProps {
   onDateRangeChange: (startDate: Date, endDate: Date) => void;
   onModeChange?: (mode: 'single' | 'range') => void;
 }
 
-export function DemandForecastingTimeFilter({
+export function DemandPredictionTimeFilter({
   onDateRangeChange,
   onModeChange,
-}: DemandForecastingTimeFilterProps) {
+}: DemandPredictionTimeFilterProps) {
   const [mode, setMode] = useState<'single' | 'range'>('single');
   const [selectedDates, setSelectedDates] = useState<Date[]>([new Date()]);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
@@ -71,10 +71,10 @@ export function DemandForecastingTimeFilter({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Calendar className="w-5 h-5" />
-          Demand Forecasting Time Filter
+          Demand Prediction Time Filter
         </CardTitle>
         <CardDescription>
-          Select a specific date or date range to analyze demand trends and forecast emerging zones
+          Select a specific date or date range to analyze demand trends and predict emerging zones
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -119,7 +119,7 @@ export function DemandForecastingTimeFilter({
           <p className="text-sm text-blue-900">
             {mode === 'single'
               ? 'Analyze demand patterns and emerging zones for a specific date.'
-              : 'Analyze demand trends and forecast emerging zones based on the selected date range.'}
+              : 'Analyze demand trends and predict emerging zones based on the selected date range.'}
           </p>
         </div>
       </CardContent>
