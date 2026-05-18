@@ -143,7 +143,7 @@ export default function Home() {
                 <p className="text-xs text-muted-foreground">Geomarketing Analytics</p>
               </div>
               <div className="text-center">
-                <div className="text-2xl mb-2">🤖</div>
+                <div className="text-2xl mb-2">🧠</div>
                 <p className="text-xs text-muted-foreground">GeoAI Forecasting</p>
               </div>
             </div>
