@@ -9,7 +9,6 @@ import { DeliveryHeatmapAnalysis } from "./DeliveryHeatmapAnalysis";
 import { DemandChangeAnalysisCard } from "./DemandChangeAnalysisCard";
 import { RelativeDemandAnalysisCard } from "./RelativeDemandAnalysisCard";
 import { SpatialAIIntelligenceCard } from "./SpatialAIIntelligenceCard";
-import { MLForecastCard } from "./MLForecastCard";
 
 type DateRange = "daily" | "monthly";
 type AreaFilter = "all" | "Downtown" | "Central Park" | "Both";
@@ -187,9 +186,6 @@ export function GeomarketingAnalyticsTab() {
           </div>
         </CardContent>
       </Card>
-
-      {/* ML Forecast Card */}
-      <MLForecastCard zoneId="default" />
 
       {/* Analytics Sections Grid */}
       {!expandedDemandAnalysis && (
