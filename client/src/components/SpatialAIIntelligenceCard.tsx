@@ -347,36 +347,7 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
     return () => clearInterval(hoursCheckInterval);
   }, []);
 
-  // Render "Closed" state (after business closes)
-  if (operatingMode === 'closed') {
-    return (
-      <Card className="col-span-2 border-2 border-red-200 bg-gradient-to-br from-red-50 to-orange-50 shadow-lg">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2">
-            <Clock className="w-5 h-5 text-red-600" />
-            Business Closed
-          </CardTitle>
-          <CardDescription>Forecasting paused - Next-day planning available</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <Alert className="border-red-300 bg-red-50">
-              <AlertTriangle className="h-4 w-4 text-red-600" />
-              <AlertDescription className="text-red-800">
-                <strong>Operating Hours:</strong> Sun-Thu 4:00 PM - 10:00 PM | Fri-Sat 4:00 PM - 11:00 PM
-              </AlertDescription>
-            </Alert>
-            <div className="text-center py-8">
-              <p className="text-lg font-semibold text-gray-700">{nextOpeningTime}</p>
-              <p className="text-sm text-gray-600 mt-2">Next-day planning and forecasting available for tomorrow's operations.</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  // Build prediction data object for child components
+  // Build prediction data object for child components (MUST be before early return)
   const predictionData = useMemo(() => ({
     demandForecast: {
       predicted_demand: demandResponse?.data?.predicted_orders || 0,
@@ -409,6 +380,37 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
     timestamp: Date.now(),
     refreshedAt: new Date().toLocaleTimeString()
   }), [demandResponse, hotspotsResponse, riskResponse, weatherResponse, demandMultiplier]);
+
+  // Render "Closed" state (after business closes)
+  if (operatingMode === 'closed') {
+    return (
+      <Card className="col-span-2 border-2 border-red-200 bg-gradient-to-br from-red-50 to-orange-50 shadow-lg">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2">
+            <Clock className="w-5 h-5 text-red-600" />
+            Business Closed
+          </CardTitle>
+          <CardDescription>Forecasting paused - Next-day planning available</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <Alert className="border-red-300 bg-red-50">
+              <AlertTriangle className="h-4 w-4 text-red-600" />
+              <AlertDescription className="text-red-800">
+                <strong>Operating Hours:</strong> Sun-Thu 4:00 PM - 10:00 PM | Fri-Sat 4:00 PM - 11:00 PM
+              </AlertDescription>
+            </Alert>
+            <div className="text-center py-8">
+              <p className="text-lg font-semibold text-gray-700">{nextOpeningTime}</p>
+              <p className="text-sm text-gray-600 mt-2">Next-day planning and forecasting available for tomorrow's operations.</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+
 
   return (
     <Card className={`col-span-2 border-2 shadow-lg ${
