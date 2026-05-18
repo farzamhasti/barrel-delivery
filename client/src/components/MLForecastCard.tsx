@@ -140,7 +140,7 @@ export function MLPredictionCard({ zoneId = 'default', predictionHour }: MLPredi
           <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
             <div className="text-sm text-gray-600 mb-1">Baseline Prediction</div>
             <div className="text-3xl font-bold text-blue-600">
-              {prediction.baselinePrediction.toFixed(1)}
+              {prediction.baselineForecast.toFixed(1)}
             </div>
             <div className="text-xs text-gray-500 mt-1">orders predicted</div>
           </div>
