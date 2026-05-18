@@ -47,6 +47,7 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
   const weatherHistory = useWeatherChangeHistory(5);
   const [todayForecast, setTodayForecast] = useState<any>(null);
   const [tomorrowForecast, setTomorrowForecast] = useState<any>(null);
+  const [showAISection, setShowAISection] = useState(false); // Toggle for optional AI section
 
   // Operating mode check (pre-operation, active-operations, or closed)
   const checkOperatingMode = useCallback(() => {
@@ -381,8 +382,8 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
     refreshedAt: new Date().toLocaleTimeString()
   }), [demandResponse, hotspotsResponse, riskResponse, weatherResponse, demandMultiplier]);
 
-  // Render "Closed" state (after business closes)
-  if (operatingMode === 'closed') {
+  // Render "Closed" state (after business closes) - with optional AI section
+  if (operatingMode === 'closed' && !showAISection) {
     return (
       <Card className="col-span-2 border-2 border-red-200 bg-gradient-to-br from-red-50 to-orange-50 shadow-lg">
         <CardHeader className="pb-3">
@@ -404,6 +405,13 @@ export function SpatialAIIntelligenceCard({ selectedMonth, selectedYear, dateRan
               <p className="text-lg font-semibold text-gray-700">{nextOpeningTime}</p>
               <p className="text-sm text-gray-600 mt-2">Next-day planning and forecasting available for tomorrow's operations.</p>
             </div>
+            <button
+              onClick={() => setShowAISection(true)}
+              className="w-full mt-4 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors"
+            >
+              <Brain className="inline w-4 h-4 mr-2" />
+              View AI Planning & Forecasts
+            </button>
           </div>
         </CardContent>
       </Card>
