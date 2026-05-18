@@ -255,7 +255,7 @@ export function MLPredictionCard({ zoneId = 'default', predictionHour }: MLPredi
         <div className="text-xs text-gray-500 border-t pt-3">
           <div className="flex items-center gap-1">
             <CheckCircle2 className="h-3 w-3 text-green-600" />
-            ML model trained on {forecast.modelMetadata.trainingDataPoints} historical data points
+            ML model trained on {prediction.modelMetadata.trainingDataPoints} historical data points
           </div>
         </div>
       </CardContent>
