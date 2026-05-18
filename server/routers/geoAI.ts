@@ -683,7 +683,7 @@ export const geoAIRouter = router({
   weather: router({
     current: publicProcedure.query(async () => {
       try {
-        const url = new URL('https://api.open-meteo.com/v1/predict');
+        const url = new URL('https://api.open-meteo.com/v1/forecast');
         url.searchParams.append('latitude', '42.8900');
         url.searchParams.append('longitude', '-79.0000');
         url.searchParams.append('current', 'temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,snowfall,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,visibility');
