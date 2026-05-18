@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BarChart3, Map as MapIcon, Calendar, TrendingUp } from "lucide-react";
+import { BarChart3, Map as MapIcon, Calendar, TrendingUp, Brain } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { DatePickerModal } from "./DatePickerModal";
 import { AnalyticsSectionModalWithGIS } from "./AnalyticsSectionModalWithGIS";
@@ -27,6 +27,7 @@ export function GeomarketingAnalyticsTab() {
   const [showHeatmap, setShowHeatmap] = useState(false);
   const [expandedDemandAnalysis, setExpandedDemandAnalysis] = useState(false);
   const [expandedRelativeDemand, setExpandedRelativeDemand] = useState(false);
+  const [showAIPlanningModal, setShowAIPlanningModal] = useState(false);
 
   // Calculate date range for queries
   const getDateRangeForQuery = () => {
@@ -349,6 +350,28 @@ export function GeomarketingAnalyticsTab() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Section 6: AI Planning & Forecasts */}
+        <Card
+          className="border-0 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => setShowAIPlanningModal(true)}
+        >
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Brain className="w-5 h-5" />
+              AI Planning & Forecasts
+            </CardTitle>
+            <CardDescription>Real-time demand forecasting and operational intelligence</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="bg-gray-100 rounded-lg h-48 flex items-center justify-center">
+              <div className="text-center">
+                <Brain className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                <p className="text-sm text-gray-500">Click to view details</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
       )}
 
@@ -493,8 +516,31 @@ export function GeomarketingAnalyticsTab() {
         </div>
             )}
       
-      {/* Spatial AI Intelligence Card - Dedicated AI Module */}
-      <SpatialAIIntelligenceCard dateRange={dateRangeQuery} areaFilter={areaFilter} />
+      {/* AI Planning Modal */}
+      {showAIPlanningModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Brain className="w-6 h-6" />
+                <div>
+                  <h2 className="text-2xl font-bold">AI Planning & Forecasts</h2>
+                  <p className="text-sm text-gray-600">Real-time demand forecasting and operational intelligence</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowAIPlanningModal(false)}
+                className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
+              >
+                ×
+              </button>
+            </div>
+            <div className="p-6">
+              <SpatialAIIntelligenceCard dateRange={dateRangeQuery} areaFilter={areaFilter} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
