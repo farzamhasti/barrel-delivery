@@ -6,8 +6,6 @@
 import { logger } from '../utils/logger';
 import { mlServiceClient } from '../ml/mlServiceClient';
 import { getDb } from '../db';
-import { orders } from '../db';
-
 import { notifyOwner } from '../_core/notification';
 
 interface RetrainingConfig {

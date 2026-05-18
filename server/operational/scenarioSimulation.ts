@@ -328,13 +328,13 @@ export class ScenarioSimulation {
    * Get risk score for comparison
    */
   private getRiskScore(riskAssessment: any): number {
-    const scoreMap = {
+    const scoreMap: Record<string, number> = {
       low: 0.1,
       medium: 0.5,
       high: 0.75,
       critical: 0.95,
     };
-    return scoreMap[riskAssessment.riskLevel] || 0;
+    return scoreMap[riskAssessment.riskLevel as string] || 0;
   }
 
   /**

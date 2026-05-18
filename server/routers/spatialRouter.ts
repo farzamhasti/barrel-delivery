@@ -261,7 +261,7 @@ export const spatialRouter = router({
             timestamp: z.number(),
           })
         ),
-        demandByZone: z.record(z.number()),
+        demandByZone: z.record(z.string(), z.number()),
       })
     )
     .query(({ input }) => {
