@@ -137,89 +137,64 @@ export function LiveDriverTrackingWindow({ onClose, onMinimize, initialPosition,
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 4px;
+          gap: 6px;
         ">
-          <svg width="56" height="56" viewBox="0 0 56 56" style="filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3)); transform: perspective(800px) rotateX(8deg) rotateZ(0deg);">
-            <!-- Car body with 3D effect -->
-            <defs>
-              <linearGradient id="carGradient-${driverName}" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" style="stop-color:${color};stop-opacity:1" />
-                <stop offset="100%" style="stop-color:${color};stop-opacity:0.85" />
-              </linearGradient>
-              <linearGradient id="windowGradient-${driverName}" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" style="stop-color:#87CEEB;stop-opacity:0.6" />
-                <stop offset="100%" style="stop-color:#4A90E2;stop-opacity:0.4" />
-              </linearGradient>
-            </defs>
-            
-            <!-- Main car body (top-down view) -->
-            <path d="M 12 16 L 16 12 L 40 12 L 44 16 L 44 32 Q 44 36 40 36 L 16 36 Q 12 36 12 32 Z" fill="url(#carGradient-${driverName})" stroke="#333" stroke-width="1.5"/>
-            
-            <!-- Front bumper -->
-            <rect x="14" y="10" width="28" height="2.5" fill="#222" rx="1"/>
-            
-            <!-- Front windshield -->
-            <path d="M 18 14 L 22 12 L 34 12 L 38 14 Z" fill="url(#windowGradient-${driverName})" stroke="#666" stroke-width="0.8" opacity="0.8"/>
-            
-            <!-- Rear windshield -->
-            <path d="M 18 32 L 22 34 L 34 34 L 38 32 Z" fill="url(#windowGradient-${driverName})" stroke="#666" stroke-width="0.8" opacity="0.7"/>
-            
-            <!-- Side windows -->
-            <rect x="12" y="18" width="3" height="8" fill="url(#windowGradient-${driverName})" stroke="#666" stroke-width="0.6" opacity="0.7" rx="0.5"/>
-            <rect x="41" y="18" width="3" height="8" fill="url(#windowGradient-${driverName})" stroke="#666" stroke-width="0.6" opacity="0.7" rx="0.5"/>
-            
-            <!-- Front lights -->
-            <circle cx="16" cy="11" r="1.5" fill="#FFD700" opacity="0.9"/>
-            <circle cx="40" cy="11" r="1.5" fill="#FFD700" opacity="0.9"/>
-            
-            <!-- Rear lights -->
-            <circle cx="16" cy="35" r="1.2" fill="#FF4444" opacity="0.8"/>
-            <circle cx="40" cy="35" r="1.2" fill="#FF4444" opacity="0.8"/>
-            
-            <!-- Wheels -->
-            <circle cx="18" cy="14" r="2.5" fill="#111" stroke="#555" stroke-width="1"/>
-            <circle cx="38" cy="14" r="2.5" fill="#111" stroke="#555" stroke-width="1"/>
-            <circle cx="18" cy="32" r="2.5" fill="#111" stroke="#555" stroke-width="1"/>
-            <circle cx="38" cy="32" r="2.5" fill="#111" stroke="#555" stroke-width="1"/>
-            
-            <!-- Wheel rims -->
-            <circle cx="18" cy="14" r="1.2" fill="#888" opacity="0.6"/>
-            <circle cx="38" cy="14" r="1.2" fill="#888" opacity="0.6"/>
-            <circle cx="18" cy="32" r="1.2" fill="#888" opacity="0.6"/>
-            <circle cx="38" cy="32" r="1.2" fill="#888" opacity="0.6"/>
-            
-            <!-- Direction arrow (pointing up) -->
-            <polygon points="28,8 26,12 30,12" fill="#FFD700" opacity="0.9" stroke="#FF8C00" stroke-width="0.5"/>
-            
-            <!-- Active status badge -->
-            <circle cx="46" cy="10" r="5" fill="#10b981" stroke="white" stroke-width="1.5" opacity="0.95"/>
-            <text x="46" y="12" text-anchor="middle" font-size="6" font-weight="bold" fill="white">✓</text>
-          </svg>
-          
-          <!-- Driver name label -->
           <div style="
-            background: linear-gradient(135deg, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.8) 100%);
+            width: 52px;
+            height: 52px;
+            background: linear-gradient(135deg, ${color} 0%, ${color}dd 100%);
+            border: 3px solid white;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.3);
+            font-weight: bold;
             color: white;
-            padding: 4px 10px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: 700;
+            font-size: 28px;
+            position: relative;
+            transform: perspective(600px) rotateX(5deg);
+          ">
+            🚗
+            <div style="
+              position: absolute;
+              bottom: -8px;
+              right: -8px;
+              background-color: #10b981;
+              color: white;
+              border: 2px solid white;
+              border-radius: 50%;
+              width: 22px;
+              height: 22px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 11px;
+              font-weight: bold;
+              box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+            ">
+              ✓
+            </div>
+          </div>
+          <div style="
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.75) 100%);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: 600;
             white-space: nowrap;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.15);
-            letter-spacing: 0.4px;
-            border: 1px solid rgba(255,255,255,0.25);
-            text-transform: uppercase;
-            max-width: 90px;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
+            letter-spacing: 0.3px;
+            border: 1px solid rgba(255,255,255,0.2);
           ">
             ${driverName}
           </div>
         </div>
       `,
-      iconSize: [70, 85],
-      iconAnchor: [35, 80],
-      popupAnchor: [0, -80],
+      iconSize: [70, 80],
+      iconAnchor: [35, 75],
+      popupAnchor: [0, -75],
     });
   };
 
