@@ -7,6 +7,7 @@ import { DeveloperCredit } from "@/components/DeveloperCredit";
 import { Menu, LogOut, X, ArrowLeft } from "lucide-react";
 import { NotificationIcon } from "@/components/NotificationIcon";
 import { GeomarketingAnalyticsTab } from "@/components/GeomarketingAnalyticsTab";
+import { SpatialAIIntelligenceCard } from "@/components/SpatialAIIntelligenceCard";
 import { LiveDriverTrackingWindow } from "@/components/LiveDriverTrackingWindow";
 import { useLiveTracking } from "@/contexts/LiveTrackingContext";
 
@@ -41,6 +42,10 @@ export default function GeomarketingDashboard() {
       setLocation("/geomarketing/analytics");
     }
   }, [location, setLocation]);
+
+  // Determine which tab to render
+  const isAIPlanningTab = location === "/geomarketing/ai-planning";
+  const isAnalyticsTab = location === "/geomarketing/analytics" || location === "/geomarketing";
 
   // Auto-close sidebar on mobile when navigating
   useEffect(() => {
@@ -197,7 +202,8 @@ export default function GeomarketingDashboard() {
           <div className="flex-1 overflow-auto">
             <div className="w-full h-full p-4 md:p-6">
               <div className="w-full max-w-7xl mx-auto">
-                <GeomarketingAnalyticsTab />
+                {isAnalyticsTab && <GeomarketingAnalyticsTab />}
+                {isAIPlanningTab && <SpatialAIIntelligenceCard />}
               </div>
             </div>
           </div>
@@ -238,6 +244,11 @@ function SidebarContent({
           href="/geomarketing/analytics"
           label="Analytics"
           active={location === "/geomarketing/analytics"}
+        />
+        <NavItem
+          href="/geomarketing/ai-planning"
+          label="AI Planning"
+          active={location === "/geomarketing/ai-planning"}
         />
       </nav>
 
