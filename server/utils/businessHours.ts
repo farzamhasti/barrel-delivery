@@ -36,7 +36,6 @@ export interface BusinessStatus {
 export interface PredictingStatus {
   canPredict: boolean;
   canAlert: boolean;
-  canPredict: boolean;
   reason: string;
   nextAvailableTime: DateTime;
 }

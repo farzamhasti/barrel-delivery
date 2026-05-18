@@ -1,4 +1,4 @@
-import { FallbackPredictData } from "./fallbackPredicting";
+import { FallbackPredictData } from "./fallbackForecasting";
 import {
   analyzeWeekdayPatterns,
   analyzeHourlyPatterns,
