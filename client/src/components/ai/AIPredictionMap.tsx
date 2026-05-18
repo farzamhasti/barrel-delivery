@@ -140,8 +140,10 @@ export const AIPredictionMap: React.FC<AIPredictionMapProps> = () => {
   
   // Fetch real-time Fort Erie weather data via tRPC (server-side to bypass CORS)
   // Weather is fetched regardless of operating hours to ensure live data
-  const { data: weatherResponse, isLoading: weatherApiLoading } = trpc.geoAI.weather.current.useQuery(undefined, {
+  const { data: weatherResponse, isLoading: weatherApiLoading, error: weatherError } = trpc.geoAI.weather.current.useQuery(undefined, {
     refetchInterval: 600000, // 10 minutes
+    retry: 2,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
   
   // Update weather state when tRPC response arrives
@@ -175,6 +177,28 @@ export const AIPredictionMap: React.FC<AIPredictionMapProps> = () => {
       });
     } else if (weatherResponse?.success === false) {
       console.error('Fort Erie weather fetch error:', weatherResponse.error);
+      // Use fallback weather data
+      setWeather({
+        temperature_2m: 15,
+        relative_humidity_2m: 65,
+        apparent_temperature: 14,
+        precipitation: 0,
+        snowfall: 0,
+        weather_code: 0,
+        wind_speed_10m: 10,
+        wind_direction_10m: 180,
+        wind_gusts_10m: 15,
+        visibility: 10000,
+        location: 'Fort Erie, Ontario, Canada',
+        latitude: 42.8845,
+        longitude: -79.0377,
+        timestamp: new Date().toISOString(),
+        time: new Date().toLocaleTimeString()
+      });
+    }
+    
+    if (weatherError) {
+      console.error('Weather API error:', weatherError);
     }
   }, [weatherResponse]);
   
