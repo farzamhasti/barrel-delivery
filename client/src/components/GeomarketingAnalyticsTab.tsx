@@ -350,28 +350,6 @@ export function GeomarketingAnalyticsTab() {
             </div>
           </CardContent>
         </Card>
-
-        {/* Section 6: AI Planning & Forecasts */}
-        <Card
-          className="border-0 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
-          onClick={() => setShowAIPlanningModal(true)}
-        >
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Brain className="w-5 h-5" />
-              AI Planning & Forecasts
-            </CardTitle>
-            <CardDescription>Real-time demand forecasting and operational intelligence</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="bg-gray-100 rounded-lg h-48 flex items-center justify-center">
-              <div className="text-center">
-                <Brain className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                <p className="text-sm text-gray-500">Click to view details</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
       )}
 
@@ -516,6 +494,28 @@ export function GeomarketingAnalyticsTab() {
         </div>
             )}
       
+      {/* AI Planning & Forecasts Card - At Bottom */}
+      <Card
+        className="border-0 shadow-sm cursor-pointer hover:shadow-md transition-shadow w-full mt-6"
+        onClick={() => setShowAIPlanningModal(true)}
+      >
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Brain className="w-5 h-5" />
+            AI Planning & Forecasts
+          </CardTitle>
+          <CardDescription>Real-time demand forecasting and operational intelligence</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="bg-gray-100 rounded-lg h-48 flex items-center justify-center">
+            <div className="text-center">
+              <Brain className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+              <p className="text-sm text-gray-500">Click to view details</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* AI Planning Modal */}
       {showAIPlanningModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
